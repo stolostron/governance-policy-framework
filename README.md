@@ -11,9 +11,9 @@ Policy framework provides governance capability to gain visibility and drive rem
 ## Architecutre
 The policy framework consists of following components
 - [Policy propagator](https://github.com/open-cluster-management/governance-policy-propagator) 
-- [Policy spec sync](https://github.com/open-cluster-management/governance-spec-sync)
-- [Policy status sync](https://github.com/open-cluster-management/governance-status-sync)
-- [Policy template sync](https://github.com/open-cluster-management/governance-template-sync)
+- [Policy spec sync](https://github.com/open-cluster-management/governance-policy-spec-sync)
+- [Policy status sync](https://github.com/open-cluster-management/governance-policy-status-sync)
+- [Policy template sync](https://github.com/open-cluster-management/governance-policy-template-sync)
 
 ![architecture](images/policy-framework-architecture.png)
 
