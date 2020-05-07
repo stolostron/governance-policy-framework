@@ -14,10 +14,13 @@ The policy framework consists of following components
 - [Policy spec sync](https://github.com/open-cluster-management/governance-policy-spec-sync)
 - [Policy status sync](https://github.com/open-cluster-management/governance-policy-status-sync)
 - [Policy template sync](https://github.com/open-cluster-management/governance-policy-template-sync)
+- Various policy controllers
+  - out-of-box
+  - bring your own
 
 ![architecture](images/policy-framework-architecture.png)
 
-## Out-of-box policies
+## Out-of-box policies and controllers
 - [configuration policy](https://github.com/open-cluster-management/config-policy-controller)
 - [cert expiration policy](https://github.com/open-cluster-management/cert-policy-controller)
 - [iam policy](https://github.com/open-cluster-management/iam-policy-controller)
