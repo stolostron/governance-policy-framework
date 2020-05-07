@@ -18,7 +18,7 @@ The policy framework consists of following components
   - out-of-box
   - bring your own
 
-![architecture](images/policy-framework-architecture.png)
+![architecture](images/policy-framework-architecture-diagram.png)
 
 ## Out-of-box policies and controllers
 - [configuration policy](https://github.com/open-cluster-management/config-policy-controller)
