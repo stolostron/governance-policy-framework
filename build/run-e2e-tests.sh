@@ -24,11 +24,6 @@ make install-crds
 
 make kind-deploy-controller 
 
-echo "patch image"
-kubectl patch deployment governance-policy-spec-sync -n multicluster-endpoint -p "{\"spec\":{\"template\":{\"spec\":{\"containers\":[{\"name\":\"governance-policy-spec-sync\",\"image\":\"${DOCKER_IMAGE_AND_TAG}\"}]}}}}"
-kubectl rollout status -n multicluster-endpoint deployment governance-policy-spec-sync --timeout=90s
-sleep 10
-
 make install-resources
 
 make e2e-test
