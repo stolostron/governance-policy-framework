@@ -1,3 +1,5 @@
+TRAVIS_BUILD ?= 1
+
 PWD := $(shell pwd)
 BASE_DIR := $(shell basename $(PWD))
 

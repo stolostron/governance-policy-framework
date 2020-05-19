@@ -1,2 +1,3 @@
-/kubeconfig_*
+/build-harness*
 /.build-harness-bootstrap
+/kubeconfig_*
