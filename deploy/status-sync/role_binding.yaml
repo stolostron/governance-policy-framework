@@ -1,0 +1,11 @@
+kind: RoleBinding
+apiVersion: rbac.authorization.k8s.io/v1
+metadata:
+  name: governance-policy-status-sync
+subjects:
+- kind: ServiceAccount
+  name: governance-policy-status-sync
+roleRef:
+  kind: Role
+  name: governance-policy-status-sync
+  apiGroup: rbac.authorization.k8s.io
