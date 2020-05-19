@@ -1,4 +1,6 @@
 # Governance Policy Framework
+[![Build Status](https://travis-ci.com/open-cluster-management/governance-policy-framework.svg?token=1xoYGv8XzWhB2heDk2My&branch=master)](https://travis-ci.com/open-cluster-management/governance-policy-framework)
+
 Red Hat Advance Cluster Management Governance - Policy Framework
 
 Policy framework provides governance capability to gain visibility and drive remediation for various security and configuration aspects to help meet such enterprise standards.
