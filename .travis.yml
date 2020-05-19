@@ -1,0 +1,29 @@
+language: go
+
+go:
+  - "1.14.x"
+
+services:
+  - docker
+
+branches:
+  only:
+    - master
+    - /^release-[0-9]+\..*$/
+
+env:
+  global:
+    - OS=linux
+    - COMPONENT_E2E_TEST_COMMAND=${TRAVIS_BUILD_DIR}/build/run-e2e-tests.sh
+
+stages:
+  - test-e2e
+
+jobs:
+  include:
+    - stage: test-e2e
+      name: "Deploy the image to a cluster and run e2e tests"
+      script:
+        - |
+          make
+          make component/test/e2e
