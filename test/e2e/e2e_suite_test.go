@@ -3,6 +3,7 @@
 package e2e
 
 import (
+	"flag"
 	"fmt"
 	"os"
 	"os/user"
@@ -23,17 +24,17 @@ import (
 )
 
 var (
-	testNamespace         string
+	userNamespace         string
+	clusterNamespace      string
 	clientHub             kubernetes.Interface
 	clientHubDynamic      dynamic.Interface
+	clientManaged         kubernetes.Interface
+	clientManagedDynamic  dynamic.Interface
 	gvrPolicy             schema.GroupVersionResource
 	gvrPlacementBinding   schema.GroupVersionResource
 	gvrPlacementRule      schema.GroupVersionResource
-	optionsFile           string
-	baseDomain            string
-	kubeadminUser         string
-	kubeadminCredential   string
-	kubeconfig            string
+	kubeconfigHub         string
+	kubeconfigManaged     string
 	defaultTimeoutSeconds int
 
 	defaultImageRegistry       string
@@ -48,14 +49,8 @@ func TestE2e(t *testing.T) {
 func init() {
 	klog.SetOutput(GinkgoWriter)
 	klog.InitFlags(nil)
-
-	// flag.StringVar(&kubeadminUser, "kubeadmin-user", "kubeadmin", "Provide the kubeadmin credential for the cluster under test (e.g. -kubeadmin-user=\"xxxxx\").")
-	// flag.StringVar(&kubeadminCredential, "kubeadmin-credential", "",
-	// 	"Provide the kubeadmin credential for the cluster under test (e.g. -kubeadmin-credential=\"xxxxx-xxxxx-xxxxx-xxxxx\").")
-	// flag.StringVar(&baseDomain, "base-domain", "", "Provide the base domain for the cluster under test (e.g. -base-domain=\"demo.red-chesterfield.com\").")
-	// flag.StringVar(&kubeconfig, "kubeconfig", "", "Location of the kubeconfig to use; defaults to KUBECONFIG if not set")
-
-	// flag.StringVar(&optionsFile, "options", "", "Location of an \"options.yaml\" file to provide input for various tests")
+	flag.StringVar(&kubeconfigHub, "kubeconfig_hub", "../../kubeconfig_hub", "Location of the kubeconfig to use; defaults to KUBECONFIG if not set")
+	flag.StringVar(&kubeconfigManaged, "kubeconfig_managed", "../../kubeconfig_managed", "Location of the kubeconfig to use; defaults to KUBECONFIG if not set")
 
 }
 
@@ -64,22 +59,25 @@ var _ = BeforeSuite(func() {
 	gvrPolicy = schema.GroupVersionResource{Group: "policies.open-cluster-management.io", Version: "v1", Resource: "policies"}
 	gvrPlacementBinding = schema.GroupVersionResource{Group: "policies.open-cluster-management.io", Version: "v1", Resource: "placementbindings"}
 	gvrPlacementRule = schema.GroupVersionResource{Group: "apps.open-cluster-management.io", Version: "v1", Resource: "placementrules"}
-	clientHub = NewKubeClient("", "", "")
-	clientHubDynamic = NewKubeClientDynamic("", "", "")
+	clientHub = NewKubeClient("", kubeconfigHub, "")
+	clientHubDynamic = NewKubeClientDynamic("", kubeconfigHub, "")
+	clientManaged = NewKubeClient("", kubeconfigManaged, "")
+	clientManagedDynamic = NewKubeClientDynamic("", kubeconfigManaged, "")
 	defaultImageRegistry = "quay.io/open-cluster-management"
 	defaultImagePullSecretName = "multiclusterhub-operator-pull-secret"
-	testNamespace = "policy-propagator-test"
+	userNamespace = "policy-test"
+	clusterNamespace = "managed"
 	defaultTimeoutSeconds = 30
 	By("Create Namesapce if needed")
 	namespaces := clientHub.CoreV1().Namespaces()
-	if _, err := namespaces.Get(testNamespace, metav1.GetOptions{}); err != nil && errors.IsNotFound(err) {
+	if _, err := namespaces.Get(userNamespace, metav1.GetOptions{}); err != nil && errors.IsNotFound(err) {
 		Expect(namespaces.Create(&corev1.Namespace{
 			ObjectMeta: metav1.ObjectMeta{
-				Name: testNamespace,
+				Name: userNamespace,
 			},
 		})).NotTo(BeNil())
 	}
-	Expect(namespaces.Get(testNamespace, metav1.GetOptions{})).NotTo(BeNil())
+	Expect(namespaces.Get(userNamespace, metav1.GetOptions{})).NotTo(BeNil())
 })
 
 func NewKubeClient(url, kubeconfig, context string) kubernetes.Interface {
