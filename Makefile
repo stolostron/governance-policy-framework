@@ -53,6 +53,10 @@ kind-deploy-controller: check-env
 	@echo installing policy-template-sync on managed
 	kubectl apply -f deploy/template-sync -n multicluster-endpoint --kubeconfig=$(PWD)/kubeconfig_managed
 
+kind-deploy-config-policy-controller: check-env
+	@echo installing config-policy-controller on managed
+	kubectl apply -f deploy/config-policy-controller -n multicluster-endpoint --kubeconfig=$(PWD)/kubeconfig_managed
+
 kind-create-cluster:
 	@echo "creating cluster"
 	kind create cluster --name test-hub
