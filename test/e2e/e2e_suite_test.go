@@ -24,18 +24,20 @@ import (
 )
 
 var (
-	userNamespace         string
-	clusterNamespace      string
-	clientHub             kubernetes.Interface
-	clientHubDynamic      dynamic.Interface
-	clientManaged         kubernetes.Interface
-	clientManagedDynamic  dynamic.Interface
-	gvrPolicy             schema.GroupVersionResource
-	gvrPlacementBinding   schema.GroupVersionResource
-	gvrPlacementRule      schema.GroupVersionResource
-	kubeconfigHub         string
-	kubeconfigManaged     string
-	defaultTimeoutSeconds int
+	userNamespace          string
+	clusterNamespace       string
+	clientHub              kubernetes.Interface
+	clientHubDynamic       dynamic.Interface
+	clientManaged          kubernetes.Interface
+	clientManagedDynamic   dynamic.Interface
+	gvrPolicy              schema.GroupVersionResource
+	gvrConfigurationPolicy schema.GroupVersionResource
+	gvrPlacementBinding    schema.GroupVersionResource
+	gvrPlacementRule       schema.GroupVersionResource
+	gvrRole                schema.GroupVersionResource
+	kubeconfigHub          string
+	kubeconfigManaged      string
+	defaultTimeoutSeconds  int
 
 	defaultImageRegistry       string
 	defaultImagePullSecretName string
@@ -57,8 +59,10 @@ func init() {
 var _ = BeforeSuite(func() {
 	By("Setup Hub client")
 	gvrPolicy = schema.GroupVersionResource{Group: "policies.open-cluster-management.io", Version: "v1", Resource: "policies"}
+	gvrConfigurationPolicy = schema.GroupVersionResource{Group: "policies.open-cluster-management.io", Version: "v1", Resource: "configurationpolicies"}
 	gvrPlacementBinding = schema.GroupVersionResource{Group: "policies.open-cluster-management.io", Version: "v1", Resource: "placementbindings"}
 	gvrPlacementRule = schema.GroupVersionResource{Group: "apps.open-cluster-management.io", Version: "v1", Resource: "placementrules"}
+	gvrRole = schema.GroupVersionResource{Group: "rbac.authorization.k8s.io", Version: "v1", Resource: "roles"}
 	clientHub = NewKubeClient("", kubeconfigHub, "")
 	clientHubDynamic = NewKubeClientDynamic("", kubeconfigHub, "")
 	clientManaged = NewKubeClient("", kubeconfigManaged, "")

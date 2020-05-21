@@ -1,7 +1,7 @@
 apiVersion: policies.open-cluster-management.io/v1
 kind: Policy
 metadata:
-  name: pod-policy
+  name: role-policy-musthave
   annotations:
     policies.open-cluster.management.io/standards: NIST-CSF
     policies.open-cluster.management.io/categories: PR.PT Protective Technology
@@ -14,11 +14,7 @@ spec:
         apiVersion: policies.open-cluster-management.io/v1
         kind: ConfigurationPolicy
         metadata:
-          name: pod-policy-configurationpolicy
-          annotations:
-            policy.mcm.ibm.com/standards: NIST-CSF
-            policy.mcm.ibm.com/categories: PR.PT Protective Technology
-            policy.mcm.ibm.com/controls: PR.PT-3 Least Functionality
+          name: role-policy-musthave
         spec:
           remediationAction: inform
           namespaceSelector:
@@ -27,34 +23,35 @@ spec:
           object-templates:
             - complianceType: musthave
               objectDefinition:
-                apiVersion: v1
-                kind: Pod
+                apiVersion: rbac.authorization.k8s.io/v1
+                kind: Role
                 metadata:
-                  name: nginx-pod-e2e
-                spec:
-                  containers:
-                    - image: nginx:1.7.9
-                      name: nginx
-                      ports:
-                        - containerPort: 80
+                  name: role-policy-e2e
+                rules:
+                  - apiGroups: ["extensions", "apps"]
+                    resources: ["deployments"]
+                    verbs: ["get", "list", "watch", "create", "delete","patch"]
+                  - apiGroups: [""]
+                    resources: ["pods"]
+                    verbs: ["get", "watch", "list"]
 ---
 apiVersion: policies.open-cluster-management.io/v1
 kind: PlacementBinding
 metadata:
-  name: pod-policy-pb
+  name: role-policy-musthave-pb
 placementRef:
   apiGroup: apps.open-cluster-management.io
   kind: PlacementRule
-  name: pod-policy-plr
+  name: role-policy-musthave-plr
 subjects:
 - apiGroup: policies.open-cluster-management.io
   kind: Policy
-  name: pod-policy
+  name: role-policy-musthave
 ---
 apiVersion: apps.open-cluster-management.io/v1
 kind: PlacementRule
 metadata:
-  name: pod-policy-plr
+  name: role-policy-musthave-plr
 spec:
   clusterConditions:
   - type: OK
