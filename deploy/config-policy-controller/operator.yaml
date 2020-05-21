@@ -1,0 +1,32 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: config-policy-ctrl
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      name: config-policy-ctrl
+  template:
+    metadata:
+      labels:
+        name: config-policy-ctrl
+    spec:
+      serviceAccountName: config-policy-ctrl
+      imagePullSecrets:
+        - name: multiclusterhub-operator-pull-secret
+      containers:
+        - image: quay.io/open-cluster-management/config-policy-controller:latest-dev
+          name: config-policy-ctrl
+          command:
+          - config-policy-controller
+          imagePullPolicy: Always
+          env:
+            - name: WATCH_NAMESPACE
+              value: managed
+            - name: POD_NAME
+              valueFrom:
+                fieldRef:
+                  fieldPath: metadata.name
+            - name: OPERATOR_NAME
+              value: "config-policy-ctrl"
