@@ -24,10 +24,13 @@ default::
 # e2e test section
 ############################################################
 .PHONY: kind-bootstrap-cluster
-kind-bootstrap-cluster: kind-create-cluster install-crds install-resources kind-deploy-controller
+kind-bootstrap-cluster: kind-create-cluster install-crds install-resources kind-deploy-controller kind-deploy-policy-controllers
 
 .PHONY: kind-bootstrap-cluster-dev
 kind-bootstrap-cluster-dev: kind-create-cluster install-crds install-resources
+
+.PHONY: kind-deploy-policy-controllers
+kind-deploy-policy-controllers: kind-deploy-config-policy-controller
 
 check-env:
 ifndef DOCKER_USER

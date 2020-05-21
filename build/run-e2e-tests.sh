@@ -22,7 +22,9 @@ make kind-create-cluster
 
 make install-crds 
 
-make kind-deploy-controller 
+make kind-deploy-controller
+
+make kind-deploy-policy-controllers
 
 make install-resources
 
