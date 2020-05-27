@@ -22,9 +22,18 @@ make kind-create-cluster
 
 make install-crds 
 
-make kind-deploy-controller 
+make kind-deploy-controller
+
+make kind-deploy-policy-controllers
 
 make install-resources
+
+# wait for controller to start
+while [[ $(kubectl get pods -l name=config-policy-ctrl -n multicluster-endpoint -o 'jsonpath={..status.conditions[?(@.type=="Ready")].status}') != "True" ]]; do 
+    echo "waiting for pod: config-policy-ctrl"
+    kubectl get pods -l name=config-policy-ctrl -n multicluster-endpoint
+    sleep 1
+done
 
 make e2e-test
 

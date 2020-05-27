@@ -24,10 +24,13 @@ default::
 # e2e test section
 ############################################################
 .PHONY: kind-bootstrap-cluster
-kind-bootstrap-cluster: kind-create-cluster install-crds install-resources kind-deploy-controller
+kind-bootstrap-cluster: kind-create-cluster install-crds install-resources kind-deploy-controller kind-deploy-policy-controllers
 
 .PHONY: kind-bootstrap-cluster-dev
 kind-bootstrap-cluster-dev: kind-create-cluster install-crds install-resources
+
+.PHONY: kind-deploy-policy-controllers
+kind-deploy-policy-controllers: kind-deploy-config-policy-controller
 
 check-env:
 ifndef DOCKER_USER
@@ -52,6 +55,10 @@ kind-deploy-controller: check-env
 	kubectl apply -f deploy/status-sync -n multicluster-endpoint --kubeconfig=$(PWD)/kubeconfig_managed
 	@echo installing policy-template-sync on managed
 	kubectl apply -f deploy/template-sync -n multicluster-endpoint --kubeconfig=$(PWD)/kubeconfig_managed
+
+kind-deploy-config-policy-controller: check-env
+	@echo installing config-policy-controller on managed
+	kubectl apply -f deploy/config-policy-controller -n multicluster-endpoint --kubeconfig=$(PWD)/kubeconfig_managed
 
 kind-create-cluster:
 	@echo "creating cluster"

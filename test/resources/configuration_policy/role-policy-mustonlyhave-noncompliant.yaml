@@ -1,0 +1,44 @@
+apiVersion: policies.open-cluster-management.io/v1
+kind: Policy
+metadata:
+  name: role-policy-mustonlyhave
+  annotations:
+    policies.open-cluster.management.io/standards: NIST-CSF
+    policies.open-cluster.management.io/categories: PR.PT Protective Technology
+    policies.open-cluster.management.io/controls: PR.PT-3 Least Functionality
+spec:
+  remediationAction: inform
+  disabled: false
+  policy-templates:
+    - objectDefinition:
+        apiVersion: policies.open-cluster-management.io/v1
+        kind: ConfigurationPolicy
+        metadata:
+          name: role-policy-mustonlyhave
+        spec:
+          remediationAction: inform
+          namespaceSelector:
+            exclude: ["kube-*"]
+            include: ["default"]
+          object-templates:
+            - complianceType: mustonlyhave
+              objectDefinition:
+                apiVersion: rbac.authorization.k8s.io/v1
+                kind: Role
+                metadata:
+                  name: role-policy-e2e
+                rules:
+                  - apiGroups: ["extensions", "apps"]
+                    resources: ["deployments"]
+                    verbs: ["get", "list", "watch", "create", "delete","patch"]
+                  - apiGroups: [""]
+                    resources: ["pods"]
+                    verbs: ["get", "watch", "list"]
+status:
+  placement:
+  - placementBinding: role-policy-mustonlyhave-pb
+    placementRule: role-policy-mustonlyhave-plr
+  status:
+  - clustername: managed
+    clusternamespace: managed
+    compliant: NonCompliant

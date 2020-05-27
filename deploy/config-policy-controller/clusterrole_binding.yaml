@@ -1,0 +1,12 @@
+kind: ClusterRoleBinding
+apiVersion: rbac.authorization.k8s.io/v1
+metadata:
+  name: config-policy-ctrl
+subjects:
+- kind: ServiceAccount
+  name: config-policy-ctrl
+  namespace: multicluster-endpoint
+roleRef:
+  kind: ClusterRole
+  name: config-policy-ctrl
+  apiGroup: rbac.authorization.k8s.io
