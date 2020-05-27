@@ -8,6 +8,7 @@ import (
 	"os"
 	"os/user"
 	"path/filepath"
+	"strconv"
 	"testing"
 
 	. "github.com/onsi/ginkgo"
@@ -71,7 +72,16 @@ var _ = BeforeSuite(func() {
 	defaultImagePullSecretName = "multiclusterhub-operator-pull-secret"
 	userNamespace = "policy-test"
 	clusterNamespace = "managed"
-	defaultTimeoutSeconds = 30
+	timeoutStr, found := os.LookupEnv("E2E_TIMEOUT_SECONDS")
+	if !found {
+		defaultTimeoutSeconds = 30
+	} else {
+		if n, err := strconv.Atoi(timeoutStr); err == nil {
+			defaultTimeoutSeconds = n
+		} else {
+			defaultTimeoutSeconds = 30
+		}
+	}
 	By("Create Namesapce if needed")
 	namespaces := clientHub.CoreV1().Namespaces()
 	if _, err := namespaces.Get(userNamespace, metav1.GetOptions{}); err != nil && errors.IsNotFound(err) {
