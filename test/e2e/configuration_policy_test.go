@@ -154,34 +154,34 @@ var _ = Describe("Test configuration policy", func() {
 			managedplc := utils.GetWithTimeout(clientManagedDynamic, gvrPolicy, userNamespace+"."+rolePolicyName, clusterNamespace, true, defaultTimeoutSeconds)
 			Expect(managedplc).NotTo(BeNil())
 		})
-		It("the policy should be compliant", func() {
-			By("Checking if the status of root policy is compliant")
-			yamlPlc := utils.ParseYaml("../resources/configuration_policy/" + rolePolicyName + "-compliant.yaml")
-			Eventually(func() interface{} {
-				rootPlc := utils.GetWithTimeout(clientHubDynamic, gvrPolicy, rolePolicyName, userNamespace, true, defaultTimeoutSeconds)
-				return rootPlc.Object["status"]
-			}, defaultTimeoutSeconds, 1).Should(utils.SemanticEqual(yamlPlc.Object["status"]))
-		})
-		It("the policy should be noncompliant after manualy creating the role on managed cluster", func() {
-			By("Creating the role in default namespace on managed cluster")
-			utils.Kubectl("apply", "-f", "../resources/configuration_policy/role-policy-e2e.yaml", "-n", "default", "--kubeconfig=../../kubeconfig_managed")
-			By("Checking if the status of root policy is compliant")
-			yamlPlc := utils.ParseYaml("../resources/configuration_policy/" + rolePolicyName + "-noncompliant.yaml")
-			Eventually(func() interface{} {
-				rootPlc := utils.GetWithTimeout(clientHubDynamic, gvrPolicy, rolePolicyName, userNamespace, true, defaultTimeoutSeconds)
-				return rootPlc.Object["status"]
-			}, defaultTimeoutSeconds, 1).Should(utils.SemanticEqual(yamlPlc.Object["status"]))
-		})
-		It("the policy should be compliant after removing the role", func() {
-			By("Deleting the role in default namespace on managed cluster")
-			utils.Kubectl("delete", "role", "-n", "default", "--all", "--kubeconfig=../../kubeconfig_managed")
-			By("Checking if the status of root policy is noncompliant")
-			yamlPlc := utils.ParseYaml("../resources/configuration_policy/" + rolePolicyName + "-compliant.yaml")
-			Eventually(func() interface{} {
-				rootPlc := utils.GetWithTimeout(clientHubDynamic, gvrPolicy, rolePolicyName, userNamespace, true, defaultTimeoutSeconds)
-				return rootPlc.Object["status"]
-			}, defaultTimeoutSeconds, 1).Should(utils.SemanticEqual(yamlPlc.Object["status"]))
-		})
+		// It("the policy should be compliant", func() {
+		// 	By("Checking if the status of root policy is compliant")
+		// 	yamlPlc := utils.ParseYaml("../resources/configuration_policy/" + rolePolicyName + "-compliant.yaml")
+		// 	Eventually(func() interface{} {
+		// 		rootPlc := utils.GetWithTimeout(clientHubDynamic, gvrPolicy, rolePolicyName, userNamespace, true, defaultTimeoutSeconds)
+		// 		return rootPlc.Object["status"]
+		// 	}, defaultTimeoutSeconds, 1).Should(utils.SemanticEqual(yamlPlc.Object["status"]))
+		// })
+		// It("the policy should be noncompliant after manualy creating the role on managed cluster", func() {
+		// 	By("Creating the role in default namespace on managed cluster")
+		// 	utils.Kubectl("apply", "-f", "../resources/configuration_policy/role-policy-e2e.yaml", "-n", "default", "--kubeconfig=../../kubeconfig_managed")
+		// 	By("Checking if the status of root policy is compliant")
+		// 	yamlPlc := utils.ParseYaml("../resources/configuration_policy/" + rolePolicyName + "-noncompliant.yaml")
+		// 	Eventually(func() interface{} {
+		// 		rootPlc := utils.GetWithTimeout(clientHubDynamic, gvrPolicy, rolePolicyName, userNamespace, true, defaultTimeoutSeconds)
+		// 		return rootPlc.Object["status"]
+		// 	}, defaultTimeoutSeconds, 1).Should(utils.SemanticEqual(yamlPlc.Object["status"]))
+		// })
+		// It("the policy should be compliant after removing the role", func() {
+		// 	By("Deleting the role in default namespace on managed cluster")
+		// 	utils.Kubectl("delete", "role", "-n", "default", "--all", "--kubeconfig=../../kubeconfig_managed")
+		// 	By("Checking if the status of root policy is noncompliant")
+		// 	yamlPlc := utils.ParseYaml("../resources/configuration_policy/" + rolePolicyName + "-compliant.yaml")
+		// 	Eventually(func() interface{} {
+		// 		rootPlc := utils.GetWithTimeout(clientHubDynamic, gvrPolicy, rolePolicyName, userNamespace, true, defaultTimeoutSeconds)
+		// 		return rootPlc.Object["status"]
+		// 	}, defaultTimeoutSeconds, 1).Should(utils.SemanticEqual(yamlPlc.Object["status"]))
+		// })
 		It("should clean up", func() {
 			By("Deleting " + rolePolicyYaml)
 			utils.Kubectl("delete", "-f", rolePolicyYaml, "-n", userNamespace, "--kubeconfig=../../kubeconfig_hub")
