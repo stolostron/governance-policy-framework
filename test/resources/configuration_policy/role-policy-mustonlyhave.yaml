@@ -1,0 +1,60 @@
+apiVersion: policies.open-cluster-management.io/v1
+kind: Policy
+metadata:
+  name: role-policy-mustonlyhave
+  annotations:
+    policies.open-cluster.management.io/standards: NIST-CSF
+    policies.open-cluster.management.io/categories: PR.PT Protective Technology
+    policies.open-cluster.management.io/controls: PR.PT-3 Least Functionality
+spec:
+  remediationAction: inform
+  disabled: false
+  policy-templates:
+    - objectDefinition:
+        apiVersion: policies.open-cluster-management.io/v1
+        kind: ConfigurationPolicy
+        metadata:
+          name: role-policy-mustonlyhave
+        spec:
+          remediationAction: inform
+          namespaceSelector:
+            exclude: ["kube-*"]
+            include: ["default"]
+          object-templates:
+            - complianceType: mustonlyhave
+              objectDefinition:
+                apiVersion: rbac.authorization.k8s.io/v1
+                kind: Role
+                metadata:
+                  name: role-policy-e2e
+                rules:
+                  - apiGroups: ["extensions", "apps"]
+                    resources: ["deployments"]
+                    verbs: ["get", "list", "watch", "create", "delete","patch"]
+                  - apiGroups: [""]
+                    resources: ["pods"]
+                    verbs: ["get", "watch", "list"]
+---
+apiVersion: policies.open-cluster-management.io/v1
+kind: PlacementBinding
+metadata:
+  name: role-policy-mustonlyhave-pb
+placementRef:
+  apiGroup: apps.open-cluster-management.io
+  kind: PlacementRule
+  name: role-policy-mustonlyhave-plr
+subjects:
+- apiGroup: policies.open-cluster-management.io
+  kind: Policy
+  name: role-policy-mustonlyhave
+---
+apiVersion: apps.open-cluster-management.io/v1
+kind: PlacementRule
+metadata:
+  name: role-policy-mustonlyhave-plr
+spec:
+  clusterConditions:
+  - type: OK
+  clusterSelector:
+    matchExpressions:
+      []

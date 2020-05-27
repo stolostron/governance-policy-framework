@@ -266,4 +266,59 @@ var _ = Describe("Test configuration policy", func() {
 			utils.ListWithTimeout(clientManagedDynamic, gvrConfigurationPolicy, metav1.ListOptions{}, 0, true, defaultTimeoutSeconds)
 		})
 	})
+	Describe("Test object mustonlyhave inform", func() {
+		const rolePolicyName string = "role-policy-mustonlyhave"
+		const rolePolicyYaml string = "../resources/configuration_policy/role-policy-mustonlyhave.yaml"
+		It("should be created on managed cluster", func() {
+			By("Creating " + rolePolicyYaml)
+			utils.Kubectl("apply", "-f", rolePolicyYaml, "-n", userNamespace, "--kubeconfig=../../kubeconfig_hub")
+			hubPlc := utils.GetWithTimeout(clientHubDynamic, gvrPolicy, rolePolicyName, userNamespace, true, defaultTimeoutSeconds)
+			Expect(hubPlc).NotTo(BeNil())
+			By("Patching " + rolePolicyName + "-plr with decision of cluster managed")
+			plr := utils.GetWithTimeout(clientHubDynamic, gvrPlacementRule, rolePolicyName+"-plr", userNamespace, true, defaultTimeoutSeconds)
+			plr.Object["status"] = utils.GeneratePlrStatus("managed")
+			plr, err := clientHubDynamic.Resource(gvrPlacementRule).Namespace(userNamespace).UpdateStatus(plr, metav1.UpdateOptions{})
+			Expect(err).To(BeNil())
+			By("Checking " + rolePolicyName + " on managed cluster in ns " + clusterNamespace)
+			managedplc := utils.GetWithTimeout(clientManagedDynamic, gvrPolicy, userNamespace+"."+rolePolicyName, clusterNamespace, true, defaultTimeoutSeconds)
+			Expect(managedplc).NotTo(BeNil())
+		})
+		It("the policy should be noncompliant", func() {
+			By("Checking if the status of root policy is noncompliant")
+			yamlPlc := utils.ParseYaml("../resources/configuration_policy/" + rolePolicyName + "-noncompliant.yaml")
+			Eventually(func() interface{} {
+				rootPlc := utils.GetWithTimeout(clientHubDynamic, gvrPolicy, rolePolicyName, userNamespace, true, defaultTimeoutSeconds)
+				return rootPlc.Object["status"]
+			}, defaultTimeoutSeconds, 1).Should(utils.SemanticEqual(yamlPlc.Object["status"]))
+		})
+		It("the policy should be compliant if manually created", func() {
+			By("Creating the role in default namespace on managed cluster")
+			utils.Kubectl("apply", "-f", "../resources/configuration_policy/role-policy-e2e.yaml", "-n", "default", "--kubeconfig=../../kubeconfig_managed")
+			By("Checking if the status of root policy is compliant")
+			yamlPlc := utils.ParseYaml("../resources/configuration_policy/" + rolePolicyName + "-compliant.yaml")
+			Eventually(func() interface{} {
+				rootPlc := utils.GetWithTimeout(clientHubDynamic, gvrPolicy, rolePolicyName, userNamespace, true, defaultTimeoutSeconds)
+				return rootPlc.Object["status"]
+			}, defaultTimeoutSeconds, 1).Should(utils.SemanticEqual(yamlPlc.Object["status"]))
+		})
+		It("the policy should be noncompliant after removing the role", func() {
+			By("Deleting the role in default namespace on managed cluster")
+			utils.Kubectl("delete", "-f", "../resources/configuration_policy/role-policy-e2e.yaml", "-n", "default", "--kubeconfig=../../kubeconfig_managed")
+			By("Checking if the status of root policy is noncompliant")
+			yamlPlc := utils.ParseYaml("../resources/configuration_policy/" + rolePolicyName + "-noncompliant.yaml")
+			Eventually(func() interface{} {
+				rootPlc := utils.GetWithTimeout(clientHubDynamic, gvrPolicy, rolePolicyName, userNamespace, true, defaultTimeoutSeconds)
+				return rootPlc.Object["status"]
+			}, defaultTimeoutSeconds, 1).Should(utils.SemanticEqual(yamlPlc.Object["status"]))
+		})
+		It("should clean up", func() {
+			By("Deleting " + rolePolicyYaml)
+			utils.Kubectl("delete", "-f", rolePolicyYaml, "-n", userNamespace, "--kubeconfig=../../kubeconfig_hub")
+			By("Checking if there is any policy left")
+			utils.ListWithTimeout(clientHubDynamic, gvrPolicy, metav1.ListOptions{}, 0, true, defaultTimeoutSeconds)
+			utils.ListWithTimeout(clientManagedDynamic, gvrPolicy, metav1.ListOptions{}, 0, true, defaultTimeoutSeconds)
+			By("Checking if there is any configuration policy left")
+			utils.ListWithTimeout(clientManagedDynamic, gvrConfigurationPolicy, metav1.ListOptions{}, 0, true, defaultTimeoutSeconds)
+		})
+	})
 })
