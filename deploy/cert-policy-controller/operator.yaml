@@ -1,0 +1,25 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: cert-policy-controller
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      name: cert-policy-controller
+  template:
+    metadata:
+      labels:
+        name: cert-policy-controller
+    spec:
+      serviceAccountName: cert-policy-controller
+      imagePullSecrets:
+        - name: multiclusterhub-operator-pull-secret
+      containers:
+        - name: cert-policy-controller
+          imagePullPolicy: Always
+          image: quay.io/open-cluster-management/cert-policy-controller:latest-dev
+          args:
+            - '--v=0'
+            - '--update-frequency=10'
+            - '--watch-ns=managed'

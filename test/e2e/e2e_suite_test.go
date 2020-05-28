@@ -32,6 +32,7 @@ var (
 	clientManaged          kubernetes.Interface
 	clientManagedDynamic   dynamic.Interface
 	gvrPolicy              schema.GroupVersionResource
+	gvrCertPolicy          schema.GroupVersionResource
 	gvrConfigurationPolicy schema.GroupVersionResource
 	gvrPlacementBinding    schema.GroupVersionResource
 	gvrPlacementRule       schema.GroupVersionResource
@@ -46,7 +47,7 @@ var (
 
 func TestE2e(t *testing.T) {
 	RegisterFailHandler(Fail)
-	RunSpecs(t, "Policy Propagator e2e Suite")
+	RunSpecs(t, "Policy Framework e2e Suite")
 }
 
 func init() {
@@ -58,9 +59,10 @@ func init() {
 }
 
 var _ = BeforeSuite(func() {
-	By("Setup Hub client")
+	By("Setup hub and managed client")
 	gvrPolicy = schema.GroupVersionResource{Group: "policies.open-cluster-management.io", Version: "v1", Resource: "policies"}
 	gvrConfigurationPolicy = schema.GroupVersionResource{Group: "policies.open-cluster-management.io", Version: "v1", Resource: "configurationpolicies"}
+	gvrCertPolicy = schema.GroupVersionResource{Group: "policies.open-cluster-management.io", Version: "v1", Resource: "certificatepolicies"}
 	gvrPlacementBinding = schema.GroupVersionResource{Group: "policies.open-cluster-management.io", Version: "v1", Resource: "placementbindings"}
 	gvrPlacementRule = schema.GroupVersionResource{Group: "apps.open-cluster-management.io", Version: "v1", Resource: "placementrules"}
 	gvrRole = schema.GroupVersionResource{Group: "rbac.authorization.k8s.io", Version: "v1", Resource: "roles"}

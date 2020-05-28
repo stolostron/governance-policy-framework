@@ -1,0 +1,15 @@
+apiVersion: cert-manager.io/v1alpha3
+kind: Certificate
+metadata:
+  name: cert-policy-certificate
+spec:
+  commonName: wap-master.fyre.test.com
+  dnsNames:
+    - wap-master.fyre.test.com
+  duration: 20h
+  isCA: true
+  issuerRef:
+    name: cert-policy-issuer
+    kind: Issuer
+  renewBefore: 10h
+  secretName: cert-policy-secret
