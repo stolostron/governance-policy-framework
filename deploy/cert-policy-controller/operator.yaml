@@ -6,11 +6,11 @@ spec:
   replicas: 1
   selector:
     matchLabels:
-      app: cert-policy-controller
+      name: cert-policy-controller
   template:
     metadata:
       labels:
-        app: cert-policy-controller
+        name: cert-policy-controller
     spec:
       serviceAccountName: cert-policy-controller
       imagePullSecrets:
@@ -22,3 +22,4 @@ spec:
           args:
             - '--v=0'
             - '--update-frequency=10'
+            - '--watch-ns=managed'

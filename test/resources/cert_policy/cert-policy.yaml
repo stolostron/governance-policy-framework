@@ -1,0 +1,48 @@
+apiVersion: policies.open-cluster-management.io/v1
+kind: Policy
+metadata:
+  name: cert-policy
+  annotations:
+    policies.open-cluster.management.io/standards: NIST-CSF
+    policies.open-cluster.management.io/categories: PR.PT Protective Technology
+    policies.open-cluster.management.io/controls: PR.PT-3 Least Functionality
+spec:
+  remediationAction: inform
+  disabled: false
+  policy-templates:
+    - objectDefinition:
+        apiVersion: policies.open-cluster-management.io/v1
+        kind: CertificatePolicy
+        metadata:
+          name: cert-policy
+        spec:
+          remediationAction: inform
+          namespaceSelector:
+            exclude: ["kube-*"]
+            include: ["default"]
+          severity: low
+          minimumDuration: 300h
+---
+apiVersion: policies.open-cluster-management.io/v1
+kind: PlacementBinding
+metadata:
+  name: cert-policy-pb
+placementRef:
+  apiGroup: apps.open-cluster-management.io
+  kind: PlacementRule
+  name: cert-policy-plr
+subjects:
+- apiGroup: policies.open-cluster-management.io
+  kind: Policy
+  name: cert-policy
+---
+apiVersion: apps.open-cluster-management.io/v1
+kind: PlacementRule
+metadata:
+  name: cert-policy-plr
+spec:
+  clusterConditions:
+  - type: OK
+  clusterSelector:
+    matchExpressions:
+      []
