@@ -1,0 +1,12 @@
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRoleBinding
+metadata:
+  name: cert-policy-controller
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: ClusterRole
+  name: cert-policy-controller
+subjects:
+- kind: ServiceAccount
+  name: cert-policy-controller
+  namespace: multicluster-endpoint

@@ -30,7 +30,7 @@ kind-bootstrap-cluster: kind-create-cluster install-crds install-resources kind-
 kind-bootstrap-cluster-dev: kind-create-cluster install-crds install-resources
 
 .PHONY: kind-deploy-policy-controllers
-kind-deploy-policy-controllers: kind-deploy-config-policy-controller
+kind-deploy-policy-controllers: kind-deploy-config-policy-controller kind-deploy-cert-policy-controller
 
 check-env:
 ifndef DOCKER_USER
@@ -59,6 +59,12 @@ kind-deploy-controller: check-env
 kind-deploy-config-policy-controller: check-env
 	@echo installing config-policy-controller on managed
 	kubectl apply -f deploy/config-policy-controller -n multicluster-endpoint --kubeconfig=$(PWD)/kubeconfig_managed
+
+kind-deploy-cert-policy-controller: check-env
+	@echo installing cert-manager on managed
+	kubectl apply --validate=false -f https://github.com/jetstack/cert-manager/releases/download/v0.15.1/cert-manager.yaml --kubeconfig=$(PWD)/kubeconfig_managed
+	@echo installing cert-policy-controller on managed
+	kubectl apply -f deploy/cert-policy-controller -n multicluster-endpoint --kubeconfig=$(PWD)/kubeconfig_managed
 
 kind-create-cluster:
 	@echo "creating cluster"
