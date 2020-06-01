@@ -29,4 +29,4 @@ status:
   status:
   - clustername: managed
     clusternamespace: managed
-    compliant: Compliant
+    compliant: NonCompliant

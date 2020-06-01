@@ -213,7 +213,11 @@ var _ = Describe("Test configuration policy", func() {
 			By("Deleting the role in default namespace on managed cluster")
 			utils.Kubectl("delete", "role", "-n", "default", "--all", "--kubeconfig=../../kubeconfig_managed")
 			By("Checking if there is any role left")
-			utils.ListWithTimeout(clientManagedDynamic, gvrRole, metav1.ListOptions{}, 0, true, defaultTimeoutSeconds)
+			Eventually(func() interface{} {
+				roleList, err := clientManagedDynamic.Resource(gvrRole).Namespace("default").List(metav1.ListOptions{})
+				Expect(err).To(BeNil())
+				return len(roleList.Items)
+			}, defaultTimeoutSeconds, 1).Should(Equal(0))
 		})
 	})
 	Describe("Test object mustnothave inform", func() {
