@@ -9,8 +9,8 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
-var _ = Describe("Test cert policy", func() {
-	Describe("Test cert policy inform", func() {
+var _ = Describe("Test iam policy", func() {
+	Describe("Test iam policy inform", func() {
 		const iamPolicyName string = "iam-policy"
 		const iamPolicyYaml string = "../resources/iam_policy/iam-policy.yaml"
 		It("should be created on managed cluster", func() {
@@ -26,6 +26,15 @@ var _ = Describe("Test cert policy", func() {
 			By("Checking " + iamPolicyName + " on managed cluster in ns " + clusterNamespace)
 			managedplc := utils.GetWithTimeout(clientManagedDynamic, gvrPolicy, userNamespace+"."+iamPolicyName, clusterNamespace, true, defaultTimeoutSeconds)
 			Expect(managedplc).NotTo(BeNil())
+		})
+		It("should clean up", func() {
+			By("Deleting " + iamPolicyYaml)
+			utils.Kubectl("delete", "-f", iamPolicyYaml, "-n", userNamespace, "--kubeconfig=../../kubeconfig_hub")
+			By("Checking if there is any policy left")
+			utils.ListWithTimeout(clientHubDynamic, gvrPolicy, metav1.ListOptions{}, 0, true, defaultTimeoutSeconds)
+			utils.ListWithTimeout(clientManagedDynamic, gvrPolicy, metav1.ListOptions{}, 0, true, defaultTimeoutSeconds)
+			By("Checking if there is any iam policy left")
+			utils.ListWithTimeout(clientManagedDynamic, gvrIamPolicy, metav1.ListOptions{}, 0, true, defaultTimeoutSeconds)
 		})
 	})
 })
