@@ -187,10 +187,10 @@ var _ = Describe("Test configuration policy", func() {
 			utils.Pause(20)
 			By("Checking if the role is not patched to match in 20s")
 			yamlRole := utils.ParseYaml("../resources/configuration_policy/role-policy-e2e-more.yaml")
-			// Eventually(func() interface{} {
-			// 	managedRole := utils.GetWithTimeout(clientManagedDynamic, gvrRole, "role-policy-e2e", "default", true, defaultTimeoutSeconds)
-			// 	return managedRole.Object["rules"]
-			// }, defaultTimeoutSeconds, 1).Should(utils.SemanticEqual(yamlRole.Object["rules"]))
+			Eventually(func() interface{} {
+				managedRole := utils.GetWithTimeout(clientManagedDynamic, gvrRole, "role-policy-e2e", "default", true, defaultTimeoutSeconds)
+				return managedRole.Object["rules"]
+			}, defaultTimeoutSeconds, 1).Should(utils.SemanticEqual(yamlRole.Object["rules"]))
 			Consistently(func() interface{} {
 				managedRole := utils.GetWithTimeout(clientManagedDynamic, gvrRole, "role-policy-e2e", "default", true, defaultTimeoutSeconds)
 				return managedRole.Object["rules"]
