@@ -53,6 +53,18 @@ while [[ $(kubectl get pods -l name=governance-policy-spec-sync -n multicluster-
     sleep 1
 done
 
+while [[ $(kubectl get pods -l name=governance-policy-status-sync -n multicluster-endpoint -o 'jsonpath={..status.conditions[?(@.type=="Ready")].status}') != "True" ]]; do 
+    echo "waiting for pod: governance-policy-status-sync"
+    kubectl get pods -l name=governance-policy-status-sync -n multicluster-endpoint
+    sleep 1
+done
+
+while [[ $(kubectl get pods -l name=governance-policy-template-sync -n multicluster-endpoint -o 'jsonpath={..status.conditions[?(@.type=="Ready")].status}') != "True" ]]; do 
+    echo "waiting for pod: governance-policy-template-sync"
+    kubectl get pods -l name=governance-policy-template-sync -n multicluster-endpoint
+    sleep 1
+done
+
 kubectl get pods -n multicluster-endpoint
 
 make e2e-test
