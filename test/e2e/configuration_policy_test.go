@@ -184,7 +184,7 @@ var _ = Describe("Test configuration policy", func() {
 		It("the policy should not be patched after manually creating a role that has more rules", func() {
 			By("Creating the mismatch role in default namespace on managed cluster")
 			utils.Kubectl("apply", "-f", "../resources/configuration_policy/role-policy-e2e-more.yaml", "-n", "default", "--kubeconfig=../../kubeconfig_managed")
-			utils.Pause(10)
+			utils.Pause(20)
 			By("Checking if the role is not patched to match in 20s")
 			yamlRole := utils.ParseYaml("../resources/configuration_policy/role-policy-e2e-more.yaml")
 			// Eventually(func() interface{} {
@@ -320,6 +320,7 @@ var _ = Describe("Test configuration policy", func() {
 		It("the policy should remove the role on managed cluster if manually created", func() {
 			By("Creating the role in default namespace on managed cluster")
 			utils.Kubectl("apply", "-f", "../resources/configuration_policy/role-policy-e2e.yaml", "-n", "default", "--kubeconfig=../../kubeconfig_managed")
+			utils.Pause(20)
 			By("Checking if the role has been deleted")
 			Eventually(func() interface{} {
 				roleList, err := clientManagedDynamic.Resource(gvrRole).Namespace("default").List(metav1.ListOptions{})
