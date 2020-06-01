@@ -187,10 +187,10 @@ var _ = Describe("Test configuration policy", func() {
 			utils.Pause(20)
 			By("Checking if the role is not patched to match in 20s")
 			yamlRole := utils.ParseYaml("../resources/configuration_policy/role-policy-e2e-more.yaml")
-			// Eventually(func() interface{} {
-			// 	managedRole := utils.GetWithTimeout(clientManagedDynamic, gvrRole, "role-policy-e2e", "default", true, defaultTimeoutSeconds)
-			// 	return managedRole.Object["rules"]
-			// }, defaultTimeoutSeconds, 1).Should(utils.SemanticEqual(yamlRole.Object["rules"]))
+			Eventually(func() interface{} {
+				managedRole := utils.GetWithTimeout(clientManagedDynamic, gvrRole, "role-policy-e2e", "default", true, defaultTimeoutSeconds)
+				return managedRole.Object["rules"]
+			}, defaultTimeoutSeconds, 1).Should(utils.SemanticEqual(yamlRole.Object["rules"]))
 			Consistently(func() interface{} {
 				managedRole := utils.GetWithTimeout(clientManagedDynamic, gvrRole, "role-policy-e2e", "default", true, defaultTimeoutSeconds)
 				return managedRole.Object["rules"]
@@ -212,6 +212,12 @@ var _ = Describe("Test configuration policy", func() {
 			utils.ListWithTimeout(clientManagedDynamic, gvrConfigurationPolicy, metav1.ListOptions{}, 0, true, defaultTimeoutSeconds)
 			By("Deleting the role in default namespace on managed cluster")
 			utils.Kubectl("delete", "role", "-n", "default", "--all", "--kubeconfig=../../kubeconfig_managed")
+			By("Checking if there is any role left")
+			Eventually(func() interface{} {
+				roleList, err := clientManagedDynamic.Resource(gvrRole).Namespace("default").List(metav1.ListOptions{})
+				Expect(err).To(BeNil())
+				return len(roleList.Items)
+			}, defaultTimeoutSeconds, 1).Should(Equal(0))
 		})
 	})
 	Describe("Test object mustnothave inform", func() {

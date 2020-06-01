@@ -1,0 +1,32 @@
+apiVersion: policies.open-cluster-management.io/v1
+kind: Policy
+metadata:
+  name: iam-policy
+  annotations:
+    policies.open-cluster-management.io/standards: NIST-CSF
+    policies.open-cluster-management.io/categories: PR.AC Identity Management Authentication and Access Control
+    policies.open-cluster-management.io/controls: PR.AC-4 Access Control
+spec:
+  remediationAction: inform
+  disabled: false
+  policy-templates:
+    - objectDefinition:
+        apiVersion: policies.open-cluster-management.io/v1
+        kind: IamPolicy # limit clusteradminrole and report violation
+        metadata:
+          name: iam-policy
+        spec:
+          severity: medium
+          namespaceSelector:
+            include: ["*"]
+            exclude: ["kube-*", "openshift-*"]
+          remediationAction: inform # will be overridden by remediationAction in parent policy
+          maxClusterRoleBindingUsers: 2
+status:
+  placement:
+  - placementBinding: iam-policy-pb
+    placementRule: iam-policy-plr
+  status:
+  - clustername: managed
+    clusternamespace: managed
+    compliant: NonCompliant
