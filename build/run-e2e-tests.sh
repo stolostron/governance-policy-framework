@@ -53,6 +53,8 @@ while [[ $(kubectl get pods -l name=governance-policy-spec-sync -n multicluster-
     sleep 1
 done
 
+kubectl get pods -n multicluster-endpoint
+
 make e2e-test
 
 echo "delete cluster"
