@@ -27,6 +27,14 @@ var _ = Describe("Test iam policy", func() {
 			managedplc := utils.GetWithTimeout(clientManagedDynamic, gvrPolicy, userNamespace+"."+iamPolicyName, clusterNamespace, true, defaultTimeoutSeconds)
 			Expect(managedplc).NotTo(BeNil())
 		})
+		It("the policy should be compliant as there is no clusterrolebindings", func() {
+			By("Checking if the status of root policy is compliant")
+			yamlPlc := utils.ParseYaml("../resources/iam_policy/" + iamPolicyName + "-compliant.yaml")
+			Eventually(func() interface{} {
+				rootPlc := utils.GetWithTimeout(clientHubDynamic, gvrPolicy, iamPolicyName, userNamespace, true, defaultTimeoutSeconds)
+				return rootPlc.Object["status"]
+			}, defaultTimeoutSeconds, 1).Should(utils.SemanticEqual(yamlPlc.Object["status"]))
+		})
 		It("should clean up", func() {
 			By("Deleting " + iamPolicyYaml)
 			utils.Kubectl("delete", "-f", iamPolicyYaml, "-n", userNamespace, "--kubeconfig=../../kubeconfig_hub")
