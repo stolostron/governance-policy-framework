@@ -41,6 +41,12 @@ while [[ $(kubectl get pods -l name=cert-policy-controller -n multicluster-endpo
     sleep 1
 done
 
+while [[ $(kubectl get pods -l name=iam-policy-controller -n multicluster-endpoint -o 'jsonpath={..status.conditions[?(@.type=="Ready")].status}') != "True" ]]; do 
+    echo "waiting for pod: iam-policy-controller"
+    kubectl get pods -l name=iam-policy-controller -n multicluster-endpoint
+    sleep 1
+done
+
 make e2e-test
 
 echo "delete cluster"
