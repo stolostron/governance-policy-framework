@@ -35,6 +35,26 @@ var _ = Describe("Test iam policy", func() {
 				return rootPlc.Object["status"]
 			}, defaultTimeoutSeconds, 1).Should(utils.SemanticEqual(yamlPlc.Object["status"]))
 		})
+		It("the policy should be noncompliant after creating clusterrolebindings", func() {
+			By("Creating ../resources/iam_policy/clusterrolebinding.yaml")
+			utils.Kubectl("apply", "-f", "../resources/iam_policy/clusterrolebinding.yaml", "--kubeconfig=../../kubeconfig_managed")
+			By("Checking if the status of root policy is noncompliant")
+			yamlPlc := utils.ParseYaml("../resources/iam_policy/" + iamPolicyName + "-noncompliant.yaml")
+			Eventually(func() interface{} {
+				rootPlc := utils.GetWithTimeout(clientHubDynamic, gvrPolicy, iamPolicyName, userNamespace, true, defaultTimeoutSeconds)
+				return rootPlc.Object["status"]
+			}, defaultTimeoutSeconds, 1).Should(utils.SemanticEqual(yamlPlc.Object["status"]))
+		})
+		It("the policy should be compliant again after delete clusterrolebindings", func() {
+			By("Deleting ../resources/iam_policy/clusterrolebinding.yaml")
+			utils.Kubectl("delete", "-f", "../resources/iam_policy/clusterrolebinding.yaml", "--kubeconfig=../../kubeconfig_managed")
+			By("Checking if the status of root policy is compliant")
+			yamlPlc := utils.ParseYaml("../resources/iam_policy/" + iamPolicyName + "-compliant.yaml")
+			Eventually(func() interface{} {
+				rootPlc := utils.GetWithTimeout(clientHubDynamic, gvrPolicy, iamPolicyName, userNamespace, true, defaultTimeoutSeconds)
+				return rootPlc.Object["status"]
+			}, defaultTimeoutSeconds, 1).Should(utils.SemanticEqual(yamlPlc.Object["status"]))
+		})
 		It("should clean up", func() {
 			By("Deleting " + iamPolicyYaml)
 			utils.Kubectl("delete", "-f", iamPolicyYaml, "-n", userNamespace, "--kubeconfig=../../kubeconfig_hub")

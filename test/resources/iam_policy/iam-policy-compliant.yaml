@@ -21,7 +21,7 @@ spec:
             include: ["*"]
             exclude: ["kube-*", "openshift-*"]
           remediationAction: inform # will be overridden by remediationAction in parent policy
-          maxClusterRoleBindingUsers: 1
+          maxClusterRoleBindingUsers: 2
 status:
   placement:
   - placementBinding: iam-policy-pb
