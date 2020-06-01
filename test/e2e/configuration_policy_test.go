@@ -203,8 +203,6 @@ var _ = Describe("Test configuration policy", func() {
 			}, defaultTimeoutSeconds, 1).Should(utils.SemanticEqual(yamlPlc.Object["status"]))
 		})
 		It("should clean up", func() {
-			By("Deleting the role in default namespace on managed cluster")
-			utils.Kubectl("delete", "role", "-n", "default", "--all", "--kubeconfig=../../kubeconfig_managed")
 			By("Deleting " + rolePolicyYaml)
 			utils.Kubectl("delete", "-f", rolePolicyYaml, "-n", userNamespace, "--kubeconfig=../../kubeconfig_hub")
 			By("Checking if there is any policy left")
@@ -212,6 +210,10 @@ var _ = Describe("Test configuration policy", func() {
 			utils.ListWithTimeout(clientManagedDynamic, gvrPolicy, metav1.ListOptions{}, 0, true, defaultTimeoutSeconds)
 			By("Checking if there is any configuration policy left")
 			utils.ListWithTimeout(clientManagedDynamic, gvrConfigurationPolicy, metav1.ListOptions{}, 0, true, defaultTimeoutSeconds)
+			By("Deleting the role in default namespace on managed cluster")
+			utils.Kubectl("delete", "role", "-n", "default", "--all", "--kubeconfig=../../kubeconfig_managed")
+			By("Checking if there is any role left")
+			utils.ListWithTimeout(clientManagedDynamic, gvrRole, metav1.ListOptions{}, 0, true, defaultTimeoutSeconds)
 		})
 	})
 	Describe("Test object mustnothave inform", func() {
