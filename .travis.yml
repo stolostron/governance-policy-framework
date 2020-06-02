@@ -27,11 +27,10 @@ jobs:
         - |
           make
           make component/test/e2e
+      after_failure:
+        - if [ "$TRAVIS_BRANCH" == "master" ]; then sh ./build/restart.sh; fi;
 
-after_failure:
-  - if [ "$TRAVIS_BRANCH" == "master" ]; then 
-      ./build/restart.sh
-    fi;
+
 
 notifications:
   slack:

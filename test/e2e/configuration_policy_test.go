@@ -165,22 +165,6 @@ var _ = Describe("Test configuration policy", func() {
 				return rootPlc.Object["status"]
 			}, defaultTimeoutSeconds, 1).Should(utils.SemanticEqual(yamlPlc.Object["status"]))
 		})
-		It("the policy should be patched after manually creating a role that has less rules", func() {
-			By("Creating the mismatch role in default namespace on managed cluster")
-			utils.Kubectl("apply", "-f", "../resources/configuration_policy/role-policy-e2e-less.yaml", "-n", "default", "--kubeconfig=../../kubeconfig_managed")
-			By("Checking if the role has been patched to match")
-			yamlRole := utils.ParseYaml("../resources/configuration_policy/role-policy-e2e.yaml")
-			Eventually(func() interface{} {
-				managedRole := utils.GetWithTimeout(clientManagedDynamic, gvrRole, "role-policy-e2e", "default", true, defaultTimeoutSeconds)
-				return managedRole.Object["rules"]
-			}, defaultTimeoutSeconds, 1).Should(utils.SemanticEqual(yamlRole.Object["rules"]))
-			By("Checking if the status of root policy is still compliant")
-			yamlPlc := utils.ParseYaml("../resources/configuration_policy/" + rolePolicyName + "-compliant.yaml")
-			Eventually(func() interface{} {
-				rootPlc := utils.GetWithTimeout(clientHubDynamic, gvrPolicy, rolePolicyName, userNamespace, true, defaultTimeoutSeconds)
-				return rootPlc.Object["status"]
-			}, defaultTimeoutSeconds, 1).Should(utils.SemanticEqual(yamlPlc.Object["status"]))
-		})
 		It("the policy should not be patched after manually creating a role that has more rules", func() {
 			By("Creating the mismatch role in default namespace on managed cluster")
 			utils.Kubectl("apply", "-f", "../resources/configuration_policy/role-policy-e2e-more.yaml", "-n", "default", "--kubeconfig=../../kubeconfig_managed")
@@ -202,6 +186,23 @@ var _ = Describe("Test configuration policy", func() {
 				return rootPlc.Object["status"]
 			}, defaultTimeoutSeconds, 1).Should(utils.SemanticEqual(yamlPlc.Object["status"]))
 		})
+		It("the policy should be patched after manually creating a role that has less rules", func() {
+			By("Creating the mismatch role in default namespace on managed cluster")
+			utils.Kubectl("apply", "-f", "../resources/configuration_policy/role-policy-e2e-less.yaml", "-n", "default", "--kubeconfig=../../kubeconfig_managed")
+			By("Checking if the role has been patched to match")
+			yamlRole := utils.ParseYaml("../resources/configuration_policy/role-policy-e2e.yaml")
+			Eventually(func() interface{} {
+				managedRole := utils.GetWithTimeout(clientManagedDynamic, gvrRole, "role-policy-e2e", "default", true, defaultTimeoutSeconds)
+				return managedRole.Object["rules"]
+			}, defaultTimeoutSeconds, 1).Should(utils.SemanticEqual(yamlRole.Object["rules"]))
+			By("Checking if the status of root policy is still compliant")
+			yamlPlc := utils.ParseYaml("../resources/configuration_policy/" + rolePolicyName + "-compliant.yaml")
+			Eventually(func() interface{} {
+				rootPlc := utils.GetWithTimeout(clientHubDynamic, gvrPolicy, rolePolicyName, userNamespace, true, defaultTimeoutSeconds)
+				return rootPlc.Object["status"]
+			}, defaultTimeoutSeconds, 1).Should(utils.SemanticEqual(yamlPlc.Object["status"]))
+		})
+
 		It("should clean up", func() {
 			By("Deleting " + rolePolicyYaml)
 			utils.Kubectl("delete", "-f", rolePolicyYaml, "-n", userNamespace, "--kubeconfig=../../kubeconfig_hub")
@@ -211,6 +212,7 @@ var _ = Describe("Test configuration policy", func() {
 			By("Checking if there is any configuration policy left")
 			utils.ListWithTimeout(clientManagedDynamic, gvrConfigurationPolicy, metav1.ListOptions{}, 0, true, defaultTimeoutSeconds)
 			By("Deleting the role in default namespace on managed cluster")
+			utils.Pause(15)
 			utils.Kubectl("delete", "role", "-n", "default", "--all", "--kubeconfig=../../kubeconfig_managed")
 			By("Checking if there is any role left")
 			Eventually(func() interface{} {
