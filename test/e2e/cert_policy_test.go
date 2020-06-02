@@ -47,6 +47,16 @@ var _ = Describe("Test cert policy", func() {
 				return rootPlc.Object["status"]
 			}, defaultTimeoutSeconds, 1).Should(utils.SemanticEqual(yamlPlc.Object["status"]))
 		})
+		It("the policy should be compliant after creating a certficate that doesn't expire", func() {
+			By("Creating ../resources/cert_policy/certificate_compliant.yaml in ns default")
+			utils.Kubectl("apply", "-f", "../resources/cert_policy/certificate_compliant.yaml", "-n", "default", "--kubeconfig=../../kubeconfig_managed")
+			By("Checking if the status of root policy is compliant")
+			yamlPlc := utils.ParseYaml("../resources/cert_policy/" + certPolicyName + "-compliant.yaml")
+			Eventually(func() interface{} {
+				rootPlc := utils.GetWithTimeout(clientHubDynamic, gvrPolicy, certPolicyName, userNamespace, true, defaultTimeoutSeconds)
+				return rootPlc.Object["status"]
+			}, defaultTimeoutSeconds, 1).Should(utils.SemanticEqual(yamlPlc.Object["status"]))
+		})
 		It("should clean up", func() {
 			By("Deleting " + certPolicyYaml)
 			utils.Kubectl("delete", "-f", certPolicyYaml, "-n", userNamespace, "--kubeconfig=../../kubeconfig_hub")
