@@ -1,4 +1,4 @@
-apiVersion: policies.open-cluster-management.io/v1
+apiVersion: policy.open-cluster-management.io/v1
 kind: Policy
 metadata:
   name: role-policy-musthave
@@ -11,7 +11,7 @@ spec:
   disabled: false
   policy-templates:
     - objectDefinition:
-        apiVersion: policies.open-cluster-management.io/v1
+        apiVersion: policy.open-cluster-management.io/v1
         kind: ConfigurationPolicy
         metadata:
           name: role-policy-musthave
@@ -35,7 +35,7 @@ spec:
                     resources: ["pods"]
                     verbs: ["get", "watch", "list"]
 ---
-apiVersion: policies.open-cluster-management.io/v1
+apiVersion: policy.open-cluster-management.io/v1
 kind: PlacementBinding
 metadata:
   name: role-policy-musthave-pb
@@ -44,7 +44,7 @@ placementRef:
   kind: PlacementRule
   name: role-policy-musthave-plr
 subjects:
-- apiGroup: policies.open-cluster-management.io
+- apiGroup: policy.open-cluster-management.io
   kind: Policy
   name: role-policy-musthave
 ---

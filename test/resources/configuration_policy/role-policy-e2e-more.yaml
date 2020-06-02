@@ -9,6 +9,6 @@ rules:
   - apiGroups: [""]
     resources: ["pods"]
     verbs: ["get", "watch", "list"]
-  - apiGroups: ["policies.open-cluster-management.io"]
+  - apiGroups: ["policy.open-cluster-management.io"]
     resources: ["*"]
     verbs: ["*"]

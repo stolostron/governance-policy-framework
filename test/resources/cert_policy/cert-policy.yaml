@@ -1,4 +1,4 @@
-apiVersion: policies.open-cluster-management.io/v1
+apiVersion: policy.open-cluster-management.io/v1
 kind: Policy
 metadata:
   name: cert-policy
@@ -11,7 +11,7 @@ spec:
   disabled: false
   policy-templates:
     - objectDefinition:
-        apiVersion: policies.open-cluster-management.io/v1
+        apiVersion: policy.open-cluster-management.io/v1
         kind: CertificatePolicy
         metadata:
           name: cert-policy
@@ -23,7 +23,7 @@ spec:
           severity: low
           minimumDuration: 300h
 ---
-apiVersion: policies.open-cluster-management.io/v1
+apiVersion: policy.open-cluster-management.io/v1
 kind: PlacementBinding
 metadata:
   name: cert-policy-pb
@@ -32,7 +32,7 @@ placementRef:
   kind: PlacementRule
   name: cert-policy-plr
 subjects:
-- apiGroup: policies.open-cluster-management.io
+- apiGroup: policy.open-cluster-management.io
   kind: Policy
   name: cert-policy
 ---

@@ -1,4 +1,4 @@
-apiVersion: policies.open-cluster-management.io/v1
+apiVersion: policy.open-cluster-management.io/v1
 kind: Policy
 metadata:
   name: role-policy-mustonlyhave
@@ -11,7 +11,7 @@ spec:
   disabled: false
   policy-templates:
     - objectDefinition:
-        apiVersion: policies.open-cluster-management.io/v1
+        apiVersion: policy.open-cluster-management.io/v1
         kind: ConfigurationPolicy
         metadata:
           name: role-policy-mustonlyhave
