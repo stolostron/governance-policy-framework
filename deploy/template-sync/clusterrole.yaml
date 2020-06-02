@@ -4,7 +4,7 @@ metadata:
   name: governance-policy-template-sync
 rules:
 - apiGroups:
-  - "policies.open-cluster-management.io"
+  - "policy.open-cluster-management.io"
   - "policies.ibm.com"
   resources:
   - '*'

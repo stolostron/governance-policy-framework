@@ -1,4 +1,4 @@
-apiVersion: policies.open-cluster-management.io/v1
+apiVersion: policy.open-cluster-management.io/v1
 kind: Policy
 metadata:
   name: cert-policy
@@ -11,7 +11,7 @@ spec:
   disabled: false
   policy-templates:
     - objectDefinition:
-        apiVersion: policies.open-cluster-management.io/v1
+        apiVersion: policy.open-cluster-management.io/v1
         kind: CertificatePolicy
         metadata:
           name: cert-policy
@@ -21,7 +21,7 @@ spec:
             exclude: ["kube-*"]
             include: ["default"]
           severity: low
-          minimumDuration: 300h
+          minimumDuration: 30h
 status:
   placement:
   - placementBinding: cert-policy-pb

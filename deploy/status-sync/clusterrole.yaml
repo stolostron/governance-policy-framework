@@ -4,7 +4,7 @@ metadata:
   name: governance-policy-status-sync
 rules:
 - apiGroups:
-  - "policies.open-cluster-management.io"
+  - "policy.open-cluster-management.io"
   resources:
   - '*'
   verbs:

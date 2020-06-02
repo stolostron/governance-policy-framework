@@ -86,11 +86,11 @@ kind-delete-cluster:
 install-crds:
 	@echo installing crds on hub
 	kubectl apply -f deploy/crds/apps.open-cluster-management.io_placementrules_crd.yaml --kubeconfig=$(PWD)/kubeconfig_hub
-	kubectl apply -f deploy/crds/policies.open-cluster-management.io_placementbindings_crd.yaml --kubeconfig=$(PWD)/kubeconfig_hub
-	kubectl apply -f deploy/crds/policies.open-cluster-management.io_policies_crd.yaml --kubeconfig=$(PWD)/kubeconfig_hub
+	kubectl apply -f deploy/crds/policy.open-cluster-management.io_placementbindings_crd.yaml --kubeconfig=$(PWD)/kubeconfig_hub
+	kubectl apply -f deploy/crds/policy.open-cluster-management.io_policies_crd.yaml --kubeconfig=$(PWD)/kubeconfig_hub
 	kubectl apply -f deploy/crds/cluster-registry-crd.yaml --kubeconfig=$(PWD)/kubeconfig_hub
 	@echo installing crds on managed
-	kubectl apply -f deploy/crds/policies.open-cluster-management.io_policies_crd.yaml --kubeconfig=$(PWD)/kubeconfig_managed
+	kubectl apply -f deploy/crds/policy.open-cluster-management.io_policies_crd.yaml --kubeconfig=$(PWD)/kubeconfig_managed
 
 install-resources:
 	@echo creating user namespace on hub

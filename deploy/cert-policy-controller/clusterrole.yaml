@@ -17,7 +17,7 @@ rules:
   verbs:
   - list
 - apiGroups:
-  - policies.open-cluster-management.io
+  - policy.open-cluster-management.io
   resources:
   - certificatepolicies
   verbs:
@@ -29,7 +29,7 @@ rules:
   - patch
   - delete
 - apiGroups:
-  - policies.open-cluster-management.io
+  - policy.open-cluster-management.io
   resources:
   - certificatepolicies/status
   verbs:

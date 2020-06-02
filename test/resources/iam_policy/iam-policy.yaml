@@ -1,17 +1,17 @@
-apiVersion: policies.open-cluster-management.io/v1
+apiVersion: policy.open-cluster-management.io/v1
 kind: Policy
 metadata:
   name: iam-policy
   annotations:
-    policies.open-cluster-management.io/standards: NIST-CSF
-    policies.open-cluster-management.io/categories: PR.AC Identity Management Authentication and Access Control
-    policies.open-cluster-management.io/controls: PR.AC-4 Access Control
+    policy.open-cluster-management.io/standards: NIST-CSF
+    policy.open-cluster-management.io/categories: PR.AC Identity Management Authentication and Access Control
+    policy.open-cluster-management.io/controls: PR.AC-4 Access Control
 spec:
   remediationAction: inform
   disabled: false
   policy-templates:
     - objectDefinition:
-        apiVersion: policies.open-cluster-management.io/v1
+        apiVersion: policy.open-cluster-management.io/v1
         kind: IamPolicy # limit clusteradminrole and report violation
         metadata:
           name: iam-policy
@@ -23,7 +23,7 @@ spec:
           remediationAction: inform # will be overridden by remediationAction in parent policy
           maxClusterRoleBindingUsers: 2
 ---
-apiVersion: policies.open-cluster-management.io/v1
+apiVersion: policy.open-cluster-management.io/v1
 kind: PlacementBinding
 metadata:
   name: iam-policy-pb
@@ -32,7 +32,7 @@ placementRef:
   kind: PlacementRule
   name: iam-policy-plr
 subjects:
-- apiGroup: policies.open-cluster-management.io
+- apiGroup: policy.open-cluster-management.io
   kind: Policy
   name: iam-policy
 ---
