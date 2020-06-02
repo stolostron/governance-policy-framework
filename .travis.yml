@@ -28,9 +28,7 @@ jobs:
           make
           make component/test/e2e
       after_failure:
-        - if [ "$TRAVIS_BRANCH" == "master" ]; then sh ./build/restart.sh; fi;
-
-
+        - if [ "$TRAVIS_BRANCH" == "master" ] && [ "$AUTO_RESTART" == "true" ]; then ./build/restart.sh; fi;
 
 notifications:
   slack:
