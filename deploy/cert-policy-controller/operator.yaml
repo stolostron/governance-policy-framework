@@ -17,9 +17,16 @@ spec:
         - name: multiclusterhub-operator-pull-secret
       containers:
         - name: cert-policy-controller
-          imagePullPolicy: Always
           image: quay.io/open-cluster-management/cert-policy-controller:latest-dev
-          args:
-            - '--v=0'
-            - '--update-frequency=10'
-            - '--watch-ns=managed'
+          command:
+          - cert-policy-controller
+          imagePullPolicy: Always
+          env:
+            - name: WATCH_NAMESPACE
+              value: managed
+            - name: POD_NAME
+              valueFrom:
+                fieldRef:
+                  fieldPath: metadata.name
+            - name: OPERATOR_NAME
+              value: "cert-policy-controller"
