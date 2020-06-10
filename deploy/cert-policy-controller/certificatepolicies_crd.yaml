@@ -1,15 +1,22 @@
 apiVersion: apiextensions.k8s.io/v1beta1
 kind: CustomResourceDefinition
 metadata:
+  creationTimestamp: null
+  labels:
+    controller-tools.k8s.io: "1.0"
   name: certificatepolicies.policy.open-cluster-management.io
 spec:
   group: policy.open-cluster-management.io
   names:
     kind: CertificatePolicy
+    listKind: CertificatePolicyList
     plural: certificatepolicies
+    singular: certificatepolicy
     shortNames:
     - certpl
   scope: Namespaced
+  subresources:
+    status: {}
   validation:
     openAPIV3Schema:
       properties:
@@ -61,6 +68,10 @@ spec:
               type: string
           type: object
   version: v1
+  versions:
+  - name: v1
+    served: true
+    storage: true
 status:
   acceptedNames:
     kind: ""
