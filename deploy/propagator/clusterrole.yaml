@@ -37,9 +37,9 @@ rules:
   - list
   - watch
 - apiGroups:
-  - clusterregistry.k8s.io
+  - cluster.open-cluster-management.io
   resources:
-  - 'clusters'
+  - managedclusters
   verbs:
   - get
   - list

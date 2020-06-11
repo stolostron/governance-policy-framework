@@ -54,7 +54,8 @@ metadata:
   name: role-policy-musthave-plr
 spec:
   clusterConditions:
-  - type: OK
+  - status: "True"
+    type: ManagedClusterConditionAvailable
   clusterSelector:
     matchExpressions:
       []
