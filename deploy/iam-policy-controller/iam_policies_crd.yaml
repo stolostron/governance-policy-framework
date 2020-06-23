@@ -6,36 +6,45 @@ spec:
   group: policy.open-cluster-management.io
   names:
     kind: IamPolicy
+    listKind: IamPolicyList
     plural: iampolicies
+    singular: iampolicy
   scope: Namespaced
+  subresources:
+    status: {}
   validation:
     openAPIV3Schema:
+      description: IamPolicy is the Schema for the iampolicies API
       properties:
         apiVersion:
           description: 'APIVersion defines the versioned schema of this representation
             of an object. Servers should convert recognized schemas to the latest
-            internal value, and may reject unrecognized values. More info: https://git.k8s.io/community/contributors/devel/api-conventions.md#resources'
+            internal value, and may reject unrecognized values. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources'
           type: string
         kind:
           description: 'Kind is a string value representing the REST resource this
             object represents. Servers may infer this from the endpoint the client
-            submits requests to. Cannot be updated. In CamelCase. More info: https://git.k8s.io/community/contributors/devel/api-conventions.md#types-kinds'
+            submits requests to. Cannot be updated. In CamelCase. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds'
           type: string
         metadata:
           type: object
         spec:
+          description: IamPolicySpec defines the desired state of IamPolicy
           properties:
             labelSelector:
-              description: selecting a list of namespaces where the policy applies
+              additionalProperties:
+                type: string
               type: object
             maxClusterRoleBindingUsers:
-              format: int64
+              description: Maximum number of cluster role binding users still valid
+                before it is considered non-compliant
               type: integer
             maxRoleBindingViolationsPerNamespace:
-              format: int64
+              description: Maximum number of iam rolebindings violations still valid
+                before it is considered non-compliant
               type: integer
             namespaceSelector:
-              description: enforce, inform
+              description: Selecting a list of namespaces where the policy applies
               properties:
                 exclude:
                   items:
@@ -47,34 +56,26 @@ spec:
                   type: array
               type: object
             remediationAction:
+              description: enforce, inform
+              type: string
+            severity:
+              description: low, medium, or high
               type: string
           type: object
         status:
+          description: IamPolicyStatus defines the observed state of IamPolicy
           properties:
             compliancyDetails:
               description: Compliant, NonCompliant, UnkownCompliancy
               type: object
             compliant:
+              description: ComplianceState shows the state of enforcement
               type: string
           type: object
+      type: object
   version: v1
-  additionalPrinterColumns:
-    - JSONPath: .status.conditions[?(@.type=="Ready")].status
-      name: Ready
-      type: string
-    - JSONPath: .status.conditions[?(@.type=="Ready")].message
-      name: Status
-      type: string
-      priority: 1
-    - JSONPath: .metadata.creationTimestamp
-      description: |-
-        CreationTimestamp is a timestamp representing the server time when this object was created. It is not guaranteed to be set in happens-before order across separate operations. Clients may not set this value. It is represented in RFC3339 form and is in UTC.
-        \nPopulated by the system. Read-only. Null for lists. More info: https://git.k8s.io/community/contributors/devel/api-conventions.md#metadata
-      name: Age
-      type: date
-status:
-  acceptedNames:
-    kind: ""
-    plural: ""
-  conditions: []
-  storedVersions: []
+  versions:
+  - name: v1
+    served: true
+    storage: true
+
