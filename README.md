@@ -28,10 +28,8 @@ The policy framework consists of following components
 - [iam policy controller](https://github.com/open-cluster-management/iam-policy-controller)
 - [cis policy controller](https://github.com/open-cluster-management/cis-controller)
 
+## Bring your own policy
+You can bring your own policy by implementing a custom policy and controller. Read [medium article](https://medium.com/ibm-cloud/develop-your-own-policy-controller-to-integrate-with-ibm-cloud-pak-for-multicloud-management-b5a83f8396e)
+
 ## More policies
 Find more policies in [policy-collection](https://github.com/open-cluster-management/policy-collection) repo
-
-## Bring your own policy
-You can bring your own policy by implementing a custom policy and controller.
-
-https://medium.com/ibm-cloud/develop-your-own-policy-controller-to-integrate-with-ibm-cloud-pak-for-multicloud-management-b5a83f8396e
