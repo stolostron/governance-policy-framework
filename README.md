@@ -23,10 +23,10 @@ The policy framework consists of following components
 ![architecture](images/policy-framework-architecture-diagram.jpg)
 
 ## Out-of-box policies and controllers
-- [configuration policy](https://github.com/open-cluster-management/config-policy-controller)
-- [cert expiration policy](https://github.com/open-cluster-management/cert-policy-controller)
-- [iam policy](https://github.com/open-cluster-management/iam-policy-controller)
-- [cis policy](https://github.com/open-cluster-management/cis-controller)
+- [configuration policy controller](https://github.com/open-cluster-management/config-policy-controller)
+- [cert expiration policy controller](https://github.com/open-cluster-management/cert-policy-controller)
+- [iam policy controller](https://github.com/open-cluster-management/iam-policy-controller)
+- [cis policy controller](https://github.com/open-cluster-management/cis-controller)
 
 ## More policies
 Find more policies in [policy-collection](https://github.com/open-cluster-management/policy-collection) repo
