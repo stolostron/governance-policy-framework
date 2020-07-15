@@ -28,6 +28,9 @@ The policy framework consists of following components
 - [iam policy](https://github.com/open-cluster-management/iam-policy-controller)
 - [cis policy](https://github.com/open-cluster-management/cis-controller)
 
+## More policies
+Find more policies in [policy-collection](https://github.com/open-cluster-management/policy-collection) repo
+
 ## Bring your own policy
 You can bring your own policy by implementing a custom policy and controller.
 
