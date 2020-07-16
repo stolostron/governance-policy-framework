@@ -3,9 +3,9 @@ kind: Policy
 metadata:
   name: role-policy-mustnothave
   annotations:
-    policies.open-cluster.management.io/standards: NIST-CSF
-    policies.open-cluster.management.io/categories: PR.PT Protective Technology
-    policies.open-cluster.management.io/controls: PR.PT-3 Least Functionality
+    policy.open-cluster.management.io/standards: NIST-CSF
+    policy.open-cluster.management.io/categories: PR.PT Protective Technology
+    policy.open-cluster.management.io/controls: PR.PT-3 Least Functionality
 spec:
   remediationAction: inform
   disabled: false

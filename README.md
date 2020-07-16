@@ -16,19 +16,20 @@ The policy framework consists of following components
 - [Policy spec sync](https://github.com/open-cluster-management/governance-policy-spec-sync)
 - [Policy status sync](https://github.com/open-cluster-management/governance-policy-status-sync)
 - [Policy template sync](https://github.com/open-cluster-management/governance-policy-template-sync)
-- Various policy controllers
+- Policy controllers
   - out-of-box
   - bring your own
 
 ![architecture](images/policy-framework-architecture-diagram.jpg)
 
 ## Out-of-box policies and controllers
-- [configuration policy](https://github.com/open-cluster-management/config-policy-controller)
-- [cert expiration policy](https://github.com/open-cluster-management/cert-policy-controller)
-- [iam policy](https://github.com/open-cluster-management/iam-policy-controller)
-- [cis policy](https://github.com/open-cluster-management/cis-controller)
+- [configuration policy controller](https://github.com/open-cluster-management/config-policy-controller)
+- [cert expiration policy controller](https://github.com/open-cluster-management/cert-policy-controller)
+- [iam policy controller](https://github.com/open-cluster-management/iam-policy-controller)
+- [cis policy controller](https://github.com/open-cluster-management/cis-controller)
 
 ## Bring your own policy
-You can bring your own policy by implementing a custom policy and controller.
+You can bring your own policy by implementing a custom policy and controller. Read [this](https://medium.com/ibm-cloud/develop-your-own-policy-controller-to-integrate-with-ibm-cloud-pak-for-multicloud-management-b5a83f8396e).
 
-https://medium.com/ibm-cloud/develop-your-own-policy-controller-to-integrate-with-ibm-cloud-pak-for-multicloud-management-b5a83f8396e
+## More policies
+Find more policies in [policy-collection](https://github.com/open-cluster-management/policy-collection) repo.
