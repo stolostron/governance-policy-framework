@@ -10,12 +10,12 @@ fi
 echo "Login hub"
 make oc/login
 
-oc create ns policies || true
+oc create ns e2e-policies || true
 
 git clone https://github.com/open-cluster-management/policy-collection.git
 cd policy-collection/deploy
 
-./deploy.sh https://github.com/open-cluster-management/policy-collection.git stable policies
+./deploy.sh https://github.com/open-cluster-management/policy-collection.git stable e2e-policies
 
 COMPLETE=1
 for i in {1..20}; do
