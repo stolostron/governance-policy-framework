@@ -27,8 +27,13 @@ jobs:
         - |
           make
           make component/test/e2e
-      after_failure:
-        - if [ "$TRAVIS_BRANCH" == "master" ] && [ "$AUTO_RESTART" == "true" ]; then ./build/restart.sh; fi;
+    - stage: test-e2e
+      name: "Test polices from policy-collection repo"
+      script:
+        - |
+          make
+          make component/test/e2e
+  
 
 notifications:
   slack:
