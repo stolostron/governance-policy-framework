@@ -27,16 +27,14 @@ for i in {1..20}; do
     fi
     echo
     echo "Number of expected Policies : 10/20"
-    echo "Number of expected Policies : $ROOT_POLICIES/$TOTAL_POLICIES"
+    echo "Number of actual Policies : $ROOT_POLICIES/$TOTAL_POLICIES"
     sleep 10
 done
 if [ $COMPLETE -eq 1 ]; then
     echo "Failed to deploy policies from policy repo"
     oc get policies -A
-    oc delete -f resources.yaml
     oc delete e2e-policies
     exit 1
 fi
-oc delete -f resources.yaml
 oc delete e2e-policies
 exit 0
