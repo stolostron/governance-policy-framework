@@ -32,8 +32,8 @@ for i in {1..20}; do
     sleep 10
 done
 if [ $COMPLETE -eq 1 ]; then
-    echo "Number of expected Policies : 10/20"
-    echo "Number of expected Policies : $ROOT_POLICIES/$TOTAL_POLICIES"
+    echo "Failed to deploy policies from policy repo"
+    oc get policies -A
     exit 1
 fi
 
