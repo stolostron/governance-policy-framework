@@ -36,10 +36,40 @@ spec:
           properties:
             labelSelector:
               type: object
+            allowedSANPattern:
+              description: A pattern that must match any defined SAN entries in
+                the certificate for the certificate to be compliant.  Golang's regexp
+                symtax only
+              type: string
+            disallowedSANPattern:
+              description: A pattern that must not match any defined SAN entries
+                in the certificate for the certificate to be compliant.  Golang's
+                regexp symtax only
+              type: string
+            labelSelector:
+              additionalProperties:
+                type: string
+              type: object
+            maximumCADuration:
+              description: Maximum CA duration for a signing certificate, longer
+                duration is considered non-compliant. Golang's time units only
+              type: string
+              pattern: ^[0-9][0-9hmnsu.]+
+            maximumDuration:
+              description: Maximum duration for a certificate, longer duration is
+                considered non-compliant. Golang's time units only
+              type: string
+              pattern: ^[0-9][0-9hmnsu.]+
+            minimumCADuration:
+              description: Minimum CA duration before a signing certificate expires
+                that it is considered non-compliant. Golang's time units only
+              type: string
+              pattern: ^[0-9][0-9hmnsu.]+
             minimumDuration:
               description: Minimum duration before a certificate expires that it is
                 considered non-compliant. Golang's time units only
               type: string
+              pattern: ^[0-9][0-9hmnsu.]+
             namespaceSelector:
               description: selecting a list of namespaces where the policy applies
               properties:

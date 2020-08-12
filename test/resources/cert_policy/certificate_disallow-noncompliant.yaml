@@ -7,7 +7,7 @@ spec:
   dnsNames:
     - wap-master.fyre.test.com
     - *.fyre.test.com
-  duration: 20h
+  duration: 50h
   isCA: true
   issuerRef:
     name: cert-policy-issuer
