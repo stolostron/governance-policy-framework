@@ -22,6 +22,11 @@ spec:
             include: ["default"]
           severity: low
           minimumDuration: 30h
+          minimumCADuration: 45h
+          maximumDuration: 9528h
+          maximumCADuration: 26280h
+          allowedSANPattern: ".*.test.com"
+          disallowedSANPattern: "[\\*]"
 status:
   placement:
   - placementBinding: cert-policy-pb

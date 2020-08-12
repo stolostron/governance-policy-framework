@@ -5,8 +5,9 @@ metadata:
 spec:
   commonName: wap-master.fyre.test.com
   dnsNames:
-    - wap-master2.fyre.test.com
-  duration: 40h
+    - wap-master.fyre.test.com
+  duration: 43800h
+  isCA: true
   issuerRef:
     name: cert-policy-issuer
     kind: Issuer
