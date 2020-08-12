@@ -10,7 +10,7 @@ fi
 echo "Login hub"
 make oc/login
 
-oc create ns e2e-policies || true
+kubectl create ns e2e-policies || true
 
 git clone https://github.com/open-cluster-management/policy-collection.git
 cd policy-collection/deploy
