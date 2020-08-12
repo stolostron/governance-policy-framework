@@ -19,7 +19,7 @@ cd policy-collection/deploy
 
 COMPLETE=1
 for i in {1..20}; do
-    ROOT_POLICIES=$(oc get policies -n policies | tail -n +2 | wc -l | tr -d '[:space:]')
+    ROOT_POLICIES=$(oc get policies -n e2e-policies | tail -n +2 | wc -l | tr -d '[:space:]')
     TOTAL_POLICIES=$(oc get policies -A | tail -n +2 | wc -l | tr -d '[:space:]')
     echo "Number of expected Policies : 10/20"
     echo "Number of actual Policies : $ROOT_POLICIES/$TOTAL_POLICIES"
