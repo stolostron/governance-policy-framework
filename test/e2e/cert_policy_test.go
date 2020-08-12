@@ -57,6 +57,66 @@ var _ = Describe("Test cert policy", func() {
 				return rootPlc.Object["status"]
 			}, defaultTimeoutSeconds, 1).Should(utils.SemanticEqual(yamlPlc.Object["status"]))
 		})
+		It("the policy should be noncompliant after creating a CA certficate that expires", func() {
+			By("Creating ../resources/cert_policy/issuer.yaml in ns default")
+			utils.Kubectl("apply", "-f", "../resources/cert_policy/issuer.yaml", "-n", "default", "--kubeconfig=../../kubeconfig_managed")
+			By("Creating ../resources/cert_policy/certificate_expired-ca.yaml in ns default")
+			utils.Kubectl("apply", "-f", "../resources/cert_policy/certificate_expired-ca.yaml", "-n", "default", "--kubeconfig=../../kubeconfig_managed")
+			By("Checking if the status of root policy is noncompliant")
+			yamlPlc := utils.ParseYaml("../resources/cert_policy/" + certPolicyName + "-noncompliant.yaml")
+			Eventually(func() interface{} {
+				rootPlc := utils.GetWithTimeout(clientHubDynamic, gvrPolicy, certPolicyName, userNamespace, true, defaultTimeoutSeconds)
+				return rootPlc.Object["status"]
+			}, defaultTimeoutSeconds, 1).Should(utils.SemanticEqual(yamlPlc.Object["status"]))
+		})
+		It("the policy should be noncompliant after creating a certficate that has too long duration", func() {
+			By("Creating ../resources/cert_policy/issuer.yaml in ns default")
+			utils.Kubectl("apply", "-f", "../resources/cert_policy/issuer.yaml", "-n", "default", "--kubeconfig=../../kubeconfig_managed")
+			By("Creating ../resources/cert_policy/certificate_long.yaml in ns default")
+			utils.Kubectl("apply", "-f", "../resources/cert_policy/certificate_long.yaml", "-n", "default", "--kubeconfig=../../kubeconfig_managed")
+			By("Checking if the status of root policy is noncompliant")
+			yamlPlc := utils.ParseYaml("../resources/cert_policy/" + certPolicyName + "-noncompliant.yaml")
+			Eventually(func() interface{} {
+				rootPlc := utils.GetWithTimeout(clientHubDynamic, gvrPolicy, certPolicyName, userNamespace, true, defaultTimeoutSeconds)
+				return rootPlc.Object["status"]
+			}, defaultTimeoutSeconds, 1).Should(utils.SemanticEqual(yamlPlc.Object["status"]))
+		})
+		It("the policy should be noncompliant after creating a CA certficate that has too long duration", func() {
+			By("Creating ../resources/cert_policy/issuer.yaml in ns default")
+			utils.Kubectl("apply", "-f", "../resources/cert_policy/issuer.yaml", "-n", "default", "--kubeconfig=../../kubeconfig_managed")
+			By("Creating ../resources/cert_policy/certificate_long-ca.yaml in ns default")
+			utils.Kubectl("apply", "-f", "../resources/cert_policy/certificate_long-ca.yaml", "-n", "default", "--kubeconfig=../../kubeconfig_managed")
+			By("Checking if the status of root policy is noncompliant")
+			yamlPlc := utils.ParseYaml("../resources/cert_policy/" + certPolicyName + "-noncompliant.yaml")
+			Eventually(func() interface{} {
+				rootPlc := utils.GetWithTimeout(clientHubDynamic, gvrPolicy, certPolicyName, userNamespace, true, defaultTimeoutSeconds)
+				return rootPlc.Object["status"]
+			}, defaultTimeoutSeconds, 1).Should(utils.SemanticEqual(yamlPlc.Object["status"]))
+		})
+		It("the policy should be noncompliant after creating a certficate that has a DNS entry that is not allowed", func() {
+			By("Creating ../resources/cert_policy/issuer.yaml in ns default")
+			utils.Kubectl("apply", "-f", "../resources/cert_policy/issuer.yaml", "-n", "default", "--kubeconfig=../../kubeconfig_managed")
+			By("Creating ../resources/cert_policy/certificate_allow-noncompliant.yaml in ns default")
+			utils.Kubectl("apply", "-f", "../resources/cert_policy/certificate_allow-noncompliant.yaml", "-n", "default", "--kubeconfig=../../kubeconfig_managed")
+			By("Checking if the status of root policy is noncompliant")
+			yamlPlc := utils.ParseYaml("../resources/cert_policy/" + certPolicyName + "-noncompliant.yaml")
+			Eventually(func() interface{} {
+				rootPlc := utils.GetWithTimeout(clientHubDynamic, gvrPolicy, certPolicyName, userNamespace, true, defaultTimeoutSeconds)
+				return rootPlc.Object["status"]
+			}, defaultTimeoutSeconds, 1).Should(utils.SemanticEqual(yamlPlc.Object["status"]))
+		})
+		It("the policy should be noncompliant after creating a certficate with a disallowed wildcard", func() {
+			By("Creating ../resources/cert_policy/issuer.yaml in ns default")
+			utils.Kubectl("apply", "-f", "../resources/cert_policy/issuer.yaml", "-n", "default", "--kubeconfig=../../kubeconfig_managed")
+			By("Creating ../resources/cert_policy/certificate_disallow-noncompliant.yaml in ns default")
+			utils.Kubectl("apply", "-f", "../resources/cert_policy/certificate_disallow-noncompliant.yaml", "-n", "default", "--kubeconfig=../../kubeconfig_managed")
+			By("Checking if the status of root policy is noncompliant")
+			yamlPlc := utils.ParseYaml("../resources/cert_policy/" + certPolicyName + "-noncompliant.yaml")
+			Eventually(func() interface{} {
+				rootPlc := utils.GetWithTimeout(clientHubDynamic, gvrPolicy, certPolicyName, userNamespace, true, defaultTimeoutSeconds)
+				return rootPlc.Object["status"]
+			}, defaultTimeoutSeconds, 1).Should(utils.SemanticEqual(yamlPlc.Object["status"]))
+		})
 		It("should clean up", func() {
 			By("Deleting " + certPolicyYaml)
 			utils.Kubectl("delete", "-f", certPolicyYaml, "-n", userNamespace, "--kubeconfig=../../kubeconfig_hub")
