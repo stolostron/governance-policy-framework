@@ -19,10 +19,9 @@ cd policy-collection/deploy
 
 COMPLETE=1
 for i in {1..20}; do
-    clear
     ROOT_POLICIES=$(oc get policies -n policies | tail -n +2 | wc -l | tr -d '[:space:]')
     TOTAL_POLICIES=$(oc get policies -A | tail -n +2 | wc -l | tr -d '[:space:]')
-    if [ $ROOT_POLICIES -eq 10 ] && [ $TOTAL_POLICIES -eq 20 ]; then
+    if [ $TOTAL_POLICIES -eq 20 ]; then
         COMPLETE=0
         break
     fi
@@ -34,6 +33,8 @@ done
 if [ $COMPLETE -eq 1 ]; then
     echo "Failed to deploy policies from policy repo"
     oc get policies -A
+    oc delete -f resources.yaml
+    oc delete e2e-policies
     exit 1
 fi
 
