@@ -35,5 +35,6 @@ if [ $COMPLETE -eq 1 ]; then
     oc delete ns e2e-policies
     exit 1
 fi
+echo "Test was successful! cleaning up..."
 oc delete ns e2e-policies
 exit 0
