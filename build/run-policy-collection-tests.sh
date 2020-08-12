@@ -37,5 +37,6 @@ if [ $COMPLETE -eq 1 ]; then
     oc delete e2e-policies
     exit 1
 fi
-
+oc delete -f resources.yaml
+oc delete e2e-policies
 exit 0
