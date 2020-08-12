@@ -32,7 +32,7 @@ jobs:
       script:
         - |
           make
-          make component/test/e2e
+          make policy-collection-test
   
 
 notifications:
