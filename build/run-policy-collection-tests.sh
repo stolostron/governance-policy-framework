@@ -10,12 +10,18 @@ fi
 echo "Login hub"
 make oc/login
 
-kubectl create ns e2e-policies || true
+kubectl create ns e2e || true
 
 git clone https://github.com/open-cluster-management/policy-collection.git
 cd policy-collection/deploy
 
 ./deploy.sh https://github.com/open-cluster-management/policy-collection.git stable e2e-policies
+
+function cleanup {
+    kubectl delete subscriptions -n e2e --all || true
+    kubectl delete channels -n e2e --all || true
+    kubectl delete policies -n e2e --all || true
+}
 
 COMPLETE=1
 for i in {1..20}; do
@@ -32,9 +38,9 @@ done
 if [ $COMPLETE -eq 1 ]; then
     echo "Failed to deploy policies from policy repo"
     kubectl get policies -A
-    kubectl delete ns e2e-policies
+   cleanup
     exit 1
 fi
 echo "Test was successful! cleaning up..."
-kubectl delete ns e2e-policies
+cleanup
 exit 0
