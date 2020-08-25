@@ -15,6 +15,9 @@ spec:
         kind: ConfigurationPolicy
         metadata:
           name: role-policy-mustonlyhave
+            annotations:
+              kubectl.kubernetes.io/last-applied-configuration: |
+                {"apiVersion":"rbac.authorization.k8s.io/v1","kind":"Role","metadata":{"annotations":{},"name":"role-policy-e2e","namespace":"default"},"rules":[{"apiGroups":["extensions","apps"],"resources":["deployments"],"verbs":["get","list","watch","create","delete","patch"]},{"apiGroups":[""],"resources":["pods"],"verbs":["get","watch","list"]}]}
         spec:
           remediationAction: inform
           namespaceSelector:
