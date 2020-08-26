@@ -13,4 +13,4 @@ curl -s -X POST \
    -H "Travis-API-Version: 3" \
    -H "Authorization: token $TRAVIS_TOKEN" \
    -d "$body" \
-   https://api.travis-ci.com/repo/open-cluster-management%2Fgovernance-policy-framework/requests
+   https://api.travis-ci.com/repo/open-cluster-management%2Fpolicy-grc-squad/requests
