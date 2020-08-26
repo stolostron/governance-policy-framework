@@ -31,7 +31,7 @@ jobs:
         - if [ "$TRAVIS_BRANCH" == "master" -a "$TRAVIS_PULL_REQUEST" == "false" ]; then ./build/ff.sh; fi;
     - stage: test-e2e
       name: "Test polices from policy-collection repo"
-      if: branch = master OR type = pull_request
+      if: branch = master AND type != pull_request
       script:
         - |
           make
