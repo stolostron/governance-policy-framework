@@ -35,7 +35,7 @@ jobs:
           make policy-collection-test
   
 after_success:
-  - if [ "$TRAVIS_BRANCH" == "master" ]; then ./build/ff.sh; fi;
+  - if [ "$TRAVIS_BRANCH" = "master" ]; then ./build/ff.sh; fi;
 
 notifications:
   slack:
