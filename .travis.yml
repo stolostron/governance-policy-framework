@@ -27,6 +27,8 @@ jobs:
         - |
           make
           make component/test/e2e
+      after_success:
+        - if [ "$TRAVIS_BRANCH" == "master" -a "$TRAVIS_PULL_REQUEST" == "false" ]; then ./build/ff.sh; fi;
     - stage: test-e2e
       name: "Test polices from policy-collection repo"
       script:
@@ -34,8 +36,6 @@ jobs:
           make
           make policy-collection-test
   
-after_success:
-  - if [ "$TRAVIS_BRANCH" = "master" ]; then ./build/ff.sh; fi;
 
 notifications:
   slack:
