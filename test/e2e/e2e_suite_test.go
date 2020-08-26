@@ -38,6 +38,7 @@ var (
 	gvrPlacementBinding    schema.GroupVersionResource
 	gvrPlacementRule       schema.GroupVersionResource
 	gvrRole                schema.GroupVersionResource
+	gvrCRD                 schema.GroupVersionResource
 	kubeconfigHub          string
 	kubeconfigManaged      string
 	defaultTimeoutSeconds  int
@@ -68,6 +69,7 @@ var _ = BeforeSuite(func() {
 	gvrPlacementBinding = schema.GroupVersionResource{Group: "policy.open-cluster-management.io", Version: "v1", Resource: "placementbindings"}
 	gvrPlacementRule = schema.GroupVersionResource{Group: "apps.open-cluster-management.io", Version: "v1", Resource: "placementrules"}
 	gvrRole = schema.GroupVersionResource{Group: "rbac.authorization.k8s.io", Version: "v1", Resource: "roles"}
+	gvrCRD = schema.GroupVersionResource{Group: "apiextensions.k8s.io", Version: "v1beta1", Resource: "customresourcedefinitions"}
 	clientHub = NewKubeClient("", kubeconfigHub, "")
 	clientHubDynamic = NewKubeClientDynamic("", kubeconfigHub, "")
 	clientManaged = NewKubeClient("", kubeconfigManaged, "")
@@ -78,12 +80,12 @@ var _ = BeforeSuite(func() {
 	clusterNamespace = "managed"
 	timeoutStr, found := os.LookupEnv("E2E_TIMEOUT_SECONDS")
 	if !found {
-		defaultTimeoutSeconds = 30
+		defaultTimeoutSeconds = 60
 	} else {
 		if n, err := strconv.Atoi(timeoutStr); err == nil {
 			defaultTimeoutSeconds = n
 		} else {
-			defaultTimeoutSeconds = 30
+			defaultTimeoutSeconds = 60
 		}
 	}
 	By("Create Namesapce if needed")

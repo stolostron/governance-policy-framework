@@ -30,7 +30,7 @@ kind-bootstrap-cluster: kind-create-cluster install-crds install-resources kind-
 kind-bootstrap-cluster-dev: kind-create-cluster install-crds install-resources
 
 .PHONY: kind-deploy-policy-controllers
-kind-deploy-policy-controllers: kind-deploy-config-policy-controller kind-deploy-cert-policy-controller kind-deploy-iam-policy-controller
+kind-deploy-policy-controllers: kind-deploy-config-policy-controller kind-deploy-cert-policy-controller kind-deploy-iam-policy-controller kind-deploy-gatekeeper
 
 check-env:
 ifndef DOCKER_USER
@@ -70,6 +70,10 @@ kind-deploy-iam-policy-controller: check-env
 	@echo installing iam-policy-controller on managed
 	kubectl apply -f deploy/iam-policy-controller -n multicluster-endpoint --kubeconfig=$(PWD)/kubeconfig_managed
 
+kind-deploy-gatekeeper: check-env
+	@echo installing gatekeeper on managed
+	kubectl apply -f deploy/gatekeeper --kubeconfig=$(PWD)/kubeconfig_managed
+
 kind-create-cluster:
 	@echo "creating cluster"
 	kind create cluster --name test-hub
@@ -100,7 +104,7 @@ install-resources:
 	kubectl apply -f test/resources/managed-cluster.yaml --kubeconfig=$(PWD)/kubeconfig_hub
 	
 e2e-test:
-	ginkgo -v --slowSpecThreshold=10 test/e2e
+	${GOPATH}/bin/ginkgo -v --slowSpecThreshold=10 test/e2e
 
 policy-collection-test:
 	@echo creating user namespace on hub
