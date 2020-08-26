@@ -104,7 +104,7 @@ install-resources:
 	kubectl apply -f test/resources/managed-cluster.yaml --kubeconfig=$(PWD)/kubeconfig_hub
 	
 e2e-test:
-	${GOPATH}/bin/ginkgo -v --slowSpecThreshold=10 test/e2e
+	ginkgo -v --slowSpecThreshold=10 test/e2e
 
 policy-collection-test:
 	@echo creating user namespace on hub
