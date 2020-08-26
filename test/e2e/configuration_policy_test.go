@@ -410,7 +410,7 @@ var _ = Describe("Test configuration policy", func() {
 		It("the policy should be noncompliant if has less rules", func() {
 			By("Creating the role in default namespace on managed cluster")
 			utils.Kubectl("apply", "-f", "../resources/configuration_policy/role-policy-e2e-less.yaml", "-n", "default", "--kubeconfig=../../kubeconfig_managed")
-			By("Checking if the status of root policy is compliant")
+			By("Checking if the status of root policy is noncompliant")
 			yamlPlc := utils.ParseYaml("../resources/configuration_policy/" + rolePolicyName + "-noncompliant.yaml")
 			Eventually(func() interface{} {
 				rootPlc := utils.GetWithTimeout(clientHubDynamic, gvrPolicy, rolePolicyName, userNamespace, true, defaultTimeoutSeconds)
@@ -430,7 +430,7 @@ var _ = Describe("Test configuration policy", func() {
 		It("the policy should be noncompliant if has more rules", func() {
 			By("Creating the role in default namespace on managed cluster")
 			utils.Kubectl("apply", "-f", "../resources/configuration_policy/role-policy-e2e-more.yaml", "-n", "default", "--kubeconfig=../../kubeconfig_managed")
-			By("Checking if the status of root policy is compliant")
+			By("Checking if the status of root policy is noncompliant")
 			yamlPlc := utils.ParseYaml("../resources/configuration_policy/" + rolePolicyName + "-noncompliant.yaml")
 			Eventually(func() interface{} {
 				rootPlc := utils.GetWithTimeout(clientHubDynamic, gvrPolicy, rolePolicyName, userNamespace, true, defaultTimeoutSeconds)
