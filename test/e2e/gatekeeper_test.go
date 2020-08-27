@@ -51,15 +51,14 @@ func GetClusterLevelWithTimeout(
 
 var _ = Describe("Test gatekeeper", func() {
 	Describe("Test gatekeeper policy creation", func() {
-		const GKDeployURL string = "https://raw.githubusercontent.com/open-policy-agent/gatekeeper/master/deploy/gatekeeper.yaml"
 		const GKPolicyName string = "policy-gatekeeper"
 		const GKPolicyYaml string = "../resources/gatekeeper/policy-gatekeeper.yaml"
 		const cfgpolKRLName string = "policy-gatekeeper-k8srequiredlabels"
 		const cfgpolauditName string = "policy-gatekeeper-audit"
 		const cfgpoladmissionName string = "policy-gatekeeper-admission"
+		const NSPolicyNameFail string = "policy-ns-fail"
+		const NSPolicyYamlFail string = "../resources/gatekeeper/cfgpol-ns-create-invalid.yaml"
 		It("should deploy gatekeeper release on managed cluster", func() {
-			By("Creating https://raw.githubusercontent.com/open-policy-agent/gatekeeper/master/deploy/gatekeeper.yaml")
-			utils.Kubectl("apply", "-f", GKDeployURL, "--kubeconfig=../../kubeconfig_managed")
 			configCRD := GetClusterLevelWithTimeout(clientManagedDynamic, gvrCRD, "configs.config.gatekeeper.sh", true, defaultTimeoutSeconds)
 			Expect(configCRD).NotTo(BeNil())
 			cpsCRD := GetClusterLevelWithTimeout(clientManagedDynamic, gvrCRD, "constraintpodstatuses.status.gatekeeper.sh", true, defaultTimeoutSeconds)
@@ -86,6 +85,16 @@ var _ = Describe("Test gatekeeper", func() {
 			Expect(audit).NotTo(BeNil())
 			admission := utils.GetWithTimeout(clientManagedDynamic, gvrConfigurationPolicy, cfgpoladmissionName, clusterNamespace, true, defaultTimeoutSeconds)
 			Expect(admission).NotTo(BeNil())
+		})
+		It("should properly enforce gatekeeper policy", func() {
+			By("Creating invalid namespace on managed")
+			utils.Kubectl("apply", "-f", NSPolicyYamlFail, "-n", "default", "--kubeconfig=../../kubeconfig_managed")
+			nsPlc := utils.GetWithTimeout(clientHubDynamic, gvrConfigurationPolicy, NSPolicyNameFail, "default", true, defaultTimeoutSeconds)
+			Expect(nsPlc).NotTo(BeNil())
+			Consistently(func() interface{} {
+				ns := GetClusterLevelWithTimeout(clientManagedDynamic, gvrNS, "e2etestfail", true, defaultTimeoutSeconds)
+				return ns
+			}, defaultTimeoutSeconds, 1).Should(BeNil())
 		})
 	})
 })

@@ -65,6 +65,12 @@ while [[ $(kubectl get pods -l name=governance-policy-template-sync -n multiclus
     sleep 1
 done
 
+while [[ $(kubectl get pods -l control-plane=controller-manager -n gatekeeper-system -o 'jsonpath={..status.conditions[?(@.type=="Ready")].status}') != "True" ]]; do 
+    echo "waiting for pod: gatekeeper-controller-manager"
+    kubectl get pods -l control-plane=controller-manager -n gatekeeper-system
+    sleep 1
+done
+
 kubectl get pods -n multicluster-endpoint
 
 make e2e-test
