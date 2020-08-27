@@ -56,8 +56,7 @@ var _ = Describe("Test gatekeeper", func() {
 		const cfgpolKRLName string = "policy-gatekeeper-k8srequiredlabels"
 		const cfgpolauditName string = "policy-gatekeeper-audit"
 		const cfgpoladmissionName string = "policy-gatekeeper-admission"
-		const NSPolicyNameFail string = "policy-ns-fail"
-		const NSPolicyYamlFail string = "../resources/gatekeeper/cfgpol-ns-create-invalid.yaml"
+		const NSYamlFail string = "../resources/gatekeeper/ns-create-invalid.yaml"
 		It("should deploy gatekeeper release on managed cluster", func() {
 			configCRD := GetClusterLevelWithTimeout(clientManagedDynamic, gvrCRD, "configs.config.gatekeeper.sh", true, defaultTimeoutSeconds)
 			Expect(configCRD).NotTo(BeNil())
@@ -88,12 +87,9 @@ var _ = Describe("Test gatekeeper", func() {
 		})
 		It("should properly enforce gatekeeper policy", func() {
 			By("Creating invalid namespace on managed")
-			utils.Kubectl("apply", "-f", NSPolicyYamlFail, "-n", "default", "--kubeconfig=../../kubeconfig_managed")
-			nsPlc := utils.GetWithTimeout(clientHubDynamic, gvrConfigurationPolicy, NSPolicyNameFail, "default", true, defaultTimeoutSeconds)
-			Expect(nsPlc).NotTo(BeNil())
+			utils.Kubectl("apply", "-f", NSYamlFail, "--kubeconfig=../../kubeconfig_managed")
 			Consistently(func() interface{} {
-				ns := GetClusterLevelWithTimeout(clientManagedDynamic, gvrNS, "e2etestfail", true, defaultTimeoutSeconds)
-				return ns
+				return GetClusterLevelWithTimeout(clientManagedDynamic, gvrNS, "e2etestfail", false, defaultTimeoutSeconds)
 			}, defaultTimeoutSeconds, 1).Should(BeNil())
 		})
 	})
