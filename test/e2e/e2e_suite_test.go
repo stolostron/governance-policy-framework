@@ -82,12 +82,12 @@ var _ = BeforeSuite(func() {
 	clusterNamespace = "managed"
 	timeoutStr, found := os.LookupEnv("E2E_TIMEOUT_SECONDS")
 	if !found {
-		defaultTimeoutSeconds = 60
+		defaultTimeoutSeconds = 30
 	} else {
 		if n, err := strconv.Atoi(timeoutStr); err == nil {
 			defaultTimeoutSeconds = n
 		} else {
-			defaultTimeoutSeconds = 60
+			defaultTimeoutSeconds = 30
 		}
 	}
 	By("Create Namesapce if needed")
