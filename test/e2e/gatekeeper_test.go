@@ -78,19 +78,43 @@ var _ = Describe("Test gatekeeper", func() {
 			plr, err := clientHubDynamic.Resource(gvrPlacementRule).Namespace("default").UpdateStatus(plr, metav1.UpdateOptions{})
 			Expect(err).To(BeNil())
 			By("Checking configpolicies on managed")
-			krl := utils.GetWithTimeout(clientManagedDynamic, gvrConfigurationPolicy, cfgpolKRLName, clusterNamespace, true, defaultTimeoutSeconds)
+			krl := utils.GetWithTimeout(clientManagedDynamic, gvrConfigurationPolicy, cfgpolKRLName, clusterNamespace, true, 120)
 			Expect(krl).NotTo(BeNil())
-			audit := utils.GetWithTimeout(clientManagedDynamic, gvrConfigurationPolicy, cfgpolauditName, clusterNamespace, true, defaultTimeoutSeconds)
+			audit := utils.GetWithTimeout(clientManagedDynamic, gvrConfigurationPolicy, cfgpolauditName, clusterNamespace, true, 120)
 			Expect(audit).NotTo(BeNil())
-			admission := utils.GetWithTimeout(clientManagedDynamic, gvrConfigurationPolicy, cfgpoladmissionName, clusterNamespace, true, defaultTimeoutSeconds)
+			admission := utils.GetWithTimeout(clientManagedDynamic, gvrConfigurationPolicy, cfgpoladmissionName, clusterNamespace, true, 120)
 			Expect(admission).NotTo(BeNil())
 		})
 		It("should properly enforce gatekeeper policy", func() {
+			By("Checking for violations in k8srequiredlabels")
+			Eventually(func() interface{} {
+				plc := utils.GetWithTimeout(clientManagedDynamic, gvrConfigurationPolicy, cfgpolauditName, clusterNamespace, true, defaultTimeoutSeconds)
+				if plc.Object["status"] != nil {
+					return plc.Object["status"].(map[string]interface{})["compliant"]
+				}
+				return ""
+			}, defaultTimeoutSeconds, 1).Should(Equal("NonCompliant"))
+			By("Checking for violations in events")
+			Eventually(func() interface{} {
+				plc := utils.GetWithTimeout(clientManagedDynamic, gvrConfigurationPolicy, cfgpoladmissionName, clusterNamespace, true, defaultTimeoutSeconds)
+				if plc.Object["status"] != nil {
+					return plc.Object["status"].(map[string]interface{})["compliant"]
+				}
+				return ""
+			}, defaultTimeoutSeconds, 1).Should(Equal("Compliant"))
 			By("Creating invalid namespace on managed")
 			utils.Kubectl("create", "ns", "e2etestfail", "--kubeconfig=../../kubeconfig_managed")
 			Consistently(func() interface{} {
 				return GetClusterLevelWithTimeout(clientManagedDynamic, gvrNS, "e2etestfail", false, defaultTimeoutSeconds)
 			}, defaultTimeoutSeconds, 1).Should(BeNil())
+			By("Checking for violations in events")
+			Eventually(func() interface{} {
+				plc := utils.GetWithTimeout(clientManagedDynamic, gvrConfigurationPolicy, cfgpoladmissionName, clusterNamespace, true, defaultTimeoutSeconds)
+				if plc.Object["status"] != nil {
+					return plc.Object["status"].(map[string]interface{})["compliant"]
+				}
+				return ""
+			}, defaultTimeoutSeconds, 1).Should(Equal("NonCompliant"))
 		})
 	})
 })
