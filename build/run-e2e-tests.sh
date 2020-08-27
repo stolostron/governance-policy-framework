@@ -31,6 +31,7 @@ make install-resources
 # wait for controller to start
 while [[ $(kubectl get pods -l name=config-policy-ctrl -n multicluster-endpoint -o 'jsonpath={..status.conditions[?(@.type=="Ready")].status}') != "True" ]]; do 
     echo "waiting for pod: config-policy-ctrl"
+    kubectl get pods -A
     kubectl get pods -l name=config-policy-ctrl -n multicluster-endpoint
     sleep 1
 done
