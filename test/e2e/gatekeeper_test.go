@@ -95,9 +95,11 @@ var _ = Describe("Test gatekeeper", func() {
 			Eventually(func() interface{} {
 				plc := utils.GetWithTimeout(clientHubDynamic, gvrPolicy, "default."+GKPolicyName, clusterNamespace, true, defaultTimeoutSeconds)
 				if plc.Object["status"] != nil {
-					details := plc.Object["status"].(map[string]interface{})["details"].([]interface{})
-					return checkForViolationMessage(details[1].(map[string]interface{})["history"].([]interface{}),
-						"NonCompliant; violation - k8srequiredlabels `ns-must-have-gk` does not exist as specified")
+					if plc.Object["status"].(map[string]interface{})["details"] != nil {
+						details := plc.Object["status"].(map[string]interface{})["details"].([]interface{})
+						return checkForViolationMessage(details[1].(map[string]interface{})["history"].([]interface{}),
+							"NonCompliant; violation - k8srequiredlabels `ns-must-have-gk` does not exist as specified")
+					}
 				}
 				return false
 			}, defaultTimeoutSeconds, 1).Should(Equal(true))
