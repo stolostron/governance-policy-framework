@@ -107,15 +107,21 @@ var _ = Describe("Test gatekeeper", func() {
 			Eventually(func() interface{} {
 				plc := utils.GetWithTimeout(clientHubDynamic, gvrPolicy, "default."+GKPolicyName, clusterNamespace, true, defaultTimeoutSeconds)
 				if plc.Object["status"] != nil {
-					details := plc.Object["status"].(map[string]interface{})["details"].([]interface{})
-					return checkForViolationMessage(details[2].(map[string]interface{})["history"].([]interface{}),
-						"Compliant; notification - no instances of `events` exist as specified, therefore this Object template is compliant")
+					if plc.Object["status"].(map[string]interface{})["details"] != nil {
+						details := plc.Object["status"].(map[string]interface{})["details"].([]interface{})
+						return checkForViolationMessage(details[2].(map[string]interface{})["history"].([]interface{}),
+							"Compliant; notification - no instances of `events` exist as specified, therefore this Object template is compliant")
+					}
 				}
 				return false
 			}, defaultTimeoutSeconds, 1).Should(Equal(true))
 		})
 		It("should properly enforce gatekeeper policy", func() {
 			By("Creating invalid namespace on managed")
+			Consistently(func() interface{} {
+				//wait before trying to create ns
+				return nil
+			}, defaultTimeoutSeconds, 1).Should(BeNil())
 			utils.Kubectl("create", "ns", "e2etestfail", "--kubeconfig=../../kubeconfig_managed")
 			Consistently(func() interface{} {
 				return GetClusterLevelWithTimeout(clientManagedDynamic, gvrNS, "e2etestfail", false, defaultTimeoutSeconds)
