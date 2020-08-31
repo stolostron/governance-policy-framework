@@ -49,13 +49,8 @@ kind-deploy-controller: check-env
 	kubectl create ns multicluster-endpoint --kubeconfig=$(PWD)/kubeconfig_managed
 	kubectl create secret -n multicluster-endpoint docker-registry multiclusterhub-operator-pull-secret --docker-server=quay.io --docker-username=${DOCKER_USER} --docker-password=${DOCKER_PASS} --kubeconfig=$(PWD)/kubeconfig_managed
 	kubectl create secret -n multicluster-endpoint generic endpoint-connmgr-hub-kubeconfig --from-file=kubeconfig=$(PWD)/kubeconfig_hub_internal --kubeconfig=$(PWD)/kubeconfig_managed
-	if [[ $(deployOnHub) -eq "true" ]]
-	then
-		@echo skipping installing policy-spec-sync on managed
-	else
-		@echo installing policy-spec-sync on managed
-		kubectl apply -f deploy/spec-sync -n multicluster-endpoint --kubeconfig=$(PWD)/kubeconfig_managed
-	fi
+	@echo installing policy-spec-sync on managed
+	kubectl apply -f deploy/spec-sync -n multicluster-endpoint --kubeconfig=$(PWD)/kubeconfig_managed
 	@echo installing policy-status-sync on managed
 	kubectl apply -f deploy/status-sync -n multicluster-endpoint --kubeconfig=$(PWD)/kubeconfig_managed
 	@echo installing policy-template-sync on managed
