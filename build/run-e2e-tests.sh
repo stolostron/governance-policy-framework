@@ -56,6 +56,14 @@ while [[ $(kubectl get pods -l name=iam-policy-controller -n multicluster-endpoi
     sleep 1
 done
 
+if [ "$(deployOnHub)" -ne "true" ]; then\
+    while [[ $(kubectl get pods -l name=governance-policy-spec-sync -n multicluster-endpoint -o 'jsonpath={..status.conditions[?(@.type=="Ready")].status}') != "True" ]]; do 
+        echo "waiting for pod: governance-policy-spec-sync"
+        kubectl get pods -l name=governance-policy-spec-sync -n multicluster-endpoint
+        sleep 1
+    done
+fi
+
 while [[ $(kubectl get pods -l name=governance-policy-status-sync -n multicluster-endpoint -o 'jsonpath={..status.conditions[?(@.type=="Ready")].status}') != "True" ]]; do 
     echo "waiting for pod: governance-policy-status-sync"
     kubectl get pods -l name=governance-policy-status-sync -n multicluster-endpoint
