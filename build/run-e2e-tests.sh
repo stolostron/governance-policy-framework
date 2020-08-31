@@ -20,6 +20,12 @@ go get github.com/onsi/gomega/...
 
 make kind-create-cluster 
 
+while [[ $(kubectl get pods -A | grep -v -e "Completed" | tail -n +2 | wc -l | tr -d '[:space:]') -ne 9 ]]; do 
+    echo "waiting for kind cluster pods running"
+    kubectl get pods -A
+    sleep 1
+done
+
 make install-crds 
 
 make kind-deploy-controller
@@ -31,6 +37,7 @@ make install-resources
 # wait for controller to start
 while [[ $(kubectl get pods -l name=config-policy-ctrl -n multicluster-endpoint -o 'jsonpath={..status.conditions[?(@.type=="Ready")].status}') != "True" ]]; do 
     echo "waiting for pod: config-policy-ctrl"
+    kubectl get pods -A
     kubectl get pods -l name=config-policy-ctrl -n multicluster-endpoint
     sleep 1
 done
@@ -62,6 +69,12 @@ done
 while [[ $(kubectl get pods -l name=governance-policy-template-sync -n multicluster-endpoint -o 'jsonpath={..status.conditions[?(@.type=="Ready")].status}') != "True" ]]; do 
     echo "waiting for pod: governance-policy-template-sync"
     kubectl get pods -l name=governance-policy-template-sync -n multicluster-endpoint
+    sleep 1
+done
+
+while [[ $(kubectl get pods -l control-plane=controller-manager -n gatekeeper-system -o 'jsonpath={..status.conditions[?(@.type=="Ready")].status}') != "True" ]]; do 
+    echo "waiting for pod: gatekeeper-controller-manager"
+    kubectl get pods -l control-plane=controller-manager -n gatekeeper-system
     sleep 1
 done
 

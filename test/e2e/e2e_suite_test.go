@@ -38,6 +38,8 @@ var (
 	gvrPlacementBinding    schema.GroupVersionResource
 	gvrPlacementRule       schema.GroupVersionResource
 	gvrRole                schema.GroupVersionResource
+	gvrCRD                 schema.GroupVersionResource
+	gvrNS                  schema.GroupVersionResource
 	kubeconfigHub          string
 	kubeconfigManaged      string
 	defaultTimeoutSeconds  int
@@ -68,6 +70,8 @@ var _ = BeforeSuite(func() {
 	gvrPlacementBinding = schema.GroupVersionResource{Group: "policy.open-cluster-management.io", Version: "v1", Resource: "placementbindings"}
 	gvrPlacementRule = schema.GroupVersionResource{Group: "apps.open-cluster-management.io", Version: "v1", Resource: "placementrules"}
 	gvrRole = schema.GroupVersionResource{Group: "rbac.authorization.k8s.io", Version: "v1", Resource: "roles"}
+	gvrCRD = schema.GroupVersionResource{Group: "apiextensions.k8s.io", Version: "v1beta1", Resource: "customresourcedefinitions"}
+	gvrNS = schema.GroupVersionResource{Version: "v1", Resource: "namespaces"}
 	clientHub = NewKubeClient("", kubeconfigHub, "")
 	clientHubDynamic = NewKubeClientDynamic("", kubeconfigHub, "")
 	clientManaged = NewKubeClient("", kubeconfigManaged, "")
