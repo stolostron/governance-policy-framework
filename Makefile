@@ -49,8 +49,12 @@ kind-deploy-controller: check-env
 	kubectl create ns multicluster-endpoint --kubeconfig=$(PWD)/kubeconfig_managed
 	kubectl create secret -n multicluster-endpoint docker-registry multiclusterhub-operator-pull-secret --docker-server=quay.io --docker-username=${DOCKER_USER} --docker-password=${DOCKER_PASS} --kubeconfig=$(PWD)/kubeconfig_managed
 	kubectl create secret -n multicluster-endpoint generic endpoint-connmgr-hub-kubeconfig --from-file=kubeconfig=$(PWD)/kubeconfig_hub_internal --kubeconfig=$(PWD)/kubeconfig_managed
-	@echo installing policy-spec-sync on managed
-	kubectl apply -f deploy/spec-sync -n multicluster-endpoint --kubeconfig=$(PWD)/kubeconfig_managed
+	if [[ $(deployOnHub) -eq "true" ]]; then \
+		echo skipping installing policy-spec-sync on managed; \
+	else \
+		echo installing policy-spec-sync on managed; \
+		kubectl apply -f deploy/spec-sync -n multicluster-endpoint --kubeconfig=$(PWD)/kubeconfig_managed; \
+	fi
 	@echo installing policy-status-sync on managed
 	kubectl apply -f deploy/status-sync -n multicluster-endpoint --kubeconfig=$(PWD)/kubeconfig_managed
 	@echo installing policy-template-sync on managed
@@ -75,21 +79,19 @@ kind-deploy-gatekeeper: check-env
 	kubectl apply -f deploy/gatekeeper --kubeconfig=$(PWD)/kubeconfig_managed
 
 kind-create-cluster:
-	@echo "creating cluster with one hub and one managed"
+	@echo "creating cluster hub"
 	kind create cluster --name test-hub
 	kind get kubeconfig --name test-hub > $(PWD)/kubeconfig_hub
 	# needed for mangaed -> hub communication
 	kind get kubeconfig --name test-hub --internal > $(PWD)/kubeconfig_hub_internal
-	kind create cluster --name test-managed
-	kind get kubeconfig --name test-managed > $(PWD)/kubeconfig_managed
-
-kind-create-cluster-hub-self-imported:
-	@echo "creating cluster with hub self imported as managed"
-	kind create cluster --name test-hub
-	kind get kubeconfig --name test-hub > $(PWD)/kubeconfig_hub
-	# needed for mangaed -> hub communication
-	kind get kubeconfig --name test-hub --internal > $(PWD)/kubeconfig_hub_internal
-	kind get kubeconfig --name test-hub > $(PWD)/kubeconfig_managed
+	if [[ $(deployOnHub) -eq "true" ]]; then \
+		echo import cluster hub as managed; \
+		kind get kubeconfig --name test-hub > $(PWD)/kubeconfig_managed; \
+	else \
+		echo i"creating cluster managed"; \
+		kind create cluster --name test-managed; \
+		kind get kubeconfig --name test-managed > $(PWD)/kubeconfig_managed; \
+	fi
 
 kind-delete-cluster:
 	kind delete cluster --name test-hub
