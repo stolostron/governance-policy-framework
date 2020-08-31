@@ -84,10 +84,11 @@ kind-create-cluster:
 	kind get kubeconfig --name test-managed > $(PWD)/kubeconfig_managed
 
 kind-create-cluster-hub-self-imported:
-	@echo "creating cluster with one hub and one managed"
+	@echo "creating cluster with hub self imported as managed"
 	kind create cluster --name test-hub
 	kind get kubeconfig --name test-hub > $(PWD)/kubeconfig_hub
 	# needed for mangaed -> hub communication
+	kind get kubeconfig --name test-hub --internal > $(PWD)/kubeconfig_hub_internal
 	kind get kubeconfig --name test-hub > $(PWD)/kubeconfig_managed
 
 kind-delete-cluster:
