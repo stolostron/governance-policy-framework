@@ -18,6 +18,7 @@ env:
 
 stages:
   - test-e2e
+  - ff
 
 jobs:
   include:
@@ -44,6 +45,11 @@ jobs:
         - |
           make
           make policy-collection-test
+    - stage: ff
+      name: "Fast forwarding GRC repos"
+      if: type = push AND branch = master
+      scripts: ./build/ff.sh
+      
   
 notifications:
   slack:
