@@ -140,5 +140,14 @@ var _ = Describe("Test gatekeeper", func() {
 				return ""
 			}, defaultTimeoutSeconds, 1).Should(Equal("ns-must-have-gk"))
 		})
+		It("should clean up", func() {
+			By("Deleting gatekeeper policy on hub")
+			utils.Kubectl("delete", "-f", GKPolicyYaml, "-n", "default", "--kubeconfig=../../kubeconfig_hub")
+			By("Checking if there is any policy left")
+			utils.ListWithTimeout(clientHubDynamic, gvrPolicy, metav1.ListOptions{}, 0, true, defaultTimeoutSeconds)
+			utils.ListWithTimeout(clientManagedDynamic, gvrPolicy, metav1.ListOptions{}, 0, true, defaultTimeoutSeconds)
+			By("Checking if there is any configuration policy left")
+			utils.ListWithTimeout(clientManagedDynamic, gvrConfigurationPolicy, metav1.ListOptions{}, 0, true, defaultTimeoutSeconds)
+		})
 	})
 })
