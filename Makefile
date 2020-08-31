@@ -50,7 +50,7 @@ kind-deploy-controller: check-env
 	kubectl create ns multicluster-endpoint --kubeconfig=$(PWD)/kubeconfig_managed
 	kubectl create secret -n multicluster-endpoint docker-registry multiclusterhub-operator-pull-secret --docker-server=quay.io --docker-username=${DOCKER_USER} --docker-password=${DOCKER_PASS} --kubeconfig=$(PWD)/kubeconfig_managed
 	kubectl create secret -n multicluster-endpoint generic endpoint-connmgr-hub-kubeconfig --from-file=kubeconfig=$(PWD)/kubeconfig_hub_internal --kubeconfig=$(PWD)/kubeconfig_managed
-	if [[ $(deployOnHub) -eq true ]]; then\
+	if [ "$(deployOnHub)" -eq "true" ]; then\
 		echo skipping installing policy-spec-sync on managed;\
 	else\
 		echo installing policy-spec-sync on managed;\
@@ -85,7 +85,7 @@ kind-create-cluster:
 	kind get kubeconfig --name test-hub > $(PWD)/kubeconfig_hub
 	# needed for mangaed -> hub communication
 	kind get kubeconfig --name test-hub --internal > $(PWD)/kubeconfig_hub_internal
-	if [[ "$(deployOnHub)" -eq "true" ]]; then\
+	if [ "$(deployOnHub)" -eq "true" ]; then\
 		echo import cluster hub as managed;\
 		kind get kubeconfig --name test-hub > $(PWD)/kubeconfig_managed;\
 	else\
