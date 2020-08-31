@@ -22,7 +22,7 @@ stages:
 jobs:
   include:
     - stage: test-e2e
-      name: "Deploy latest GRC controllers to cluster and run e2e tests"
+      name: "Governance framework e2e tests"
       script:
         - |
           make
@@ -30,7 +30,7 @@ jobs:
       after_success:
         - if [ "$TRAVIS_BRANCH" == "master" -a "$TRAVIS_PULL_REQUEST" == "false" ]; then ./build/ff.sh; fi;
     - stage: test-e2e
-      name: "Deploy latest GRC controllers to cluster and run e2e tests with deployOnHub=true"
+      name: "Governance framework e2e tests with deployOnHub=true"
       env:
         - deployOnHub=true
       script:
@@ -45,7 +45,6 @@ jobs:
           make
           make policy-collection-test
   
-
 notifications:
   slack:
     on_pull_requests: false

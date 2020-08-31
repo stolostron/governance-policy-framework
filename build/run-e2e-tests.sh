@@ -18,7 +18,7 @@ echo "Installing ginkgo ..."
 go get github.com/onsi/ginkgo/ginkgo
 go get github.com/onsi/gomega/...
 
-if [[ deployOnHub -eq "true" ]]
+if [[ $deployOnHub -eq "true" ]]
 then
     make kind-create-cluster-hub-self-imported
 else
