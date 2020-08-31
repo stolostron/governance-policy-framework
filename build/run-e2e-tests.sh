@@ -28,9 +28,9 @@ done
 
 make install-crds 
 
-make kind-deploy-controller
-
 make install-resources
+
+make kind-deploy-controller
 
 make kind-deploy-policy-controllers
 
@@ -53,12 +53,6 @@ done
 while [[ $(kubectl get pods -l name=iam-policy-controller -n multicluster-endpoint -o 'jsonpath={..status.conditions[?(@.type=="Ready")].status}') != "True" ]]; do 
     echo "waiting for pod: iam-policy-controller"
     kubectl get pods -l name=iam-policy-controller -n multicluster-endpoint
-    sleep 1
-done
-
-while [[ $(kubectl get pods -l name=governance-policy-spec-sync -n multicluster-endpoint -o 'jsonpath={..status.conditions[?(@.type=="Ready")].status}') != "True" ]]; do 
-    echo "waiting for pod: governance-policy-spec-sync"
-    kubectl get pods -l name=governance-policy-spec-sync -n multicluster-endpoint
     sleep 1
 done
 
