@@ -95,9 +95,11 @@ var _ = Describe("Test gatekeeper", func() {
 			Eventually(func() interface{} {
 				plc := utils.GetWithTimeout(clientHubDynamic, gvrPolicy, "default."+GKPolicyName, clusterNamespace, true, defaultTimeoutSeconds)
 				if plc.Object["status"] != nil {
-					details := plc.Object["status"].(map[string]interface{})["details"].([]interface{})
-					return checkForViolationMessage(details[1].(map[string]interface{})["history"].([]interface{}),
-						"NonCompliant; violation - k8srequiredlabels `ns-must-have-gk` does not exist as specified")
+					if plc.Object["status"].(map[string]interface{})["details"] != nil {
+						details := plc.Object["status"].(map[string]interface{})["details"].([]interface{})
+						return checkForViolationMessage(details[1].(map[string]interface{})["history"].([]interface{}),
+							"NonCompliant; violation - k8srequiredlabels `ns-must-have-gk` does not exist as specified")
+					}
 				}
 				return false
 			}, defaultTimeoutSeconds, 1).Should(Equal(true))
@@ -139,6 +141,15 @@ var _ = Describe("Test gatekeeper", func() {
 				}
 				return ""
 			}, defaultTimeoutSeconds, 1).Should(Equal("ns-must-have-gk"))
+		})
+		It("should clean up", func() {
+			By("Deleting gatekeeper policy on hub")
+			utils.Kubectl("delete", "-f", GKPolicyYaml, "-n", "default", "--kubeconfig=../../kubeconfig_hub")
+			By("Checking if there is any policy left")
+			utils.ListWithTimeout(clientHubDynamic, gvrPolicy, metav1.ListOptions{}, 0, true, defaultTimeoutSeconds)
+			utils.ListWithTimeout(clientManagedDynamic, gvrPolicy, metav1.ListOptions{}, 0, true, defaultTimeoutSeconds)
+			By("Checking if there is any configuration policy left")
+			utils.ListWithTimeout(clientManagedDynamic, gvrConfigurationPolicy, metav1.ListOptions{}, 0, true, defaultTimeoutSeconds)
 		})
 	})
 })
