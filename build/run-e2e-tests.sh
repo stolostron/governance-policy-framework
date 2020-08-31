@@ -18,7 +18,11 @@ echo "Installing ginkgo ..."
 go get github.com/onsi/ginkgo/ginkgo
 go get github.com/onsi/gomega/...
 
-make kind-create-cluster 
+if deployOnHub == "true" then
+    make kind-create-cluster-hub-self-imported
+else
+    make kind-create-cluster
+fi
 
 while [[ $(kubectl get pods -A | grep -v -e "Completed" | tail -n +2 | wc -l | tr -d '[:space:]') -ne 9 ]]; do 
     echo "waiting for kind cluster pods running"

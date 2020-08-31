@@ -75,13 +75,20 @@ kind-deploy-gatekeeper: check-env
 	kubectl apply -f deploy/gatekeeper --kubeconfig=$(PWD)/kubeconfig_managed
 
 kind-create-cluster:
-	@echo "creating cluster"
+	@echo "creating cluster with one hub and one managed"
 	kind create cluster --name test-hub
 	kind get kubeconfig --name test-hub > $(PWD)/kubeconfig_hub
 	# needed for mangaed -> hub communication
 	kind get kubeconfig --name test-hub --internal > $(PWD)/kubeconfig_hub_internal
 	kind create cluster --name test-managed
 	kind get kubeconfig --name test-managed > $(PWD)/kubeconfig_managed
+
+kind-create-cluster-hub-self-imported:
+	@echo "creating cluster with one hub and one managed"
+	kind create cluster --name test-hub
+	kind get kubeconfig --name test-hub > $(PWD)/kubeconfig_hub
+	# needed for mangaed -> hub communication
+	kind get kubeconfig --name test-hub > $(PWD)/kubeconfig_managed
 
 kind-delete-cluster:
 	kind delete cluster --name test-hub

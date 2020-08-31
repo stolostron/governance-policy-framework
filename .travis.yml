@@ -30,6 +30,14 @@ jobs:
       after_success:
         - if [ "$TRAVIS_BRANCH" == "master" -a "$TRAVIS_PULL_REQUEST" == "false" ]; then ./build/ff.sh; fi;
     - stage: test-e2e
+      name: "Deploy latest GRC controllers to cluster and run e2e tests"
+      env:
+        - deployOnHub=true
+      script:
+        - |
+          make
+          make component/test/e2e
+    - stage: test-e2e
       name: "Test polices from policy-collection repo"
       if: type = push AND branch = master
       script:
