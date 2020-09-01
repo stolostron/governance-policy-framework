@@ -97,8 +97,10 @@ var _ = Describe("Test gatekeeper", func() {
 				if plc.Object["status"] != nil {
 					if plc.Object["status"].(map[string]interface{})["details"] != nil {
 						details := plc.Object["status"].(map[string]interface{})["details"].([]interface{})
-						return checkForViolationMessage(details[1].(map[string]interface{})["history"].([]interface{}),
-							"NonCompliant; violation - k8srequiredlabels `ns-must-have-gk` does not exist as specified")
+						if details[1].(map[string]interface{})["history"] != nil {
+							return checkForViolationMessage(details[1].(map[string]interface{})["history"].([]interface{}),
+								"NonCompliant; violation - k8srequiredlabels `ns-must-have-gk` does not exist as specified")
+						}
 					}
 				}
 				return false
@@ -109,8 +111,10 @@ var _ = Describe("Test gatekeeper", func() {
 				if plc.Object["status"] != nil {
 					if plc.Object["status"].(map[string]interface{})["details"] != nil {
 						details := plc.Object["status"].(map[string]interface{})["details"].([]interface{})
-						return checkForViolationMessage(details[2].(map[string]interface{})["history"].([]interface{}),
-							"Compliant; notification - no instances of `events` exist as specified, therefore this Object template is compliant")
+						if details[2].(map[string]interface{})["history"] != nil {
+							return checkForViolationMessage(details[2].(map[string]interface{})["history"].([]interface{}),
+								"Compliant; notification - no instances of `events` exist as specified, therefore this Object template is compliant")
+						}
 					}
 				}
 				return false
