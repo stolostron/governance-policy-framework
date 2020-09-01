@@ -80,6 +80,8 @@ while [[ $(kubectl get pods -l control-plane=controller-manager -n gatekeeper-sy
     sleep 1
 done
 
+sleep 10
+
 kubectl get pods -n multicluster-endpoint
 
 make e2e-test
