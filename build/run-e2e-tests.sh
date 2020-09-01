@@ -32,6 +32,26 @@ make install-resources
 
 make kind-deploy-controller
 
+if [ "$deployOnHub" != "true" ]; then\
+    while [[ $(kubectl get pods -l name=governance-policy-spec-sync -n multicluster-endpoint -o 'jsonpath={..status.conditions[?(@.type=="Ready")].status}') != "True" ]]; do 
+        echo "waiting for pod: governance-policy-spec-sync"
+        kubectl get pods -l name=governance-policy-spec-sync -n multicluster-endpoint
+        sleep 1
+    done
+fi
+
+while [[ $(kubectl get pods -l name=governance-policy-status-sync -n multicluster-endpoint -o 'jsonpath={..status.conditions[?(@.type=="Ready")].status}') != "True" ]]; do 
+    echo "waiting for pod: governance-policy-status-sync"
+    kubectl get pods -l name=governance-policy-status-sync -n multicluster-endpoint
+    sleep 1
+done
+
+while [[ $(kubectl get pods -l name=governance-policy-template-sync -n multicluster-endpoint -o 'jsonpath={..status.conditions[?(@.type=="Ready")].status}') != "True" ]]; do 
+    echo "waiting for pod: governance-policy-template-sync"
+    kubectl get pods -l name=governance-policy-template-sync -n multicluster-endpoint
+    sleep 1
+done
+
 make kind-deploy-policy-controllers
 
 # wait for controller to start
@@ -54,33 +74,11 @@ while [[ $(kubectl get pods -l name=iam-policy-controller -n multicluster-endpoi
     sleep 1
 done
 
-if [ "$deployOnHub" != "true" ]; then\
-    while [[ $(kubectl get pods -l name=governance-policy-spec-sync -n multicluster-endpoint -o 'jsonpath={..status.conditions[?(@.type=="Ready")].status}') != "True" ]]; do 
-        echo "waiting for pod: governance-policy-spec-sync"
-        kubectl get pods -l name=governance-policy-spec-sync -n multicluster-endpoint
-        sleep 1
-    done
-fi
-
-while [[ $(kubectl get pods -l name=governance-policy-status-sync -n multicluster-endpoint -o 'jsonpath={..status.conditions[?(@.type=="Ready")].status}') != "True" ]]; do 
-    echo "waiting for pod: governance-policy-status-sync"
-    kubectl get pods -l name=governance-policy-status-sync -n multicluster-endpoint
-    sleep 1
-done
-
-while [[ $(kubectl get pods -l name=governance-policy-template-sync -n multicluster-endpoint -o 'jsonpath={..status.conditions[?(@.type=="Ready")].status}') != "True" ]]; do 
-    echo "waiting for pod: governance-policy-template-sync"
-    kubectl get pods -l name=governance-policy-template-sync -n multicluster-endpoint
-    sleep 1
-done
-
 while [[ $(kubectl get pods -l control-plane=controller-manager -n gatekeeper-system -o 'jsonpath={..status.conditions[?(@.type=="Ready")].status}') != "True" ]]; do 
     echo "waiting for pod: gatekeeper-controller-manager"
     kubectl get pods -l control-plane=controller-manager -n gatekeeper-system
     sleep 1
 done
-
-sleep 10
 
 kubectl get pods -n multicluster-endpoint
 
