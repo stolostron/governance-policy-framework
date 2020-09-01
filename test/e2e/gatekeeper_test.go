@@ -97,8 +97,10 @@ var _ = Describe("Test gatekeeper", func() {
 				if plc.Object["status"] != nil {
 					if plc.Object["status"].(map[string]interface{})["details"] != nil {
 						details := plc.Object["status"].(map[string]interface{})["details"].([]interface{})
-						return checkForViolationMessage(details[1].(map[string]interface{})["history"].([]interface{}),
-							"NonCompliant; violation - k8srequiredlabels `ns-must-have-gk` does not exist as specified")
+						if details[1].(map[string]interface{})["history"] != nil {
+							return checkForViolationMessage(details[1].(map[string]interface{})["history"].([]interface{}),
+								"NonCompliant; violation - k8srequiredlabels `ns-must-have-gk` does not exist as specified")
+						}
 					}
 				}
 				return false
@@ -109,8 +111,10 @@ var _ = Describe("Test gatekeeper", func() {
 				if plc.Object["status"] != nil {
 					if plc.Object["status"].(map[string]interface{})["details"] != nil {
 						details := plc.Object["status"].(map[string]interface{})["details"].([]interface{})
-						return checkForViolationMessage(details[2].(map[string]interface{})["history"].([]interface{}),
-							"Compliant; notification - no instances of `events` exist as specified, therefore this Object template is compliant")
+						if details[2].(map[string]interface{})["history"] != nil {
+							return checkForViolationMessage(details[2].(map[string]interface{})["history"].([]interface{}),
+								"Compliant; notification - no instances of `events` exist as specified, therefore this Object template is compliant")
+						}
 					}
 				}
 				return false
@@ -156,6 +160,9 @@ var _ = Describe("Test gatekeeper", func() {
 			utils.ListWithTimeout(clientManagedDynamic, gvrPolicy, metav1.ListOptions{}, 0, true, defaultTimeoutSeconds)
 			By("Checking if there is any configuration policy left")
 			utils.ListWithTimeout(clientManagedDynamic, gvrConfigurationPolicy, metav1.ListOptions{}, 0, true, defaultTimeoutSeconds)
+			By("Deleting gatekeeper ConstraintTemplate and K8sRequiredLabels")
+			utils.Kubectl("delete", "ConstraintTemplate", "--all", "--kubeconfig=../../kubeconfig_managed")
+			utils.Kubectl("delete", "K8sRequiredLabels", "--all", "--kubeconfig=../../kubeconfig_managed")
 		})
 	})
 })

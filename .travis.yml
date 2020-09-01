@@ -18,17 +18,24 @@ env:
 
 stages:
   - test-e2e
+  - ff
 
 jobs:
   include:
     - stage: test-e2e
-      name: "Deploy latest GRC controllers to cluster and run e2e tests"
+      name: "Governance framework e2e tests"
       script:
         - |
           make
           make component/test/e2e
-      after_success:
-        - if [ "$TRAVIS_BRANCH" == "master" -a "$TRAVIS_PULL_REQUEST" == "false" ]; then ./build/ff.sh; fi;
+    - stage: test-e2e
+      name: "Governance framework e2e tests with deployOnHub=true"
+      env:
+        - deployOnHub=true
+      script:
+        - |
+          make
+          make component/test/e2e
     - stage: test-e2e
       name: "Test polices from policy-collection repo"
       if: type = push AND branch = master
@@ -36,8 +43,11 @@ jobs:
         - |
           make
           make policy-collection-test
+    - stage: ff
+      name: "Fast forwarding GRC repos"
+      if: type = push AND branch = master
+      scripts: ./build/ff.sh
   
-
 notifications:
   slack:
     on_pull_requests: false
