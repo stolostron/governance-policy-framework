@@ -47,7 +47,6 @@ jobs:
       name: "Fast forwarding GRC repos"
       if: type = push AND branch = master
       scripts: ./build/ff.sh
-      
   
 notifications:
   slack:
