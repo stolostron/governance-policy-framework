@@ -57,7 +57,6 @@ make kind-deploy-policy-controllers
 # wait for controller to start
 while [[ $(kubectl get pods -l name=config-policy-ctrl -n multicluster-endpoint -o 'jsonpath={..status.conditions[?(@.type=="Ready")].status}') != "True" ]]; do 
     echo "waiting for pod: config-policy-ctrl"
-    kubectl get pods -A
     kubectl get pods -l name=config-policy-ctrl -n multicluster-endpoint
     sleep 1
 done
@@ -80,7 +79,9 @@ while [[ $(kubectl get pods -l control-plane=controller-manager -n gatekeeper-sy
     sleep 1
 done
 
-kubectl get pods -n multicluster-endpoint
+kubectl get pods -A
+
+echo "all ready! statt to test"
 
 make e2e-test
 
