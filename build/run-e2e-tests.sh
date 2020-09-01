@@ -34,8 +34,6 @@ make kind-deploy-controller
 
 make kind-deploy-policy-controllers
 
-
-
 # wait for controller to start
 while [[ $(kubectl get pods -l name=config-policy-ctrl -n multicluster-endpoint -o 'jsonpath={..status.conditions[?(@.type=="Ready")].status}') != "True" ]]; do 
     echo "waiting for pod: config-policy-ctrl"

@@ -56,8 +56,13 @@ kind-deploy-controller: check-env
 		echo installing policy-spec-sync on managed;\
 		kubectl apply -f deploy/spec-sync -n multicluster-endpoint --kubeconfig=$(PWD)/kubeconfig_managed;\
 	fi
-	@echo installing policy-status-sync on managed
-	kubectl apply -f deploy/status-sync -n multicluster-endpoint --kubeconfig=$(PWD)/kubeconfig_managed
+	if [ "$(deployOnHub)" = "true" ]; then\
+		echo installing policy-status-sync with ON_MULTICLUSTERHUB;\
+		kubectl apply -k deploy/status-sync -n multicluster-endpoint --kubeconfig=$(PWD)/kubeconfig_managed;\
+	else\
+		echo installing policy-status-sync on managed;\
+		kubectl apply -f deploy/status-sync/yamls -n multicluster-endpoint --kubeconfig=$(PWD)/kubeconfig_managed;\
+	fi
 	@echo installing policy-template-sync on managed
 	kubectl apply -f deploy/template-sync -n multicluster-endpoint --kubeconfig=$(PWD)/kubeconfig_managed
 
