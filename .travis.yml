@@ -45,7 +45,7 @@ jobs:
           make policy-collection-test
     - stage: ff
       name: "Fast forwarding GRC repos"
-      # if: type = push AND branch = master
+      if: type = push AND branch = master
       scripts: ./build/ff.sh
       
   
