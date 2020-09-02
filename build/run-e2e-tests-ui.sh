@@ -8,7 +8,6 @@ export OC_CLUSTER_URL=$OC_HUB_CLUSTER_URL
 export OC_CLUSTER_PASS=$OC_HUB_CLUSTER_PASS
 make oc/login
 oc delete policies.policy.open-cluster-management.io -n default --all || true
-# placementbindings.mcm.ibm.com throws error when doesn't exist
 oc delete placementbindings.policy.open-cluster-management.io  -n default --all || true
 oc delete placementrule  -n default --all || true
 
@@ -21,7 +20,6 @@ export OC_CLUSTER_URL=$OC_MANAGED_CLUSTER_URL
 export OC_CLUSTER_PASS=$OC_MANAGED_CLUSTER_PASS
 make oc/login
 oc delete pod --all -n default || true
-# secrets=`oc get certificate -l e2e=true -o=jsonpath='{.items[*].spec.secretName}'`
 oc delete issuer -l e2e=true -n default || true
 oc delete certificate -l e2e=true -n default || true
 oc delete secret -n default rsa-ca-sample-secret || true # in case secrets are empty
@@ -39,8 +37,6 @@ export OC_CLUSTER_URL=$OC_HUB_CLUSTER_URL
 export OC_CLUSTER_PASS=$OC_HUB_CLUSTER_PASS
 make oc/login
 
-# echo "Create RBAC users"
-# source ${TRAVIS_BUILD_DIR}/build/rbac-setup.sh
 # assume rbac user has been setup already
 export SELENIUM_USER=e2e-cluster-admin-cluster
 export SELENIUM_PASSWORD=${RBAC_PASS}
