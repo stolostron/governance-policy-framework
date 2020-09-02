@@ -11,7 +11,7 @@
 #     export RBAC_PASS=<your-password>
 
 set -e
-RBAC_DIR=${TRAVIS_BUILD_DIR:-.}/tests/e2e/yaml/rbac_test
+RBAC_DIR=${TRAVIS_BUILD_DIR:-.}
 
 if [ -z ${RBAC_PASS} ]; then
   echo "Error: RBAC password not set in variable RBAC_PASS."
