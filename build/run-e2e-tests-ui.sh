@@ -41,6 +41,10 @@ make oc/login
 
 # echo "Create RBAC users"
 # source ${TRAVIS_BUILD_DIR}/build/rbac-setup.sh
+# assume rbac user has been setup already
+export SELENIUM_USER=e2e-cluster-admin-cluster
+export SELENIUM_PASSWORD=${RBAC_PASS}
+export SELENIUM_USER_SELECT=e2e-htpasswd
 
 make docker/login
 export DOCKER_URI=quay.io/open-cluster-management/grc-ui-tests:latest-dev
@@ -51,4 +55,4 @@ export SELENIUM_USER=${SELENIUM_USER:-${OC_CLUSTER_USER}}
 export SELENIUM_PASSWORD=${SELENIUM_PASSWORD:-${OC_HUB_CLUSTER_PASS}}
 
 
-docker run --volume $(pwd)/results:/opt/app-root/src/grc-ui/test-output/e2e --env SELENIUM_CLUSTER=$SELENIUM_CLUSTER --env SELENIUM_PASSWORD=$SELENIUM_PASSWORD --env SELENIUM_USER=$SELENIUM_USER --env DISABLE_CANARY_TEST=true --env SKIP_NIGHTWATCH_COVERAGE=true --env SKIP_LOG_DELETE=true $DOCKER_URI
+docker run --volume $(pwd)/results:/opt/app-root/src/grc-ui/test-output/e2e --env SELENIUM_CLUSTER=$SELENIUM_CLUSTER --env SELENIUM_PASSWORD=$SELENIUM_PASSWORD --env SELENIUM_USER=$SELENIUM_USER --env SKIP_NIGHTWATCH_COVERAGE=true --env SKIP_LOG_DELETE=true $DOCKER_URI
