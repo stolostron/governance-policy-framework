@@ -125,3 +125,6 @@ e2e-test:
 policy-collection-test:
 	@echo creating user namespace on hub
 	./build/run-policy-collection-tests.sh
+
+travis-slack-reporter:
+	docker run --volume $(PWD)/results:/opt/app-root/src/grc-ui/test-output/e2e --env SLACK_TOKEN=$(SLACK_TOKEN) quay.io/open-cluster-management/grc-ui-tests:latest-dev node ./tests/utils/slack-reporter.js
