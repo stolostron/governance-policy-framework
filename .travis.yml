@@ -23,6 +23,14 @@ stages:
 jobs:
   include:
     - stage: test-e2e
+      name: "Governance framework UI e2e tests"
+      env:
+        - COMPONENT_E2E_TEST_COMMAND=${TRAVIS_BUILD_DIR}/build/run-e2e-tests-ui.sh
+      script: 
+        - |
+          make
+          make component/test/e2e
+    - stage: test-e2e
       name: "Governance framework e2e tests"
       script:
         - |
