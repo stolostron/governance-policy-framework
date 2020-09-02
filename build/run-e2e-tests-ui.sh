@@ -39,9 +39,6 @@ export OC_CLUSTER_URL=$OC_HUB_CLUSTER_URL
 export OC_CLUSTER_PASS=$OC_HUB_CLUSTER_PASS
 make oc/login
 
-# echo "Create RBAC users"
-# source ${TRAVIS_BUILD_DIR}/build/rbac-setup.sh
-
 make docker/login
 export DOCKER_URI=quay.io/open-cluster-management/grc-ui-tests:latest-dev
 make docker/pull
