@@ -41,11 +41,11 @@ make oc/login
 export SERVICEACCT_TOKEN=`${BUILD_HARNESS_PATH}/vendor/oc whoami --show-token`
 echo "SERVICEACCT_TOKEN=$SERVICEACCT_TOKEN"
 
-echo "Create RBAC users"
-source ${TRAVIS_BUILD_DIR}/build/rbac-setup.sh
+# echo "Create RBAC users"
+# source ${TRAVIS_BUILD_DIR}/build/rbac-setup.sh
 
 make docker/login
-export DOCKER_URI=quay.io/open-cluster-management/grc-ui-api:latest-dev
+export DOCKER_URI=quay.io/open-cluster-management/grc-ui-tests:latest-dev
 make docker/pull
 
 export SELENIUM_USER=${SELENIUM_USER:-${OC_CLUSTER_USER}}
