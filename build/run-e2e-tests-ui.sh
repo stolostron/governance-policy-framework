@@ -38,8 +38,8 @@ echo "Login hub again"
 export OC_CLUSTER_URL=$OC_HUB_CLUSTER_URL
 export OC_CLUSTER_PASS=$OC_HUB_CLUSTER_PASS
 make oc/login
-export SERVICEACCT_TOKEN=`${BUILD_HARNESS_PATH}/vendor/oc whoami --show-token`
-echo "SERVICEACCT_TOKEN=$SERVICEACCT_TOKEN"
+# export SERVICEACCT_TOKEN=`${BUILD_HARNESS_PATH}/vendor/oc whoami --show-token`
+# echo "SERVICEACCT_TOKEN=$SERVICEACCT_TOKEN"
 
 # echo "Create RBAC users"
 # source ${TRAVIS_BUILD_DIR}/build/rbac-setup.sh
@@ -48,6 +48,9 @@ make docker/login
 export DOCKER_URI=quay.io/open-cluster-management/grc-ui-tests:latest-dev
 make docker/pull
 
+export SELENIUM_CLUSTER=`oc get route multicloud-console -o=jsonpath='{.spec.host}'   `
 export SELENIUM_USER=${SELENIUM_USER:-${OC_CLUSTER_USER}}
 export SELENIUM_PASSWORD=${SELENIUM_PASSWORD:-${OC_HUB_CLUSTER_PASS}}
 
+
+docker run --volume $(pwd)/results:/opt/app-root/src/grc-ui/test-output/e2e --env SELENIUM_CLUSTER=$SELENIUM_CLUSTER --env SELENIUM_PASSWORD=$SELENIUM_PASSWORD --env SELENIUM_USER=$SELENIUM_USER --env DISABLE_CANARY_TEST=true --env SKIP_NIGHTWATCH_COVERAGE=true --env SKIP_LOG_DELETE=true $DOCKER_URI
