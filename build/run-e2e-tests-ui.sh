@@ -46,7 +46,7 @@ docker run --volume $(pwd):/opt/app-root/src/tmp -e RBAC_PASS=$RBAC_PASS quay.io
 sudo chmod -R 777 build tests
 source ${TRAVIS_BUILD_DIR}/build/rbac-setup.sh
 
-export SELENIUM_CLUSTER=https://`oc get route multicloud-console -n open-cluster-management -o=jsonpath='{.spec.host}'   `
+export SELENIUM_CLUSTER=https://`oc get route multicloud-console -n open-cluster-management -o=jsonpath='{.spec.host}'`
 export SELENIUM_USER=${SELENIUM_USER:-${OC_CLUSTER_USER}}
 export SELENIUM_PASSWORD=${SELENIUM_PASSWORD:-${OC_HUB_CLUSTER_PASS}}
 
