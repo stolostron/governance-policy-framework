@@ -38,7 +38,7 @@ export OC_CLUSTER_PASS=$OC_HUB_CLUSTER_PASS
 make oc/login
 
 # assume rbac user has been setup already
-docker run --volume $(PWD):/opt/app-root/src/tmp  -e RBAC_PASS=8f63a29624fa7f26672b65e83026fcfc quay.io/open-cluster-management/grc-ui-tests:latest-dev cp -r build tests /opt/app-root/src/tmp
+docker run --volume $(PWD):/opt/app-root/src/tmp  -e RBAC_PASS=$RBAC_PASS quay.io/open-cluster-management/grc-ui-tests:latest-dev cp -r build tests /opt/app-root/src/tmp
 source ${TRAVIS_BUILD_DIR}/build/rbac-setup.sh
 
 make docker/login
