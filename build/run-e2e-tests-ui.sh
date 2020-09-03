@@ -37,13 +37,13 @@ export OC_CLUSTER_URL=$OC_HUB_CLUSTER_URL
 export OC_CLUSTER_PASS=$OC_HUB_CLUSTER_PASS
 make oc/login
 
-# assume rbac user has been setup already
-docker run --volume $(PWD):/opt/app-root/src/tmp  -e RBAC_PASS=$RBAC_PASS quay.io/open-cluster-management/grc-ui-tests:latest-dev cp -r build tests /opt/app-root/src/tmp
-source ${TRAVIS_BUILD_DIR}/build/rbac-setup.sh
-
 make docker/login
 export DOCKER_URI=quay.io/open-cluster-management/grc-ui-tests:latest-dev
 make docker/pull
+
+# assume rbac user has been setup already
+docker run --volume $(PWD):/opt/app-root/src/tmp  -e RBAC_PASS=$RBAC_PASS quay.io/open-cluster-management/grc-ui-tests:latest-dev cp -r build tests /opt/app-root/src/tmp
+source ${TRAVIS_BUILD_DIR}/build/rbac-setup.sh
 
 export SELENIUM_CLUSTER=https://`oc get route multicloud-console -n open-cluster-management -o=jsonpath='{.spec.host}'   `
 export SELENIUM_USER=${SELENIUM_USER:-${OC_CLUSTER_USER}}
