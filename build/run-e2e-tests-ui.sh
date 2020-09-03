@@ -41,8 +41,9 @@ make docker/login
 export DOCKER_URI=quay.io/open-cluster-management/grc-ui-tests:latest-dev
 make docker/pull
 
-# assume rbac user has been setup already
+# setup RBAC roles using test image
 docker run --volume $(pwd):/opt/app-root/src/tmp -e RBAC_PASS=$RBAC_PASS quay.io/open-cluster-management/grc-ui-tests:latest-dev cp -r build tests /opt/app-root/src/tmp
+chmod -R 777  tests build
 source ${TRAVIS_BUILD_DIR}/build/rbac-setup.sh
 
 export SELENIUM_CLUSTER=https://`oc get route multicloud-console -n open-cluster-management -o=jsonpath='{.spec.host}'   `
