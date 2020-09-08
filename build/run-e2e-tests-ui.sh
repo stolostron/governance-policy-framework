@@ -42,7 +42,7 @@ docker run --volume $(pwd)/results:/opt/app-root/src/grc-ui/test-output/e2e \
     --env OC_CLUSTER_URL=$OC_HUB_CLUSTER_URL \
     --env OC_CLUSTER_PASS=$OC_HUB_CLUSTER_PASS \
     --env OC_CLUSTER_USER=$OC_CLUSTER_USER \
-    --env DISABLE_CANARY_TEST=true \
+    --env RBAC_PASS=$RBAC_PASS \
     --env TRAVIS_REPO_SLUG=$TRAVIS_REPO_SLUG \
     --env TRAVIS_PULL_REQUEST=$TRAVIS_PULL_REQUEST \
     --env TRAVIS_BRANCH=$TRAVIS_BRANCH \
