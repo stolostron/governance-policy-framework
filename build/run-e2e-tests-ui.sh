@@ -32,23 +32,15 @@ echo "Logout"
 export OC_COMMAND=logout
 make oc/command
 
-echo "Login hub again"
-export OC_CLUSTER_URL=$OC_HUB_CLUSTER_URL
-export OC_CLUSTER_PASS=$OC_HUB_CLUSTER_PASS
-make oc/login
-
-# assume rbac user has been setup already
-export SELENIUM_USER=e2e-cluster-admin-cluster
-export SELENIUM_PASSWORD=${RBAC_PASS}
-export SELENIUM_USER_SELECT=grc-e2e-htpasswd
-
 make docker/login
 export DOCKER_URI=quay.io/open-cluster-management/grc-ui-tests:latest-dev
 make docker/pull
 
-export SELENIUM_CLUSTER=https://`oc get route multicloud-console -n open-cluster-management -o=jsonpath='{.spec.host}'   `
-export SELENIUM_USER=${SELENIUM_USER:-${OC_CLUSTER_USER}}
-export SELENIUM_PASSWORD=${SELENIUM_PASSWORD:-${OC_HUB_CLUSTER_PASS}}
+printenv
 
-
-docker run --volume $(pwd)/results:/opt/app-root/src/grc-ui/test-output/e2e --env SELENIUM_USER_SELECT=$SELENIUM_USER_SELECT --env SELENIUM_CLUSTER=$SELENIUM_CLUSTER --env SELENIUM_PASSWORD=$SELENIUM_PASSWORD --env SELENIUM_USER=$SELENIUM_USER --env RBAC_PASS=$RBAC_PASS --env SKIP_NIGHTWATCH_COVERAGE=true --env SKIP_LOG_DELETE=true $DOCKER_URI
+docker run --volume $(pwd)/results:/opt/app-root/src/grc-ui/test-output/e2e \
+    --env OC_CLUSTER_URL=$OC_HUB_CLUSTER_URL \
+    --env OC_CLUSTER_PASS=$OC_HUB_CLUSTER_PASS \
+    --env OC_CLUSTER_USER=$OC_CLUSTER_USER \
+    --env RBAC_PASS=$RBAC_PASS \
+    $DOCKER_URI
