@@ -122,10 +122,7 @@ var _ = Describe("Test gatekeeper", func() {
 		})
 		It("should properly enforce gatekeeper policy", func() {
 			By("Creating invalid namespace on managed")
-			Consistently(func() interface{} {
-				//wait before trying to create ns
-				return nil
-			}, defaultTimeoutSeconds, 1).Should(BeNil())
+			utils.Pause(60)
 			utils.Kubectl("create", "ns", "e2etestfail", "--kubeconfig=../../kubeconfig_managed")
 			Consistently(func() interface{} {
 				return GetClusterLevelWithTimeout(clientManagedDynamic, gvrNS, "e2etestfail", false, defaultTimeoutSeconds)
