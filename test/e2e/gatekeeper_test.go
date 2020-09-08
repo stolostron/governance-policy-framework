@@ -125,7 +125,7 @@ var _ = Describe("Test gatekeeper", func() {
 			Consistently(func() interface{} {
 				//wait before trying to create ns
 				return nil
-			}, defaultTimeoutSeconds, 1).Should(BeNil())
+			}, 60, 1).Should(BeNil())
 			utils.Kubectl("create", "ns", "e2etestfail", "--kubeconfig=../../kubeconfig_managed")
 			Consistently(func() interface{} {
 				return GetClusterLevelWithTimeout(clientManagedDynamic, gvrNS, "e2etestfail", false, defaultTimeoutSeconds)
