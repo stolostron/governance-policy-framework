@@ -7,7 +7,7 @@
 trap "exit 1" TERM
 TOP_PID=$$
 
-KUBECTL_ARGS=""
+OC_ARGS=""
 WAIT_TIME="${WAIT_TIME:-2}" # seconds
 DEBUG="${DEBUG:-0}"
 TREAT_ERRORS_AS_READY=0
@@ -16,9 +16,9 @@ usage() {
 cat <<EOF
 This script waits until a job, pod or service enter ready state. 
 
-${0##*/} job [<job name> | -l<kubectl selector>]
-${0##*/} pod [<pod name> | -l<kubectl selector>]
-${0##*/} service [<service name> | -l<kubectl selector>]
+${0##*/} job [<job name> | -l<oc selector>]
+${0##*/} pod [<pod name> | -l<oc selector>]
+${0##*/} service [<service name> | -l<oc selector>]
 
 Examples:
 Wait for all pods with a following label to enter 'Ready' state:
@@ -45,7 +45,7 @@ exit 1
 get_pod_state() {
     get_pod_state_name="$1"
     get_pod_state_flags="$2"
-    get_pod_state_output1=$(kubectl get pods "$get_pod_state_name" $get_pod_state_flags $KUBECTL_ARGS -o go-template='
+    get_pod_state_output1=$(oc get pods "$get_pod_state_name" $get_pod_state_flags $OC_ARGS -o go-template='
 {{- define "checkStatus" -}}
   {{- $rootStatus := .status }}
   {{- $hasReadyStatus := false }}
@@ -110,7 +110,7 @@ get_pod_state() {
 # example output with 2 services each matching a single pod would be: "falsefalse"
 get_service_state() {
     get_service_state_name="$1"
-    get_service_state_selectors=$(kubectl get service "$get_service_state_name" $KUBECTL_ARGS -ojson | jq -cr 'if . | has("items") then .items[] else . end | [ .spec.selector | to_entries[] | "\(.key)=\(.value)" ] | join(",") ' 2>&1)
+    get_service_state_selectors=$(oc get service "$get_service_state_name" $OC_ARGS -ojson | jq -cr 'if . | has("items") then .items[] else . end | [ .spec.selector | to_entries[] | "\(.key)=\(.value)" ] | join(",") ' 2>&1)
     if [ $? -ne 0 ]; then
         echo "$get_service_state_selectors" >&2
         kill -s TERM $TOP_PID
@@ -135,10 +135,10 @@ get_service_state() {
 # example output with 2 still running jobs would be "0 0"
 # this function considers the line:
 # Pods Statuses:	0 Running / 1 Succeeded / 0 Failed
-# in a 'kubectl describe' job output.
+# in a 'oc describe' job output.
 get_job_state() {
     get_job_state_name="$1"
-    get_job_state_output=$(kubectl describe jobs "$get_job_state_name" $KUBECTL_ARGS 2>&1)
+    get_job_state_output=$(oc describe jobs "$get_job_state_name" $OC_ARGS 2>&1)
     if [ $? -ne 0 ]; then
         echo "$get_job_state_output" >&2
         kill -s TERM $TOP_PID
@@ -193,18 +193,18 @@ wait_for_resource() {
     wait_for_resource_type=$1
     wait_for_resource_descriptor="$2"
     while [ -n "$(get_${wait_for_resource_type}_state "$wait_for_resource_descriptor")" ] ; do
-        print_KUBECTL_ARGS="$KUBECTL_ARGS"
-        [ "$print_KUBECTL_ARGS" != "" ] && print_KUBECTL_ARGS=" $print_KUBECTL_ARGS"
-        echo "Waiting for $wait_for_resource_type $wait_for_resource_descriptor${print_KUBECTL_ARGS}..."
+        print_OC_ARGS="$OC_ARGS"
+        [ "$print_OC_ARGS" != "" ] && print_OC_ARGS=" $print_OC_ARGS"
+        echo "Waiting for $wait_for_resource_type $wait_for_resource_descriptor${print_OC_ARGS}..."
         sleep "$WAIT_TIME"
     done
     ready "$wait_for_resource_type" "$wait_for_resource_descriptor"
 }
 
 ready() {
-    print_KUBECTL_ARGS="$KUBECTL_ARGS"
-    [ "$print_KUBECTL_ARGS" != "" ] && print_KUBECTL_ARGS=" $print_KUBECTL_ARGS"
-    printf "[%s] %s %s%s is ready.\\n" "$(date +'%Y-%m-%d %H:%M:%S')" "$1" "$2" "$print_KUBECTL_ARGS"
+    print_OC_ARGS="$OC_ARGS"
+    [ "$print_OC_ARGS" != "" ] && print_OC_ARGS=" $print_OC_ARGS"
+    printf "[%s] %s %s%s is ready.\\n" "$(date +'%Y-%m-%d %H:%M:%S')" "$1" "$2" "$print_OC_ARGS"
 }
 
 main() {
@@ -231,7 +231,7 @@ main() {
     main_name="$1"
     shift
 
-    KUBECTL_ARGS="${*}"
+    OC_ARGS="${*}"
 
     wait_for_resource "$main_resource" "$main_name"
 
