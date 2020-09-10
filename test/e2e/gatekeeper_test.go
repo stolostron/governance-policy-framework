@@ -135,7 +135,7 @@ var _ = Describe("Test gatekeeper", func() {
 					return checkForViolationMessage(details[2].(map[string]interface{})["history"].([]interface{}), "NonCompliant; violation - events exist:")
 				}
 				return false
-			}, defaultTimeoutSeconds, 1).Should(Equal(true))
+			}, defaultTimeoutSeconds*2, 1).Should(Equal(true))
 		})
 		It("should create relatedObjects properly on managed", func() {
 			By("Checking configurationpolicies on managed")
