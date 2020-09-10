@@ -65,7 +65,7 @@ var _ = Describe("Test cert policy", func() {
 			Eventually(func() interface{} {
 				rootPlc := utils.GetWithTimeout(clientHubDynamic, gvrPolicy, certPolicyName, userNamespace, true, defaultTimeoutSeconds)
 				return rootPlc.Object["status"]
-			}, defaultTimeoutSeconds, 1).Should(utils.SemanticEqual(yamlPlc.Object["status"]))
+			}, defaultTimeoutSeconds*2, 1).Should(utils.SemanticEqual(yamlPlc.Object["status"]))
 		})
 		It("the policy should be compliant after creating a certficate that doesn't expire", func() {
 			By("Creating ../resources/cert_policy/certificate_compliant.yaml in ns default")
