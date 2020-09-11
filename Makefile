@@ -31,7 +31,7 @@ kind-bootstrap-cluster: kind-create-cluster install-crds install-resources kind-
 kind-bootstrap-cluster-dev: kind-create-cluster install-crds install-resources
 
 .PHONY: kind-deploy-policy-controllers
-kind-deploy-policy-controllers: kind-deploy-config-policy-controller kind-deploy-cert-policy-controller kind-deploy-iam-policy-controller kind-deploy-gatekeeper
+kind-deploy-policy-controllers: kind-deploy-cert-policy-controller kind-deploy-gatekeeper kind-deploy-config-policy-controller kind-deploy-iam-policy-controller
 
 check-env:
 ifndef DOCKER_USER

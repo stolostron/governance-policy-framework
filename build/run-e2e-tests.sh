@@ -79,6 +79,12 @@ while [[ $(kubectl get pods -l control-plane=controller-manager -n gatekeeper-sy
     sleep 1
 done
 
+while [[ $(kubectl get pods -l control-plane=audit-controller -n gatekeeper-system -o 'jsonpath={..status.conditions[?(@.type=="Ready")].status}') != "True" ]]; do 
+    echo "waiting for pod: gatekeeper-audit"
+    kubectl get pods -l control-plane=gatekeeper-audit -n gatekeeper-system
+    sleep 1
+done
+
 kubectl get pods -A
 
 echo "all ready! statt to test"
