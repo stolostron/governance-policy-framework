@@ -122,36 +122,26 @@ var _ = Describe("Test gatekeeper", func() {
 				return len(nsMustHaveGkCR.Object["status"].(map[string]interface{})["byPod"].([]interface{}))
 			}, defaultTimeoutSeconds, 1).Should(Equal(2))
 		})
-		// It("should generate statuses properly on hub", func() {
-		// 	By("Checking statuses on hub policy")
-		// 	Eventually(func() interface{} {
-		// 		plc := utils.GetWithTimeout(clientHubDynamic, gvrPolicy, "default."+GKPolicyName, clusterNamespace, true, defaultTimeoutSeconds)
-		// 		if plc.Object["status"] != nil {
-		// 			if plc.Object["status"].(map[string]interface{})["details"] != nil {
-		// 				details := plc.Object["status"].(map[string]interface{})["details"].([]interface{})
-		// 				if details[1].(map[string]interface{})["history"] != nil {
-		// 					return checkForViolationMessage(details[1].(map[string]interface{})["history"].([]interface{}),
-		// 						"NonCompliant; violation - k8srequiredlabels `ns-must-have-gk` does not exist as specified")
-		// 				}
-		// 			}
-		// 		}
-		// 		return false
-		// 	}, defaultTimeoutSeconds, 1).Should(Equal(true))
-		// 	By("Checking for violations in events")
-		// 	Eventually(func() interface{} {
-		// 		plc := utils.GetWithTimeout(clientHubDynamic, gvrPolicy, "default."+GKPolicyName, clusterNamespace, true, defaultTimeoutSeconds)
-		// 		if plc.Object["status"] != nil {
-		// 			if plc.Object["status"].(map[string]interface{})["details"] != nil {
-		// 				details := plc.Object["status"].(map[string]interface{})["details"].([]interface{})
-		// 				if details[2].(map[string]interface{})["history"] != nil {
-		// 					return checkForViolationMessage(details[2].(map[string]interface{})["history"].([]interface{}),
-		// 						"Compliant; notification - no instances of `events` exist as specified, therefore this Object template is compliant")
-		// 				}
-		// 			}
-		// 		}
-		// 		return false
-		// 	}, defaultTimeoutSeconds, 1).Should(Equal(true))
-		// })
+		It("should generate statuses properly on hub", func() {
+			By("Checking if status for policy template policy-gatekeeper-k8srequiredlabels is compliant")
+			Eventually(func() interface{} {
+				plc := utils.GetWithTimeout(clientHubDynamic, gvrPolicy, "default."+GKPolicyName, clusterNamespace, true, defaultTimeoutSeconds)
+				details := plc.Object["status"].(map[string]interface{})["details"].([]interface{})
+				return details[0].(map[string]interface{})["compliant"]
+			}, defaultTimeoutSeconds, 1).Should(Equal("Compliant"))
+			By("Checking if violation message for policy template policy-gatekeeper-audit is correct")
+			Eventually(func() interface{} {
+				plc := utils.GetWithTimeout(clientHubDynamic, gvrPolicy, "default."+GKPolicyName, clusterNamespace, true, defaultTimeoutSeconds)
+				details := plc.Object["status"].(map[string]interface{})["details"].([]interface{})
+				return details[1].(map[string]interface{})["history"].([]interface{})[0].(map[string]interface{})["message"]
+			}, defaultTimeoutSeconds, 1).Should(Equal("NonCompliant; violation - k8srequiredlabels `ns-must-have-gk` does not exist as specified"))
+			By("Checking if violation message for policy template policy-gatekeeper-admission is correct")
+			Eventually(func() interface{} {
+				plc := utils.GetWithTimeout(clientHubDynamic, gvrPolicy, "default."+GKPolicyName, clusterNamespace, true, defaultTimeoutSeconds)
+				details := plc.Object["status"].(map[string]interface{})["details"].([]interface{})
+				return details[2].(map[string]interface{})["history"].([]interface{})[0].(map[string]interface{})["message"]
+			}, defaultTimeoutSeconds, 1).Should(Equal("Compliant; notification - no instances of `events` exist as specified, therefore this Object template is compliant"))
+		})
 		// It("should properly enforce gatekeeper policy", func() {
 		// 	By("Creating invalid namespace on managed")
 		// 	utils.Pause(60)
