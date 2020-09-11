@@ -7,9 +7,12 @@ echo "Login hub to clean up"
 export OC_CLUSTER_URL=$OC_HUB_CLUSTER_URL
 export OC_CLUSTER_PASS=$OC_HUB_CLUSTER_PASS
 make oc/login
-oc delete policies.policy.open-cluster-management.io -n default --all || true
-oc delete placementbindings.policy.open-cluster-management.io  -n default --all || true
-oc delete placementrule  -n default --all || true
+for ns in default e2e-rbac-test-1 e2e-rbac-test-2
+do
+    oc delete policies.policy.open-cluster-management.io -n $ns --all || true
+    oc delete placementbindings.policy.open-cluster-management.io  -n $ns --all || true
+    oc delete placementrules.apps.open-cluster-management.io -n $ns --all || true
+done
 
 echo "Logout"
 export OC_COMMAND=logout
