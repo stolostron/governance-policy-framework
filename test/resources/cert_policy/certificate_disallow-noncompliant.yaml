@@ -6,7 +6,7 @@ spec:
   commonName: wap-master.fyre.test.com
   dnsNames:
     - wap-master.fyre.test.com
-    - *.fyre.test.com
+    - "*.fyre.test.com"
   duration: 50h
   isCA: true
   issuerRef:
