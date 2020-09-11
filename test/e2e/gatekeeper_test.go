@@ -98,6 +98,30 @@ var _ = Describe("Test gatekeeper", func() {
 			nsMustHaveGkCR := GetClusterLevelWithTimeout(clientManagedDynamic, gvrK8sRequiredLabels, "ns-must-have-gk", true, defaultTimeoutSeconds)
 			Expect(nsMustHaveGkCR).NotTo(BeNil())
 		})
+		It("K8sRequiredLabels ns-must-have-gk should be properly enforced for audit", func() {
+			By("Checking if ns-must-have-gk status field has been updated")
+			Eventually(func() interface{} {
+				nsMustHaveGkCR := GetClusterLevelWithTimeout(clientManagedDynamic, gvrK8sRequiredLabels, "ns-must-have-gk", true, defaultTimeoutSeconds)
+				return nsMustHaveGkCR.Object["status"]
+			}, defaultTimeoutSeconds, 1).ShouldNot(BeNil())
+			By("Checking if ns-must-have-gk status.totalViolations field has been updated")
+			Eventually(func() interface{} {
+				nsMustHaveGkCR := GetClusterLevelWithTimeout(clientManagedDynamic, gvrK8sRequiredLabels, "ns-must-have-gk", true, defaultTimeoutSeconds)
+				return nsMustHaveGkCR.Object["status"].(map[string]interface{})["totalViolations"]
+			}, defaultTimeoutSeconds, 1).ShouldNot(BeNil())
+			By("Checking if ns-must-have-gk status.violations field has been updated")
+			Eventually(func() interface{} {
+				nsMustHaveGkCR := GetClusterLevelWithTimeout(clientManagedDynamic, gvrK8sRequiredLabels, "ns-must-have-gk", true, defaultTimeoutSeconds)
+				return nsMustHaveGkCR.Object["status"].(map[string]interface{})["violations"]
+			}, defaultTimeoutSeconds, 1).ShouldNot(BeNil())
+		})
+		It("K8sRequiredLabels ns-must-have-gk should be properly enforced for admission", func() {
+			By("Checking if ns-must-have-gk status.byPod field size is two")
+			Eventually(func() interface{} {
+				nsMustHaveGkCR := GetClusterLevelWithTimeout(clientManagedDynamic, gvrK8sRequiredLabels, "ns-must-have-gk", true, defaultTimeoutSeconds)
+				return len(nsMustHaveGkCR.Object["status"].(map[string]interface{})["byPod"].([]interface{}))
+			}, defaultTimeoutSeconds, 1).Should(Equal(2))
+		})
 		// It("should generate statuses properly on hub", func() {
 		// 	By("Checking statuses on hub policy")
 		// 	Eventually(func() interface{} {
