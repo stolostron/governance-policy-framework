@@ -4,7 +4,6 @@ package e2e
 
 import (
 	"fmt"
-	"strings"
 
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
@@ -48,10 +47,6 @@ func GetClusterLevelWithTimeout(
 		return obj
 	}
 	return nil
-}
-
-func checkForViolationMessage(history []interface{}, message string) (f bool) {
-	return strings.HasPrefix(history[0].(map[string]interface{})["message"].(string), message)
 }
 
 var _ = Describe("Test gatekeeper", func() {
@@ -142,46 +137,41 @@ var _ = Describe("Test gatekeeper", func() {
 				return details[2].(map[string]interface{})["history"].([]interface{})[0].(map[string]interface{})["message"]
 			}, defaultTimeoutSeconds, 1).Should(Equal("Compliant; notification - no instances of `events` exist as specified, therefore this Object template is compliant"))
 		})
-		// It("should properly enforce gatekeeper policy", func() {
-		// 	By("Creating invalid namespace on managed")
-		// 	utils.Pause(60)
-		// 	utils.Kubectl("create", "ns", "e2etestfail", "--kubeconfig=../../kubeconfig_managed")
-		// 	Consistently(func() interface{} {
-		// 		return GetClusterLevelWithTimeout(clientManagedDynamic, gvrNS, "e2etestfail", false, defaultTimeoutSeconds)
-		// 	}, defaultTimeoutSeconds, 1).Should(BeNil())
-		// 	By("Checking for violations in events")
-		// 	Eventually(func() interface{} {
-		// 		plc := utils.GetWithTimeout(clientHubDynamic, gvrPolicy, "default."+GKPolicyName, clusterNamespace, true, defaultTimeoutSeconds)
-		// 		if plc.Object["status"] != nil {
-		// 			details := plc.Object["status"].(map[string]interface{})["details"].([]interface{})
-		// 			return checkForViolationMessage(details[2].(map[string]interface{})["history"].([]interface{}), "NonCompliant; violation - events exist:")
-		// 		}
-		// 		return false
-		// 	}, defaultTimeoutSeconds, 1).Should(Equal(true))
-		// })
-		// It("should create relatedObjects properly on managed", func() {
-		// 	By("Checking configurationpolicies on managed")
-		// 	Eventually(func() interface{} {
-		// 		plc := utils.GetWithTimeout(clientManagedDynamic, gvrConfigurationPolicy, cfgpolauditName, clusterNamespace, true, 120)
-		// 		if plc.Object["status"] != nil {
-		// 			ro := plc.Object["status"].(map[string]interface{})["relatedObjects"].([]interface{})
-		// 			md := ro[0].(map[string]interface{})["object"].(map[string]interface{})["metadata"].(map[string]interface{})
-		// 			return md["name"]
-		// 		}
-		// 		return ""
-		// 	}, defaultTimeoutSeconds, 1).Should(Equal("ns-must-have-gk"))
-		// })
-		// It("should clean up", func() {
-		// 	By("Deleting gatekeeper policy on hub")
-		// 	utils.Kubectl("delete", "-f", GKPolicyYaml, "-n", "default", "--kubeconfig=../../kubeconfig_hub")
-		// 	By("Checking if there is any policy left")
-		// 	utils.ListWithTimeout(clientHubDynamic, gvrPolicy, metav1.ListOptions{}, 0, true, defaultTimeoutSeconds)
-		// 	utils.ListWithTimeout(clientManagedDynamic, gvrPolicy, metav1.ListOptions{}, 0, true, defaultTimeoutSeconds)
-		// 	By("Checking if there is any configuration policy left")
-		// 	utils.ListWithTimeout(clientManagedDynamic, gvrConfigurationPolicy, metav1.ListOptions{}, 0, true, defaultTimeoutSeconds)
-		// 	By("Deleting gatekeeper ConstraintTemplate and K8sRequiredLabels")
-		// 	utils.Kubectl("delete", "ConstraintTemplate", "--all", "--kubeconfig=../../kubeconfig_managed")
-		// 	utils.Kubectl("delete", "K8sRequiredLabels", "--all", "--kubeconfig=../../kubeconfig_managed")
-		// })
+		It("Creating an invalid ns should generate a violation message", func() {
+			By("Creating invalid namespace on managed")
+			utils.Kubectl("create", "ns", "e2etestfail", "--kubeconfig=../../kubeconfig_managed")
+			By("Checking if status for policy template policy-gatekeeper-admission is noncompliant")
+			Eventually(func() interface{} {
+				plc := utils.GetWithTimeout(clientHubDynamic, gvrPolicy, "default."+GKPolicyName, clusterNamespace, true, defaultTimeoutSeconds)
+				details := plc.Object["status"].(map[string]interface{})["details"].([]interface{})
+				return details[2].(map[string]interface{})["compliant"]
+			}, defaultTimeoutSeconds, 1).Should(Equal("NonCompliant"))
+			By("Checking if violation message for policy template policy-gatekeeper-admission is correct")
+			Eventually(func() interface{} {
+				plc := utils.GetWithTimeout(clientHubDynamic, gvrPolicy, "default."+GKPolicyName, clusterNamespace, true, defaultTimeoutSeconds)
+				details := plc.Object["status"].(map[string]interface{})["details"].([]interface{})
+				return details[2].(map[string]interface{})["history"].([]interface{})[0].(map[string]interface{})["message"]
+			}, defaultTimeoutSeconds, 1).Should(ContainSubstring("NonCompliant; violation - events exist:"))
+		})
+		It("should create relatedObjects properly on managed", func() {
+			By("Checking configurationpolicies on managed")
+			Eventually(func() interface{} {
+				plc := utils.GetWithTimeout(clientManagedDynamic, gvrConfigurationPolicy, cfgpolauditName, clusterNamespace, true, defaultTimeoutSeconds)
+				ro := plc.Object["status"].(map[string]interface{})["relatedObjects"].([]interface{})
+				return ro[0].(map[string]interface{})["object"].(map[string]interface{})["metadata"].(map[string]interface{})["name"]
+			}, defaultTimeoutSeconds, 1).Should(Equal("ns-must-have-gk"))
+		})
+		It("should clean up", func() {
+			By("Deleting gatekeeper policy on hub")
+			utils.Kubectl("delete", "-f", GKPolicyYaml, "-n", "default", "--kubeconfig=../../kubeconfig_hub")
+			By("Checking if there is any policy left")
+			utils.ListWithTimeout(clientHubDynamic, gvrPolicy, metav1.ListOptions{}, 0, true, defaultTimeoutSeconds)
+			utils.ListWithTimeout(clientManagedDynamic, gvrPolicy, metav1.ListOptions{}, 0, true, defaultTimeoutSeconds)
+			By("Checking if there is any configuration policy left")
+			utils.ListWithTimeout(clientManagedDynamic, gvrConfigurationPolicy, metav1.ListOptions{}, 0, true, defaultTimeoutSeconds)
+			By("Deleting gatekeeper ConstraintTemplate and K8sRequiredLabels")
+			utils.Kubectl("delete", "ConstraintTemplate", "--all", "--kubeconfig=../../kubeconfig_managed")
+			utils.Kubectl("delete", "K8sRequiredLabels", "--all", "--kubeconfig=../../kubeconfig_managed")
+		})
 	})
 })
