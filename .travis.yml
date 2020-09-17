@@ -25,7 +25,7 @@ jobs:
   include:
     - stage: patch-cluster
       name: "Patch cluster to latest"
-      # if: type != pull_request AND branch = master
+      if: type != pull_request AND branch = master
       env:
         - COMPONENT_E2E_TEST_COMMAND=${TRAVIS_BUILD_DIR}/build/patch-cluster.sh
       script: 
@@ -34,7 +34,7 @@ jobs:
           make component/test/e2e
     - stage: test-e2e
       name: "Governance framework UI e2e tests"
-      # if: type != pull_request AND branch = master
+      if: type != pull_request AND branch = master
       env:
         - COMPONENT_E2E_TEST_COMMAND=${TRAVIS_BUILD_DIR}/build/run-e2e-tests-ui.sh
       script: 
