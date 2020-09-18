@@ -8,6 +8,8 @@ if ! which kubectl > /dev/null; then
 fi
 
 echo "Login hub"
+export OC_CLUSTER_URL=$OC_HUB_CLUSTER_URL
+export OC_CLUSTER_PASS=$OC_HUB_CLUSTER_PASS
 make oc/login
 
 kubectl create ns policy-collection-e2e || true
