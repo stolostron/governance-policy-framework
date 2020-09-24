@@ -7,7 +7,7 @@ export OC_CLUSTER_URL=$OC_HUB_CLUSTER_URL
 export OC_CLUSTER_PASS=$OC_HUB_CLUSTER_PASS
 make oc/login
 
-# ./build/patch-dev-images.sh
+./build/patch-dev-images.sh
 
 oc delete pod -l app=console-header -A
 oc delete pod -l app=grc -A
