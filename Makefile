@@ -72,7 +72,7 @@ kind-deploy-config-policy-controller: check-env
 
 kind-deploy-cert-policy-controller: check-env
 	@echo installing cert-manager on managed
-	kubectl apply --validate=false -f https://github.com/jetstack/cert-manager/releases/download/v0.15.1/cert-manager.yaml --kubeconfig=$(PWD)/kubeconfig_managed
+	kubectl apply --validate=false -f https://github.com/jetstack/cert-manager/releases/download/v1.0.1/cert-manager.yaml --kubeconfig=$(PWD)/kubeconfig_managed
 	@echo installing cert-policy-controller on managed
 	kubectl apply -f deploy/cert-policy-controller -n multicluster-endpoint --kubeconfig=$(PWD)/kubeconfig_managed
 
