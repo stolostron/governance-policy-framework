@@ -71,6 +71,7 @@ jobs:
   
 notifications:
   slack:
+    if: branch = master
     on_pull_requests: false
     rooms:
       secure: qaj5g0eO0XtIXz9vhwIkeH8RTtOFVMjZabgDAEk/YqUtBRrOTVADp4haRigNYBwhnew/h5gA4i+8j/rBZGbNn0W4ziPJT5WDAbqlyg6v7A/xguJozKL4LIuW29NaJaNisW1OtDCrXxJ0Pb5HjaIhoQMxl5UWKP7BJv0Xy9lq4tqfO+CJDuyerP0M6pFgnK8qYpbQ5NDh4Ou7HMLxYrJdfXf7T7YYi3pE7EctYIz05DTEYqYsh8rfOuvunmL3uBYuMROOnygJmKfApBn59rgQWtvLcoQUl6l5p1C9bR5F9yn5gFPAqKWbRPBNwStxHf+gCdCoac+iOQfwGnODlO+x+KItWYIuPSlMHdl+BrFLJ/GqraIAvArGQqkZ6zIHcIlmIHNUak+h6LZUdWSuvgQI666dZwZOBDEFqn9yWGOgO2nFYCoB8VDwHXA2zaEe1ZuWGrX+pVe0WgM7C4EYK21i6HlN9N20/gqIjyGW5CQZJWFrl55OF5uR4ZfPvclr1GwsxiQfVfGyUAU5TGgQvY+QcU8sxhL8g7OZxEbFdV06+HzUAKyVIv0N4rwlCQdr46DDR6y8nOIOYfBD3a0w5poMab6m7qLd+w1E041gFDnEqnxSE8qlFPxREwPOsPhL4EuqtKUP7NTVrXY4/6jtM1D+Dz3MMEtIEq1Kj/YE/XTxlLQ=
