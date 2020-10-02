@@ -21,6 +21,7 @@ cd policy-collection/deploy
 
 function cleanup {
     kubectl delete subscriptions -n policy-collection-e2e --all || true
+    sleep 10
     kubectl delete channels -n policy-collection-e2e --all || true
     kubectl delete policies -n policy-collection-e2e --all || true
 }
@@ -29,9 +30,9 @@ COMPLETE=1
 for i in {1..20}; do
     ROOT_POLICIES=$(kubectl get policies -n policy-collection-e2e | tail -n +2 | wc -l | tr -d '[:space:]')
     TOTAL_POLICIES=$(kubectl get policies -A | grep e2e | wc -l | tr -d '[:space:]')
-    echo "Number of expected Policies : 10/20"
+    echo "Number of expected Policies : 11/22"
     echo "Number of actual Policies : $ROOT_POLICIES/$TOTAL_POLICIES"
-    if [ $ROOT_POLICIES -eq 10 ]; then
+    if [ $ROOT_POLICIES -eq 11 ]; then
         COMPLETE=0
         break
     fi
