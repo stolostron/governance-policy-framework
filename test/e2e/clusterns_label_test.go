@@ -12,6 +12,6 @@ var _ = Describe("Test cluster ns creation", func() {
 	It("Should contain label on cluster ns", func() {
 		ns, err := clientManaged.CoreV1().Namespaces().Get(clusterNamespace, metav1.GetOptions{})
 		Expect(err).To(BeNil())
-		Expect(ns.GetLabels()["policy.open-cluster-management.io/isClusterNs"]).To(Equal("true"))
+		Expect(ns.GetLabels()["policy.open-cluster-management.io/isClusterNamespace"]).To(Equal("true"))
 	})
 })
