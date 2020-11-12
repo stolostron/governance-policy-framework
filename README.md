@@ -12,6 +12,7 @@ Policy framework provides governance capability to gain visibility and drive rem
 
 ## Architecutre
 The policy framework consists of following components
+- [Governance dashboard](https://github.com/open-cluster-management/grc-ui)
 - [Policy propagator](https://github.com/open-cluster-management/governance-policy-propagator) 
 - [Policy spec sync](https://github.com/open-cluster-management/governance-policy-spec-sync)
 - [Policy status sync](https://github.com/open-cluster-management/governance-policy-status-sync)
@@ -24,9 +25,8 @@ The policy framework consists of following components
 
 ## Out-of-box policies and controllers
 - [configuration policy controller](https://github.com/open-cluster-management/config-policy-controller)
-- [cert expiration policy controller](https://github.com/open-cluster-management/cert-policy-controller)
+- [cert policy controller](https://github.com/open-cluster-management/cert-policy-controller)
 - [iam policy controller](https://github.com/open-cluster-management/iam-policy-controller)
-- [cis policy controller](https://github.com/open-cluster-management/cis-controller)
 
 ## Bring your own policy
 You can bring your own policy by implementing a custom policy and controller. Read [this](https://medium.com/ibm-cloud/develop-your-own-policy-controller-to-integrate-with-ibm-cloud-pak-for-multicloud-management-b5a83f8396e).
