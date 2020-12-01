@@ -25,13 +25,13 @@ default::
 # e2e test section
 ############################################################
 .PHONY: kind-bootstrap-cluster
-kind-bootstrap-cluster: kind-create-cluster install-crds install-resources kind-deploy-controller kind-deploy-policy-controllers
+kind-bootstrap-cluster: kind-create-cluster install-crds install-resources kind-deploy-policy-framework kind-deploy-policy-controllers
 
 .PHONY: kind-bootstrap-cluster-dev
 kind-bootstrap-cluster-dev: kind-create-cluster install-crds install-resources
 
 .PHONY: kind-deploy-policy-controllers
-kind-deploy-policy-controllers: kind-deploy-cert-policy-controller kind-deploy-gatekeeper kind-deploy-config-policy-controller kind-deploy-iam-policy-controller
+kind-deploy-policy-controllers: kind-deploy-cert-policy-controller kind-deploy-olm kind-deploy-config-policy-controller kind-deploy-iam-policy-controller
 
 check-env:
 ifndef DOCKER_USER
@@ -41,7 +41,7 @@ ifndef DOCKER_PASS
 	$(error DOCKER_PASS is undefined)
 endif
 
-kind-deploy-controller: check-env
+kind-deploy-policy-framework: check-env
 	@echo installing policy-propagator on hub
 	kubectl create ns governance --kubeconfig=$(PWD)/kubeconfig_hub
 	kubectl create secret -n governance docker-registry multiclusterhub-operator-pull-secret --docker-server=quay.io --docker-username=${DOCKER_USER} --docker-password=${DOCKER_PASS} --kubeconfig=$(PWD)/kubeconfig_hub
@@ -80,9 +80,13 @@ kind-deploy-iam-policy-controller: check-env
 	@echo installing iam-policy-controller on managed
 	kubectl apply -f deploy/iam-policy-controller -n multicluster-endpoint --kubeconfig=$(PWD)/kubeconfig_managed
 
-kind-deploy-gatekeeper: check-env
-	@echo installing gatekeeper on managed
-	kubectl apply -f deploy/gatekeeper --kubeconfig=$(PWD)/kubeconfig_managed
+kind-deploy-olm: check-env
+	@echo installing OLM on managed
+	kubectl apply -f https://github.com/operator-framework/operator-lifecycle-manager/releases/download/v0.17.0/crds.yaml --kubeconfig=$(PWD)/kubeconfig_managed
+	sleep 2
+	kubectl apply -f https://github.com/operator-framework/operator-lifecycle-manager/releases/download/v0.17.0/olm.yaml --kubeconfig=$(PWD)/kubeconfig_managed
+	# @echo installing gatekeeper on managed
+	# kubectl apply -f deploy/gatekeeper --kubeconfig=$(PWD)/kubeconfig_managed
 
 kind-create-cluster:
 	@echo "creating cluster hub"

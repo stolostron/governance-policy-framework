@@ -3,6 +3,7 @@
 package e2e
 
 import (
+	"context"
 	"fmt"
 	"os/exec"
 
@@ -32,7 +33,7 @@ func GetClusterLevelWithTimeout(
 	Eventually(func() error {
 		var err error
 		namespace := clientHubDynamic.Resource(gvr)
-		obj, err = namespace.Get(name, metav1.GetOptions{})
+		obj, err = namespace.Get(context.TODO(), name, metav1.GetOptions{})
 		if wantFound && err != nil {
 			return err
 		}
@@ -50,7 +51,30 @@ func GetClusterLevelWithTimeout(
 	return nil
 }
 
+const GKOPolicyYaml string = "../resources/gatekeeper/policy-gatekeeper-operator.yaml"
+
 var _ = Describe("Test gatekeeper", func() {
+	Describe("Test gatekeeper operator", func() {
+		const GKOPolicyName string = "policy-gatekeeper-operator"
+		It("gatekeeper operator policy should be created on managed", func() {
+			By("Creating policy on hub")
+			utils.Kubectl("apply", "-f", GKOPolicyYaml, "-n", userNamespace, "--kubeconfig=../../kubeconfig_hub")
+			hubPlc := utils.GetWithTimeout(clientHubDynamic, gvrPolicy, GKOPolicyName, userNamespace, true, defaultTimeoutSeconds)
+			Expect(hubPlc).NotTo(BeNil())
+			By("Patching " + GKOPolicyName + " pr with decision of cluster managed")
+			plr := utils.GetWithTimeout(clientHubDynamic, gvrPlacementRule, "placement-"+GKOPolicyName, userNamespace, true, defaultTimeoutSeconds)
+			plr.Object["status"] = utils.GeneratePlrStatus("managed")
+			plr, err := clientHubDynamic.Resource(gvrPlacementRule).Namespace(userNamespace).UpdateStatus(context.TODO(), plr, metav1.UpdateOptions{})
+			Expect(err).To(BeNil())
+			By("Checking " + GKOPolicyName + " on managed cluster in ns " + clusterNamespace)
+			managedplc := utils.GetWithTimeout(clientManagedDynamic, gvrPolicy, userNamespace+"."+GKOPolicyName, clusterNamespace, true, defaultTimeoutSeconds)
+			Expect(managedplc).NotTo(BeNil())
+		})
+		It("should create gatekeeper pods on managed cluster", func() {
+			By("Checking number of pods in gatekeeper-system ns")
+			utils.ListWithTimeoutByNamespace(clientManagedDynamic, gvrPod, metav1.ListOptions{}, "gatekeeper-system", 6, true, 240)
+		})
+	})
 	Describe("Test gatekeeper policy creation", func() {
 		const GKPolicyName string = "policy-gatekeeper"
 		const GKPolicyYaml string = "../resources/gatekeeper/policy-gatekeeper.yaml"
@@ -76,7 +100,7 @@ var _ = Describe("Test gatekeeper", func() {
 			By("Patching " + GKPolicyName + " pr with decision of cluster managed")
 			plr := utils.GetWithTimeout(clientHubDynamic, gvrPlacementRule, "placement-"+GKPolicyName, "default", true, defaultTimeoutSeconds)
 			plr.Object["status"] = utils.GeneratePlrStatus("managed")
-			plr, err := clientHubDynamic.Resource(gvrPlacementRule).Namespace("default").UpdateStatus(plr, metav1.UpdateOptions{})
+			plr, err := clientHubDynamic.Resource(gvrPlacementRule).Namespace("default").UpdateStatus(context.TODO(), plr, metav1.UpdateOptions{})
 			Expect(err).To(BeNil())
 			By("Checking configpolicies on managed")
 			krl := utils.GetWithTimeout(clientManagedDynamic, gvrConfigurationPolicy, cfgpolKRLName, clusterNamespace, true, defaultTimeoutSeconds)
@@ -112,11 +136,11 @@ var _ = Describe("Test gatekeeper", func() {
 			}, defaultTimeoutSeconds, 1).ShouldNot(BeNil())
 		})
 		It("K8sRequiredLabels ns-must-have-gk should be properly enforced for admission", func() {
-			By("Checking if ns-must-have-gk status.byPod field size is two")
+			By("Checking if ns-must-have-gk status.byPod field size is 3")
 			Eventually(func() interface{} {
 				nsMustHaveGkCR := GetClusterLevelWithTimeout(clientManagedDynamic, gvrK8sRequiredLabels, "ns-must-have-gk", true, defaultTimeoutSeconds)
 				return len(nsMustHaveGkCR.Object["status"].(map[string]interface{})["byPod"].([]interface{}))
-			}, defaultTimeoutSeconds, 1).Should(Equal(2))
+			}, defaultTimeoutSeconds*4, 1).Should(Equal(3))
 		})
 		It("should generate statuses properly on hub", func() {
 			By("Checking if status for policy template policy-gatekeeper-k8srequiredlabels is compliant")
@@ -178,16 +202,20 @@ var _ = Describe("Test gatekeeper", func() {
 			}, defaultTimeoutSeconds, 1).Should(Equal("ns-must-have-gk"))
 		})
 		It("should clean up", func() {
+			By("Deleting gatekeeper operator policy on hub")
+			utils.Kubectl("delete", "-f", GKOPolicyYaml, "-n", userNamespace, "--kubeconfig=../../kubeconfig_hub")
 			By("Deleting gatekeeper policy on hub")
 			utils.Kubectl("delete", "-f", GKPolicyYaml, "-n", "default", "--kubeconfig=../../kubeconfig_hub")
 			By("Checking if there is any policy left")
 			utils.ListWithTimeout(clientHubDynamic, gvrPolicy, metav1.ListOptions{}, 0, true, defaultTimeoutSeconds)
-			utils.ListWithTimeout(clientManagedDynamic, gvrPolicy, metav1.ListOptions{}, 0, true, defaultTimeoutSeconds)
+			utils.ListWithTimeoutByNamespace(clientManagedDynamic, gvrPolicy, metav1.ListOptions{}, clusterNamespace, 0, true, defaultTimeoutSeconds)
 			By("Checking if there is any configuration policy left")
 			utils.ListWithTimeout(clientManagedDynamic, gvrConfigurationPolicy, metav1.ListOptions{}, 0, true, defaultTimeoutSeconds)
 			By("Deleting gatekeeper ConstraintTemplate and K8sRequiredLabels")
 			utils.Kubectl("delete", "K8sRequiredLabels", "--all", "--kubeconfig=../../kubeconfig_managed")
 			utils.Kubectl("delete", "crd", "k8srequiredlabels.constraints.gatekeeper.sh", "--kubeconfig=../../kubeconfig_managed")
+			By("Deleting all events in gatekeeper-system")
+			utils.Kubectl("delete", "events", "--all", "-n gatekeeper-system", "--kubeconfig=../../kubeconfig_managed")
 		})
 	})
 })

@@ -3,6 +3,7 @@
 package e2e
 
 import (
+	"context"
 	"flag"
 	"fmt"
 	"os"
@@ -31,6 +32,7 @@ var (
 	clientHubDynamic       dynamic.Interface
 	clientManaged          kubernetes.Interface
 	clientManagedDynamic   dynamic.Interface
+	gvrPod                 schema.GroupVersionResource
 	gvrPolicy              schema.GroupVersionResource
 	gvrIamPolicy           schema.GroupVersionResource
 	gvrCertPolicy          schema.GroupVersionResource
@@ -64,6 +66,7 @@ func init() {
 
 var _ = BeforeSuite(func() {
 	By("Setup hub and managed client")
+	gvrPod = schema.GroupVersionResource{Version: "v1", Resource: "pods"}
 	gvrPolicy = schema.GroupVersionResource{Group: "policy.open-cluster-management.io", Version: "v1", Resource: "policies"}
 	gvrConfigurationPolicy = schema.GroupVersionResource{Group: "policy.open-cluster-management.io", Version: "v1", Resource: "configurationpolicies"}
 	gvrCertPolicy = schema.GroupVersionResource{Group: "policy.open-cluster-management.io", Version: "v1", Resource: "certificatepolicies"}
@@ -94,14 +97,14 @@ var _ = BeforeSuite(func() {
 	}
 	By("Create Namesapce if needed")
 	namespaces := clientHub.CoreV1().Namespaces()
-	if _, err := namespaces.Get(userNamespace, metav1.GetOptions{}); err != nil && errors.IsNotFound(err) {
-		Expect(namespaces.Create(&corev1.Namespace{
+	if _, err := namespaces.Get(context.TODO(), userNamespace, metav1.GetOptions{}); err != nil && errors.IsNotFound(err) {
+		Expect(namespaces.Create(context.TODO(), &corev1.Namespace{
 			ObjectMeta: metav1.ObjectMeta{
 				Name: userNamespace,
 			},
-		})).NotTo(BeNil())
+		}, metav1.CreateOptions{})).NotTo(BeNil())
 	}
-	Expect(namespaces.Get(userNamespace, metav1.GetOptions{})).NotTo(BeNil())
+	Expect(namespaces.Get(context.TODO(), userNamespace, metav1.GetOptions{})).NotTo(BeNil())
 })
 
 func NewKubeClient(url, kubeconfig, context string) kubernetes.Interface {

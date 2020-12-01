@@ -59,6 +59,9 @@ spec:
                     kinds:
                       - apiGroups: [""]
                         kinds: ["Namespace"]
+                    namespaces:
+                      - managed
+                      - e2etestfail
                   parameters:
                     labels: ["gatekeeper"]
     - objectDefinition:
