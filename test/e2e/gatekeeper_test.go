@@ -134,7 +134,7 @@ var _ = Describe("Test gatekeeper", func() {
 			}, defaultTimeoutSeconds, 1).ShouldNot(BeNil())
 		})
 		It("K8sRequiredLabels ns-must-have-gk should be properly enforced for admission", func() {
-			By("Checking if ns-must-have-gk status.byPod field size is two")
+			By("Checking if ns-must-have-gk status.byPod field size is 3")
 			Eventually(func() interface{} {
 				nsMustHaveGkCR := GetClusterLevelWithTimeout(clientManagedDynamic, gvrK8sRequiredLabels, "ns-must-have-gk", true, defaultTimeoutSeconds)
 				return len(nsMustHaveGkCR.Object["status"].(map[string]interface{})["byPod"].([]interface{}))

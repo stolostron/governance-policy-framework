@@ -73,6 +73,12 @@ while [[ $(kubectl get pods -l name=iam-policy-controller -n multicluster-endpoi
     sleep 1
 done
 
+while [[ $(kubectl get pods -l app=packageserver -n olm -o 'jsonpath={..status.conditions[?(@.type=="Ready")].status}') != "True" ]]; do 
+    echo "waiting for pod: packageserver"
+    kubectl get pods -l app=packageserver -n olm
+    sleep 1
+done
+
 kubectl get pods -A
 
 echo "all ready! statt to test"
