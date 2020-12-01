@@ -20,11 +20,8 @@ go get github.com/onsi/gomega/...
 
 make kind-create-cluster
 
-while [[ $(kubectl get pods -A | grep -v -e "Completed" | tail -n +2 | wc -l | tr -d '[:space:]') -ne 9 ]]; do 
-    echo "waiting for kind cluster pods running"
-    kubectl get pods -A
-    sleep 1
-done
+./build/wait_for.sh pod -n kube-system
+./build/wait_for.sh pod -n local-path-storage
 
 make install-crds 
 
