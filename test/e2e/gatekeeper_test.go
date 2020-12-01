@@ -3,6 +3,7 @@
 package e2e
 
 import (
+	"context"
 	"fmt"
 	"os/exec"
 
@@ -32,7 +33,7 @@ func GetClusterLevelWithTimeout(
 	Eventually(func() error {
 		var err error
 		namespace := clientHubDynamic.Resource(gvr)
-		obj, err = namespace.Get(name, metav1.GetOptions{})
+		obj, err = namespace.Get(context.TODO(), name, metav1.GetOptions{})
 		if wantFound && err != nil {
 			return err
 		}
@@ -62,7 +63,7 @@ var _ = Describe("Test gatekeeper", func() {
 			By("Patching " + GKOPolicyName + " pr with decision of cluster managed")
 			plr := utils.GetWithTimeout(clientHubDynamic, gvrPlacementRule, "placement-"+GKOPolicyName, userNamespace, true, defaultTimeoutSeconds)
 			plr.Object["status"] = utils.GeneratePlrStatus("managed")
-			plr, err := clientHubDynamic.Resource(gvrPlacementRule).Namespace(userNamespace).UpdateStatus(plr, metav1.UpdateOptions{})
+			plr, err := clientHubDynamic.Resource(gvrPlacementRule).Namespace(userNamespace).UpdateStatus(context.TODO(), plr, metav1.UpdateOptions{})
 			Expect(err).To(BeNil())
 			By("Checking " + GKOPolicyName + " on managed cluster in ns " + clusterNamespace)
 			managedplc := utils.GetWithTimeout(clientManagedDynamic, gvrPolicy, userNamespace+"."+GKOPolicyName, clusterNamespace, true, defaultTimeoutSeconds)
@@ -98,7 +99,7 @@ var _ = Describe("Test gatekeeper", func() {
 			By("Patching " + GKPolicyName + " pr with decision of cluster managed")
 			plr := utils.GetWithTimeout(clientHubDynamic, gvrPlacementRule, "placement-"+GKPolicyName, "default", true, defaultTimeoutSeconds)
 			plr.Object["status"] = utils.GeneratePlrStatus("managed")
-			plr, err := clientHubDynamic.Resource(gvrPlacementRule).Namespace("default").UpdateStatus(plr, metav1.UpdateOptions{})
+			plr, err := clientHubDynamic.Resource(gvrPlacementRule).Namespace("default").UpdateStatus(context.TODO(), plr, metav1.UpdateOptions{})
 			Expect(err).To(BeNil())
 			By("Checking configpolicies on managed")
 			krl := utils.GetWithTimeout(clientManagedDynamic, gvrConfigurationPolicy, cfgpolKRLName, clusterNamespace, true, defaultTimeoutSeconds)

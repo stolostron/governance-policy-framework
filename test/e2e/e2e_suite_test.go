@@ -3,6 +3,7 @@
 package e2e
 
 import (
+	"context"
 	"flag"
 	"fmt"
 	"os"
@@ -96,14 +97,14 @@ var _ = BeforeSuite(func() {
 	}
 	By("Create Namesapce if needed")
 	namespaces := clientHub.CoreV1().Namespaces()
-	if _, err := namespaces.Get(userNamespace, metav1.GetOptions{}); err != nil && errors.IsNotFound(err) {
-		Expect(namespaces.Create(&corev1.Namespace{
+	if _, err := namespaces.Get(context.TODO(), userNamespace, metav1.GetOptions{}); err != nil && errors.IsNotFound(err) {
+		Expect(namespaces.Create(context.TODO(), &corev1.Namespace{
 			ObjectMeta: metav1.ObjectMeta{
 				Name: userNamespace,
 			},
-		})).NotTo(BeNil())
+		}, metav1.CreateOptions{})).NotTo(BeNil())
 	}
-	Expect(namespaces.Get(userNamespace, metav1.GetOptions{})).NotTo(BeNil())
+	Expect(namespaces.Get(context.TODO(), userNamespace, metav1.GetOptions{})).NotTo(BeNil())
 })
 
 func NewKubeClient(url, kubeconfig, context string) kubernetes.Interface {
