@@ -2,7 +2,7 @@ TRAVIS_BUILD ?= 1
 
 PWD := $(shell pwd)
 BASE_DIR := $(shell basename $(PWD))
-deployOnHub ?= false
+deployOnHub ?= true
 
 # GITHUB_USER containing '@' char must be escaped with '%40'
 GITHUB_USER := $(shell echo $(GITHUB_USER) | sed 's/@/%40/g')
