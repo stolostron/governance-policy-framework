@@ -41,7 +41,7 @@ spec:
                   displayName: Gatekeeper Operator Upstream
                   publisher: github.com/font/gatekeeper-operator
                   sourceType: grpc
-                  image: 'quay.io/ycao56/gatekeeper-operator-bundle-index:0.0.3'
+                  image: 'quay.io/willkutler/gatekeeper-operator-bundle-index:0.0.1'
     - objectDefinition:
         apiVersion: policy.open-cluster-management.io/v1
         kind: ConfigurationPolicy
