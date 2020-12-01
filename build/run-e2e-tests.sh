@@ -43,6 +43,7 @@ make kind-deploy-policy-controllers
 ./build/wait_for.sh pod -l name=cert-policy-controller -n multicluster-endpoint
 ./build/wait_for.sh pod -l name=iam-policy-controller -n multicluster-endpoint
 ./build/wait_for.sh pod -n olm
+./build/wait_for.sh pod -n cert-manager
 
 kubectl get pods -A
 
