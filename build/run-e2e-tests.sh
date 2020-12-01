@@ -21,7 +21,7 @@ go get github.com/onsi/gomega/...
 make kind-create-cluster
 
 ./build/wait_for.sh pod -n kube-system
-./build/wait_for.sh pod -l k8s-app=kube-dns
+./build/wait_for.sh pod -l k8s-app=kube-dns -n kube-system
 ./build/wait_for.sh pod -n local-path-storage
 
 make install-crds 
