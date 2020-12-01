@@ -30,7 +30,7 @@ make install-crds
 
 make install-resources
 
-make kind-deploy-controller
+make kind-deploy-policy-framework
 
 if [ "$deployOnHub" != "true" ]; then\
     while [[ $(kubectl get pods -l name=governance-policy-spec-sync -n multicluster-endpoint -o 'jsonpath={..status.conditions[?(@.type=="Ready")].status}') != "True" ]]; do 

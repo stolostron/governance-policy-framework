@@ -31,6 +31,7 @@ var (
 	clientHubDynamic       dynamic.Interface
 	clientManaged          kubernetes.Interface
 	clientManagedDynamic   dynamic.Interface
+	gvrPod                 schema.GroupVersionResource
 	gvrPolicy              schema.GroupVersionResource
 	gvrIamPolicy           schema.GroupVersionResource
 	gvrCertPolicy          schema.GroupVersionResource
@@ -64,6 +65,7 @@ func init() {
 
 var _ = BeforeSuite(func() {
 	By("Setup hub and managed client")
+	gvrPod = schema.GroupVersionResource{Version: "v1", Resource: "pods"}
 	gvrPolicy = schema.GroupVersionResource{Group: "policy.open-cluster-management.io", Version: "v1", Resource: "policies"}
 	gvrConfigurationPolicy = schema.GroupVersionResource{Group: "policy.open-cluster-management.io", Version: "v1", Resource: "configurationpolicies"}
 	gvrCertPolicy = schema.GroupVersionResource{Group: "policy.open-cluster-management.io", Version: "v1", Resource: "certificatepolicies"}
