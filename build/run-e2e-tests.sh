@@ -73,6 +73,7 @@ while [[ $(kubectl get pods -l name=iam-policy-controller -n multicluster-endpoi
     sleep 1
 done
 
+alias oc=kubectl
 ./build/wait_for.sh pod -n olm
 
 kubectl get pods -A
