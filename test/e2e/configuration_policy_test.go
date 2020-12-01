@@ -1,9 +1,10 @@
 // Copyright (c) 2020 Red Hat, Inc.
-// +build dd
 
 package e2e
 
 import (
+	"context"
+
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
 	"github.com/open-cluster-management/governance-policy-propagator/test/utils"
@@ -22,7 +23,7 @@ var _ = Describe("Test configuration policy", func() {
 			By("Patching " + rolePolicyName + "-plr with decision of cluster managed")
 			plr := utils.GetWithTimeout(clientHubDynamic, gvrPlacementRule, rolePolicyName+"-plr", userNamespace, true, defaultTimeoutSeconds)
 			plr.Object["status"] = utils.GeneratePlrStatus("managed")
-			plr, err := clientHubDynamic.Resource(gvrPlacementRule).Namespace(userNamespace).UpdateStatus(plr, metav1.UpdateOptions{})
+			plr, err := clientHubDynamic.Resource(gvrPlacementRule).Namespace(userNamespace).UpdateStatus(context.TODO(), plr, metav1.UpdateOptions{})
 			Expect(err).To(BeNil())
 			By("Checking " + rolePolicyName + " on managed cluster in ns " + clusterNamespace)
 			managedplc := utils.GetWithTimeout(clientManagedDynamic, gvrPolicy, userNamespace+"."+rolePolicyName, clusterNamespace, true, defaultTimeoutSeconds)
@@ -117,7 +118,7 @@ var _ = Describe("Test configuration policy", func() {
 			By("Patching " + rolePolicyName + "-plr with decision of cluster managed")
 			plr := utils.GetWithTimeout(clientHubDynamic, gvrPlacementRule, rolePolicyName+"-plr", userNamespace, true, defaultTimeoutSeconds)
 			plr.Object["status"] = utils.GeneratePlrStatus("managed")
-			plr, err := clientHubDynamic.Resource(gvrPlacementRule).Namespace(userNamespace).UpdateStatus(plr, metav1.UpdateOptions{})
+			plr, err := clientHubDynamic.Resource(gvrPlacementRule).Namespace(userNamespace).UpdateStatus(context.TODO(), plr, metav1.UpdateOptions{})
 			Expect(err).To(BeNil())
 			By("Checking " + rolePolicyName + " on managed cluster in ns " + clusterNamespace)
 			managedplc := utils.GetWithTimeout(clientManagedDynamic, gvrPolicy, userNamespace+"."+rolePolicyName, clusterNamespace, true, defaultTimeoutSeconds)
@@ -135,7 +136,7 @@ var _ = Describe("Test configuration policy", func() {
 			By("Patching remediationAction = enforce on root policy")
 			rootPlc := utils.GetWithTimeout(clientHubDynamic, gvrPolicy, rolePolicyName, userNamespace, true, defaultTimeoutSeconds)
 			rootPlc.Object["spec"].(map[string]interface{})["remediationAction"] = "enforce"
-			rootPlc, _ = clientHubDynamic.Resource(gvrPolicy).Namespace(userNamespace).Update(rootPlc, metav1.UpdateOptions{})
+			rootPlc, _ = clientHubDynamic.Resource(gvrPolicy).Namespace(userNamespace).Update(context.TODO(), rootPlc, metav1.UpdateOptions{})
 			Expect(rootPlc.Object["spec"].(map[string]interface{})["remediationAction"]).To(Equal("enforce"))
 			By("Checking if the status of root policy is compliant")
 			yamlPlc := utils.ParseYaml("../resources/configuration_policy/" + rolePolicyName + "-compliant.yaml")
@@ -149,13 +150,13 @@ var _ = Describe("Test configuration policy", func() {
 			utils.Kubectl("delete", "role", "-n", "default", "--all", "--kubeconfig=../../kubeconfig_managed")
 			By("Checking if the role has been deleted")
 			Eventually(func() interface{} {
-				roleList, err := clientManagedDynamic.Resource(gvrRole).Namespace("default").List(metav1.ListOptions{})
+				roleList, err := clientManagedDynamic.Resource(gvrRole).Namespace("default").List(context.TODO(), metav1.ListOptions{})
 				Expect(err).To(BeNil())
 				return len(roleList.Items)
 			}, defaultTimeoutSeconds, 1).Should(Equal(0))
 			By("Checking if the role has been recreated")
 			Eventually(func() interface{} {
-				roleList, err := clientManagedDynamic.Resource(gvrRole).Namespace("default").List(metav1.ListOptions{})
+				roleList, err := clientManagedDynamic.Resource(gvrRole).Namespace("default").List(context.TODO(), metav1.ListOptions{})
 				Expect(err).To(BeNil())
 				return len(roleList.Items)
 			}, defaultTimeoutSeconds, 1).Should(Equal(1))
@@ -217,7 +218,7 @@ var _ = Describe("Test configuration policy", func() {
 			utils.Kubectl("delete", "role", "-n", "default", "--all", "--kubeconfig=../../kubeconfig_managed")
 			By("Checking if there is any role left")
 			Eventually(func() interface{} {
-				roleList, err := clientManagedDynamic.Resource(gvrRole).Namespace("default").List(metav1.ListOptions{})
+				roleList, err := clientManagedDynamic.Resource(gvrRole).Namespace("default").List(context.TODO(), metav1.ListOptions{})
 				Expect(err).To(BeNil())
 				return len(roleList.Items)
 			}, defaultTimeoutSeconds, 1).Should(Equal(0))
@@ -234,7 +235,7 @@ var _ = Describe("Test configuration policy", func() {
 			By("Patching " + rolePolicyName + "-plr with decision of cluster managed")
 			plr := utils.GetWithTimeout(clientHubDynamic, gvrPlacementRule, rolePolicyName+"-plr", userNamespace, true, defaultTimeoutSeconds)
 			plr.Object["status"] = utils.GeneratePlrStatus("managed")
-			plr, err := clientHubDynamic.Resource(gvrPlacementRule).Namespace(userNamespace).UpdateStatus(plr, metav1.UpdateOptions{})
+			plr, err := clientHubDynamic.Resource(gvrPlacementRule).Namespace(userNamespace).UpdateStatus(context.TODO(), plr, metav1.UpdateOptions{})
 			Expect(err).To(BeNil())
 			By("Checking " + rolePolicyName + " on managed cluster in ns " + clusterNamespace)
 			managedplc := utils.GetWithTimeout(clientManagedDynamic, gvrPolicy, userNamespace+"."+rolePolicyName, clusterNamespace, true, defaultTimeoutSeconds)
@@ -289,7 +290,7 @@ var _ = Describe("Test configuration policy", func() {
 			By("Patching " + rolePolicyName + "-plr with decision of cluster managed")
 			plr := utils.GetWithTimeout(clientHubDynamic, gvrPlacementRule, rolePolicyName+"-plr", userNamespace, true, defaultTimeoutSeconds)
 			plr.Object["status"] = utils.GeneratePlrStatus("managed")
-			plr, err := clientHubDynamic.Resource(gvrPlacementRule).Namespace(userNamespace).UpdateStatus(plr, metav1.UpdateOptions{})
+			plr, err := clientHubDynamic.Resource(gvrPlacementRule).Namespace(userNamespace).UpdateStatus(context.TODO(), plr, metav1.UpdateOptions{})
 			Expect(err).To(BeNil())
 			By("Checking " + rolePolicyName + " on managed cluster in ns " + clusterNamespace)
 			managedplc := utils.GetWithTimeout(clientManagedDynamic, gvrPolicy, userNamespace+"."+rolePolicyName, clusterNamespace, true, defaultTimeoutSeconds)
@@ -317,7 +318,7 @@ var _ = Describe("Test configuration policy", func() {
 			By("Patching remediationAction = enforce on root policy")
 			rootPlc := utils.GetWithTimeout(clientHubDynamic, gvrPolicy, rolePolicyName, userNamespace, true, defaultTimeoutSeconds)
 			rootPlc.Object["spec"].(map[string]interface{})["remediationAction"] = "enforce"
-			rootPlc, _ = clientHubDynamic.Resource(gvrPolicy).Namespace(userNamespace).Update(rootPlc, metav1.UpdateOptions{})
+			rootPlc, _ = clientHubDynamic.Resource(gvrPolicy).Namespace(userNamespace).Update(context.TODO(), rootPlc, metav1.UpdateOptions{})
 			Expect(rootPlc.Object["spec"].(map[string]interface{})["remediationAction"]).To(Equal("enforce"))
 			By("Checking if the status of root policy is compliant")
 			yamlPlc := utils.ParseYaml("../resources/configuration_policy/" + rolePolicyName + "-compliant.yaml")
@@ -332,7 +333,7 @@ var _ = Describe("Test configuration policy", func() {
 			utils.Pause(20)
 			By("Checking if the role has been deleted")
 			Eventually(func() interface{} {
-				roleList, err := clientManagedDynamic.Resource(gvrRole).Namespace("default").List(metav1.ListOptions{})
+				roleList, err := clientManagedDynamic.Resource(gvrRole).Namespace("default").List(context.TODO(), metav1.ListOptions{})
 				Expect(err).To(BeNil())
 				return len(roleList.Items)
 			}, defaultTimeoutSeconds, 1).Should(Equal(0))
@@ -364,7 +365,7 @@ var _ = Describe("Test configuration policy", func() {
 			By("Patching " + rolePolicyName + "-plr with decision of cluster managed")
 			plr := utils.GetWithTimeout(clientHubDynamic, gvrPlacementRule, rolePolicyName+"-plr", userNamespace, true, defaultTimeoutSeconds)
 			plr.Object["status"] = utils.GeneratePlrStatus("managed")
-			plr, err := clientHubDynamic.Resource(gvrPlacementRule).Namespace(userNamespace).UpdateStatus(plr, metav1.UpdateOptions{})
+			plr, err := clientHubDynamic.Resource(gvrPlacementRule).Namespace(userNamespace).UpdateStatus(context.TODO(), plr, metav1.UpdateOptions{})
 			Expect(err).To(BeNil())
 			By("Checking " + rolePolicyName + " on managed cluster in ns " + clusterNamespace)
 			managedplc := utils.GetWithTimeout(clientManagedDynamic, gvrPolicy, userNamespace+"."+rolePolicyName, clusterNamespace, true, defaultTimeoutSeconds)
@@ -459,7 +460,7 @@ var _ = Describe("Test configuration policy", func() {
 			By("Patching " + rolePolicyName + "-plr with decision of cluster managed")
 			plr := utils.GetWithTimeout(clientHubDynamic, gvrPlacementRule, rolePolicyName+"-plr", userNamespace, true, defaultTimeoutSeconds)
 			plr.Object["status"] = utils.GeneratePlrStatus("managed")
-			plr, err := clientHubDynamic.Resource(gvrPlacementRule).Namespace(userNamespace).UpdateStatus(plr, metav1.UpdateOptions{})
+			plr, err := clientHubDynamic.Resource(gvrPlacementRule).Namespace(userNamespace).UpdateStatus(context.TODO(), plr, metav1.UpdateOptions{})
 			Expect(err).To(BeNil())
 			By("Checking " + rolePolicyName + " on managed cluster in ns " + clusterNamespace)
 			managedplc := utils.GetWithTimeout(clientManagedDynamic, gvrPolicy, userNamespace+"."+rolePolicyName, clusterNamespace, true, defaultTimeoutSeconds)
@@ -469,7 +470,7 @@ var _ = Describe("Test configuration policy", func() {
 			By("Patching remediationAction = enforce on root policy")
 			rootPlc := utils.GetWithTimeout(clientHubDynamic, gvrPolicy, rolePolicyName, userNamespace, true, defaultTimeoutSeconds)
 			rootPlc.Object["spec"].(map[string]interface{})["remediationAction"] = "enforce"
-			rootPlc, _ = clientHubDynamic.Resource(gvrPolicy).Namespace(userNamespace).Update(rootPlc, metav1.UpdateOptions{})
+			rootPlc, _ = clientHubDynamic.Resource(gvrPolicy).Namespace(userNamespace).Update(context.TODO(), rootPlc, metav1.UpdateOptions{})
 			Expect(rootPlc.Object["spec"].(map[string]interface{})["remediationAction"]).To(Equal("enforce"))
 			By("Checking if the status of root policy is compliant")
 			yamlPlc := utils.ParseYaml("../resources/configuration_policy/" + rolePolicyName + "-compliant.yaml")
@@ -481,7 +482,7 @@ var _ = Describe("Test configuration policy", func() {
 		It("the role should be created by policy", func() {
 			By("Checking if the role has been created")
 			Eventually(func() interface{} {
-				roleList, err := clientManagedDynamic.Resource(gvrRole).Namespace("default").List(metav1.ListOptions{})
+				roleList, err := clientManagedDynamic.Resource(gvrRole).Namespace("default").List(context.TODO(), metav1.ListOptions{})
 				Expect(err).To(BeNil())
 				return len(roleList.Items)
 			}, defaultTimeoutSeconds, 1).Should(Equal(1))
@@ -491,13 +492,13 @@ var _ = Describe("Test configuration policy", func() {
 			utils.Kubectl("delete", "role", "-n", "default", "--all", "--kubeconfig=../../kubeconfig_managed")
 			By("Checking if the role has been deleted")
 			Eventually(func() interface{} {
-				roleList, err := clientManagedDynamic.Resource(gvrRole).Namespace("default").List(metav1.ListOptions{})
+				roleList, err := clientManagedDynamic.Resource(gvrRole).Namespace("default").List(context.TODO(), metav1.ListOptions{})
 				Expect(err).To(BeNil())
 				return len(roleList.Items)
 			}, defaultTimeoutSeconds, 1).Should(Equal(0))
 			By("Checking if the role has been recreated")
 			Eventually(func() interface{} {
-				roleList, err := clientManagedDynamic.Resource(gvrRole).Namespace("default").List(metav1.ListOptions{})
+				roleList, err := clientManagedDynamic.Resource(gvrRole).Namespace("default").List(context.TODO(), metav1.ListOptions{})
 				Expect(err).To(BeNil())
 				return len(roleList.Items)
 			}, defaultTimeoutSeconds, 1).Should(Equal(1))

@@ -1,9 +1,10 @@
 // Copyright (c) 2020 Red Hat, Inc.
-// +build dd
 
 package e2e
 
 import (
+	"context"
+
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
 	"github.com/open-cluster-management/governance-policy-propagator/test/utils"
@@ -27,7 +28,7 @@ var _ = Describe("Test cert policy", func() {
 			By("Patching " + certPolicyName + "-plr with decision of cluster managed")
 			plr := utils.GetWithTimeout(clientHubDynamic, gvrPlacementRule, certPolicyName+"-plr", userNamespace, true, defaultTimeoutSeconds)
 			plr.Object["status"] = utils.GeneratePlrStatus("managed")
-			plr, err := clientHubDynamic.Resource(gvrPlacementRule).Namespace(userNamespace).UpdateStatus(plr, metav1.UpdateOptions{})
+			plr, err := clientHubDynamic.Resource(gvrPlacementRule).Namespace(userNamespace).UpdateStatus(context.TODO(), plr, metav1.UpdateOptions{})
 			Expect(err).To(BeNil())
 			By("Checking " + certPolicyName + " on managed cluster in ns " + clusterNamespace)
 			managedplc := utils.GetWithTimeout(clientManagedDynamic, gvrPolicy, userNamespace+"."+certPolicyName, clusterNamespace, true, defaultTimeoutSeconds)
