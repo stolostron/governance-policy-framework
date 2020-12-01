@@ -128,12 +128,12 @@ var _ = Describe("Test gatekeeper", func() {
 			Eventually(func() interface{} {
 				nsMustHaveGkCR := GetClusterLevelWithTimeout(clientManagedDynamic, gvrK8sRequiredLabels, "ns-must-have-gk", true, defaultTimeoutSeconds)
 				return nsMustHaveGkCR.Object["status"].(map[string]interface{})["totalViolations"]
-			}, defaultTimeoutSeconds*2, 1).Should(Equal(0))
+			}, defaultTimeoutSeconds*2, 1).ShouldNot(BeNil())
 			By("Checking if ns-must-have-gk status.violations field has been updated")
 			Eventually(func() interface{} {
 				nsMustHaveGkCR := GetClusterLevelWithTimeout(clientManagedDynamic, gvrK8sRequiredLabels, "ns-must-have-gk", true, defaultTimeoutSeconds)
 				return nsMustHaveGkCR.Object["status"].(map[string]interface{})["violations"]
-			}, defaultTimeoutSeconds, 1).Should(BeNil())
+			}, defaultTimeoutSeconds, 1).ShouldNot(BeNil())
 		})
 		It("K8sRequiredLabels ns-must-have-gk should be properly enforced for admission", func() {
 			By("Checking if ns-must-have-gk status.byPod field size is 3")
@@ -215,6 +215,8 @@ var _ = Describe("Test gatekeeper", func() {
 			By("Deleting gatekeeper ConstraintTemplate and K8sRequiredLabels")
 			utils.Kubectl("delete", "K8sRequiredLabels", "--all", "--kubeconfig=../../kubeconfig_managed")
 			utils.Kubectl("delete", "crd", "k8srequiredlabels.constraints.gatekeeper.sh", "--kubeconfig=../../kubeconfig_managed")
+			By("Deleting all events in gatekeeper-system")
+			utils.Kubectl("delete", "events", "--all", "-n gatekeeper-system", "--kubeconfig=../../kubeconfig_managed")
 		})
 	})
 })
