@@ -11,6 +11,7 @@ OC_ARGS=""
 WAIT_TIME="${WAIT_TIME:-2}" # seconds
 DEBUG="${DEBUG:-0}"
 TREAT_ERRORS_AS_READY=0
+alias oc=kubectl
 
 usage() {
 cat <<EOF
