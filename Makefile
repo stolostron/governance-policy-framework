@@ -83,7 +83,7 @@ kind-deploy-iam-policy-controller: check-env
 kind-deploy-olm: check-env
 	@echo installing OLM on managed
 	kubectl apply -f https://github.com/operator-framework/operator-lifecycle-manager/releases/download/v0.17.0/crds.yaml --kubeconfig=$(PWD)/kubeconfig_managed
-	sleep 2
+	sleep 5
 	kubectl apply -f https://github.com/operator-framework/operator-lifecycle-manager/releases/download/v0.17.0/olm.yaml --kubeconfig=$(PWD)/kubeconfig_managed
 	# @echo installing gatekeeper on managed
 	# kubectl apply -f deploy/gatekeeper --kubeconfig=$(PWD)/kubeconfig_managed
