@@ -141,7 +141,7 @@ var _ = Describe("Test gatekeeper", func() {
 				nsMustHaveGkCR := GetClusterLevelWithTimeout(clientManagedDynamic, gvrK8sRequiredLabels, "ns-must-have-gk", true, defaultTimeoutSeconds)
 				fmt.Printf("%v\n", nsMustHaveGkCR.Object["status"].(map[string]interface{})["violations"])
 				return nsMustHaveGkCR.Object["status"].(map[string]interface{})["violations"]
-			}, defaultTimeoutSeconds, 1).ShouldNot(BeNil())
+			}, defaultTimeoutSeconds*2, 1).ShouldNot(BeNil())
 		})
 		It("K8sRequiredLabels ns-must-have-gk should be properly enforced for admission", func() {
 			By("Checking if ns-must-have-gk status.byPod field size is 3")
@@ -201,7 +201,7 @@ var _ = Describe("Test gatekeeper", func() {
 				details := plc.Object["status"].(map[string]interface{})["details"].([]interface{})
 				fmt.Printf("%v\n", details[2].(map[string]interface{})["history"].([]interface{})[0].(map[string]interface{})["message"])
 				return details[2].(map[string]interface{})["history"].([]interface{})[0].(map[string]interface{})["message"]
-			}, defaultTimeoutSeconds, 1).Should(ContainSubstring("NonCompliant; violation - events exist:"))
+			}, defaultTimeoutSeconds, 1).Should(ContainSubstring("NonCompliant; violation - events exist: [e2etestfail."))
 		})
 		It("should create relatedObjects properly on managed", func() {
 			By("Checking configurationpolicies on managed")
