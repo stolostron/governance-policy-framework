@@ -21,6 +21,36 @@ spec:
                 kind: Namespace
                 metadata:
                   name: gatekeeper-system
+            - complianceType: musthave
+              objectDefinition:
+                apiVersion: rbac.authorization.k8s.io/v1
+                kind: ClusterRole
+                metadata:
+                  name: gatekeeper-operator-openshift-role
+                rules:
+                - apiGroups:
+                  - security.openshift.io
+                  resourceNames:
+                  - anyuid
+                  resources:
+                  - securitycontextconstraints
+                  verbs:
+                  - use
+            - complianceType: musthave
+              objectDefinition:
+                apiVersion: rbac.authorization.k8s.io/v1
+                kind: RoleBinding
+                metadata:
+                  name: gatekeeper-operator-openshift-binding
+                  namespace: gatekeeper-system
+                roleRef:
+                  apiGroup: rbac.authorization.k8s.io
+                  kind: ClusterRole
+                  name: gatekeeper-operator-openshift-role
+                subjects:
+                - kind: ServiceAccount
+                  name: default
+                  namespace: gatekeeper-system
     - objectDefinition:
         apiVersion: policy.open-cluster-management.io/v1
         kind: ConfigurationPolicy
@@ -106,54 +136,6 @@ spec:
                     emitAdmissionEvents: Enabled
                     logLevel: INFO
                     replicas: 2
-    - objectDefinition:
-        apiVersion: policy.open-cluster-management.io/v1
-        kind: ConfigurationPolicy
-        metadata:
-          name: gatekeeper-role
-        spec:
-          remediationAction: inform
-          severity: high
-          object-templates:
-            - complianceType: musthave
-              objectDefinition:
-                apiVersion: rbac.authorization.k8s.io/v1
-                kind: ClusterRole
-                metadata:
-                  name: gatekeeper-operator-openshift
-                rules:
-                - apiGroups:
-                  - security.openshift.io
-                  resourceNames:
-                  - anyuid
-                  resources:
-                  - securitycontextconstraints
-                  verbs:
-                  - use
-    - objectDefinition:
-        apiVersion: policy.open-cluster-management.io/v1
-        kind: ConfigurationPolicy
-        metadata:
-          name: gatekeeper-role-binding
-        spec:
-          remediationAction: inform
-          severity: high
-          object-templates:
-            - complianceType: musthave
-              objectDefinition:
-                apiVersion: rbac.authorization.k8s.io/v1
-                kind: RoleBinding
-                metadata:
-                  name: gatekeeper-operator-openshift-binding
-                  namespace: gatekeeper-system
-                roleRef:
-                  apiGroup: rbac.authorization.k8s.io
-                  kind: ClusterRole
-                  name: gatekeeper-operator-openshift
-                subjects:
-                - kind: ServiceAccount
-                  name: default
-                  namespace: gatekeeper-system
 ---
 apiVersion: policy.open-cluster-management.io/v1
 kind: PlacementBinding
