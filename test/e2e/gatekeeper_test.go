@@ -56,6 +56,14 @@ const GKOPolicyYaml string = "../resources/gatekeeper/policy-gatekeeper-operator
 var _ = Describe("Test gatekeeper", func() {
 	Describe("Test gatekeeper operator", func() {
 		const GKOPolicyName string = "policy-gatekeeper-operator"
+		It("Creating a valid ns before creating gatekeeper policy", func() {
+			By("Creating a namespace called e2etestsuccess on managed")
+			// keep trying until the create was rejected by gatekeeper
+			Eventually(func() interface{} {
+				out, _ := exec.Command("kubectl", "create", "ns", "e2etestsuccess", "--kubeconfig=../../kubeconfig_managed").CombinedOutput()
+				return string(out)
+			}, defaultTimeoutSeconds, 1).Should(ContainSubstring("namespace/e2etestsuccess created"))
+		})
 		It("gatekeeper operator policy should be created on managed", func() {
 			By("Creating policy on hub")
 			utils.Kubectl("apply", "-f", GKOPolicyYaml, "-n", userNamespace, "--kubeconfig=../../kubeconfig_hub")
@@ -81,14 +89,6 @@ var _ = Describe("Test gatekeeper", func() {
 		const cfgpolKRLName string = "policy-gatekeeper-k8srequiredlabels"
 		const cfgpolauditName string = "policy-gatekeeper-audit"
 		const cfgpoladmissionName string = "policy-gatekeeper-admission"
-		It("Creating a valid ns before creating gatekeeper policy", func() {
-			By("Creating a namespace called e2etestsuccess on managed")
-			// keep trying until the create was rejected by gatekeeper
-			Eventually(func() interface{} {
-				out, _ := exec.Command("kubectl", "create", "ns", "e2etestsuccess", "--kubeconfig=../../kubeconfig_managed").CombinedOutput()
-				return string(out)
-			}, defaultTimeoutSeconds, 1).Should(ContainSubstring("namespace/e2etestsuccess created"))
-		})
 		It("should deploy gatekeeper release on managed cluster", func() {
 			configCRD := GetClusterLevelWithTimeout(clientManagedDynamic, gvrCRD, "configs.config.gatekeeper.sh", true, defaultTimeoutSeconds)
 			Expect(configCRD).NotTo(BeNil())
