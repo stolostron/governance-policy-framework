@@ -60,7 +60,7 @@ spec:
                       - apiGroups: [""]
                         kinds: ["Namespace"]
                     namespaces:
-                      - managed
+                      - e2etestsuccess
                       - e2etestfail
                   parameters:
                     labels: ["gatekeeper"]

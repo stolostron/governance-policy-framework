@@ -81,7 +81,14 @@ var _ = Describe("Test gatekeeper", func() {
 		const cfgpolKRLName string = "policy-gatekeeper-k8srequiredlabels"
 		const cfgpolauditName string = "policy-gatekeeper-audit"
 		const cfgpoladmissionName string = "policy-gatekeeper-admission"
-		const NSYamlFail string = "../resources/gatekeeper/ns-create-invalid.yaml"
+		It("Creating an invalid ns should generate a violation message", func() {
+			By("Creating invalid namespace on managed")
+			// keep trying until the create was rejected by gatekeeper
+			Eventually(func() interface{} {
+				out, _ := exec.Command("kubectl", "create", "ns", "e2etestsuccess", "--kubeconfig=../../kubeconfig_managed").CombinedOutput()
+				return string(out)
+			}, defaultTimeoutSeconds, 1).Should(ContainSubstring("namespace/e2etestsuccess created"))
+		})
 		It("should deploy gatekeeper release on managed cluster", func() {
 			configCRD := GetClusterLevelWithTimeout(clientManagedDynamic, gvrCRD, "configs.config.gatekeeper.sh", true, defaultTimeoutSeconds)
 			Expect(configCRD).NotTo(BeNil())
