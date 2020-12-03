@@ -131,7 +131,7 @@ var _ = Describe("Test gatekeeper", func() {
 				nsMustHaveGkCR := GetClusterLevelWithTimeout(clientManagedDynamic, gvrK8sRequiredLabels, "ns-must-have-gk", true, defaultTimeoutSeconds)
 				return nsMustHaveGkCR.Object["status"]
 			}, defaultTimeoutSeconds, 1).ShouldNot(BeNil())
-			By("Checking if ns-must-have-gk status.totalViolations field has been updated")
+			By("Checking if ns-must-have-gk status.totalViolations is equal to 1")
 			Eventually(func() interface{} {
 				nsMustHaveGkCR := GetClusterLevelWithTimeout(clientManagedDynamic, gvrK8sRequiredLabels, "ns-must-have-gk", true, defaultTimeoutSeconds)
 				return nsMustHaveGkCR.Object["status"].(map[string]interface{})["totalViolations"]
