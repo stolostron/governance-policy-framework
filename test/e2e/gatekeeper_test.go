@@ -135,10 +135,11 @@ var _ = Describe("Test gatekeeper", func() {
 			Eventually(func() interface{} {
 				nsMustHaveGkCR := GetClusterLevelWithTimeout(clientManagedDynamic, gvrK8sRequiredLabels, "ns-must-have-gk", true, defaultTimeoutSeconds)
 				return nsMustHaveGkCR.Object["status"].(map[string]interface{})["totalViolations"]
-			}, defaultTimeoutSeconds*2, 1).ShouldNot(BeNil())
+			}, defaultTimeoutSeconds*2, 1).Should(Equal(int64(1)))
 			By("Checking if ns-must-have-gk status.violations field has been updated")
 			Eventually(func() interface{} {
 				nsMustHaveGkCR := GetClusterLevelWithTimeout(clientManagedDynamic, gvrK8sRequiredLabels, "ns-must-have-gk", true, defaultTimeoutSeconds)
+				fmt.Printf("%v\n", nsMustHaveGkCR.Object["status"].(map[string]interface{})["violations"])
 				return nsMustHaveGkCR.Object["status"].(map[string]interface{})["violations"]
 			}, defaultTimeoutSeconds, 1).ShouldNot(BeNil())
 		})
