@@ -58,7 +58,7 @@ var _ = Describe("Test gatekeeper", func() {
 		const GKOPolicyName string = "policy-gatekeeper-operator"
 		It("Creating a valid ns before creating gatekeeper policy", func() {
 			By("Creating a namespace called e2etestsuccess on managed")
-			// keep trying until the create was rejected by gatekeeper
+			// keep trying until the create goes through by gatekeeper
 			Eventually(func() interface{} {
 				out, _ := exec.Command("kubectl", "create", "ns", "e2etestsuccess", "--kubeconfig=../../kubeconfig_managed").CombinedOutput()
 				return string(out)
