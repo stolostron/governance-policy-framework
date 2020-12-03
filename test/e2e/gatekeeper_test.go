@@ -191,7 +191,6 @@ var _ = Describe("Test gatekeeper", func() {
 		})
 		It("Creating an invalid ns should generate a violation message", func() {
 			By("Creating invalid namespace on managed")
-			// keep trying until the create was rejected by gatekeeper
 			Eventually(func() interface{} {
 				out, _ := exec.Command("kubectl", "create", "ns", "e2etestfail", "--kubeconfig=../../kubeconfig_managed").CombinedOutput()
 				return string(out)
