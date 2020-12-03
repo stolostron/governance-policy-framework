@@ -41,7 +41,7 @@ spec:
                   displayName: Gatekeeper Operator Upstream
                   publisher: github.com/font/gatekeeper-operator
                   sourceType: grpc
-                  image: 'quay.io/willkutler/gatekeeper-operator-bundle-index:0.0.3'
+                  image: 'quay.io/willkutler/gatekeeper-operator-bundle-index:0.0.2'
     - objectDefinition:
         apiVersion: policy.open-cluster-management.io/v1
         kind: ConfigurationPolicy
@@ -100,12 +100,60 @@ spec:
                     logLevel: INFO
                     replicas: 1
                   image:
-                    image: 'docker.io/openpolicyagent/gatekeeper:v3.2.1'
+                    image: 'docker.io/openpolicyagent/gatekeeper:v3.1.1'
                   validatingWebhook: Enabled
                   webhook:
                     emitAdmissionEvents: Enabled
                     logLevel: INFO
                     replicas: 2
+    - objectDefinition:
+        apiVersion: policy.open-cluster-management.io/v1
+        kind: ConfigurationPolicy
+        metadata:
+          name: gatekeeper-role
+        spec:
+          remediationAction: inform
+          severity: high
+          object-templates:
+            - complianceType: musthave
+              objectDefinition:
+                apiVersion: rbac.authorization.k8s.io/v1
+                kind: ClusterRole
+                metadata:
+                  name: gatekeeper-operator-openshift
+                rules:
+                - apiGroups:
+                  - security.openshift.io
+                  resourceNames:
+                  - anyuid
+                  resources:
+                  - securitycontextconstraints
+                  verbs:
+                  - use
+    - objectDefinition:
+        apiVersion: policy.open-cluster-management.io/v1
+        kind: ConfigurationPolicy
+        metadata:
+          name: gatekeeper-role-binding
+        spec:
+          remediationAction: inform
+          severity: high
+          object-templates:
+            - complianceType: musthave
+              objectDefinition:
+                apiVersion: rbac.authorization.k8s.io/v1
+                kind: RoleBinding
+                metadata:
+                  name: gatekeeper-operator-openshift-binding
+                  namespace: gatekeeper-system
+                roleRef:
+                  apiGroup: rbac.authorization.k8s.io
+                  kind: ClusterRole
+                  name: gatekeeper-operator-openshift
+                subjects:
+                - kind: ServiceAccount
+                  name: default
+                  namespace: gatekeeper-system
 ---
 apiVersion: policy.open-cluster-management.io/v1
 kind: PlacementBinding
