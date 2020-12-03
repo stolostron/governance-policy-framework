@@ -72,7 +72,8 @@ var _ = Describe("Test gatekeeper", func() {
 		})
 		It("should create gatekeeper pods on managed cluster", func() {
 			By("Checking number of pods in gatekeeper-system ns")
-			utils.ListWithTimeoutByNamespace(clientManagedDynamic, gvrPod, metav1.ListOptions{}, "gatekeeper-system", 6, true, 240)
+			podList := utils.ListWithTimeoutByNamespace(clientManagedDynamic, gvrPod, metav1.ListOptions{}, "gatekeeper-system", 6, true, 240)
+			fmt.Printf("%+v\n", podList)
 		})
 	})
 	Describe("Test gatekeeper policy creation", func() {
@@ -191,6 +192,7 @@ var _ = Describe("Test gatekeeper", func() {
 			Eventually(func() interface{} {
 				plc := utils.GetWithTimeout(clientHubDynamic, gvrPolicy, "default."+GKPolicyName, clusterNamespace, true, defaultTimeoutSeconds)
 				details := plc.Object["status"].(map[string]interface{})["details"].([]interface{})
+				fmt.Printf("%v\n", details[2].(map[string]interface{})["history"].([]interface{})[0].(map[string]interface{})["message"])
 				return details[2].(map[string]interface{})["history"].([]interface{})[0].(map[string]interface{})["message"]
 			}, defaultTimeoutSeconds, 1).Should(ContainSubstring("NonCompliant; violation - events exist:"))
 		})
