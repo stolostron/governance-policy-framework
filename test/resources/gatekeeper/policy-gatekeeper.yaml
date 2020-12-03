@@ -60,7 +60,7 @@ spec:
                       - apiGroups: [""]
                         kinds: ["Namespace"]
                     namespaces:
-                      - managed
+                      - e2etestsuccess
                       - e2etestfail
                   parameters:
                     labels: ["gatekeeper"]
@@ -81,7 +81,6 @@ spec:
                   name: ns-must-have-gk
                 status:
                   totalViolations: 0
-                  violations: []
     - objectDefinition:
         apiVersion: policy.open-cluster-management.io/v1
         kind: ConfigurationPolicy
