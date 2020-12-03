@@ -81,8 +81,8 @@ var _ = Describe("Test gatekeeper", func() {
 		const cfgpolKRLName string = "policy-gatekeeper-k8srequiredlabels"
 		const cfgpolauditName string = "policy-gatekeeper-audit"
 		const cfgpoladmissionName string = "policy-gatekeeper-admission"
-		It("Creating an invalid ns should generate a violation message", func() {
-			By("Creating invalid namespace on managed")
+		It("Creating a valid ns before creating gatekeeper policy", func() {
+			By("Creating a namespace called e2etestsuccess on managed")
 			// keep trying until the create was rejected by gatekeeper
 			Eventually(func() interface{} {
 				out, _ := exec.Command("kubectl", "create", "ns", "e2etestsuccess", "--kubeconfig=../../kubeconfig_managed").CombinedOutput()
