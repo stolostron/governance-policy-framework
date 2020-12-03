@@ -165,8 +165,8 @@ var _ = Describe("Test gatekeeper", func() {
 				details := plc.Object["status"].(map[string]interface{})["details"].([]interface{})
 				Expect(details[1].(map[string]interface{})["history"]).NotTo(BeNil())
 				return details[1].(map[string]interface{})["history"].([]interface{})[0].(map[string]interface{})["message"]
-			}, defaultTimeoutSeconds, 1).Should(Equal("Compliant; notification - k8srequiredlabels [ns-must-have-gk] exist
-			as specified, therefore this Object template is compliant")
+			}, defaultTimeoutSeconds, 1).Should(Equal("Compliant; notification - k8srequiredlabels [ns-must-have-gk] exist as specified, therefore this Object template is compliant"))
+			By("Checking if violation message for policy template policy-gatekeeper-admission is compliant")
 			Eventually(func() interface{} {
 				plc := utils.GetWithTimeout(clientHubDynamic, gvrPolicy, "default."+GKPolicyName, clusterNamespace, true, defaultTimeoutSeconds)
 				details := plc.Object["status"].(map[string]interface{})["details"].([]interface{})
