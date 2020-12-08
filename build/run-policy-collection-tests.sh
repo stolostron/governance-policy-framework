@@ -8,42 +8,11 @@ if ! which kubectl > /dev/null; then
 fi
 
 echo "Login hub"
-export OC_CLUSTER_URL=$OC_HUB_CLUSTER_URL
-export OC_CLUSTER_PASS=$OC_HUB_CLUSTER_PASS
+export OC_CLUSTER_URL=${OC_HUB_CLUSTER_URL:-https://api.chocolate.dev08.red-chesterfield.com:6443}
+export OC_CLUSTER_URL=${OC_CLUSTER_URL:-kubeadmin}
+export OC_CLUSTER_PASS=${OC_HUB_CLUSTER_PASS:-nG4qU-IKg5J-Sw39N-ZpNuG}
 make oc/login
-
-kubectl create ns policy-collection-e2e || true
-
-git clone https://github.com/open-cluster-management/policy-collection.git
-cd policy-collection/deploy
-
-./deploy.sh https://github.com/open-cluster-management/policy-collection.git stable policy-collection-e2e
-
-function cleanup {
-    kubectl delete subscriptions -n policy-collection-e2e --all || true
-    sleep 10
-    kubectl delete channels -n policy-collection-e2e --all || true
-    kubectl delete policies -n policy-collection-e2e --all || true
-}
-
-COMPLETE=1
-for i in {1..20}; do
-    ROOT_POLICIES=$(kubectl get policies -n policy-collection-e2e | tail -n +2 | wc -l | tr -d '[:space:]')
-    TOTAL_POLICIES=$(kubectl get policies -A | grep e2e | wc -l | tr -d '[:space:]')
-    echo "Number of expected Policies : 11/22"
-    echo "Number of actual Policies : $ROOT_POLICIES/$TOTAL_POLICIES"
-    if [ $ROOT_POLICIES -eq 11 ]; then
-        COMPLETE=0
-        break
-    fi
-    sleep 10
-done
-if [ $COMPLETE -eq 1 ]; then
-    echo "Failed to deploy policies from policy repo"
-    kubectl get policies -A
-   cleanup
-    exit 1
-fi
-echo "Test was successful! cleaning up..."
-cleanup
-exit 0
+export HUB_KUBECONFIG=`echo ~/.kube/config`
+export MANAGED_KUBECONFIG=`echo ~/.kube/config`
+export MANAGED_CLUSTER_NAME='local-cluster'
+ginkgo -v --slowSpecThreshold=10 test/policy-collection -- -kubeconfig_hub=$HUB_KUBECONFIG -kubeconfig_managed=$MANAGED_KUBECONFIG -cluster_namespace=$MANAGED_CLUSTER_NAME
