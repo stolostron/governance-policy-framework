@@ -48,12 +48,12 @@ var _ = Describe("Test stable/policy-comp-operator", func() {
 			rootPlc := utils.GetWithTimeout(clientHubDynamic, gvrPolicy, compPolicyName, userNamespace, true, defaultTimeoutSeconds)
 			rootPlc.Object["spec"].(map[string]interface{})["remediationAction"] = "enforce"
 			rootPlc, err := clientHubDynamic.Resource(gvrPolicy).Namespace(userNamespace).Update(context.TODO(), rootPlc, metav1.UpdateOptions{})
-			By("Checking remediationAction for root policy")
+			By("Checking if remediationAction is enforce for root policy")
 			Expect(err).To(BeNil())
 			Eventually(func() interface{} {
 				return rootPlc.Object["spec"].(map[string]interface{})["remediationAction"]
 			}, defaultTimeoutSeconds, 1).Should(Equal("enforce"))
-			By("Checking remediationAction for replicated policy")
+			By("Checking if remediationAction is enforce for replicated policy")
 			Expect(err).To(BeNil())
 			Eventually(func() interface{} {
 				managedPlc := utils.GetWithTimeout(clientManagedDynamic, gvrPolicy, userNamespace+"."+compPolicyName, clusterNamespace, true, defaultTimeoutSeconds)
@@ -77,16 +77,16 @@ var _ = Describe("Test stable/policy-comp-operator", func() {
 			}, defaultTimeoutSeconds*4, 1).Should(Equal(policiesv1.Compliant))
 		})
 		It("Informing stable/policy-comp-operator", func() {
-			By("Patching remediationAction = enforce on root policy")
+			By("Patching remediationAction = inform on root policy")
 			rootPlc := utils.GetWithTimeout(clientHubDynamic, gvrPolicy, compPolicyName, userNamespace, true, defaultTimeoutSeconds)
 			rootPlc.Object["spec"].(map[string]interface{})["remediationAction"] = "inform"
 			rootPlc, err := clientHubDynamic.Resource(gvrPolicy).Namespace(userNamespace).Update(context.TODO(), rootPlc, metav1.UpdateOptions{})
-			By("Checking remediationAction for on root policy")
+			By("Checking if remediationAction is inform for root policy")
 			Expect(err).To(BeNil())
 			Eventually(func() interface{} {
 				return rootPlc.Object["spec"].(map[string]interface{})["remediationAction"]
 			}, defaultTimeoutSeconds, 1).Should(Equal("inform"))
-			By("Checking remediationAction for replicated policy")
+			By("Checking if remediationAction is inform for replicated policy")
 			Expect(err).To(BeNil())
 			Eventually(func() interface{} {
 				managedPlc := utils.GetWithTimeout(clientManagedDynamic, gvrPolicy, userNamespace+"."+compPolicyName, clusterNamespace, true, defaultTimeoutSeconds)
@@ -95,11 +95,14 @@ var _ = Describe("Test stable/policy-comp-operator", func() {
 		})
 		It("clean up", func() {
 			utils.Kubectl("delete", "-f", compPolicyURL, "-n", userNamespace, "--kubeconfig="+kubeconfigHub)
-			utils.Kubectl("delete", "-n", "openshift-compliance", "OperatorGroup", "compliance-operator", "--kubeconfig="+kubeconfigManaged)
-			utils.Kubectl("delete", "-n", "openshift-compliance", "Subscription", "comp-operator-subscription", "--kubeconfig="+kubeconfigManaged)
-			utils.Kubectl("delete", "ns", "openshift-compliance", "--kubeconfig="+kubeconfigManaged)
 			Eventually(func() interface{} {
-				out, _ := exec.Command("kubectl", "get", "ns", "openshift-compliance", "--kubeconfig="+kubeconfigManaged).CombinedOutput()
+				managedPlc := utils.GetWithTimeout(clientManagedDynamic, gvrPolicy, userNamespace+"."+compPolicyName, clusterNamespace, false, defaultTimeoutSeconds)
+				return managedPlc
+			}, defaultTimeoutSeconds, 1).Should(BeNil())
+			utils.Kubectl("delete", "-n", "openshift-compliance", "Subscription", "comp-operator-subscription", "--kubeconfig="+kubeconfigManaged)
+			utils.Kubectl("delete", "-n", "openshift-compliance", "OperatorGroup", "compliance-operator", "--kubeconfig="+kubeconfigManaged)
+			Eventually(func() interface{} {
+				out, _ := exec.Command("kubectl", "delete", "ns", "openshift-compliance", "--kubeconfig="+kubeconfigManaged).CombinedOutput()
 				return string(out)
 			}, defaultTimeoutSeconds, 1).Should(Equal("Error from server (NotFound): namespaces \"openshift-compliance\" not found\n"))
 			utils.Kubectl("delete", "events", "-n", clusterNamespace, "--all", "--kubeconfig="+kubeconfigManaged)
