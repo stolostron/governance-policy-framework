@@ -32,7 +32,7 @@ for i in {1..20}; do
     TOTAL_POLICIES=$(kubectl get policies -A | grep e2e | wc -l | tr -d '[:space:]')
     echo "Number of expected Policies : 11/22"
     echo "Number of actual Policies : $ROOT_POLICIES/$TOTAL_POLICIES"
-    if [ $ROOT_POLICIES -eq 11 ]; then
+    if [ $ROOT_POLICIES -eq 12 ]; then
         COMPLETE=0
         break
     fi
