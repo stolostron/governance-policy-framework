@@ -25,7 +25,7 @@ func isOCP46andAbove() bool {
 		return false
 	}
 	version := clusterVersion.Object["status"].(map[string]interface{})["desired"].(map[string]interface{})["version"].(string)
-	fmt.Println("OCP Version %s" + version)
+	fmt.Println("OCP Version " + version)
 	if strings.HasPrefix(version, "4.3") || strings.HasPrefix(version, "4.4") || strings.HasPrefix(version, "4.5") {
 		// not ocp 4.3, 4.4 or 4.5
 		return false
