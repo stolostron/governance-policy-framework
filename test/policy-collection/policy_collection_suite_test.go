@@ -27,26 +27,17 @@ import (
 )
 
 var (
-	userNamespace          string
-	clusterNamespace       string
-	clientHub              kubernetes.Interface
-	clientHubDynamic       dynamic.Interface
-	clientManaged          kubernetes.Interface
-	clientManagedDynamic   dynamic.Interface
-	gvrPod                 schema.GroupVersionResource
-	gvrPolicy              schema.GroupVersionResource
-	gvrIamPolicy           schema.GroupVersionResource
-	gvrCertPolicy          schema.GroupVersionResource
-	gvrConfigurationPolicy schema.GroupVersionResource
-	gvrPlacementBinding    schema.GroupVersionResource
-	gvrPlacementRule       schema.GroupVersionResource
-	gvrRole                schema.GroupVersionResource
-	gvrCRD                 schema.GroupVersionResource
-	gvrNS                  schema.GroupVersionResource
-	gvrK8sRequiredLabels   schema.GroupVersionResource
-	kubeconfigHub          string
-	kubeconfigManaged      string
-	defaultTimeoutSeconds  int
+	userNamespace         string
+	clusterNamespace      string
+	clientHub             kubernetes.Interface
+	clientHubDynamic      dynamic.Interface
+	clientManaged         kubernetes.Interface
+	clientManagedDynamic  dynamic.Interface
+	gvrPolicy             schema.GroupVersionResource
+	gvrClusterVersion     schema.GroupVersionResource
+	kubeconfigHub         string
+	kubeconfigManaged     string
+	defaultTimeoutSeconds int
 
 	defaultImageRegistry       string
 	defaultImagePullSecretName string
@@ -69,17 +60,8 @@ func init() {
 
 var _ = BeforeSuite(func() {
 	By("Setup hub and managed client")
-	gvrPod = schema.GroupVersionResource{Version: "v1", Resource: "pods"}
 	gvrPolicy = schema.GroupVersionResource{Group: "policy.open-cluster-management.io", Version: "v1", Resource: "policies"}
-	gvrConfigurationPolicy = schema.GroupVersionResource{Group: "policy.open-cluster-management.io", Version: "v1", Resource: "configurationpolicies"}
-	gvrCertPolicy = schema.GroupVersionResource{Group: "policy.open-cluster-management.io", Version: "v1", Resource: "certificatepolicies"}
-	gvrIamPolicy = schema.GroupVersionResource{Group: "policy.open-cluster-management.io", Version: "v1", Resource: "iampolicies"}
-	gvrPlacementBinding = schema.GroupVersionResource{Group: "policy.open-cluster-management.io", Version: "v1", Resource: "placementbindings"}
-	gvrPlacementRule = schema.GroupVersionResource{Group: "apps.open-cluster-management.io", Version: "v1", Resource: "placementrules"}
-	gvrRole = schema.GroupVersionResource{Group: "rbac.authorization.k8s.io", Version: "v1", Resource: "roles"}
-	gvrCRD = schema.GroupVersionResource{Group: "apiextensions.k8s.io", Version: "v1beta1", Resource: "customresourcedefinitions"}
-	gvrNS = schema.GroupVersionResource{Version: "v1", Resource: "namespaces"}
-	gvrK8sRequiredLabels = schema.GroupVersionResource{Group: "constraints.gatekeeper.sh", Version: "v1beta1", Resource: "k8srequiredlabels"}
+	gvrClusterVersion = schema.GroupVersionResource{Group: "config.openshift.io", Version: "v1", Resource: "clusterversions"}
 	clientHub = NewKubeClient("", kubeconfigHub, "")
 	clientHubDynamic = NewKubeClientDynamic("", kubeconfigHub, "")
 	clientManaged = NewKubeClient("", kubeconfigManaged, "")
