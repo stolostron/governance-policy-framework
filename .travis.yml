@@ -59,7 +59,7 @@ jobs:
           make component/test/e2e
     - stage: test-e2e
       name: "Test polices from policy-collection repo"
-      # if: type != pull_request AND branch = master
+      if: type != pull_request AND branch = master
       script:
         - |
           make
