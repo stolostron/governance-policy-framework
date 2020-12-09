@@ -3,3 +3,5 @@
 /kubeconfig_*
 .vscode/launch.json
 test/e2e/debug.test
+/test-output
+test/policy-collection/policy-collection.test
