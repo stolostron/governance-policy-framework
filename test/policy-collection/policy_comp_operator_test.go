@@ -17,7 +17,7 @@ import (
 	"k8s.io/apimachinery/pkg/runtime"
 )
 
-func isOCP46() bool {
+func isOCP46andAbove() bool {
 	clusterVersion, err := clientManagedDynamic.Resource(gvrClusterVersion).Get(context.TODO(), "version", metav1.GetOptions{})
 	if err != nil && errors.IsNotFound(err) {
 		// no version CR, not ocp
@@ -27,9 +27,10 @@ func isOCP46() bool {
 	version := clusterVersion.Object["status"].(map[string]interface{})["desired"].(map[string]interface{})["version"].(string)
 	fmt.Println("OCP Version %s" + version)
 	if strings.HasPrefix(version, "4.3") || strings.HasPrefix(version, "4.4") || strings.HasPrefix(version, "4.5") {
-		// ocp 4.3, 4.4 or 4.5
+		// not ocp 4.3, 4.4 or 4.5
 		return false
 	}
+	// should be ocp 4.6 and above
 	return true
 }
 
@@ -96,7 +97,7 @@ var _ = Describe("Test stable/policy-comp-operator", func() {
 			}, defaultTimeoutSeconds*4, 1).Should(Equal(policiesv1.Compliant))
 		})
 		It("Compliance operator pod should be running", func() {
-			if !isOCP46() {
+			if !isOCP46andAbove() {
 				Skip("Skipping as it is not ocp 4.6 cluster")
 			}
 			By("Checking if pod compliance-operator has been created")
@@ -113,7 +114,7 @@ var _ = Describe("Test stable/policy-comp-operator", func() {
 			}, defaultTimeoutSeconds*2, 1).Should(Equal("Running"))
 		})
 		It("Profile bundle pods should be running", func() {
-			if !isOCP46() {
+			if !isOCP46andAbove() {
 				Skip("Skipping as it is not ocp 4.6 cluster")
 			}
 			By("Checking if pod ocp4-pp has been created")
