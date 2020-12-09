@@ -21,10 +21,11 @@ func isOCP46() bool {
 	clusterVersion, err := clientManagedDynamic.Resource(gvrClusterVersion).Get(context.TODO(), "version", metav1.GetOptions{})
 	if err != nil && errors.IsNotFound(err) {
 		// no version CR, not ocp
+		fmt.Println("This is not an OCP cluster")
 		return false
 	}
 	version := clusterVersion.Object["status"].(map[string]interface{})["desired"].(map[string]interface{})["version"].(string)
-	fmt.Printf(version)
+	fmt.Println("OCP Version %s" + version)
 	if strings.HasPrefix(version, "4.3") || strings.HasPrefix(version, "4.4") || strings.HasPrefix(version, "4.5") {
 		// ocp 4.3, 4.4 or 4.5
 		return false
