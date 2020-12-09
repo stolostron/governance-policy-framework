@@ -4,6 +4,7 @@ package e2e
 
 import (
 	"context"
+	"fmt"
 	"os/exec"
 	"strings"
 
@@ -23,11 +24,12 @@ func isOCP46() bool {
 		return false
 	}
 	version := clusterVersion.Object["status"].(map[string]interface{})["desired"].(map[string]interface{})["version"].(string)
-	if !strings.HasPrefix(version, "4.3") || !strings.HasPrefix(version, "4.4") || !strings.HasPrefix(version, "4.5") {
-		// not ocp 4.3, 4.4 or 4.5
-		return true
+	fmt.Printf(version)
+	if strings.HasPrefix(version, "4.3") || strings.HasPrefix(version, "4.4") || strings.HasPrefix(version, "4.5") {
+		// ocp 4.3, 4.4 or 4.5
+		return false
 	}
-	return false
+	return true
 }
 
 var _ = Describe("Test stable/policy-comp-operator", func() {
@@ -35,7 +37,6 @@ var _ = Describe("Test stable/policy-comp-operator", func() {
 		const compPolicyURL = "https://raw.githubusercontent.com/open-cluster-management/policy-collection/master/stable/CA-Security-Assessment-and-Authorization/policy-compliance-operator-install.yaml"
 		const compPolicyName = "policy-comp-operator"
 		It("stable/policy-comp-operator should be created on hub", func() {
-			isOCP46()
 			By("Creating policy on hub")
 			utils.Kubectl("apply", "-f", compPolicyURL, "-n", userNamespace, "--kubeconfig="+kubeconfigHub)
 		})
@@ -58,7 +59,7 @@ var _ = Describe("Test stable/policy-comp-operator", func() {
 					}
 				}
 				return nil
-			}, defaultTimeoutSeconds, 1).Should(Equal(policiesv1.NonCompliant))
+			}, defaultTimeoutSeconds*2, 1).Should(Equal(policiesv1.NonCompliant))
 		})
 		It("Enforcing stable/policy-comp-operator", func() {
 			By("Patching remediationAction = enforce on root policy")
@@ -157,7 +158,6 @@ var _ = Describe("Test stable/policy-comp-operator", func() {
 			}, defaultTimeoutSeconds, 1).Should(Equal("inform"))
 		})
 		It("clean up", func() {
-			Skip("skip")
 			utils.Kubectl("delete", "-f", compPolicyURL, "-n", userNamespace, "--kubeconfig="+kubeconfigHub)
 			Eventually(func() interface{} {
 				managedPlc := utils.GetWithTimeout(clientManagedDynamic, gvrPolicy, userNamespace+"."+compPolicyName, clusterNamespace, false, defaultTimeoutSeconds)
