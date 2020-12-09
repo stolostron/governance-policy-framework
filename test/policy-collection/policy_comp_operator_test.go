@@ -38,7 +38,7 @@ var _ = Describe("Test stable/policy-comp-operator", func() {
 	Describe("Test installing compliance operator", func() {
 		const compPolicyURL = "https://raw.githubusercontent.com/open-cluster-management/policy-collection/master/stable/CA-Security-Assessment-and-Authorization/policy-compliance-operator-install.yaml"
 		const compPolicyName = "policy-comp-operator"
-		It("clean up first", func() {
+		It("clean up in case the last build failed", func() {
 			utils.Kubectl("delete", "-f", compPolicyURL, "-n", userNamespace, "--kubeconfig="+kubeconfigHub)
 			Eventually(func() interface{} {
 				managedPlc := utils.GetWithTimeout(clientManagedDynamic, gvrPolicy, userNamespace+"."+compPolicyName, clusterNamespace, false, defaultTimeoutSeconds)
@@ -47,8 +47,7 @@ var _ = Describe("Test stable/policy-comp-operator", func() {
 			utils.Kubectl("delete", "-n", "openshift-compliance", "ProfileBundle", "--all", "--kubeconfig="+kubeconfigManaged)
 			utils.Kubectl("delete", "-n", "openshift-compliance", "subscriptions.operators.coreos.com", "compliance-operator", "--kubeconfig="+kubeconfigManaged)
 			utils.Kubectl("delete", "-n", "openshift-compliance", "OperatorGroup", "compliance-operator", "--kubeconfig="+kubeconfigManaged)
-			out, _ := exec.Command("kubectl", "delete", "ns", "openshift-compliance", "--kubeconfig="+kubeconfigManaged).CombinedOutput()
-			Expect(string(out)).To(Equal("namespace \"openshift-compliance\" deleted\n"))
+			utils.Kubectl("delete", "ns", "openshift-compliance", "--kubeconfig="+kubeconfigManaged)
 			utils.Kubectl("delete", "events", "-n", clusterNamespace, "--all", "--kubeconfig="+kubeconfigManaged)
 		})
 		It("stable/policy-comp-operator should be created on hub", func() {
