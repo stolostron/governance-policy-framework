@@ -3,47 +3,27 @@
 set -e
 
 if ! which kubectl > /dev/null; then
-    echo "installing kubectl"
-    curl -LO https://storage.googleapis.com/kubernetes-release/release/$(curl -s https://storage.googleapis.com/kubernetes-release/release/stable.txt)/bin/linux/amd64/kubectl && chmod +x kubectl && sudo mv kubectl /usr/local/bin/
+    echo "Installing oc and kubectl clis..."
+    mkdir clis-unpacked
+    curl -kLo oc.tar.gz https://mirror.openshift.com/pub/openshift-v4/clients/ocp/4.6.6/openshift-client-linux-4.6.6.tar.gz
+    tar -xzf oc.tar.gz -C clis-unpacked
+    chmod 755 ./clis-unpacked/oc
+    chmod 755 ./clis-unpacked/kubectl
+    sudo mv ./clis-unpacked/oc /usr/local/bin/oc
+    sudo mv ./clis-unpacked/kubectl /usr/local/bin/kubectl
 fi
+echo "Installing ginkgo ..."
+go get github.com/onsi/ginkgo/ginkgo
+go get github.com/onsi/gomega/...
 
 echo "Login hub"
-export OC_CLUSTER_URL=$OC_HUB_CLUSTER_URL
-export OC_CLUSTER_PASS=$OC_HUB_CLUSTER_PASS
-make oc/login
+export OC_CLUSTER_URL=${OC_HUB_CLUSTER_URL:-${OC_CLUSTER_URL}}
+export OC_CLUSTER_USER=${OC_CLUSTER_USER:-kubeadmin}
+export OC_CLUSTER_PASS=${OC_HUB_CLUSTER_PASS:-${OC_CLUSTER_PASS}}
+echo OC_CLUSTER_URL=$OC_CLUSTER_URL
+oc login ${OC_CLUSTER_URL} --insecure-skip-tls-verify=true -u ${OC_CLUSTER_USER} -p ${OC_CLUSTER_PASS}
 
-kubectl create ns policy-collection-e2e || true
-
-git clone https://github.com/open-cluster-management/policy-collection.git
-cd policy-collection/deploy
-
-./deploy.sh https://github.com/open-cluster-management/policy-collection.git stable policy-collection-e2e
-
-function cleanup {
-    kubectl delete subscriptions -n policy-collection-e2e --all || true
-    sleep 10
-    kubectl delete channels -n policy-collection-e2e --all || true
-    kubectl delete policies -n policy-collection-e2e --all || true
-}
-
-COMPLETE=1
-for i in {1..20}; do
-    ROOT_POLICIES=$(kubectl get policies -n policy-collection-e2e | tail -n +2 | wc -l | tr -d '[:space:]')
-    TOTAL_POLICIES=$(kubectl get policies -A | grep e2e | wc -l | tr -d '[:space:]')
-    echo "Number of expected Policies : 11/22"
-    echo "Number of actual Policies : $ROOT_POLICIES/$TOTAL_POLICIES"
-    if [ $ROOT_POLICIES -eq 12 ]; then
-        COMPLETE=0
-        break
-    fi
-    sleep 10
-done
-if [ $COMPLETE -eq 1 ]; then
-    echo "Failed to deploy policies from policy repo"
-    kubectl get policies -A
-   cleanup
-    exit 1
-fi
-echo "Test was successful! cleaning up..."
-cleanup
-exit 0
+export HUB_KUBECONFIG=`echo ~/.kube/config`
+export MANAGED_KUBECONFIG=`echo ~/.kube/config`
+export MANAGED_CLUSTER_NAME=${MANAGED_CLUSTER_NAME:-"local-cluster"}
+ginkgo -v --slowSpecThreshold=10 test/policy-collection -- -kubeconfig_hub=$HUB_KUBECONFIG -kubeconfig_managed=$MANAGED_KUBECONFIG -cluster_namespace=$MANAGED_CLUSTER_NAME

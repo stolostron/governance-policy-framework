@@ -127,7 +127,6 @@ e2e-test:
 	ginkgo -v --slowSpecThreshold=10 test/e2e
 
 policy-collection-test:
-	@echo creating user namespace on hub
 	./build/run-policy-collection-tests.sh
 
 travis-slack-reporter:
