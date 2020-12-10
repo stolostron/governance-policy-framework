@@ -48,11 +48,11 @@ var _ = Describe("Test stable/policy-comp-operator", func() {
 			utils.Kubectl("delete", "-n", "openshift-compliance", "subscriptions.operators.coreos.com", "compliance-operator", "--kubeconfig="+kubeconfigManaged)
 			utils.Kubectl("delete", "-n", "openshift-compliance", "OperatorGroup", "compliance-operator", "--kubeconfig="+kubeconfigManaged)
 			utils.Kubectl("delete", "ns", "openshift-compliance", "--kubeconfig="+kubeconfigManaged)
-			utils.Kubectl("delete", "events", "-n", clusterNamespace, "--all", "--kubeconfig="+kubeconfigManaged)
 		})
 		It("stable/policy-comp-operator should be created on hub", func() {
 			By("Creating policy on hub")
-			utils.Kubectl("apply", "-f", compPolicyURL, "-n", userNamespace, "--kubeconfig="+kubeconfigHub)
+			out, _ := exec.Command("kubectl", "apply", "-f", compPolicyURL, "-n", userNamespace, "--kubeconfig="+kubeconfigHub).CombinedOutput()
+			fmt.Println(string(out))
 		})
 		It("stable/policy-comp-operator on managed cluster", func() {
 			By("Checking policy-comp-operator on managed cluster in ns " + clusterNamespace)
