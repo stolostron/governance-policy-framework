@@ -1,5 +1,7 @@
 language: go
 
+sudo: required
+
 go:
   - "1.14.x"
 
@@ -23,7 +25,7 @@ env:
 stages:
   - build
   - patch-cluster
-  # - test-e2e
+  - test-e2e
   - ff
   - publish
 
@@ -35,6 +37,7 @@ jobs:
     - stage: build
       name: "Build the test image"
       script:
+        - set -e
         - if [ "$TRAVIS_PULL_REQUEST" != "false" ]; then export COMPONENT_TAG_EXTENSION="-PR${TRAVIS_PULL_REQUEST}-${TRAVIS_COMMIT}"; fi;
         - export COMPONENT_BUILD_COMMAND="docker build . -f Dockerfile.e2etest -t "
         - export COMPONENT_NAME="grc-policy-framework-tests"
@@ -78,7 +81,7 @@ jobs:
           make component/test/e2e
     - stage: test-e2e
       name: "Test polices from policy-collection repo"
-      if: type != pull_request AND branch = master
+      # if: type != pull_request AND branch = master
       script:
         - |
           make
