@@ -27,6 +27,9 @@ stages:
   - ff
   - publish
 
+before_script:
+  - make init
+
 jobs:
   include:
     - stage: build
