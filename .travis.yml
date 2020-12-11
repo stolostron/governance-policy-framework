@@ -17,9 +17,9 @@ env:
     - COMPONENT_E2E_TEST_COMMAND=${TRAVIS_BUILD_DIR}/build/run-e2e-tests.sh
 
 stages:
-  - build
   - patch-cluster
   - test-e2e
+  - build
   - ff
   - publish
 
