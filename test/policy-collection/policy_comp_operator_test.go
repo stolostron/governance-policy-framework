@@ -39,22 +39,31 @@ var _ = Describe("Test stable/policy-comp-operator", func() {
 		const compPolicyURL = "https://raw.githubusercontent.com/open-cluster-management/policy-collection/master/stable/CA-Security-Assessment-and-Authorization/policy-compliance-operator-install.yaml"
 		const compPolicyName = "policy-comp-operator"
 		It("clean up in case the last build failed", func() {
-			utils.Kubectl("delete", "-f", compPolicyURL, "-n", userNamespace, "--kubeconfig="+kubeconfigHub)
-			Eventually(func() interface{} {
-				managedPlc := utils.GetWithTimeout(clientManagedDynamic, gvrPolicy, userNamespace+"."+compPolicyName, clusterNamespace, false, defaultTimeoutSeconds)
-				return managedPlc
-			}, defaultTimeoutSeconds, 1).Should(BeNil())
-			utils.Kubectl("delete", "-n", "openshift-compliance", "ProfileBundle", "--all", "--kubeconfig="+kubeconfigManaged)
-			utils.Kubectl("delete", "-n", "openshift-compliance", "subscriptions.operators.coreos.com", "compliance-operator", "--kubeconfig="+kubeconfigManaged)
-			utils.Kubectl("delete", "-n", "openshift-compliance", "OperatorGroup", "compliance-operator", "--kubeconfig="+kubeconfigManaged)
-			utils.Kubectl("delete", "ns", "openshift-compliance", "--kubeconfig="+kubeconfigManaged)
+			By("checking if openshift-compliance ns exists")
+			_, err := clientManaged.CoreV1().Namespaces().Get(context.TODO(), "openshift-compliance", metav1.GetOptions{})
+			if err == nil || !errors.IsNotFound(err) {
+				By("namespace openshift-compliance exists, cleaning up...")
+				utils.Kubectl("delete", "-f", compPolicyURL, "-n", userNamespace, "--kubeconfig="+kubeconfigHub)
+				Eventually(func() interface{} {
+					managedPlc := utils.GetWithTimeout(clientManagedDynamic, gvrPolicy, userNamespace+"."+compPolicyName, clusterNamespace, false, defaultTimeoutSeconds)
+					return managedPlc
+				}, defaultTimeoutSeconds, 1).Should(BeNil())
+				utils.Kubectl("delete", "-n", "openshift-compliance", "ProfileBundle", "--all", "--kubeconfig="+kubeconfigManaged)
+				utils.Kubectl("delete", "-n", "openshift-compliance", "subscriptions.operators.coreos.com", "compliance-operator", "--kubeconfig="+kubeconfigManaged)
+				utils.Kubectl("delete", "-n", "openshift-compliance", "OperatorGroup", "compliance-operator", "--kubeconfig="+kubeconfigManaged)
+				out, _ := exec.Command("kubectl", "delete", "ns", "openshift-compliance", "--kubeconfig="+kubeconfigManaged).CombinedOutput()
+				Expect(string(out)).To(Equal("namespace \"openshift-compliance\" deleted\n"))
+			}
 		})
 		It("stable/policy-comp-operator should be created on hub", func() {
 			By("Creating policy on hub")
 			out, _ := exec.Command("kubectl", "apply", "-f", compPolicyURL, "-n", userNamespace, "--kubeconfig="+kubeconfigHub).CombinedOutput()
 			fmt.Println(string(out))
+			By("Checking policy-comp-operator on hub cluster in ns " + userNamespace)
+			rootPlc := utils.GetWithTimeout(clientHubDynamic, gvrPolicy, compPolicyName, userNamespace, true, defaultTimeoutSeconds)
+			Expect(rootPlc).NotTo(BeNil())
 		})
-		It("stable/policy-comp-operator on managed cluster", func() {
+		It("stable/policy-comp-operator should be created on managed cluster", func() {
 			By("Checking policy-comp-operator on managed cluster in ns " + clusterNamespace)
 			managedplc := utils.GetWithTimeout(clientManagedDynamic, gvrPolicy, userNamespace+"."+compPolicyName, clusterNamespace, true, defaultTimeoutSeconds)
 			Expect(managedplc).NotTo(BeNil())
