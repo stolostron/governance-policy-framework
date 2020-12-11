@@ -1,0 +1,8 @@
+# Copyright (c) 2020 Red Hat, Inc.
+FROM golang:buster
+
+COPY go.mod go.sum ./
+COPY test ./test
+COPY build ./build
+
+CMD ["./build/run-policy-collection-tests.sh"]
