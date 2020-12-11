@@ -17,14 +17,25 @@ env:
     - COMPONENT_E2E_TEST_COMMAND=${TRAVIS_BUILD_DIR}/build/run-e2e-tests.sh
 
 stages:
+  - build
   - patch-cluster
   - test-e2e
-  - build
   - ff
   - publish
 
 jobs:
   include:
+    - stage: build
+      name: "Build the test image"
+      script:
+        - set -e
+        - if [ "$TRAVIS_PULL_REQUEST" != "false" ]; then export COMPONENT_TAG_EXTENSION="-PR${TRAVIS_PULL_REQUEST}-${TRAVIS_COMMIT}"; fi;
+        - export COMPONENT_BUILD_COMMAND="docker build . -f Dockerfile.e2etest -t "
+        - export COMPONENT_NAME="grc-policy-framework-tests"
+        - make component/build
+        - make component/push
+        - COMPONENT_NEWTAG="latest-dev" make component/tag;
+        - COMPONENT_VERSION="latest" COMPONENT_TAG_EXTENSION="-dev" make component/push;
     - stage: patch-cluster
       name: "Patch cluster to latest"
       if: type != pull_request AND branch = master
@@ -66,17 +77,6 @@ jobs:
         - |
           make
           make policy-collection-test
-    - stage: build
-      name: "Build the test image"
-      script:
-        - set -e
-        - if [ "$TRAVIS_PULL_REQUEST" != "false" ]; then export COMPONENT_TAG_EXTENSION="-PR${TRAVIS_PULL_REQUEST}-${TRAVIS_COMMIT}"; fi;
-        - export COMPONENT_BUILD_COMMAND="docker build . -f Dockerfile.e2etest -t "
-        - export COMPONENT_NAME="grc-policy-framework-tests"
-        - make component/build
-        - make component/push
-        - COMPONENT_NEWTAG="latest-dev" make component/tag;
-        - COMPONENT_VERSION="latest" COMPONENT_TAG_EXTENSION="-dev" make component/push;
     - stage: ff
       name: "Fast forwarding GRC repos"
       if: type != pull_request AND branch = master
