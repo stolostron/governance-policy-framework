@@ -68,7 +68,6 @@ jobs:
           make policy-collection-test
     - stage: build
       name: "Build the test image"
-      if: type != pull_request AND branch = master
       script:
         - set -e
         - if [ "$TRAVIS_PULL_REQUEST" != "false" ]; then export COMPONENT_TAG_EXTENSION="-PR${TRAVIS_PULL_REQUEST}-${TRAVIS_COMMIT}"; fi;
