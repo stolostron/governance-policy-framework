@@ -52,7 +52,7 @@ var _ = Describe("Test stable/policy-comp-operator", func() {
 				utils.Kubectl("delete", "-n", "openshift-compliance", "subscriptions.operators.coreos.com", "compliance-operator", "--kubeconfig="+kubeconfigManaged)
 				utils.Kubectl("delete", "-n", "openshift-compliance", "OperatorGroup", "compliance-operator", "--kubeconfig="+kubeconfigManaged)
 				out, _ := exec.Command("kubectl", "delete", "ns", "openshift-compliance", "--kubeconfig="+kubeconfigManaged).CombinedOutput()
-				Expect(string(out)).To(Equal("namespace \"openshift-compliance\" deleted\n"))
+				Expect(string(out)).To(ContainSubstring("namespace \"openshift-compliance\" deleted"))
 			}
 		})
 		It("stable/policy-comp-operator should be created on hub", func() {
@@ -190,7 +190,7 @@ var _ = Describe("Test stable/policy-comp-operator", func() {
 			utils.Kubectl("delete", "-n", "openshift-compliance", "subscriptions.operators.coreos.com", "compliance-operator", "--kubeconfig="+kubeconfigManaged)
 			utils.Kubectl("delete", "-n", "openshift-compliance", "OperatorGroup", "compliance-operator", "--kubeconfig="+kubeconfigManaged)
 			out, _ := exec.Command("kubectl", "delete", "ns", "openshift-compliance", "--kubeconfig="+kubeconfigManaged).CombinedOutput()
-			Expect(string(out)).To(Equal("namespace \"openshift-compliance\" deleted\n"))
+			Expect(string(out)).To(ContainSubstring("namespace \"openshift-compliance\" deleted"))
 			utils.Kubectl("delete", "events", "-n", clusterNamespace, "--all", "--kubeconfig="+kubeconfigManaged)
 		})
 	})
