@@ -8,6 +8,5 @@ WORKDIR /go/src/github.com/open-cluster-management/governance-policy-framework
 COPY test ./test
 COPY build ./build
 COPY vendor ./vendor
-COPY go.mod go.sum ./
 
 CMD ["./build/run-policy-collection-tests.sh"]
