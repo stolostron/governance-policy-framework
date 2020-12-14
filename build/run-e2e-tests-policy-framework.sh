@@ -20,5 +20,5 @@ printenv
 docker run --volume $(pwd)/results:/go/src/github.com/open-cluster-management/governance-policy-framework/test-output \
     --env HUB_KUBECONFIG=$HUB_KUBECONFIG \
     --env MANAGED_KUBECONFIG=$MANAGED_KUBECONFIG \
-    --enc MANAGED_CLUSTER_NAME=$MANAGED_CLUSTER_NAME
+    --env MANAGED_CLUSTER_NAME=$MANAGED_CLUSTER_NAME
     $TEST_IMAGE_URI
