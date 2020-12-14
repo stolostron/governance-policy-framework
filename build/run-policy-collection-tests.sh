@@ -13,8 +13,8 @@ if ! which kubectl > /dev/null; then
     mv ./clis-unpacked/kubectl /usr/local/bin/kubectl
 fi
 echo "Installing ginkgo ..."
-go get github.com/onsi/ginkgo/ginkgo
-go get github.com/onsi/gomega/...
+go get -u github.com/onsi/ginkgo/ginkgo
+go get -u github.com/onsi/gomega/...
 
 echo "Login hub"
 export OC_CLUSTER_URL=${OC_HUB_CLUSTER_URL:-${OC_CLUSTER_URL}}
