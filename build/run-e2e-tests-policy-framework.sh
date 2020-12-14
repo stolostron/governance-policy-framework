@@ -1,9 +1,7 @@
 #!/bin/bash
 
 set -e
-TEST_IMAGE=$1
-
-echo $1
+TEST_IMAGE_URI=$1
 
 printenv
 
@@ -11,4 +9,4 @@ docker run --volume $(pwd)/results:/go/src/github.com/open-cluster-management/go
     --env OC_CLUSTER_URL=$OC_HUB_CLUSTER_URL \
     --env OC_CLUSTER_PASS=$OC_HUB_CLUSTER_PASS \
     --env OC_CLUSTER_USER=$OC_CLUSTER_USER \
-    $DOCKER_URI
+    $TEST_IMAGE_URI
