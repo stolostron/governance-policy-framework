@@ -2,7 +2,7 @@
 
 set -e
 
-./build/download-clis.sh
+sudo ./build/download-clis.sh
 
 echo "Installing ginkgo ..."
 go get github.com/onsi/ginkgo/ginkgo
