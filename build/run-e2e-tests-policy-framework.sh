@@ -3,7 +3,7 @@
 set -e
 TEST_IMAGE_URI=$1
 
-./build/download-clis.sh
+sudo ./build/download-clis.sh
 
 echo "Login hub"
 export OC_CLUSTER_URL=${OC_HUB_CLUSTER_URL:-${OC_CLUSTER_URL}}
