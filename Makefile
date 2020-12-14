@@ -127,7 +127,7 @@ e2e-test:
 	ginkgo -v --slowSpecThreshold=10 test/e2e
 
 policy-collection-test:
-	./build/run-policy-collection-tests.sh
+    ginkgo -v --slowSpecThreshold=10 test/policy-collection -- -kubeconfig_hub=$(HUB_KUBECONFIG) -kubeconfig_managed=$(MANAGED_KUBECONFIG) -cluster_namespace=$(MANAGED_CLUSTER_NAME)	
 
 travis-slack-reporter:
 	docker run --volume $(PWD)/results:/opt/app-root/src/grc-ui/test-output/e2e \

@@ -9,4 +9,4 @@ COPY test ./test
 COPY build ./build
 COPY vendor ./vendor
 
-CMD ["./build/run-policy-collection-tests.sh"]
+CMD ["./build/run-test-image.sh"]
