@@ -196,6 +196,7 @@ wait_for_resource() {
     while [ -n "$(get_${wait_for_resource_type}_state "$wait_for_resource_descriptor")" ] ; do
         print_OC_ARGS="$OC_ARGS"
         [ "$print_OC_ARGS" != "" ] && print_OC_ARGS=" $print_OC_ARGS"
+        oc get $wait_for_resource_type $wait_for_resource_descriptor${print_OC_ARGS}
         echo "Waiting for $wait_for_resource_type $wait_for_resource_descriptor${print_OC_ARGS}..."
         sleep "$WAIT_TIME"
     done
