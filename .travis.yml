@@ -41,6 +41,7 @@ jobs:
         - if [ "$TRAVIS_PULL_REQUEST" != "false" ]; then export COMPONENT_TAG_EXTENSION="-PR${TRAVIS_PULL_REQUEST}-${TRAVIS_COMMIT}"; fi;
         - export COMPONENT_BUILD_COMMAND="docker build . -f Dockerfile.e2etest -t "
         - export COMPONENT_NAME="grc-policy-framework-tests"
+        - go mod vendor
         - make component/build
         - make component/push
         - COMPONENT_NEWTAG="latest-dev" make component/tag;
