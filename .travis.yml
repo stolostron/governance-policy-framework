@@ -20,8 +20,7 @@ env:
     - COMPONENT_E2E_TEST_COMMAND=${TRAVIS_BUILD_DIR}/build/run-e2e-tests.sh
 
 stages:
-  - build
-  - patch-cluster
+  - prepare
   - test-e2e
   - ff
   - publish
@@ -31,7 +30,7 @@ before_script:
 
 jobs:
   include:
-    - stage: build
+    - stage: prepare
       name: "Build the test image"
       script:
         - set -e
@@ -43,7 +42,7 @@ jobs:
         - make component/push
         - COMPONENT_NEWTAG="latest-dev" make component/tag;
         - COMPONENT_VERSION="latest" COMPONENT_TAG_EXTENSION="-dev" make component/push;
-    - stage: patch-cluster
+    - stage: prepare
       name: "Patch cluster to latest"
       if: type != pull_request AND branch = master
       env:
