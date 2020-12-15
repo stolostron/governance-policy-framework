@@ -55,7 +55,7 @@ func init() {
 	flag.StringVar(&kubeconfigHub, "kubeconfig_hub", "../../kubeconfig_hub", "Location of the kubeconfig to use; defaults to KUBECONFIG if not set")
 	flag.StringVar(&kubeconfigManaged, "kubeconfig_managed", "../../kubeconfig_managed", "Location of the kubeconfig to use; defaults to KUBECONFIG if not set")
 	flag.StringVar(&userNamespace, "user_namespace", "policy-test", "ns on hub to create root policy")
-	flag.StringVar(&clusterNamespace, "cluster_namespace", "managed", "cluster ns name")
+	flag.StringVar(&clusterNamespace, "cluster_namespace", "local-cluster", "cluster ns name")
 }
 
 var _ = BeforeSuite(func() {

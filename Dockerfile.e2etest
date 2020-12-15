@@ -1,0 +1,12 @@
+# Copyright (c) 2020 Red Hat, Inc.
+FROM golang:buster
+
+RUN mkdir -p /src/github.com/open-cluster-management/governance-policy-framework
+
+WORKDIR /go/src/github.com/open-cluster-management/governance-policy-framework
+
+COPY test ./test
+COPY build ./build
+COPY vendor ./vendor
+
+CMD ["./build/run-test-image.sh"]

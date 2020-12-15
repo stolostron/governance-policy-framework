@@ -14,15 +14,35 @@ branches:
 env:
   global:
     - OS=linux
+    - COMPONENT_TAG_EXTENSION="-${TRAVIS_COMMIT}"
+    # Component Specific
+    - COMPONENT_INIT_COMMAND=${TRAVIS_BUILD_DIR}/build/install-dependencies.sh
     - COMPONENT_E2E_TEST_COMMAND=${TRAVIS_BUILD_DIR}/build/run-e2e-tests.sh
 
 stages:
+  - build
   - patch-cluster
   - test-e2e
   - ff
+  - publish
+
+before_script:
+  - make init
 
 jobs:
   include:
+    - stage: build
+      name: "Build the test image"
+      script:
+        - set -e
+        - if [ "$TRAVIS_PULL_REQUEST" != "false" ]; then export COMPONENT_TAG_EXTENSION="-PR${TRAVIS_PULL_REQUEST}-${TRAVIS_COMMIT}"; fi;
+        - export COMPONENT_BUILD_COMMAND="docker build . -f Dockerfile.e2etest -t "
+        - export COMPONENT_NAME="grc-policy-framework-tests"
+        - go mod vendor
+        - make component/build
+        - make component/push
+        - COMPONENT_NEWTAG="latest-dev" make component/tag;
+        - COMPONENT_VERSION="latest" COMPONENT_TAG_EXTENSION="-dev" make component/push;
     - stage: patch-cluster
       name: "Patch cluster to latest"
       if: type != pull_request AND branch = master
@@ -59,15 +79,26 @@ jobs:
           make component/test/e2e
     - stage: test-e2e
       name: "Test polices from policy-collection repo"
-      if: type != pull_request AND branch = master
-      script:
+      # if: type != pull_request AND branch = master
+      env:
+        - COMPONENT_E2E_TEST_COMMAND=${TRAVIS_BUILD_DIR}/build/run-e2e-tests-policy-framework.sh
+      script: 
         - |
           make
-          make policy-collection-test
+          export COMPONENT_NAME="grc-policy-framework-tests"
+          if [ "$TRAVIS_PULL_REQUEST" != "false" ]; then export COMPONENT_TAG_EXTENSION="-PR${TRAVIS_PULL_REQUEST}-${TRAVIS_COMMIT}"; fi;
+          make component/pull
+          make component/test/e2e
     - stage: ff
       name: "Fast forwarding GRC repos"
       if: type != pull_request AND branch = master
       scripts: ./build/ff.sh
+    - stage: publish
+      name: "Publish the image to quay with an official version/sha tag and publish entry to integration pipeline stage"
+      if: type = push AND branch =~ /^release-[0-9]+\..*$/
+      script:
+        - set -e
+        - make pipeline-manifest/update COMPONENT_NAME=grc-policy-framework-tests PIPELINE_MANIFEST_COMPONENT_SHA256=${TRAVIS_COMMIT} PIPELINE_MANIFEST_COMPONENT_REPO=${TRAVIS_REPO_SLUG} PIPELINE_MANIFEST_BRANCH=${TRAVIS_BRANCH}
   
 notifications:
   slack:
