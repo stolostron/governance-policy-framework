@@ -17,7 +17,7 @@ import (
 	"k8s.io/apimachinery/pkg/runtime"
 )
 
-var _ = Describe("Test stable/policy-gatekeeper-operator", func() {
+var _ = Describe("Test community/policy-gatekeeper-operator", func() {
 	Describe("Test installing gatekeeper operator", func() {
 		const gatekeeperPolicyURL = "https://raw.githubusercontent.com/open-cluster-management/policy-collection/master/community/CM-Configuration-Management/policy-gatekeeper-operator.yaml"
 		const gatekeeperPolicyName = "policy-gatekeeper-operator"
@@ -39,7 +39,7 @@ var _ = Describe("Test stable/policy-gatekeeper-operator", func() {
 				Expect(string(out)).To(ContainSubstring("namespace \"gatekeeper-system\" deleted"))
 			}
 		})
-		It("stable/policy-gatekeeper-operator should be created on hub", func() {
+		It("community/policy-gatekeeper-operator should be created on hub", func() {
 			By("Creating policy on hub")
 			out, _ := exec.Command("kubectl", "apply", "-f", gatekeeperPolicyURL, "-n", userNamespace, "--kubeconfig="+kubeconfigHub).CombinedOutput()
 			fmt.Println(string(out))
@@ -52,12 +52,12 @@ var _ = Describe("Test stable/policy-gatekeeper-operator", func() {
 			rootPlc := utils.GetWithTimeout(clientHubDynamic, gvrPolicy, gatekeeperPolicyName, userNamespace, true, defaultTimeoutSeconds)
 			Expect(rootPlc).NotTo(BeNil())
 		})
-		It("stable/policy-gatekeeper-operator should be created on managed cluster", func() {
+		It("community/policy-gatekeeper-operator should be created on managed cluster", func() {
 			By("Checking policy-gatekeeper-operator on managed cluster in ns " + clusterNamespace)
 			managedplc := utils.GetWithTimeout(clientManagedDynamic, gvrPolicy, userNamespace+"."+gatekeeperPolicyName, clusterNamespace, true, defaultTimeoutSeconds)
 			Expect(managedplc).NotTo(BeNil())
 		})
-		It("stable/policy-gatekeeper-operator should be noncompliant", func() {
+		It("community/policy-gatekeeper-operator should be noncompliant", func() {
 			By("Checking if the status of root policy is noncompliant")
 			Eventually(func() interface{} {
 				rootPlc := utils.GetWithTimeout(clientHubDynamic, gvrPolicy, gatekeeperPolicyName, userNamespace, true, defaultTimeoutSeconds)
@@ -73,7 +73,7 @@ var _ = Describe("Test stable/policy-gatekeeper-operator", func() {
 				return nil
 			}, defaultTimeoutSeconds*2, 1).Should(Equal(policiesv1.NonCompliant))
 		})
-		It("Enforcing stable/policy-gatekeeper-operator", func() {
+		It("Enforcing community/policy-gatekeeper-operator", func() {
 			By("Patching remediationAction = enforce on root policy")
 			rootPlc := utils.GetWithTimeout(clientHubDynamic, gvrPolicy, gatekeeperPolicyName, userNamespace, true, defaultTimeoutSeconds)
 			rootPlc.Object["spec"].(map[string]interface{})["remediationAction"] = "enforce"
@@ -90,7 +90,7 @@ var _ = Describe("Test stable/policy-gatekeeper-operator", func() {
 				return managedPlc.Object["spec"].(map[string]interface{})["remediationAction"]
 			}, defaultTimeoutSeconds, 1).Should(Equal("enforce"))
 		})
-		It("stable/policy-gatekeeper-operator should be compliant", func() {
+		It("community/policy-gatekeeper-operator should be compliant", func() {
 			By("Checking if the status of root policy is compliant")
 			Eventually(func() interface{} {
 				rootPlc := utils.GetWithTimeout(clientHubDynamic, gvrPolicy, gatekeeperPolicyName, userNamespace, true, defaultTimeoutSeconds)
