@@ -243,7 +243,7 @@ var _ = Describe("Test compliance operator and scan", func() {
 		})
 		It("ComplianceSuite e8 should be created", func() {
 			By("Checking if ComplianceSuite e8 exists on managed cluster")
-			e8 := utils.GetWithTimeout(clientManagedDynamic, gvrComplianceSuite, "e8", "openshift-compliance", true, defaultTimeoutSeconds)
+			e8 := utils.GetWithTimeout(clientManagedDynamic, gvrComplianceSuite, "e8", "openshift-compliance", true, defaultTimeoutSeconds*4)
 			Expect(e8).NotTo(BeNil())
 			By("Checking if ComplianceSuite e8 scan status field has been created")
 			Eventually(func() interface{} {
