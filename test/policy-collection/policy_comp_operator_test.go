@@ -174,7 +174,7 @@ var _ = Describe("Test compliance operator and scan", func() {
 				podList, err := clientManaged.CoreV1().Pods("openshift-compliance").List(context.TODO(), metav1.ListOptions{LabelSelector: "name=compliance-operator"})
 				Expect(err).To(BeNil())
 				return len(podList.Items)
-			}, defaultTimeoutSeconds*2, 1).Should(Equal(1))
+			}, defaultTimeoutSeconds*4, 1).Should(Equal(1))
 			By("Checking if pod compliance-operator is running")
 			Eventually(func() interface{} {
 				podList, err := clientManaged.CoreV1().Pods("openshift-compliance").List(context.TODO(), metav1.ListOptions{LabelSelector: "name=compliance-operator"})
