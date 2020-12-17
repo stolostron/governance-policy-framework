@@ -58,9 +58,6 @@ spec:
                 metadata:
                   name: gatekeeper-operator
                   namespace: gatekeeper-system
-                spec:
-                  targetNamespaces:
-                    - gatekeeper-system
     - objectDefinition:
         apiVersion: policy.open-cluster-management.io/v1
         kind: ConfigurationPolicy
