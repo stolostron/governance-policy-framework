@@ -105,6 +105,11 @@ var _ = Describe("Test compliance operator and scan", func() {
 			By("Creating policy on hub")
 			out, _ := exec.Command("kubectl", "apply", "-f", compPolicyURL, "-n", userNamespace, "--kubeconfig="+kubeconfigHub).CombinedOutput()
 			fmt.Println(string(out))
+			By("Patching placement rule")
+			out, _ = exec.Command("kubectl", "patch", "-n", userNamespace, "placementrule.apps.open-cluster-management.io/placement-policy-gatekeeper-operator",
+				"--type=json", "-p=[{\"op\": \"replace\", \"path\": \"/spec/clusterSelector/matchExpressions\", \"value\":[{\"key\": \"name\", \"operator\": \"In\", \"values\": ["+clusterNamespace+"]}]}]",
+				"--kubeconfig="+kubeconfigHub).CombinedOutput()
+			fmt.Println(string(out))
 			By("Checking policy-comp-operator on hub cluster in ns " + userNamespace)
 			rootPlc := utils.GetWithTimeout(clientHubDynamic, gvrPolicy, compPolicyName, userNamespace, true, defaultTimeoutSeconds)
 			Expect(rootPlc).NotTo(BeNil())
