@@ -45,7 +45,7 @@ func cleanupRequired() bool {
 var _ = Describe("Test compliance operator and scan", func() {
 	const compPolicyURL = "https://raw.githubusercontent.com/open-cluster-management/policy-collection/master/stable/CA-Security-Assessment-and-Authorization/policy-compliance-operator-install.yaml"
 	const compPolicyName = "policy-comp-operator"
-	const compE8ScanPolicyURL = "https://raw.githubusercontent.com/open-cluster-management/policy-collection/master/community/CM-Configuration-Management/policy-compliance-operator-e8-scan.yaml"
+	const compE8ScanPolicyURL = "https://raw.githubusercontent.com/open-cluster-management/policy-collection/master/stable/CM-Configuration-Management/policy-compliance-operator-e8-scan.yaml"
 	const compE8ScanPolicyName = "policy-e8-scan"
 	BeforeEach(func() {
 		if !isOCP46andAbove() {
@@ -210,8 +210,8 @@ var _ = Describe("Test compliance operator and scan", func() {
 			}, defaultTimeoutSeconds*4, 1).Should(Equal("Running"))
 		})
 	})
-	Describe("Test community/policy-e8-scan", func() {
-		It("community/policy-e8-scan should be created on hub", func() {
+	Describe("Test stable/policy-e8-scan", func() {
+		It("stable/policy-e8-scan should be created on hub", func() {
 			By("Creating policy on hub")
 			out, _ := exec.Command("kubectl", "apply", "-f", compE8ScanPolicyURL, "-n", userNamespace, "--kubeconfig="+kubeconfigHub).CombinedOutput()
 			fmt.Println(string(out))
@@ -219,12 +219,12 @@ var _ = Describe("Test compliance operator and scan", func() {
 			rootPlc := utils.GetWithTimeout(clientHubDynamic, gvrPolicy, compE8ScanPolicyName, userNamespace, true, defaultTimeoutSeconds)
 			Expect(rootPlc).NotTo(BeNil())
 		})
-		It("community/policy-e8-scan should be created on managed cluster", func() {
+		It("stable/policy-e8-scan should be created on managed cluster", func() {
 			By("Checking policy-e8-scan on managed cluster in ns " + clusterNamespace)
 			managedplc := utils.GetWithTimeout(clientManagedDynamic, gvrPolicy, userNamespace+"."+compE8ScanPolicyName, clusterNamespace, true, defaultTimeoutSeconds)
 			Expect(managedplc).NotTo(BeNil())
 		})
-		It("Enforcing community/policy-e8-scan", func() {
+		It("Enforcing stable/policy-e8-scan", func() {
 			By("Patching remediationAction = enforce on root policy")
 			rootPlc := utils.GetWithTimeout(clientHubDynamic, gvrPolicy, compE8ScanPolicyName, userNamespace, true, defaultTimeoutSeconds)
 			rootPlc.Object["spec"].(map[string]interface{})["remediationAction"] = "enforce"
@@ -278,7 +278,7 @@ var _ = Describe("Test compliance operator and scan", func() {
 				return e8.Object["status"].(map[string]interface{})["phase"]
 			}, defaultTimeoutSeconds*4, 1).Should(Equal("DONE"))
 		})
-		It("Informing community/policy-e8-scan", func() {
+		It("Informing stable/policy-e8-scan", func() {
 			By("Patching remediationAction = inform on root policy")
 			rootPlc := utils.GetWithTimeout(clientHubDynamic, gvrPolicy, compE8ScanPolicyName, userNamespace, true, defaultTimeoutSeconds)
 			rootPlc.Object["spec"].(map[string]interface{})["remediationAction"] = "inform"
