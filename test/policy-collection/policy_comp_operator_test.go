@@ -106,7 +106,7 @@ var _ = Describe("Test compliance operator and scan", func() {
 			out, _ := exec.Command("kubectl", "apply", "-f", compPolicyURL, "-n", userNamespace, "--kubeconfig="+kubeconfigHub).CombinedOutput()
 			fmt.Println(string(out))
 			By("Patching placement rule")
-			out, _ = exec.Command("kubectl", "patch", "-n", userNamespace, "placementrule.apps.open-cluster-management.io/placement-policy-gatekeeper-operator",
+			out, _ = exec.Command("kubectl", "patch", "-n", userNamespace, "placementrule.apps.open-cluster-management.io/placement-"+compPolicyName,
 				"--type=json", "-p=[{\"op\": \"replace\", \"path\": \"/spec/clusterSelector/matchExpressions\", \"value\":[{\"key\": \"name\", \"operator\": \"In\", \"values\": ["+clusterNamespace+"]}]}]",
 				"--kubeconfig="+kubeconfigHub).CombinedOutput()
 			fmt.Println(string(out))
@@ -248,7 +248,7 @@ var _ = Describe("Test compliance operator and scan", func() {
 			Eventually(func() interface{} {
 				e8 := utils.GetWithTimeout(clientManagedDynamic, gvrComplianceSuite, "e8", "openshift-compliance", true, defaultTimeoutSeconds)
 				return e8.Object["status"]
-			}, defaultTimeoutSeconds*6, 1).ShouldNot(BeNil())
+			}, defaultTimeoutSeconds*4, 1).ShouldNot(BeNil())
 			By("Checking if ComplianceSuite e8 scan status.phase is RUNNING")
 			Eventually(func() interface{} {
 				e8 := utils.GetWithTimeout(clientManagedDynamic, gvrComplianceSuite, "e8", "openshift-compliance", true, defaultTimeoutSeconds)
