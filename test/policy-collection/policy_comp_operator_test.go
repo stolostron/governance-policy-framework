@@ -64,6 +64,7 @@ var _ = Describe("Test compliance operator and scan", func() {
 			}, defaultTimeoutSeconds, 1).Should(BeNil())
 			utils.Kubectl("delete", "-n", "openshift-compliance", "ScanSettingBinding", "e8", "--kubeconfig="+kubeconfigManaged)
 			utils.Kubectl("delete", "-n", "openshift-compliance", "ComplianceSuite", "e8", "--kubeconfig="+kubeconfigManaged)
+			utils.Kubectl("delete", "-n", "openshift-compliance", "ComplianceScan", "--all", "--kubeconfig="+kubeconfigManaged)
 			utils.ListWithTimeoutByNamespace(clientManagedDynamic, gvrComplianceCheckResult, metav1.ListOptions{}, "openshift-compliance", 0, false, defaultTimeoutSeconds)
 		})
 		It("clean up compliance operator", func() {
@@ -277,6 +278,23 @@ var _ = Describe("Test compliance operator and scan", func() {
 				return e8.Object["status"].(map[string]interface{})["phase"]
 			}, defaultTimeoutSeconds*4, 1).Should(Equal("DONE"))
 		})
+		It("Informing community/policy-e8-scan", func() {
+			By("Patching remediationAction = inform on root policy")
+			rootPlc := utils.GetWithTimeout(clientHubDynamic, gvrPolicy, compE8ScanPolicyName, userNamespace, true, defaultTimeoutSeconds)
+			rootPlc.Object["spec"].(map[string]interface{})["remediationAction"] = "inform"
+			rootPlc, err := clientHubDynamic.Resource(gvrPolicy).Namespace(userNamespace).Update(context.TODO(), rootPlc, metav1.UpdateOptions{})
+			By("Checking if remediationAction is inform for root policy")
+			Expect(err).To(BeNil())
+			Eventually(func() interface{} {
+				return rootPlc.Object["spec"].(map[string]interface{})["remediationAction"]
+			}, defaultTimeoutSeconds, 1).Should(Equal("inform"))
+			By("Checking if remediationAction is inform for replicated policy")
+			Expect(err).To(BeNil())
+			Eventually(func() interface{} {
+				managedPlc := utils.GetWithTimeout(clientManagedDynamic, gvrPolicy, userNamespace+"."+compE8ScanPolicyName, clusterNamespace, true, defaultTimeoutSeconds)
+				return managedPlc.Object["spec"].(map[string]interface{})["remediationAction"]
+			}, defaultTimeoutSeconds, 1).Should(Equal("inform"))
+		})
 	})
 	Describe("Clean up after all", func() {
 		It("clean up compliance scan e8", func() {
@@ -287,6 +305,7 @@ var _ = Describe("Test compliance operator and scan", func() {
 			}, defaultTimeoutSeconds, 1).Should(BeNil())
 			utils.Kubectl("delete", "-n", "openshift-compliance", "ScanSettingBinding", "e8", "--kubeconfig="+kubeconfigManaged)
 			utils.Kubectl("delete", "-n", "openshift-compliance", "ComplianceSuite", "e8", "--kubeconfig="+kubeconfigManaged)
+			utils.Kubectl("delete", "-n", "openshift-compliance", "ComplianceScan", "--all", "--kubeconfig="+kubeconfigManaged)
 			utils.ListWithTimeoutByNamespace(clientManagedDynamic, gvrComplianceCheckResult, metav1.ListOptions{}, "openshift-compliance", 0, false, defaultTimeoutSeconds)
 		})
 		It("clean up compliance operator", func() {
