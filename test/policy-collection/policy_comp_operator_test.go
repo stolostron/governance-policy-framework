@@ -268,7 +268,7 @@ var _ = Describe("Test compliance operator and scan", func() {
 			}, defaultTimeoutSeconds*4, 1).Should(Equal("DONE"))
 		})
 	})
-	Describe("Clean up afterwards", func() {
+	Describe("Clean up after all", func() {
 		It("clean up compliance scan e8", func() {
 			utils.Kubectl("delete", "-f", compE8ScanPolicyURL, "-n", userNamespace, "--kubeconfig="+kubeconfigHub)
 			Eventually(func() interface{} {

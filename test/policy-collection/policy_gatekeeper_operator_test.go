@@ -21,7 +21,7 @@ var _ = PDescribe("Test community/policy-gatekeeper-operator", func() {
 	Describe("Test installing gatekeeper operator", func() {
 		const gatekeeperPolicyURL = "https://raw.githubusercontent.com/open-cluster-management/policy-collection/master/community/CM-Configuration-Management/policy-gatekeeper-operator.yaml"
 		const gatekeeperPolicyName = "policy-gatekeeper-operator"
-		It("clean up in case the last build failed", func() {
+		It("Clean up before all", func() {
 			By("checking if gatekeeper-system ns exists")
 			_, err := clientManaged.CoreV1().Namespaces().Get(context.TODO(), "gatekeeper-system", metav1.GetOptions{})
 			if err == nil || !errors.IsNotFound(err) {
@@ -155,7 +155,7 @@ var _ = PDescribe("Test community/policy-gatekeeper-operator", func() {
 			}, defaultTimeoutSeconds*2, 1).Should(Equal("Running/Running"))
 		})
 
-		It("clean up", func() {
+		It("Clean up after all", func() {
 			utils.Kubectl("delete", "-f", gatekeeperPolicyURL, "-n", userNamespace, "--kubeconfig="+kubeconfigHub)
 			Eventually(func() interface{} {
 				managedPlc := utils.GetWithTimeout(clientManagedDynamic, gvrPolicy, userNamespace+"."+gatekeeperPolicyName, clusterNamespace, false, defaultTimeoutSeconds)
