@@ -47,6 +47,11 @@ var _ = Describe("Test compliance operator and scan", func() {
 	const compPolicyName = "policy-comp-operator"
 	const compE8ScanPolicyURL = "https://raw.githubusercontent.com/open-cluster-management/policy-collection/master/community/CM-Configuration-Management/policy-compliance-operator-e8-scan.yaml"
 	const compE8ScanPolicyName = "policy-e8-scan"
+	BeforeEach(func() {
+		if !isOCP46andAbove() {
+			Skip("Skipping as compliance operator is only supported on OCP 4.6 and above")
+		}
+	})
 	Describe("Clean up before all", func() {
 		It("clean up compliance scan e8", func() {
 			if !cleanupRequired() {
