@@ -248,7 +248,7 @@ var _ = Describe("Test compliance operator and scan", func() {
 			Eventually(func() interface{} {
 				e8 := utils.GetWithTimeout(clientManagedDynamic, gvrComplianceSuite, "e8", "openshift-compliance", true, defaultTimeoutSeconds)
 				return e8.Object["status"]
-			}, defaultTimeoutSeconds*4, 1).ShouldNot(BeNil())
+			}, defaultTimeoutSeconds*6, 1).ShouldNot(BeNil())
 			By("Checking if ComplianceSuite e8 scan status.phase is RUNNING")
 			Eventually(func() interface{} {
 				e8 := utils.GetWithTimeout(clientManagedDynamic, gvrComplianceSuite, "e8", "openshift-compliance", true, defaultTimeoutSeconds)
