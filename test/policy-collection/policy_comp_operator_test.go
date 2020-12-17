@@ -239,7 +239,12 @@ var _ = Describe("Test compliance operator and scan", func() {
 			By("Checking if ComplianceSuite e8 exists on managed cluster")
 			e8 := utils.GetWithTimeout(clientManagedDynamic, gvrComplianceSuite, "e8", "openshift-compliance", true, defaultTimeoutSeconds)
 			Expect(e8).NotTo(BeNil())
-			By("Checking if ComplianceSuite e8 scan is RUNNING")
+			By("Checking if ComplianceSuite e8 scan status field has been created")
+			Eventually(func() interface{} {
+				e8 := utils.GetWithTimeout(clientManagedDynamic, gvrComplianceSuite, "e8", "openshift-compliance", true, defaultTimeoutSeconds)
+				return e8.Object["status"]
+			}, defaultTimeoutSeconds*4, 1).ShouldNot(BeNil())
+			By("Checking if ComplianceSuite e8 scan status.phase is RUNNING")
 			Eventually(func() interface{} {
 				e8 := utils.GetWithTimeout(clientManagedDynamic, gvrComplianceSuite, "e8", "openshift-compliance", true, defaultTimeoutSeconds)
 				return e8.Object["status"].(map[string]interface{})["phase"]
@@ -254,14 +259,14 @@ var _ = Describe("Test compliance operator and scan", func() {
 			}, defaultTimeoutSeconds*4, 1).ShouldNot(Equal(0))
 		})
 		It("ComplianceSuite e8 scan results should be AGGREGATING", func() {
-			By("Checking if ComplianceSuite e8 scan is AGGREGATING")
+			By("Checking if ComplianceSuite e8 scan status.phase is AGGREGATING")
 			Eventually(func() interface{} {
 				e8 := utils.GetWithTimeout(clientManagedDynamic, gvrComplianceSuite, "e8", "openshift-compliance", true, defaultTimeoutSeconds)
 				return e8.Object["status"].(map[string]interface{})["phase"]
 			}, defaultTimeoutSeconds*4, 1).Should(Equal("AGGREGATING"))
 		})
 		It("ComplianceSuite e8 scan results should be DONE", func() {
-			By("Checking if ComplianceSuite e8 scan is DONE")
+			By("Checking if ComplianceSuite e8 scan status.phase is DONE")
 			Eventually(func() interface{} {
 				e8 := utils.GetWithTimeout(clientManagedDynamic, gvrComplianceSuite, "e8", "openshift-compliance", true, defaultTimeoutSeconds)
 				return e8.Object["status"].(map[string]interface{})["phase"]
