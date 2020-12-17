@@ -17,7 +17,7 @@ import (
 	"k8s.io/apimachinery/pkg/runtime"
 )
 
-var _ = Describe("Test community/policy-gatekeeper-operator", func() {
+var _ = PDescribe("Test community/policy-gatekeeper-operator", func() {
 	Describe("Test installing gatekeeper operator", func() {
 		const gatekeeperPolicyURL = "https://raw.githubusercontent.com/open-cluster-management/policy-collection/master/community/CM-Configuration-Management/policy-gatekeeper-operator.yaml"
 		const gatekeeperPolicyName = "policy-gatekeeper-operator"
@@ -147,7 +147,7 @@ var _ = Describe("Test community/policy-gatekeeper-operator", func() {
 				Expect(err).To(BeNil())
 				return len(podList.Items)
 			}, defaultTimeoutSeconds*2, 1).Should(Equal(2))
-			By("Checking if pod gatekeeper-audit is running")
+			By("Checking if pod gatekeeper-controller-manager is running")
 			Eventually(func() interface{} {
 				podList, err := clientManaged.CoreV1().Pods("gatekeeper-system").List(context.TODO(), metav1.ListOptions{LabelSelector: "gatekeeper.sh/operation=webhook"})
 				Expect(err).To(BeNil())
