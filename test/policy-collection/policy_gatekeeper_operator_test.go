@@ -154,7 +154,23 @@ var _ = PDescribe("Test community/policy-gatekeeper-operator", func() {
 				return string(podList.Items[0].Status.Phase) + "/" + string(podList.Items[1].Status.Phase)
 			}, defaultTimeoutSeconds*2, 1).Should(Equal("Running/Running"))
 		})
-
+		It("Informing community/policy-gatekeeper-operator", func() {
+			By("Patching remediationAction = inform on root policy")
+			rootPlc := utils.GetWithTimeout(clientHubDynamic, gvrPolicy, gatekeeperPolicyName, userNamespace, true, defaultTimeoutSeconds)
+			rootPlc.Object["spec"].(map[string]interface{})["remediationAction"] = "inform"
+			rootPlc, err := clientHubDynamic.Resource(gvrPolicy).Namespace(userNamespace).Update(context.TODO(), rootPlc, metav1.UpdateOptions{})
+			By("Checking if remediationAction is inform for root policy")
+			Expect(err).To(BeNil())
+			Eventually(func() interface{} {
+				return rootPlc.Object["spec"].(map[string]interface{})["remediationAction"]
+			}, defaultTimeoutSeconds, 1).Should(Equal("inform"))
+			By("Checking if remediationAction is inform for replicated policy")
+			Expect(err).To(BeNil())
+			Eventually(func() interface{} {
+				managedPlc := utils.GetWithTimeout(clientManagedDynamic, gvrPolicy, userNamespace+"."+gatekeeperPolicyName, clusterNamespace, true, defaultTimeoutSeconds)
+				return managedPlc.Object["spec"].(map[string]interface{})["remediationAction"]
+			}, defaultTimeoutSeconds, 1).Should(Equal("inform"))
+		})
 		It("Clean up after all", func() {
 			utils.Kubectl("delete", "-f", gatekeeperPolicyURL, "-n", userNamespace, "--kubeconfig="+kubeconfigHub)
 			Eventually(func() interface{} {
