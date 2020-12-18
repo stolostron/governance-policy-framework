@@ -17,7 +17,7 @@ import (
 	"k8s.io/apimachinery/pkg/runtime"
 )
 
-var _ = PDescribe("Test community/policy-gatekeeper-operator", func() {
+var _ = Describe("Test community/policy-gatekeeper-operator", func() {
 	Describe("Test installing gatekeeper operator", func() {
 		const gatekeeperPolicyURL = "https://raw.githubusercontent.com/open-cluster-management/policy-collection/master/community/CM-Configuration-Management/policy-gatekeeper-operator.yaml"
 		const gatekeeperPolicyName = "policy-gatekeeper-operator"
