@@ -64,7 +64,9 @@ var _ = Describe("Test compliance operator and scan", func() {
 			}, defaultTimeoutSeconds, 1).Should(BeNil())
 			utils.Kubectl("delete", "-n", "openshift-compliance", "ScanSettingBinding", "e8", "--kubeconfig="+kubeconfigManaged)
 			utils.Kubectl("delete", "-n", "openshift-compliance", "ComplianceSuite", "e8", "--kubeconfig="+kubeconfigManaged)
+			utils.ListWithTimeoutByNamespace(clientManagedDynamic, gvrComplianceSuite, metav1.ListOptions{}, "openshift-compliance", 0, false, defaultTimeoutSeconds)
 			utils.Kubectl("delete", "-n", "openshift-compliance", "ComplianceScan", "--all", "--kubeconfig="+kubeconfigManaged)
+			utils.ListWithTimeoutByNamespace(clientManagedDynamic, gvrComplianceScan, metav1.ListOptions{}, "openshift-compliance", 0, false, defaultTimeoutSeconds)
 			utils.ListWithTimeoutByNamespace(clientManagedDynamic, gvrComplianceCheckResult, metav1.ListOptions{}, "openshift-compliance", 0, false, defaultTimeoutSeconds)
 		})
 		It("clean up compliance operator", func() {
@@ -305,7 +307,9 @@ var _ = Describe("Test compliance operator and scan", func() {
 			}, defaultTimeoutSeconds, 1).Should(BeNil())
 			utils.Kubectl("delete", "-n", "openshift-compliance", "ScanSettingBinding", "e8", "--kubeconfig="+kubeconfigManaged)
 			utils.Kubectl("delete", "-n", "openshift-compliance", "ComplianceSuite", "e8", "--kubeconfig="+kubeconfigManaged)
+			utils.ListWithTimeoutByNamespace(clientManagedDynamic, gvrComplianceSuite, metav1.ListOptions{}, "openshift-compliance", 0, false, defaultTimeoutSeconds)
 			utils.Kubectl("delete", "-n", "openshift-compliance", "ComplianceScan", "--all", "--kubeconfig="+kubeconfigManaged)
+			utils.ListWithTimeoutByNamespace(clientManagedDynamic, gvrComplianceScan, metav1.ListOptions{}, "openshift-compliance", 0, false, defaultTimeoutSeconds)
 			utils.ListWithTimeoutByNamespace(clientManagedDynamic, gvrComplianceCheckResult, metav1.ListOptions{}, "openshift-compliance", 0, false, defaultTimeoutSeconds)
 		})
 		It("clean up compliance operator", func() {
