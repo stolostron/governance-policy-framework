@@ -47,7 +47,7 @@ var (
 
 func TestE2e(t *testing.T) {
 	RegisterFailHandler(Fail)
-	junitReporter := reporters.NewJUnitReporter("../../test-output/e2e/policy-collection.xml")
+	junitReporter := reporters.NewJUnitReporter("../../test-output/policy-collection.xml")
 	RunSpecsWithDefaultAndCustomReporters(t, "Policy collection repo e2e Suite", []Reporter{junitReporter})
 }
 
