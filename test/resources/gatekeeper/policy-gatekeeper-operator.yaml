@@ -46,22 +46,6 @@ spec:
         apiVersion: policy.open-cluster-management.io/v1
         kind: ConfigurationPolicy
         metadata:
-          name: gatekeeper-operator-group
-        spec:
-          remediationAction: inform
-          severity: high
-          object-templates:
-            - complianceType: musthave
-              objectDefinition:
-                apiVersion: operators.coreos.com/v1
-                kind: OperatorGroup
-                metadata:
-                  name: gatekeeper-operator
-                  namespace: gatekeeper-system
-    - objectDefinition:
-        apiVersion: policy.open-cluster-management.io/v1
-        kind: ConfigurationPolicy
-        metadata:
           name: gatekeeper-operator-subscription
         spec:
           remediationAction: inform
