@@ -27,17 +27,20 @@ import (
 )
 
 var (
-	userNamespace         string
-	clusterNamespace      string
-	clientHub             kubernetes.Interface
-	clientHubDynamic      dynamic.Interface
-	clientManaged         kubernetes.Interface
-	clientManagedDynamic  dynamic.Interface
-	gvrPolicy             schema.GroupVersionResource
-	gvrClusterVersion     schema.GroupVersionResource
-	kubeconfigHub         string
-	kubeconfigManaged     string
-	defaultTimeoutSeconds int
+	userNamespace            string
+	clusterNamespace         string
+	clientHub                kubernetes.Interface
+	clientHubDynamic         dynamic.Interface
+	clientManaged            kubernetes.Interface
+	clientManagedDynamic     dynamic.Interface
+	gvrClusterVersion        schema.GroupVersionResource
+	gvrComplianceScan        schema.GroupVersionResource
+	gvrComplianceSuite       schema.GroupVersionResource
+	gvrComplianceCheckResult schema.GroupVersionResource
+	gvrPolicy                schema.GroupVersionResource
+	kubeconfigHub            string
+	kubeconfigManaged        string
+	defaultTimeoutSeconds    int
 
 	defaultImageRegistry       string
 	defaultImagePullSecretName string
@@ -45,7 +48,7 @@ var (
 
 func TestE2e(t *testing.T) {
 	RegisterFailHandler(Fail)
-	junitReporter := reporters.NewJUnitReporter("../../test-output/e2e/policy-collection.xml")
+	junitReporter := reporters.NewJUnitReporter("../../test-output/policy-collection.xml")
 	RunSpecsWithDefaultAndCustomReporters(t, "Policy collection repo e2e Suite", []Reporter{junitReporter})
 }
 
@@ -60,8 +63,11 @@ func init() {
 
 var _ = BeforeSuite(func() {
 	By("Setup hub and managed client")
-	gvrPolicy = schema.GroupVersionResource{Group: "policy.open-cluster-management.io", Version: "v1", Resource: "policies"}
 	gvrClusterVersion = schema.GroupVersionResource{Group: "config.openshift.io", Version: "v1", Resource: "clusterversions"}
+	gvrComplianceScan = schema.GroupVersionResource{Group: "compliance.openshift.io", Version: "v1alpha1", Resource: "compliancescans"}
+	gvrComplianceSuite = schema.GroupVersionResource{Group: "compliance.openshift.io", Version: "v1alpha1", Resource: "compliancesuites"}
+	gvrComplianceCheckResult = schema.GroupVersionResource{Group: "compliance.openshift.io", Version: "v1alpha1", Resource: "compliancecheckresults"}
+	gvrPolicy = schema.GroupVersionResource{Group: "policy.open-cluster-management.io", Version: "v1", Resource: "policies"}
 	clientHub = NewKubeClient("", kubeconfigHub, "")
 	clientHubDynamic = NewKubeClientDynamic("", kubeconfigHub, "")
 	clientManaged = NewKubeClient("", kubeconfigManaged, "")

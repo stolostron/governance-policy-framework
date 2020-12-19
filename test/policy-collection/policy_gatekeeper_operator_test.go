@@ -21,22 +21,22 @@ var _ = Describe("Test community/policy-gatekeeper-operator", func() {
 	Describe("Test installing gatekeeper operator", func() {
 		const gatekeeperPolicyURL = "https://raw.githubusercontent.com/open-cluster-management/policy-collection/master/community/CM-Configuration-Management/policy-gatekeeper-operator.yaml"
 		const gatekeeperPolicyName = "policy-gatekeeper-operator"
-		It("clean up in case the last build failed", func() {
-			By("checking if gatekeeper-system ns exists")
-			_, err := clientManaged.CoreV1().Namespaces().Get(context.TODO(), "gatekeeper-system", metav1.GetOptions{})
+		It("Clean up before all", func() {
+			By("checking if openshift-gatekeeper-operator ns exists")
+			_, err := clientManaged.CoreV1().Namespaces().Get(context.TODO(), "openshift-gatekeeper-operator", metav1.GetOptions{})
 			if err == nil || !errors.IsNotFound(err) {
-				By("namespace gatekeeper-system exists, cleaning up...")
+				By("namespace openshift-gatekeeper-operator exists, cleaning up...")
 				utils.Kubectl("delete", "-f", gatekeeperPolicyURL, "-n", userNamespace, "--kubeconfig="+kubeconfigHub)
 				Eventually(func() interface{} {
 					managedPlc := utils.GetWithTimeout(clientManagedDynamic, gvrPolicy, userNamespace+"."+gatekeeperPolicyName, clusterNamespace, false, defaultTimeoutSeconds)
 					return managedPlc
 				}, defaultTimeoutSeconds, 1).Should(BeNil())
-				utils.Kubectl("delete", "-n", "gatekeeper-system", "Gatekeeper", "gatekeeper", "--kubeconfig="+kubeconfigManaged)
-				utils.Kubectl("delete", "-n", "gatekeeper-system", "subscriptions.operators.coreos.com", "gatekeeper-operator-sub", "--kubeconfig="+kubeconfigManaged)
-				utils.Kubectl("delete", "-n", "gatekeeper-system", "OperatorGroup", "gatekeeper-operator", "--kubeconfig="+kubeconfigManaged)
+				utils.Kubectl("delete", "-n", "openshift-gatekeeper-operator", "Gatekeeper", "gatekeeper", "--kubeconfig="+kubeconfigManaged)
+				utils.Kubectl("delete", "-n", "openshift-gatekeeper-operator", "subscriptions.operators.coreos.com", "gatekeeper-operator-sub", "--kubeconfig="+kubeconfigManaged)
+				utils.Kubectl("delete", "-n", "openshift-gatekeeper-operator", "OperatorGroup", "gatekeeper-operator", "--kubeconfig="+kubeconfigManaged)
 				utils.Kubectl("delete", "crd", "gatekeepers.operator.gatekeeper.sh", "--kubeconfig="+kubeconfigManaged)
-				out, _ := exec.Command("kubectl", "delete", "ns", "gatekeeper-system", "--kubeconfig="+kubeconfigManaged).CombinedOutput()
-				Expect(string(out)).To(ContainSubstring("namespace \"gatekeeper-system\" deleted"))
+				out, _ := exec.Command("kubectl", "delete", "ns", "openshift-gatekeeper-operator", "--kubeconfig="+kubeconfigManaged).CombinedOutput()
+				Expect(string(out)).To(ContainSubstring("namespace \"openshift-gatekeeper-operator\" deleted"))
 			}
 		})
 		It("community/policy-gatekeeper-operator should be created on hub", func() {
@@ -44,7 +44,7 @@ var _ = Describe("Test community/policy-gatekeeper-operator", func() {
 			out, _ := exec.Command("kubectl", "apply", "-f", gatekeeperPolicyURL, "-n", userNamespace, "--kubeconfig="+kubeconfigHub).CombinedOutput()
 			fmt.Println(string(out))
 			By("Patching placement rule")
-			out, _ = exec.Command("kubectl", "patch", "-n", userNamespace, "placementrule.apps.open-cluster-management.io/placement-policy-gatekeeper-operator",
+			out, _ = exec.Command("kubectl", "patch", "-n", userNamespace, "placementrule.apps.open-cluster-management.io/placement-"+gatekeeperPolicyName,
 				"--type=json", "-p=[{\"op\": \"replace\", \"path\": \"/spec/clusterSelector/matchExpressions\", \"value\":[{\"key\": \"name\", \"operator\": \"In\", \"values\": ["+clusterNamespace+"]}]}]",
 				"--kubeconfig="+kubeconfigHub).CombinedOutput()
 			fmt.Println(string(out))
@@ -109,13 +109,13 @@ var _ = Describe("Test community/policy-gatekeeper-operator", func() {
 		It("Gatekeeper operator pod should be running", func() {
 			By("Checking if pod gatekeeper-operator has been created")
 			Eventually(func() interface{} {
-				podList, err := clientManaged.CoreV1().Pods("gatekeeper-system").List(context.TODO(), metav1.ListOptions{LabelSelector: "control-plane=controller-manager"})
+				podList, err := clientManaged.CoreV1().Pods("openshift-gatekeeper-operator").List(context.TODO(), metav1.ListOptions{LabelSelector: "control-plane=controller-manager"})
 				Expect(err).To(BeNil())
 				return len(podList.Items)
 			}, defaultTimeoutSeconds*2, 1).ShouldNot(Equal(0))
 			By("Checking if pod gatekeeper-operator is running")
 			Eventually(func() interface{} {
-				podList, err := clientManaged.CoreV1().Pods("gatekeeper-system").List(context.TODO(), metav1.ListOptions{LabelSelector: "control-plane=controller-manager"})
+				podList, err := clientManaged.CoreV1().Pods("openshift-gatekeeper-operator").List(context.TODO(), metav1.ListOptions{LabelSelector: "control-plane=controller-manager"})
 				Expect(err).To(BeNil())
 				for _, item := range podList.Items {
 					if strings.HasPrefix(item.ObjectMeta.Name, "gatekeeper-operator-controller-manager") {
@@ -128,13 +128,13 @@ var _ = Describe("Test community/policy-gatekeeper-operator", func() {
 		It("Gatekeeper audit pod should be running", func() {
 			By("Checking if pod gatekeeper-audit has been created")
 			Eventually(func() interface{} {
-				podList, err := clientManaged.CoreV1().Pods("gatekeeper-system").List(context.TODO(), metav1.ListOptions{LabelSelector: "control-plane=audit-controller"})
+				podList, err := clientManaged.CoreV1().Pods("openshift-gatekeeper-system").List(context.TODO(), metav1.ListOptions{LabelSelector: "control-plane=audit-controller"})
 				Expect(err).To(BeNil())
 				return len(podList.Items)
 			}, defaultTimeoutSeconds*2, 1).Should(Equal(1))
 			By("Checking if pod gatekeeper-audit is running")
 			Eventually(func() interface{} {
-				podList, err := clientManaged.CoreV1().Pods("gatekeeper-system").List(context.TODO(), metav1.ListOptions{LabelSelector: "control-plane=audit-controller"})
+				podList, err := clientManaged.CoreV1().Pods("openshift-gatekeeper-system").List(context.TODO(), metav1.ListOptions{LabelSelector: "control-plane=audit-controller"})
 				Expect(err).To(BeNil())
 				return string(podList.Items[0].Status.Phase)
 			}, defaultTimeoutSeconds*2, 1).Should(Equal("Running"))
@@ -143,30 +143,46 @@ var _ = Describe("Test community/policy-gatekeeper-operator", func() {
 		It("Gatekeeper controller manager pods should be running", func() {
 			By("Checking if pod gatekeeper-controller-manager has been created")
 			Eventually(func() interface{} {
-				podList, err := clientManaged.CoreV1().Pods("gatekeeper-system").List(context.TODO(), metav1.ListOptions{LabelSelector: "gatekeeper.sh/operation=webhook"})
+				podList, err := clientManaged.CoreV1().Pods("openshift-gatekeeper-system").List(context.TODO(), metav1.ListOptions{LabelSelector: "gatekeeper.sh/operation=webhook"})
 				Expect(err).To(BeNil())
 				return len(podList.Items)
 			}, defaultTimeoutSeconds*2, 1).Should(Equal(2))
-			By("Checking if pod gatekeeper-audit is running")
+			By("Checking if pod gatekeeper-controller-manager is running")
 			Eventually(func() interface{} {
-				podList, err := clientManaged.CoreV1().Pods("gatekeeper-system").List(context.TODO(), metav1.ListOptions{LabelSelector: "gatekeeper.sh/operation=webhook"})
+				podList, err := clientManaged.CoreV1().Pods("openshift-gatekeeper-system").List(context.TODO(), metav1.ListOptions{LabelSelector: "gatekeeper.sh/operation=webhook"})
 				Expect(err).To(BeNil())
 				return string(podList.Items[0].Status.Phase) + "/" + string(podList.Items[1].Status.Phase)
 			}, defaultTimeoutSeconds*2, 1).Should(Equal("Running/Running"))
 		})
-
-		It("clean up", func() {
+		It("Informing community/policy-gatekeeper-operator", func() {
+			By("Patching remediationAction = inform on root policy")
+			rootPlc := utils.GetWithTimeout(clientHubDynamic, gvrPolicy, gatekeeperPolicyName, userNamespace, true, defaultTimeoutSeconds)
+			rootPlc.Object["spec"].(map[string]interface{})["remediationAction"] = "inform"
+			rootPlc, err := clientHubDynamic.Resource(gvrPolicy).Namespace(userNamespace).Update(context.TODO(), rootPlc, metav1.UpdateOptions{})
+			By("Checking if remediationAction is inform for root policy")
+			Expect(err).To(BeNil())
+			Eventually(func() interface{} {
+				return rootPlc.Object["spec"].(map[string]interface{})["remediationAction"]
+			}, defaultTimeoutSeconds, 1).Should(Equal("inform"))
+			By("Checking if remediationAction is inform for replicated policy")
+			Expect(err).To(BeNil())
+			Eventually(func() interface{} {
+				managedPlc := utils.GetWithTimeout(clientManagedDynamic, gvrPolicy, userNamespace+"."+gatekeeperPolicyName, clusterNamespace, true, defaultTimeoutSeconds)
+				return managedPlc.Object["spec"].(map[string]interface{})["remediationAction"]
+			}, defaultTimeoutSeconds, 1).Should(Equal("inform"))
+		})
+		It("Clean up after all", func() {
 			utils.Kubectl("delete", "-f", gatekeeperPolicyURL, "-n", userNamespace, "--kubeconfig="+kubeconfigHub)
 			Eventually(func() interface{} {
 				managedPlc := utils.GetWithTimeout(clientManagedDynamic, gvrPolicy, userNamespace+"."+gatekeeperPolicyName, clusterNamespace, false, defaultTimeoutSeconds)
 				return managedPlc
 			}, defaultTimeoutSeconds, 1).Should(BeNil())
-			utils.Kubectl("delete", "-n", "gatekeeper-system", "Gatekeeper", "gatekeeper", "--kubeconfig="+kubeconfigManaged)
-			utils.Kubectl("delete", "-n", "gatekeeper-system", "subscriptions.operators.coreos.com", "gatekeeper-operator-sub", "--kubeconfig="+kubeconfigManaged)
-			utils.Kubectl("delete", "-n", "gatekeeper-system", "OperatorGroup", "gatekeeper-operator", "--kubeconfig="+kubeconfigManaged)
+			utils.Kubectl("delete", "-n", "openshift-gatekeeper-operator", "Gatekeeper", "gatekeeper", "--kubeconfig="+kubeconfigManaged)
+			utils.Kubectl("delete", "-n", "openshift-gatekeeper-operator", "subscriptions.operators.coreos.com", "gatekeeper-operator-sub", "--kubeconfig="+kubeconfigManaged)
+			utils.Kubectl("delete", "-n", "openshift-gatekeeper-operator", "OperatorGroup", "gatekeeper-operator", "--kubeconfig="+kubeconfigManaged)
 			utils.Kubectl("delete", "crd", "gatekeepers.operator.gatekeeper.sh", "--kubeconfig="+kubeconfigManaged)
-			out, _ := exec.Command("kubectl", "delete", "ns", "gatekeeper-system", "--kubeconfig="+kubeconfigManaged).CombinedOutput()
-			Expect(string(out)).To(ContainSubstring("namespace \"gatekeeper-system\" deleted"))
+			out, _ := exec.Command("kubectl", "delete", "ns", "openshift-gatekeeper-operator", "--kubeconfig="+kubeconfigManaged).CombinedOutput()
+			Expect(string(out)).To(ContainSubstring("namespace \"openshift-gatekeeper-operator\" deleted"))
 			utils.Kubectl("delete", "events", "-n", clusterNamespace, "--all", "--kubeconfig="+kubeconfigManaged)
 		})
 	})
