@@ -34,7 +34,6 @@ var (
 	clientManaged            kubernetes.Interface
 	clientManagedDynamic     dynamic.Interface
 	gvrClusterVersion        schema.GroupVersionResource
-	gvrComplianceScan        schema.GroupVersionResource
 	gvrComplianceSuite       schema.GroupVersionResource
 	gvrComplianceCheckResult schema.GroupVersionResource
 	gvrPolicy                schema.GroupVersionResource
@@ -64,7 +63,6 @@ func init() {
 var _ = BeforeSuite(func() {
 	By("Setup hub and managed client")
 	gvrClusterVersion = schema.GroupVersionResource{Group: "config.openshift.io", Version: "v1", Resource: "clusterversions"}
-	gvrComplianceScan = schema.GroupVersionResource{Group: "compliance.openshift.io", Version: "v1alpha1", Resource: "compliancescans"}
 	gvrComplianceSuite = schema.GroupVersionResource{Group: "compliance.openshift.io", Version: "v1alpha1", Resource: "compliancesuites"}
 	gvrComplianceCheckResult = schema.GroupVersionResource{Group: "compliance.openshift.io", Version: "v1alpha1", Resource: "compliancecheckresults"}
 	gvrPolicy = schema.GroupVersionResource{Group: "policy.open-cluster-management.io", Version: "v1", Resource: "policies"}
