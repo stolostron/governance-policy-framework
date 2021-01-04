@@ -75,7 +75,7 @@ spec:
                   name: gatekeeper-operator-sub
                   namespace: gatekeeper-system
                 spec:
-                  channel: alpha
+                  channel: stable
                   name: gatekeeper-operator
                   source: gatekeeper-operator
                   sourceNamespace: gatekeeper-system
