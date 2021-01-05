@@ -221,8 +221,10 @@ var _ = Describe("Test community/policy-gatekeeper-operator", func() {
 		})
 		It("Creating a valid ns should not be blocked by gatekeeper", func() {
 			By("Creating a namespace called e2etestsuccess on managed")
-			out, _ := exec.Command("kubectl", "apply", "-f", "../resources/gatekeeper/ns-create-valid.yaml", "--kubeconfig="+kubeconfigManaged).CombinedOutput()
-			Expect(string(out)).Should(ContainSubstring("namespace/e2etestsuccess created"))
+			Eventually(func() interface{} {
+				out, _ := exec.Command("kubectl", "apply", "-f", "../resources/gatekeeper/ns-create-valid.yaml", "--kubeconfig="+kubeconfigManaged).CombinedOutput()
+				return string(out)
+			}, defaultTimeoutSeconds*2, 1).Should(ContainSubstring("namespace/e2etestsuccess created"))
 		})
 		It("Creating an invalid ns should generate a violation message", func() {
 			By("Creating invalid namespace on managed")
