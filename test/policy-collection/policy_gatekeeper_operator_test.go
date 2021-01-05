@@ -113,7 +113,7 @@ var _ = Describe("Test community/policy-gatekeeper-operator", func() {
 					}
 				}
 				return nil
-			}, defaultTimeoutSeconds*4, 1).Should(Equal(policiesv1.Compliant))
+			}, defaultTimeoutSeconds*6, 1).Should(Equal(policiesv1.Compliant))
 		})
 		It("Gatekeeper operator pod should be running", func() {
 			By("Checking if pod gatekeeper-operator has been created")
