@@ -245,6 +245,7 @@ var _ = Describe("Test community/policy-gatekeeper-operator", func() {
 			By("Creating a namespace called e2etestsuccess on managed")
 			Eventually(func() interface{} {
 				out, _ := exec.Command("kubectl", "apply", "-f", "../resources/gatekeeper/ns-create-valid.yaml", "--kubeconfig="+kubeconfigManaged).CombinedOutput()
+				fmt.Println(string(out))
 				return string(out)
 			}, defaultTimeoutSeconds*2, 1).Should(ContainSubstring("namespace/e2etestsuccess created"))
 		})
