@@ -9,7 +9,6 @@ import (
 	"os"
 	"os/user"
 	"path/filepath"
-	"strconv"
 	"testing"
 
 	. "github.com/onsi/ginkgo"
@@ -59,6 +58,7 @@ func init() {
 	flag.StringVar(&kubeconfigManaged, "kubeconfig_managed", "../../kubeconfig_managed", "Location of the kubeconfig to use; defaults to KUBECONFIG if not set")
 	flag.StringVar(&userNamespace, "user_namespace", "policy-test", "ns on hub to create root policy")
 	flag.StringVar(&clusterNamespace, "cluster_namespace", "local-cluster", "cluster ns name")
+	flag.IntVar(&defaultTimeoutSeconds, "timeout_seconds", 30, "Timeout seconds for assertion")
 }
 
 var _ = BeforeSuite(func() {
@@ -74,16 +74,6 @@ var _ = BeforeSuite(func() {
 	clientManagedDynamic = NewKubeClientDynamic("", kubeconfigManaged, "")
 	defaultImageRegistry = "quay.io/open-cluster-management"
 	defaultImagePullSecretName = "multiclusterhub-operator-pull-secret"
-	timeoutStr, found := os.LookupEnv("E2E_TIMEOUT_SECONDS")
-	if !found {
-		defaultTimeoutSeconds = 30
-	} else {
-		if n, err := strconv.Atoi(timeoutStr); err == nil {
-			defaultTimeoutSeconds = n
-		} else {
-			defaultTimeoutSeconds = 30
-		}
-	}
 	By("Create Namesapce if needed")
 	namespaces := clientHub.CoreV1().Namespaces()
 	if _, err := namespaces.Get(context.TODO(), userNamespace, metav1.GetOptions{}); err != nil && errors.IsNotFound(err) {

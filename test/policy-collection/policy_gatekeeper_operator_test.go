@@ -211,7 +211,7 @@ var _ = Describe("Test community/policy-gatekeeper-operator", func() {
 					}
 				}
 				return nil
-			}, defaultTimeoutSeconds*4, 1).Should(Equal(policiesv1.Compliant))
+			}, defaultTimeoutSeconds*6, 1).Should(Equal(policiesv1.Compliant))
 			By("Checking if status for policy template policy-gatekeeper-audit is compliant")
 			Eventually(func() interface{} {
 				plc := utils.GetWithTimeout(clientHubDynamic, gvrPolicy, userNamespace+"."+GKPolicyName, clusterNamespace, true, defaultTimeoutSeconds)
