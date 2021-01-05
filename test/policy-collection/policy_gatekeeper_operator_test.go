@@ -17,7 +17,29 @@ import (
 	"k8s.io/apimachinery/pkg/runtime"
 )
 
+func isOCP44() bool {
+	clusterVersion, err := clientManagedDynamic.Resource(gvrClusterVersion).Get(context.TODO(), "version", metav1.GetOptions{})
+	if err != nil && errors.IsNotFound(err) {
+		// no version CR, not ocp
+		fmt.Println("This is not an OCP cluster")
+		return false
+	}
+	version := clusterVersion.Object["status"].(map[string]interface{})["desired"].(map[string]interface{})["version"].(string)
+	fmt.Println("OCP Version " + version)
+	if strings.HasPrefix(version, "4.4") {
+		// not ocp 4.3, 4.4 or 4.5
+		return true
+	}
+	// should be ocp 4.6 and above
+	return false
+}
+
 var _ = Describe("Test community/policy-gatekeeper-operator", func() {
+	BeforeEach(func() {
+		if isOCP44() {
+			Skip("Skipping as this is ocp 4.4")
+		}
+	})
 	Describe("Test installing gatekeeper operator", func() {
 		const gatekeeperPolicyURL = "https://raw.githubusercontent.com/open-cluster-management/policy-collection/master/community/CM-Configuration-Management/policy-gatekeeper-operator.yaml"
 		const gatekeeperPolicyName = "policy-gatekeeper-operator"
