@@ -40,9 +40,6 @@ var (
 	kubeconfigHub            string
 	kubeconfigManaged        string
 	defaultTimeoutSeconds    int
-
-	defaultImageRegistry       string
-	defaultImagePullSecretName string
 )
 
 func TestE2e(t *testing.T) {
@@ -72,8 +69,6 @@ var _ = BeforeSuite(func() {
 	clientHubDynamic = NewKubeClientDynamic("", kubeconfigHub, "")
 	clientManaged = NewKubeClient("", kubeconfigManaged, "")
 	clientManagedDynamic = NewKubeClientDynamic("", kubeconfigManaged, "")
-	defaultImageRegistry = "quay.io/open-cluster-management"
-	defaultImagePullSecretName = "multiclusterhub-operator-pull-secret"
 	By("Create Namesapce if needed")
 	namespaces := clientHub.CoreV1().Namespaces()
 	if _, err := namespaces.Get(context.TODO(), userNamespace, metav1.GetOptions{}); err != nil && errors.IsNotFound(err) {
