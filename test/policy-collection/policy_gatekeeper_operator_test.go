@@ -18,13 +18,22 @@ import (
 )
 
 var _ = Describe("Test community/policy-gatekeeper-operator", func() {
+	const gatekeeperPolicyURL = "https://raw.githubusercontent.com/open-cluster-management/policy-collection/master/community/CM-Configuration-Management/policy-gatekeeper-operator.yaml"
+	const gatekeeperPolicyName = "policy-gatekeeper-operator"
+	const GKPolicyYaml = "https://raw.githubusercontent.com/open-cluster-management/policy-collection/master/community/CM-Configuration-Management/policy-gatekeeper-sample.yaml"
+	const GKPolicyName = "policy-gatekeeper"
 	Describe("Test installing gatekeeper operator", func() {
-		const gatekeeperPolicyURL = "https://raw.githubusercontent.com/open-cluster-management/policy-collection/master/community/CM-Configuration-Management/policy-gatekeeper-operator.yaml"
-		const gatekeeperPolicyName = "policy-gatekeeper-operator"
 		It("Clean up before all", func() {
 			By("checking if openshift-gatekeeper-operator ns exists")
 			_, err := clientManaged.CoreV1().Namespaces().Get(context.TODO(), "openshift-gatekeeper-operator", metav1.GetOptions{})
 			if err == nil || !errors.IsNotFound(err) {
+				utils.Kubectl("delete", "-f", GKPolicyYaml, "-n", userNamespace, "--kubeconfig="+kubeconfigHub)
+				Eventually(func() interface{} {
+					managedPlc := utils.GetWithTimeout(clientManagedDynamic, gvrPolicy, userNamespace+"."+GKPolicyName, clusterNamespace, false, defaultTimeoutSeconds)
+					return managedPlc
+				}, defaultTimeoutSeconds, 1).Should(BeNil())
+				utils.Kubectl("delete", "ns", "e2etestsuccess", "--kubeconfig="+kubeconfigManaged)
+				utils.Kubectl("delete", "ns", "e2etestfail", "--kubeconfig="+kubeconfigManaged)
 				By("namespace openshift-gatekeeper-operator exists, cleaning up...")
 				utils.Kubectl("delete", "-f", gatekeeperPolicyURL, "-n", userNamespace, "--kubeconfig="+kubeconfigHub)
 				Eventually(func() interface{} {
@@ -171,7 +180,104 @@ var _ = Describe("Test community/policy-gatekeeper-operator", func() {
 				return managedPlc.Object["spec"].(map[string]interface{})["remediationAction"]
 			}, defaultTimeoutSeconds, 1).Should(Equal("inform"))
 		})
-		It("Clean up after all", func() {
+
+	})
+
+	Describe("Test community/policy-gatekeeper-sample", func() {
+		It("community/policy-gatekeeper-sample should be created on hub", func() {
+			By("Creating policy on hub")
+			out, _ := exec.Command("kubectl", "apply", "-f", GKPolicyYaml, "-n", userNamespace, "--kubeconfig="+kubeconfigHub).CombinedOutput()
+			fmt.Println(string(out))
+			By("Patching placement rule")
+			out, _ = exec.Command("kubectl", "patch", "-n", userNamespace, "placementrule.apps.open-cluster-management.io/placement-"+GKPolicyName,
+				"--type=json", "-p=[{\"op\": \"replace\", \"path\": \"/spec/clusterSelector/matchExpressions\", \"value\":[{\"key\": \"name\", \"operator\": \"In\", \"values\": ["+clusterNamespace+"]}]}]",
+				"--kubeconfig="+kubeconfigHub).CombinedOutput()
+			fmt.Println(string(out))
+			By("Checking policy-gatekeeper namespace on hub cluster in ns " + userNamespace)
+			rootPlc := utils.GetWithTimeout(clientHubDynamic, gvrPolicy, GKPolicyName, userNamespace, true, defaultTimeoutSeconds)
+			Expect(rootPlc).NotTo(BeNil())
+		})
+		It("community/policy-gatekeeper-sample should be compliant", func() {
+			By("Checking if the status of root policy is compliant")
+			Eventually(func() interface{} {
+				rootPlc := utils.GetWithTimeout(clientHubDynamic, gvrPolicy, GKPolicyName, userNamespace, true, defaultTimeoutSeconds)
+				var policy policiesv1.Policy
+				err := runtime.DefaultUnstructuredConverter.
+					FromUnstructured(rootPlc.UnstructuredContent(), &policy)
+				Expect(err).To(BeNil())
+				for _, statusPerCluster := range policy.Status.Status {
+					if statusPerCluster.ClusterNamespace == clusterNamespace {
+						return statusPerCluster.ComplianceState
+					}
+				}
+				return nil
+			}, defaultTimeoutSeconds*4, 1).Should(Equal(policiesv1.Compliant))
+			By("Checking if status for policy template policy-gatekeeper-audit is compliant")
+			Eventually(func() interface{} {
+				plc := utils.GetWithTimeout(clientHubDynamic, gvrPolicy, userNamespace+"."+GKPolicyName, clusterNamespace, true, defaultTimeoutSeconds)
+				details := plc.Object["status"].(map[string]interface{})["details"].([]interface{})
+				return details[1].(map[string]interface{})["compliant"]
+			}, defaultTimeoutSeconds, 1).Should(Equal("Compliant"))
+		})
+		It("Creating a valid ns should not be blocked by gatekeeper", func() {
+			By("Creating a namespace called e2etestsuccess on managed")
+			out, _ := exec.Command("kubectl", "apply", "-f", "../resources/gatekeeper/ns-create-valid.yaml", "--kubeconfig="+kubeconfigManaged).CombinedOutput()
+			Expect(string(out)).Should(ContainSubstring("namespace/e2etestsuccess created"))
+		})
+		It("Creating an invalid ns should generate a violation message", func() {
+			By("Creating invalid namespace on managed")
+			out, _ := exec.Command("kubectl", "create", "ns", "e2etestfail", "--kubeconfig="+kubeconfigManaged).CombinedOutput()
+			fmt.Println(string(out))
+			Expect(string(out)).Should(ContainSubstring("denied by ns-must-have-gk"))
+			By("Checking if status for policy template policy-gatekeeper-admission is noncompliant")
+			Eventually(func() interface{} {
+				plc := utils.GetWithTimeout(clientHubDynamic, gvrPolicy, userNamespace+"."+GKPolicyName, clusterNamespace, true, defaultTimeoutSeconds)
+				details := plc.Object["status"].(map[string]interface{})["details"].([]interface{})
+				return details[2].(map[string]interface{})["compliant"]
+			}, defaultTimeoutSeconds, 1).Should(Equal("NonCompliant"))
+			By("Checking if violation message for policy template policy-gatekeeper-admission is noncompliant")
+			Eventually(func() interface{} {
+				plc := utils.GetWithTimeout(clientHubDynamic, gvrPolicy, userNamespace+"."+GKPolicyName, clusterNamespace, true, defaultTimeoutSeconds)
+				details := plc.Object["status"].(map[string]interface{})["details"].([]interface{})
+				fmt.Printf("%v\n", details[2].(map[string]interface{})["history"].([]interface{})[0].(map[string]interface{})["message"])
+				return details[2].(map[string]interface{})["history"].([]interface{})[0].(map[string]interface{})["message"]
+			}, defaultTimeoutSeconds, 1).Should(ContainSubstring("NonCompliant; violation - events exist: [e2etestfail."))
+			By("Checking if status for policy template policy-gatekeeper-audit is still compliant")
+			Eventually(func() interface{} {
+				plc := utils.GetWithTimeout(clientHubDynamic, gvrPolicy, userNamespace+"."+GKPolicyName, clusterNamespace, true, defaultTimeoutSeconds)
+				details := plc.Object["status"].(map[string]interface{})["details"].([]interface{})
+				return details[1].(map[string]interface{})["compliant"]
+			}, defaultTimeoutSeconds, 1).Should(Equal("Compliant"))
+		})
+		It("community/policy-gatekeeper-sample should be noncompliant", func() {
+			By("Checking if the status of root policy is noncompliant")
+			Eventually(func() interface{} {
+				rootPlc := utils.GetWithTimeout(clientHubDynamic, gvrPolicy, GKPolicyName, userNamespace, true, defaultTimeoutSeconds)
+				var policy policiesv1.Policy
+				err := runtime.DefaultUnstructuredConverter.
+					FromUnstructured(rootPlc.UnstructuredContent(), &policy)
+				Expect(err).To(BeNil())
+				for _, statusPerCluster := range policy.Status.Status {
+					if statusPerCluster.ClusterNamespace == clusterNamespace {
+						return statusPerCluster.ComplianceState
+					}
+				}
+				return nil
+			}, defaultTimeoutSeconds*4, 1).Should(Equal(policiesv1.NonCompliant))
+		})
+	})
+
+	Describe("Clean up after all", func() {
+		It("Clean up community/policy-gatekeeper-sample", func() {
+			utils.Kubectl("delete", "-f", GKPolicyYaml, "-n", userNamespace, "--kubeconfig="+kubeconfigHub)
+			Eventually(func() interface{} {
+				managedPlc := utils.GetWithTimeout(clientManagedDynamic, gvrPolicy, userNamespace+"."+GKPolicyName, clusterNamespace, false, defaultTimeoutSeconds)
+				return managedPlc
+			}, defaultTimeoutSeconds, 1).Should(BeNil())
+			utils.Kubectl("delete", "ns", "e2etestsuccess", "--kubeconfig="+kubeconfigManaged)
+			utils.Kubectl("delete", "ns", "e2etestfail", "--kubeconfig="+kubeconfigManaged)
+		})
+		It("Clean up community/policy-gatekeeper-operator", func() {
 			utils.Kubectl("delete", "-f", gatekeeperPolicyURL, "-n", userNamespace, "--kubeconfig="+kubeconfigHub)
 			Eventually(func() interface{} {
 				managedPlc := utils.GetWithTimeout(clientManagedDynamic, gvrPolicy, userNamespace+"."+gatekeeperPolicyName, clusterNamespace, false, defaultTimeoutSeconds)
