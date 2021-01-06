@@ -9,9 +9,9 @@ RUN  microdnf update -y \
         && microdnf install which \
         && microdnf clean all
 
-RUN mkdir -p /src/github.com/open-cluster-management/governance-policy-framework
+RUN mkdir -p /root/go/src/github.com/open-cluster-management/governance-policy-framework
 
-WORKDIR /go/src/github.com/open-cluster-management/governance-policy-framework
+WORKDIR /root/go/src/github.com/open-cluster-management/governance-policy-framework
 
 COPY test ./test
 COPY build ./build
