@@ -1,5 +1,5 @@
 # Copyright (c) 2020 Red Hat, Inc.
-FROM golang:buster
+FROM registry.access.redhat.com/ubi8/go-toolset
 
 RUN mkdir -p /src/github.com/open-cluster-management/governance-policy-framework
 
