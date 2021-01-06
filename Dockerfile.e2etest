@@ -9,10 +9,13 @@ RUN  microdnf update -y \
         && microdnf install which \
         && microdnf clean all
 
-ENV PATH=$GOPATH/bin:$PATH
-RUN mkdir -p /root/go/src/github.com/open-cluster-management/governance-policy-framework
+ENV PATH /usr/local/go/bin:$PATH
+ENV GOPATH /go
+ENV PATH $GOPATH/bin:$PATH
+WORKDIR $GOPATH
+RUN mkdir -p $GOPATH/src/github.com/open-cluster-management/governance-policy-framework
 
-WORKDIR /root/go/src/github.com/open-cluster-management/governance-policy-framework
+WORKDIR $GOPATH/src/github.com/open-cluster-management/governance-policy-framework
 
 COPY test ./test
 COPY build ./build
