@@ -1,5 +1,13 @@
 # Copyright (c) 2020 Red Hat, Inc.
-FROM registry.access.redhat.com/ubi8/go-toolset
+FROM registry.access.redhat.com/ubi8/ubi-minimal:latest
+
+RUN  microdnf update -y \
+        && microdnf install tar \
+        && microdnf install gzip \
+        && microdnf install golang \
+        && microdnf install git \
+        && microdnf install which \
+        && microdnf clean all
 
 RUN mkdir -p /src/github.com/open-cluster-management/governance-policy-framework
 
