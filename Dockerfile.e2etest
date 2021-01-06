@@ -9,6 +9,7 @@ RUN  microdnf update -y \
         && microdnf install which \
         && microdnf clean all
 
+RUN export PATH="$GOPATH/bin:$PATH"
 RUN mkdir -p /root/go/src/github.com/open-cluster-management/governance-policy-framework
 
 WORKDIR /root/go/src/github.com/open-cluster-management/governance-policy-framework
@@ -21,5 +22,6 @@ RUN ./build/download-clis.sh
 
 RUN go get github.com/onsi/ginkgo/ginkgo
 RUN go get github.com/onsi/gomega/...
+
 
 CMD ["./build/run-test-image.sh"]
