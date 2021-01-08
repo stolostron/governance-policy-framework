@@ -251,9 +251,11 @@ var _ = Describe("Test community/policy-gatekeeper-operator", func() {
 		})
 		It("Creating an invalid ns should generate a violation message", func() {
 			By("Creating invalid namespace on managed")
-			out, _ := exec.Command("kubectl", "create", "ns", "e2etestfail", "--kubeconfig="+kubeconfigManaged).CombinedOutput()
-			fmt.Println(string(out))
-			Expect(string(out)).Should(ContainSubstring("denied by ns-must-have-gk"))
+			Eventually(func() interface{} {
+				out, _ := exec.Command("kubectl", "create", "ns", "e2etestfail", "--kubeconfig="+kubeconfigManaged).CombinedOutput()
+				fmt.Println(string(out))
+				return string(out)
+			}, defaultTimeoutSeconds*2, 1).Should(ContainSubstring("denied by ns-must-have-gk"))
 			By("Checking if status for policy template policy-gatekeeper-admission is noncompliant")
 			Eventually(func() interface{} {
 				plc := utils.GetWithTimeout(clientHubDynamic, gvrPolicy, userNamespace+"."+GKPolicyName, clusterNamespace, true, defaultTimeoutSeconds)
