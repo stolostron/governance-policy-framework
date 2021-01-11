@@ -182,7 +182,7 @@ var _ = Describe("Test gatekeeper", func() {
 				details := plc.Object["status"].(map[string]interface{})["details"].([]interface{})
 				fmt.Printf("%v\n", details[2].(map[string]interface{})["history"].([]interface{})[0].(map[string]interface{})["message"])
 				return details[2].(map[string]interface{})["history"].([]interface{})[0].(map[string]interface{})["message"]
-			}, defaultTimeoutSeconds, 1).Should(Equal("Compliant; notification - no instances of `events` found as specified, therefore this Object template is compliant"))
+			}, defaultTimeoutSeconds, 1).Should(Equal("Compliant; notification - events [] in namespace gatekeeper-system missing as expected, therefore this Object template is compliant"))
 		})
 		It("Creating a valid ns should not be blocked by gatekeeper", func() {
 			By("Creating a namespace called e2etestsuccess on managed")
