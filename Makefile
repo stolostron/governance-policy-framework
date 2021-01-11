@@ -131,6 +131,7 @@ policy-collection-test:
 
 travis-slack-reporter:
 	docker run --volume $(PWD)/results:/opt/app-root/src/grc-ui/test-output/e2e \
+		--volume $(PWD)/results-cypress:/opt/app-root/src/grc-ui/test-output/cypress \
 		--env SLACK_TOKEN=$(SLACK_TOKEN) \
 		--env TRAVIS_REPO_SLUG=$(TRAVIS_REPO_SLUG) \
   	  	--env TRAVIS_PULL_REQUEST=$(TRAVIS_PULL_REQUEST) \
