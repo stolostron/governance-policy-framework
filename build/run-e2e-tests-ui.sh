@@ -46,6 +46,7 @@ make docker/pull
 printenv
 
 docker run --volume $(pwd)/results:/opt/app-root/src/grc-ui/test-output/e2e \
+    --volume $(PWD)/results-cypress:/opt/app-root/src/grc-ui/test-output/cypress \
     --env OC_CLUSTER_URL=$OC_HUB_CLUSTER_URL \
     --env OC_CLUSTER_PASS=$OC_HUB_CLUSTER_PASS \
     --env OC_CLUSTER_USER=$OC_CLUSTER_USER \
