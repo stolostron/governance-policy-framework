@@ -32,7 +32,7 @@ jobs:
   include:
     - stage: prepare
       name: "Build the test image"
-      # if: type != pull_request AND branch = master
+      if: type != pull_request AND branch = master
       script:
         - set -e
         - if [ "$TRAVIS_PULL_REQUEST" != "false" ]; then export COMPONENT_TAG_EXTENSION="-PR${TRAVIS_PULL_REQUEST}-${TRAVIS_COMMIT}"; fi;
@@ -79,7 +79,7 @@ jobs:
           make component/test/e2e
     - stage: test-e2e
       name: "Test polices from policy-collection repo"
-      # if: type != pull_request AND branch = master
+      if: type != pull_request AND branch = master
       env:
         - COMPONENT_E2E_TEST_COMMAND=${TRAVIS_BUILD_DIR}/build/run-e2e-tests-policy-framework.sh
       script: 
