@@ -165,7 +165,7 @@ var _ = Describe("Test gatekeeper", func() {
 				details := plc.Object["status"].(map[string]interface{})["details"].([]interface{})
 				Expect(details[1].(map[string]interface{})["history"]).NotTo(BeNil())
 				return details[1].(map[string]interface{})["history"].([]interface{})[0].(map[string]interface{})["message"]
-			}, defaultTimeoutSeconds, 1).Should(Equal("Compliant; notification - k8srequiredlabels [ns-must-have-gk] exist as specified, therefore this Object template is compliant"))
+			}, defaultTimeoutSeconds, 1).Should(Equal("Compliant; notification - k8srequiredlabels [ns-must-have-gk] found as specified, therefore this Object template is compliant"))
 			By("Checking if violation message for policy template policy-gatekeeper-admission is compliant")
 			Eventually(func() interface{} {
 				plc := utils.GetWithTimeout(clientHubDynamic, gvrPolicy, "default."+GKPolicyName, clusterNamespace, true, defaultTimeoutSeconds)
@@ -182,7 +182,7 @@ var _ = Describe("Test gatekeeper", func() {
 				details := plc.Object["status"].(map[string]interface{})["details"].([]interface{})
 				fmt.Printf("%v\n", details[2].(map[string]interface{})["history"].([]interface{})[0].(map[string]interface{})["message"])
 				return details[2].(map[string]interface{})["history"].([]interface{})[0].(map[string]interface{})["message"]
-			}, defaultTimeoutSeconds, 1).Should(Equal("Compliant; notification - no instances of `events` exist as specified, therefore this Object template is compliant"))
+			}, defaultTimeoutSeconds, 1).Should(Equal("Compliant; notification - events [] in namespace gatekeeper-system missing as expected, therefore this Object template is compliant"))
 		})
 		It("Creating a valid ns should not be blocked by gatekeeper", func() {
 			By("Creating a namespace called e2etestsuccess on managed")
@@ -207,7 +207,7 @@ var _ = Describe("Test gatekeeper", func() {
 				details := plc.Object["status"].(map[string]interface{})["details"].([]interface{})
 				fmt.Printf("%v\n", details[2].(map[string]interface{})["history"].([]interface{})[0].(map[string]interface{})["message"])
 				return details[2].(map[string]interface{})["history"].([]interface{})[0].(map[string]interface{})["message"]
-			}, defaultTimeoutSeconds, 1).Should(ContainSubstring("NonCompliant; violation - events exist: [e2etestfail."))
+			}, defaultTimeoutSeconds, 1).Should(ContainSubstring("NonCompliant; violation - events found: [e2etestfail."))
 		})
 		It("should create relatedObjects properly on managed", func() {
 			By("Checking configurationpolicies on managed")
