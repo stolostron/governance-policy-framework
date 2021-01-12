@@ -34,7 +34,7 @@ func isOCP44() bool {
 	return false
 }
 
-var _ = Describe("Test community/policy-gatekeeper-operator", func() {
+var _ = Describe("GRC: [P1][Sev1][policy-grc] Test community/policy-gatekeeper-operator", func() {
 	BeforeEach(func() {
 		if isOCP44() {
 			Skip("Skipping as this is ocp 4.4")
