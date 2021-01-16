@@ -91,7 +91,7 @@ var _ = Describe("GRC: [P1][Sev1][policy-grc] Test compliance operator and scan"
 			utils.Kubectl("delete", "events", "-n", clusterNamespace, "--all", "--kubeconfig="+kubeconfigManaged)
 		})
 	})
-	FDescribe("Test stable/policy-comp-operator", func() {
+	Describe("Test stable/policy-comp-operator", func() {
 		It("clean up in case the last build failed", func() {
 			By("checking if openshift-compliance ns exists")
 			_, err := clientManaged.CoreV1().Namespaces().Get(context.TODO(), "openshift-compliance", metav1.GetOptions{})
