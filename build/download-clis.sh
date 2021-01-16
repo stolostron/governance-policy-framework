@@ -2,6 +2,8 @@
 
 # Copyright (c) 2020 Red Hat, Inc.
 
+set -e
+
 if ! which oc > /dev/null; then
     echo "Installing oc and kubectl clis..."
     mkdir clis-unpacked
