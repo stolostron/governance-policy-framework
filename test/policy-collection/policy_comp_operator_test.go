@@ -91,7 +91,7 @@ var _ = Describe("GRC: [P1][Sev1][policy-grc] Test compliance operator and scan"
 			utils.Kubectl("delete", "events", "-n", clusterNamespace, "--all", "--kubeconfig="+kubeconfigManaged)
 		})
 	})
-	Describe("Test stable/policy-comp-operator", func() {
+	FDescribe("Test stable/policy-comp-operator", func() {
 		It("clean up in case the last build failed", func() {
 			By("checking if openshift-compliance ns exists")
 			_, err := clientManaged.CoreV1().Namespaces().Get(context.TODO(), "openshift-compliance", metav1.GetOptions{})
@@ -178,7 +178,13 @@ var _ = Describe("GRC: [P1][Sev1][policy-grc] Test compliance operator and scan"
 		})
 		It("Compliance operator pod should be running", func() {
 			By("Checking if pod compliance-operator has been created")
+			var i int = 0
 			Eventually(func() interface{} {
+				if i == 60*2 || i == 60*4 {
+					fmt.Println("compliance operator pod still not created, deleting subscription and let it recreate", i)
+					out, _ := exec.Command("kubectl", "delete", "-n", "openshift-compliance", "subscriptions.operators.coreos.com", "compliance-operator", "--kubeconfig="+kubeconfigManaged).CombinedOutput()
+					fmt.Println(string(out))
+				}
 				podList, err := clientManaged.CoreV1().Pods("openshift-compliance").List(context.TODO(), metav1.ListOptions{LabelSelector: "name=compliance-operator"})
 				Expect(err).To(BeNil())
 				return len(podList.Items)
