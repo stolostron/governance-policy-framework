@@ -239,6 +239,11 @@ var _ = Describe("GRC: [P1][Sev1][policy-grc] Test compliance operator and scan"
 			By("Creating policy on hub")
 			out, _ := exec.Command("kubectl", "apply", "-f", compE8ScanPolicyURL, "-n", userNamespace, "--kubeconfig="+kubeconfigHub).CombinedOutput()
 			fmt.Println(string(out))
+			By("Patching placement rule")
+			out, _ = exec.Command("kubectl", "patch", "-n", userNamespace, "placementrule.apps.open-cluster-management.io/placement-"+compE8ScanPolicyName,
+				"--type=json", "-p=[{\"op\": \"replace\", \"path\": \"/spec/clusterSelector/matchExpressions\", \"value\":[{\"key\": \"name\", \"operator\": \"In\", \"values\": ["+clusterNamespace+"]}]}]",
+				"--kubeconfig="+kubeconfigHub).CombinedOutput()
+			fmt.Println(string(out))
 			By("Checking policy-e8-scan on hub cluster in ns " + userNamespace)
 			rootPlc := utils.GetWithTimeout(clientHubDynamic, gvrPolicy, compE8ScanPolicyName, userNamespace, true, defaultTimeoutSeconds)
 			Expect(rootPlc).NotTo(BeNil())
