@@ -105,17 +105,17 @@ var _ = Describe("GRC: [P1][Sev1][policy-grc] Test community/policy-gatekeeper-o
 			}, defaultTimeoutSeconds*2, 1).Should(Equal(policiesv1.NonCompliant))
 		})
 		It("Enforcing community/policy-gatekeeper-operator", func() {
-			By("Patching remediationAction = enforce on root policy")
-			rootPlc := utils.GetWithTimeout(clientHubDynamic, gvrPolicy, gatekeeperPolicyName, userNamespace, true, defaultTimeoutSeconds)
-			rootPlc.Object["spec"].(map[string]interface{})["remediationAction"] = "enforce"
-			rootPlc, err := clientHubDynamic.Resource(gvrPolicy).Namespace(userNamespace).Update(context.TODO(), rootPlc, metav1.UpdateOptions{})
-			By("Checking if remediationAction is enforce for root policy")
-			Expect(err).To(BeNil())
 			Eventually(func() interface{} {
+				By("Patching remediationAction = enforce on root policy")
+				rootPlc := utils.GetWithTimeout(clientHubDynamic, gvrPolicy, gatekeeperPolicyName, userNamespace, true, defaultTimeoutSeconds)
+				rootPlc.Object["spec"].(map[string]interface{})["remediationAction"] = "enforce"
+				rootPlc, err := clientHubDynamic.Resource(gvrPolicy).Namespace(userNamespace).Update(context.TODO(), rootPlc, metav1.UpdateOptions{})
+				Expect(err).To(BeNil())
+				By("Checking if remediationAction is enforce for root policy")
+				rootPlc = utils.GetWithTimeout(clientHubDynamic, gvrPolicy, gatekeeperPolicyName, userNamespace, true, defaultTimeoutSeconds)
 				return rootPlc.Object["spec"].(map[string]interface{})["remediationAction"]
 			}, defaultTimeoutSeconds, 1).Should(Equal("enforce"))
 			By("Checking if remediationAction is enforce for replicated policy")
-			Expect(err).To(BeNil())
 			Eventually(func() interface{} {
 				managedPlc := utils.GetWithTimeout(clientManagedDynamic, gvrPolicy, userNamespace+"."+gatekeeperPolicyName, clusterNamespace, true, defaultTimeoutSeconds)
 				return managedPlc.Object["spec"].(map[string]interface{})["remediationAction"]
@@ -186,17 +186,17 @@ var _ = Describe("GRC: [P1][Sev1][policy-grc] Test community/policy-gatekeeper-o
 			}, defaultTimeoutSeconds*2, 1).Should(Equal("Running/Running"))
 		})
 		It("Informing community/policy-gatekeeper-operator", func() {
-			By("Patching remediationAction = inform on root policy")
-			rootPlc := utils.GetWithTimeout(clientHubDynamic, gvrPolicy, gatekeeperPolicyName, userNamespace, true, defaultTimeoutSeconds)
-			rootPlc.Object["spec"].(map[string]interface{})["remediationAction"] = "inform"
-			rootPlc, err := clientHubDynamic.Resource(gvrPolicy).Namespace(userNamespace).Update(context.TODO(), rootPlc, metav1.UpdateOptions{})
-			By("Checking if remediationAction is inform for root policy")
-			Expect(err).To(BeNil())
 			Eventually(func() interface{} {
+				By("Patching remediationAction = inform on root policy")
+				rootPlc := utils.GetWithTimeout(clientHubDynamic, gvrPolicy, gatekeeperPolicyName, userNamespace, true, defaultTimeoutSeconds)
+				rootPlc.Object["spec"].(map[string]interface{})["remediationAction"] = "inform"
+				rootPlc, err := clientHubDynamic.Resource(gvrPolicy).Namespace(userNamespace).Update(context.TODO(), rootPlc, metav1.UpdateOptions{})
+				Expect(err).To(BeNil())
+				By("Checking if remediationAction is inform for root policy")
+				rootPlc = utils.GetWithTimeout(clientHubDynamic, gvrPolicy, gatekeeperPolicyName, userNamespace, true, defaultTimeoutSeconds)
 				return rootPlc.Object["spec"].(map[string]interface{})["remediationAction"]
 			}, defaultTimeoutSeconds, 1).Should(Equal("inform"))
 			By("Checking if remediationAction is inform for replicated policy")
-			Expect(err).To(BeNil())
 			Eventually(func() interface{} {
 				managedPlc := utils.GetWithTimeout(clientManagedDynamic, gvrPolicy, userNamespace+"."+gatekeeperPolicyName, clusterNamespace, true, defaultTimeoutSeconds)
 				return managedPlc.Object["spec"].(map[string]interface{})["remediationAction"]
