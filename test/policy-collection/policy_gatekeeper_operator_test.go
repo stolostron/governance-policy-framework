@@ -247,7 +247,7 @@ var _ = Describe("GRC: [P1][Sev1][policy-grc] Test community/policy-gatekeeper-o
 				out, _ := exec.Command("kubectl", "apply", "-f", "../resources/gatekeeper/ns-create-valid.yaml", "--kubeconfig="+kubeconfigManaged).CombinedOutput()
 				fmt.Println(string(out))
 				return string(out)
-			}, defaultTimeoutSeconds*2, 1).Should(ContainSubstring("namespace/e2etestsuccess created"))
+			}, defaultTimeoutSeconds*6, 1).Should(ContainSubstring("namespace/e2etestsuccess created"))
 		})
 		It("Creating an invalid ns should generate a violation message", func() {
 			By("Creating invalid namespace on managed")
