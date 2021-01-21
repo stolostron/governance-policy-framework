@@ -203,7 +203,7 @@ var _ = Describe("GRC: [P1][Sev1][policy-grc] Test community/policy-gatekeeper-o
 
 	})
 
-	Describe("Test community/policy-gatekeeper-sample", func() {
+	Describe("RHACM4K-1274/RHACM4K-1282 GRC: [P1][Sev1][policy-grc] Test community/policy-gatekeeper-sample", func() {
 		It("community/policy-gatekeeper-sample should be created on hub", func() {
 			By("Creating policy on hub")
 			out, _ := exec.Command("kubectl", "apply", "-f", GKPolicyYaml, "-n", userNamespace, "--kubeconfig="+kubeconfigHub).CombinedOutput()
