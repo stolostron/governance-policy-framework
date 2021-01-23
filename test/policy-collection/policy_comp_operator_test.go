@@ -184,6 +184,7 @@ var _ = Describe("GRC: [P1][Sev1][policy-grc] Test compliance operator and scan"
 					out, _ := exec.Command("kubectl", "delete", "-n", "openshift-compliance", "subscriptions.operators.coreos.com", "compliance-operator", "--kubeconfig="+kubeconfigManaged).CombinedOutput()
 					fmt.Println(string(out))
 				}
+				i++
 				podList, err := clientManaged.CoreV1().Pods("openshift-compliance").List(context.TODO(), metav1.ListOptions{LabelSelector: "name=compliance-operator"})
 				Expect(err).To(BeNil())
 				return len(podList.Items)
