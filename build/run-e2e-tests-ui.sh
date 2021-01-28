@@ -3,16 +3,19 @@
 set -e
 UI_CURRENT_IMAGE=$1
 
+make docker/login
+export DOCKER_URI=quay.io/open-cluster-management/grc-ui-tests:latest-dev
+make docker/pull
+
+docker run --volume $(pwd)/build:/opt/app-root/src/grc-ui/tmp \
+    $DOCKER_URI \
+    cp ./build/{cluster-clean-up.sh,install-cert-manager.sh} tmp/
+
 echo "Login hub to clean up"
 export OC_CLUSTER_URL=$OC_HUB_CLUSTER_URL
 export OC_CLUSTER_PASS=$OC_HUB_CLUSTER_PASS
 make oc/login
-for ns in default e2e-rbac-test-1 e2e-rbac-test-2
-do
-    oc delete policies.policy.open-cluster-management.io -n $ns --all || true
-    oc delete placementbindings.policy.open-cluster-management.io  -n $ns --all || true
-    oc delete placementrules.apps.open-cluster-management.io -n $ns --all || true
-done
+./build/cluster-clean-up.sh hub
 
 echo "Logout"
 export OC_COMMAND=logout
@@ -22,26 +25,12 @@ echo "Login managed to clean up"
 export OC_CLUSTER_URL=${OC_MANAGED_CLUSTER_URL:-${OC_HUB_CLUSTER_URL}}
 export OC_CLUSTER_PASS=${OC_MANAGED_CLUSTER_PASS:-${OC_HUB_CLUSTER_PASS}}
 make oc/login
-oc delete pod --all -n default || true
-oc delete issuers.cert-manager.io -l e2e=true -n default || true
-oc delete certificates.cert-manager.io -l e2e=true -n default || true
-oc delete secret -n default rsa-ca-sample-secret || true # in case secrets are empty
-oc delete clusterrolebinding -l e2e=true || true
+./build/cluster-clean-up.sh managed
 
-if [ $(oc get ns cert-manager | grep Active | wc -l | tr -d '[:space:]') -eq 1 ]; then
-    echo "Cert manager already installed"
-else 
-    echo "Install cert manager on managed"
-    oc apply --validate=false -f https://github.com/jetstack/cert-manager/releases/download/v1.0.1/cert-manager.yaml
-fi
-
+./build/install-cert0manager.sh
 echo "Logout"
 export OC_COMMAND=logout
 make oc/command
-
-make docker/login
-export DOCKER_URI=quay.io/open-cluster-management/grc-ui-tests:latest-dev
-make docker/pull
 
 printenv
 
