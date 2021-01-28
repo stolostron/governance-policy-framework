@@ -27,7 +27,8 @@ export OC_CLUSTER_PASS=${OC_MANAGED_CLUSTER_PASS:-${OC_HUB_CLUSTER_PASS}}
 make oc/login
 ./build/cluster-clean-up.sh managed
 
-./build/install-cert0manager.sh
+./build/install-cert-manager.sh
+
 echo "Logout"
 export OC_COMMAND=logout
 make oc/command
