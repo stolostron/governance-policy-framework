@@ -34,7 +34,7 @@ func isOCP44() bool {
 	return false
 }
 
-var _ = Describe("GRC: [P1][Sev1][policy-grc] Test community/policy-gatekeeper-operator", func() {
+var _ = Describe("", func() {
 	BeforeEach(func() {
 		if isOCP44() {
 			Skip("Skipping as this is ocp 4.4")
@@ -44,7 +44,7 @@ var _ = Describe("GRC: [P1][Sev1][policy-grc] Test community/policy-gatekeeper-o
 	const gatekeeperPolicyName = "policy-gatekeeper-operator"
 	const GKPolicyYaml = "https://raw.githubusercontent.com/open-cluster-management/policy-collection/master/community/CM-Configuration-Management/policy-gatekeeper-sample.yaml"
 	const GKPolicyName = "policy-gatekeeper"
-	Describe("Test installing gatekeeper operator", func() {
+	Describe("RHACM4K-1692 GRC: [P1][Sev1][policy-grc] Test installing gatekeeper operator", func() {
 		It("Clean up before all", func() {
 			By("checking if openshift-gatekeeper-operator ns exists")
 			_, err := clientManaged.CoreV1().Namespaces().Get(context.TODO(), "openshift-gatekeeper-operator", metav1.GetOptions{})
@@ -292,7 +292,7 @@ var _ = Describe("GRC: [P1][Sev1][policy-grc] Test community/policy-gatekeeper-o
 		})
 	})
 
-	Describe("Clean up after all", func() {
+	Describe("GRC: [P1][Sev1][policy-grc] Clean up after all", func() {
 		It("Clean up community/policy-gatekeeper-sample", func() {
 			utils.Kubectl("delete", "-f", GKPolicyYaml, "-n", userNamespace, "--kubeconfig="+kubeconfigHub)
 			Eventually(func() interface{} {
