@@ -173,13 +173,13 @@ var _ = Describe("", func() {
 		It("Gatekeeper controller manager pods should be running", func() {
 			By("Checking if pod gatekeeper-controller-manager has been created")
 			Eventually(func() interface{} {
-				podList, err := clientManaged.CoreV1().Pods("openshift-gatekeeper-system").List(context.TODO(), metav1.ListOptions{LabelSelector: "gatekeeper.sh/operation=webhook"})
+				podList, err := clientManaged.CoreV1().Pods("openshift-gatekeeper-system").List(context.TODO(), metav1.ListOptions{LabelSelector: "control-plane=controller-manager"})
 				Expect(err).To(BeNil())
 				return len(podList.Items)
 			}, defaultTimeoutSeconds*2, 1).Should(Equal(2))
 			By("Checking if pod gatekeeper-controller-manager is running")
 			Eventually(func() interface{} {
-				podList, err := clientManaged.CoreV1().Pods("openshift-gatekeeper-system").List(context.TODO(), metav1.ListOptions{LabelSelector: "gatekeeper.sh/operation=webhook"})
+				podList, err := clientManaged.CoreV1().Pods("openshift-gatekeeper-system").List(context.TODO(), metav1.ListOptions{LabelSelector: "control-plane=controller-manager"})
 				Expect(err).To(BeNil())
 				return string(podList.Items[0].Status.Phase) + "/" + string(podList.Items[1].Status.Phase)
 			}, defaultTimeoutSeconds*2, 1).Should(Equal("Running/Running"))
