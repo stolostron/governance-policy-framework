@@ -437,7 +437,7 @@ var _ = Describe("", func() {
 				out, _ := exec.Command("kubectl", "apply", "-f", "../resources/gatekeeper/pod-mutation.yaml", "-n", "default", "--kubeconfig="+kubeconfigManaged).CombinedOutput()
 				fmt.Println(string(out))
 				By("Check if pod contains annotation owner=admin")
-				pod, _ := clientManaged.CoreV1().Pods(userNamespace).Get(context.TODO(), "pod-mutation", metav1.GetOptions{})
+				pod, _ := clientManaged.CoreV1().Pods("default").Get(context.TODO(), "pod-mutation", metav1.GetOptions{})
 				return pod.Annotations["owner"]
 			}, defaultTimeoutSeconds*6, 1).Should(Equal("admin"))
 			Eventually(func() interface{} {
