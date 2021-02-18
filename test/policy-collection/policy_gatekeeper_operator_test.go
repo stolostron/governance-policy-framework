@@ -44,11 +44,27 @@ var _ = Describe("", func() {
 	const gatekeeperPolicyName = "policy-gatekeeper-operator"
 	const GKPolicyYaml = "https://raw.githubusercontent.com/open-cluster-management/policy-collection/master/community/CM-Configuration-Management/policy-gatekeeper-sample.yaml"
 	const GKPolicyName = "policy-gatekeeper"
+	const GKAssignPolicyYaml = "https://raw.githubusercontent.com/open-cluster-management/policy-collection/master/community/CM-Configuration-Management/policy-gatekeeper-image-pull-policy.yaml"
+	const GKAssignPolicyName = "policy-gatekeeper-image-pull-policy"
+	const GKAssignMetadataPolicyYaml = "https://raw.githubusercontent.com/open-cluster-management/policy-collection/master/community/CM-Configuration-Management/policy-gatekeeper-annotation-owner.yaml"
+	const GKAssignMetadataPolicyName = "policy-gatekeeper-annotation-owner"
 	Describe("RHACM4K-1692 GRC: [P1][Sev1][policy-grc] Test installing gatekeeper operator", func() {
 		It("Clean up before all", func() {
 			By("checking if openshift-gatekeeper-operator ns exists")
 			_, err := clientManaged.CoreV1().Namespaces().Get(context.TODO(), "openshift-gatekeeper-operator", metav1.GetOptions{})
 			if err == nil || !errors.IsNotFound(err) {
+				utils.Kubectl("delete", "-f", GKAssignMetadataPolicyYaml, "-n", userNamespace, "--kubeconfig="+kubeconfigHub)
+				Eventually(func() interface{} {
+					managedPlc := utils.GetWithTimeout(clientManagedDynamic, gvrPolicy, userNamespace+"."+GKAssignMetadataPolicyName, clusterNamespace, false, defaultTimeoutSeconds)
+					return managedPlc
+				}, defaultTimeoutSeconds, 1).Should(BeNil())
+				utils.Kubectl("delete", "-f", GKAssignPolicyYaml, "-n", userNamespace, "--kubeconfig="+kubeconfigHub)
+				Eventually(func() interface{} {
+					managedPlc := utils.GetWithTimeout(clientManagedDynamic, gvrPolicy, userNamespace+"."+GKAssignPolicyName, clusterNamespace, false, defaultTimeoutSeconds)
+					return managedPlc
+				}, defaultTimeoutSeconds, 1).Should(BeNil())
+				out, _ := exec.Command("kubectl", "delete", "-f", "../resources/gatekeeper/pod-mutation.yaml", "-n", "default", "--kubeconfig="+kubeconfigManaged).CombinedOutput()
+				fmt.Println(string(out))
 				utils.Kubectl("delete", "-f", GKPolicyYaml, "-n", userNamespace, "--kubeconfig="+kubeconfigHub)
 				Eventually(func() interface{} {
 					managedPlc := utils.GetWithTimeout(clientManagedDynamic, gvrPolicy, userNamespace+"."+GKPolicyName, clusterNamespace, false, defaultTimeoutSeconds)
@@ -292,7 +308,197 @@ var _ = Describe("", func() {
 		})
 	})
 
+	Describe("GRC: [P1][Sev1][policy-grc] Test enabling gatekeeper mutation feature", func() {
+		It("Enabling mutation feature through policy", func() {
+			Eventually(func() interface{} {
+				By("Patching mutatingWebhook = Enabled on root policy")
+				rootPlc := utils.GetWithTimeout(clientHubDynamic, gvrPolicy, gatekeeperPolicyName, userNamespace, true, defaultTimeoutSeconds)
+				rootPlc.Object["spec"].(map[string]interface{})["policy-templates"].([]interface{})[4].(map[string]interface{})["objectDefinition"].(map[string]interface{})["spec"].(map[string]interface{})["object-templates"].([]interface{})[0].(map[string]interface{})["objectDefinition"].(map[string]interface{})["spec"].(map[string]interface{})["mutatingWebhook"] = "Enabled"
+				rootPlc, _ = clientHubDynamic.Resource(gvrPolicy).Namespace(userNamespace).Update(context.TODO(), rootPlc, metav1.UpdateOptions{})
+				By("Checking if mutatingWebhook is Enabled for root policy")
+				rootPlc = utils.GetWithTimeout(clientHubDynamic, gvrPolicy, gatekeeperPolicyName, userNamespace, true, defaultTimeoutSeconds)
+				return rootPlc.Object["spec"].(map[string]interface{})["policy-templates"].([]interface{})[4].(map[string]interface{})["objectDefinition"].(map[string]interface{})["spec"].(map[string]interface{})["object-templates"].([]interface{})[0].(map[string]interface{})["objectDefinition"].(map[string]interface{})["spec"].(map[string]interface{})["mutatingWebhook"]
+			}, defaultTimeoutSeconds, 1).Should(Equal("Enabled"))
+		})
+		It("Enforcing policy-gatekeeper-operator to enable mutation feature", func() {
+			Eventually(func() interface{} {
+				By("Patching remediationAction = enforce on root policy")
+				rootPlc := utils.GetWithTimeout(clientHubDynamic, gvrPolicy, gatekeeperPolicyName, userNamespace, true, defaultTimeoutSeconds)
+				rootPlc.Object["spec"].(map[string]interface{})["remediationAction"] = "enforce"
+				rootPlc, _ = clientHubDynamic.Resource(gvrPolicy).Namespace(userNamespace).Update(context.TODO(), rootPlc, metav1.UpdateOptions{})
+				By("Checking if remediationAction is enforce for root policy")
+				rootPlc = utils.GetWithTimeout(clientHubDynamic, gvrPolicy, gatekeeperPolicyName, userNamespace, true, defaultTimeoutSeconds)
+				return rootPlc.Object["spec"].(map[string]interface{})["remediationAction"]
+			}, defaultTimeoutSeconds, 1).Should(Equal("enforce"))
+			By("Checking if remediationAction is enforce for replicated policy")
+			Eventually(func() interface{} {
+				managedPlc := utils.GetWithTimeout(clientManagedDynamic, gvrPolicy, userNamespace+"."+gatekeeperPolicyName, clusterNamespace, true, defaultTimeoutSeconds)
+				return managedPlc.Object["spec"].(map[string]interface{})["remediationAction"]
+			}, defaultTimeoutSeconds, 1).Should(Equal("enforce"))
+		})
+		It("policy-gatekeeper-operator should be compliant", func() {
+			By("Checking if the status of root policy is compliant")
+			Eventually(func() interface{} {
+				rootPlc := utils.GetWithTimeout(clientHubDynamic, gvrPolicy, gatekeeperPolicyName, userNamespace, true, defaultTimeoutSeconds)
+				var policy policiesv1.Policy
+				err := runtime.DefaultUnstructuredConverter.
+					FromUnstructured(rootPlc.UnstructuredContent(), &policy)
+				Expect(err).To(BeNil())
+				for _, statusPerCluster := range policy.Status.Status {
+					if statusPerCluster.ClusterNamespace == clusterNamespace {
+						return statusPerCluster.ComplianceState
+					}
+				}
+				return nil
+			}, defaultTimeoutSeconds*2, 1).Should(Equal(policiesv1.Compliant))
+		})
+		It("Checking if Assign/AssingnMetadata CRDs have been created", func() {
+			Eventually(func() interface{} {
+				out, _ := exec.Command("kubectl", "get", "crd", "assign.mutations.gatekeeper.sh", "--kubeconfig="+kubeconfigManaged).CombinedOutput()
+				fmt.Println(string(out))
+				return string(out)
+			}, defaultTimeoutSeconds*4, 1).Should(ContainSubstring("CREATED AT\nassign.mutations.gatekeeper.sh"))
+			Eventually(func() interface{} {
+				out, _ := exec.Command("kubectl", "get", "crd", "assignmetadata.mutations.gatekeeper.sh", "--kubeconfig="+kubeconfigManaged).CombinedOutput()
+				fmt.Println(string(out))
+				return string(out)
+			}, defaultTimeoutSeconds*4, 1).Should(ContainSubstring("CREATED AT\nassignmetadata.mutations.gatekeeper.sh"))
+		})
+		It("Checking if gatekeeper controller manager has mutation flag on", func() {
+			Eventually(func() interface{} {
+				podList, _ := clientManaged.CoreV1().Pods("openshift-gatekeeper-system").List(context.TODO(), metav1.ListOptions{LabelSelector: "control-plane=controller-manager"})
+				return fmt.Sprintf("%d/%d", len(podList.Items[0].Spec.Containers[0].Args), len(podList.Items[1].Spec.Containers[0].Args))
+			}, defaultTimeoutSeconds*4, 1).Should(Equal("7/7"))
+			Eventually(func() interface{} {
+				podList, _ := clientManaged.CoreV1().Pods("openshift-gatekeeper-system").List(context.TODO(), metav1.ListOptions{LabelSelector: "control-plane=controller-manager"})
+				return podList.Items[0].Spec.Containers[0].Args[6] + "/" + podList.Items[1].Spec.Containers[0].Args[6]
+			}, defaultTimeoutSeconds*6, 1).Should(Equal("--enable-mutation=true/--enable-mutation=true"))
+		})
+	})
+
+	Describe("GRC: [P1][Sev1][policy-grc] Install mutation policy", func() {
+		It("Creating mutation policy on hub", func() {
+			By("Creating " + GKAssignPolicyName + " on hub")
+			out, _ := exec.Command("kubectl", "apply", "-f", GKAssignPolicyYaml, "-n", userNamespace, "--kubeconfig="+kubeconfigHub).CombinedOutput()
+			fmt.Println(string(out))
+			By("Patching placement rule")
+			out, _ = exec.Command("kubectl", "patch", "-n", userNamespace, "placementrule.apps.open-cluster-management.io/placement-"+GKAssignPolicyName,
+				"--type=json", "-p=[{\"op\": \"replace\", \"path\": \"/spec/clusterSelector/matchExpressions\", \"value\":[{\"key\": \"name\", \"operator\": \"In\", \"values\": ["+clusterNamespace+"]}]}]",
+				"--kubeconfig="+kubeconfigHub).CombinedOutput()
+			fmt.Println(string(out))
+			By("Creating " + GKAssignMetadataPolicyName + " on hub")
+			out, _ = exec.Command("kubectl", "apply", "-f", GKAssignMetadataPolicyYaml, "-n", userNamespace, "--kubeconfig="+kubeconfigHub).CombinedOutput()
+			fmt.Println(string(out))
+			By("Patching placement rule")
+			out, _ = exec.Command("kubectl", "patch", "-n", userNamespace, "placementrule.apps.open-cluster-management.io/placement-"+GKAssignMetadataPolicyName,
+				"--type=json", "-p=[{\"op\": \"replace\", \"path\": \"/spec/clusterSelector/matchExpressions\", \"value\":[{\"key\": \"name\", \"operator\": \"In\", \"values\": ["+clusterNamespace+"]}]}]",
+				"--kubeconfig="+kubeconfigHub).CombinedOutput()
+			fmt.Println(string(out))
+		})
+		It(GKAssignPolicyName+" should be compliant", func() {
+			By("Checking if the status of root policy is compliant")
+			Eventually(func() interface{} {
+				rootPlc := utils.GetWithTimeout(clientHubDynamic, gvrPolicy, GKAssignPolicyName, userNamespace, true, defaultTimeoutSeconds)
+				var policy policiesv1.Policy
+				err := runtime.DefaultUnstructuredConverter.
+					FromUnstructured(rootPlc.UnstructuredContent(), &policy)
+				Expect(err).To(BeNil())
+				for _, statusPerCluster := range policy.Status.Status {
+					if statusPerCluster.ClusterNamespace == clusterNamespace {
+						return statusPerCluster.ComplianceState
+					}
+				}
+				return nil
+			}, defaultTimeoutSeconds*2, 1).Should(Equal(policiesv1.Compliant))
+		})
+		It(GKAssignMetadataPolicyName+" should be compliant", func() {
+			By("Checking if the status of root policy is compliant")
+			Eventually(func() interface{} {
+				rootPlc := utils.GetWithTimeout(clientHubDynamic, gvrPolicy, GKAssignMetadataPolicyName, userNamespace, true, defaultTimeoutSeconds)
+				var policy policiesv1.Policy
+				err := runtime.DefaultUnstructuredConverter.
+					FromUnstructured(rootPlc.UnstructuredContent(), &policy)
+				Expect(err).To(BeNil())
+				for _, statusPerCluster := range policy.Status.Status {
+					if statusPerCluster.ClusterNamespace == clusterNamespace {
+						return statusPerCluster.ComplianceState
+					}
+				}
+				return nil
+			}, defaultTimeoutSeconds*2, 1).Should(Equal(policiesv1.Compliant))
+		})
+
+	})
+
+	Describe("GRC: [P1][Sev1][policy-grc] Test gatekeeper mutation feature", func() {
+		It("Verify mutation feature", func() {
+			Eventually(func() interface{} {
+				By("Creating a pod to test AssignMetadata")
+				out, _ := exec.Command("kubectl", "apply", "-f", "../resources/gatekeeper/pod-mutation.yaml", "-n", "default", "--kubeconfig="+kubeconfigManaged).CombinedOutput()
+				fmt.Println(string(out))
+				By("Check if pod contains annotation owner=admin")
+				pod, _ := clientManaged.CoreV1().Pods(userNamespace).Get(context.TODO(), "pod-mutation", metav1.GetOptions{})
+				return pod.Annotations["owner"]
+			}, defaultTimeoutSeconds*6, 1).Should(Equal("admin"))
+			Eventually(func() interface{} {
+				By("Creating a pod to test Assign")
+				out, _ := exec.Command("kubectl", "apply", "-f", "../resources/gatekeeper/pod-mutation.yaml", "-n", "default", "--kubeconfig="+kubeconfigManaged).CombinedOutput()
+				fmt.Println(string(out))
+				By("Check if imagepullpolicy has been mutated to Always")
+				pod, _ := clientManaged.CoreV1().Pods("default").Get(context.TODO(), "pod-mutation", metav1.GetOptions{})
+				return string(pod.Spec.Containers[0].ImagePullPolicy)
+			}, defaultTimeoutSeconds*6, 1).Should(Equal("Always"))
+
+		})
+	})
+
+	Describe("GRC: [P1][Sev1][policy-grc] Test disabling gatekeeper mutation feature", func() {
+		It("Disabling mutation feature through policy", func() {
+			Eventually(func() interface{} {
+				By("Patching mutatingWebhook = Disabled on root policy")
+				rootPlc := utils.GetWithTimeout(clientHubDynamic, gvrPolicy, gatekeeperPolicyName, userNamespace, true, defaultTimeoutSeconds)
+				rootPlc.Object["spec"].(map[string]interface{})["policy-templates"].([]interface{})[4].(map[string]interface{})["objectDefinition"].(map[string]interface{})["spec"].(map[string]interface{})["object-templates"].([]interface{})[0].(map[string]interface{})["objectDefinition"].(map[string]interface{})["spec"].(map[string]interface{})["mutatingWebhook"] = "Disabled"
+				rootPlc, _ = clientHubDynamic.Resource(gvrPolicy).Namespace(userNamespace).Update(context.TODO(), rootPlc, metav1.UpdateOptions{})
+				By("Checking if mutatingWebhook is Disabled for root policy")
+				rootPlc = utils.GetWithTimeout(clientHubDynamic, gvrPolicy, gatekeeperPolicyName, userNamespace, true, defaultTimeoutSeconds)
+				return rootPlc.Object["spec"].(map[string]interface{})["policy-templates"].([]interface{})[4].(map[string]interface{})["objectDefinition"].(map[string]interface{})["spec"].(map[string]interface{})["object-templates"].([]interface{})[0].(map[string]interface{})["objectDefinition"].(map[string]interface{})["spec"].(map[string]interface{})["mutatingWebhook"]
+			}, defaultTimeoutSeconds, 1).Should(Equal("Disabled"))
+		})
+		It("Checking if Assign/AssingnMetadata CRDs have been removed", func() {
+			Eventually(func() interface{} {
+				out, _ := exec.Command("kubectl", "get", "crd", "assign.mutations.gatekeeper.sh", "--kubeconfig="+kubeconfigManaged).CombinedOutput()
+				fmt.Println(string(out))
+				return string(out)
+			}, defaultTimeoutSeconds*4, 1).Should(ContainSubstring("not found"))
+			Eventually(func() interface{} {
+				out, _ := exec.Command("kubectl", "get", "crd", "assignmetadata.mutations.gatekeeper.sh", "--kubeconfig="+kubeconfigManaged).CombinedOutput()
+				fmt.Println(string(out))
+				return string(out)
+			}, defaultTimeoutSeconds*4, 1).Should(ContainSubstring("not found"))
+		})
+		It("Checking if gatekeeper controller manager has mutation flag off", func() {
+			Eventually(func() interface{} {
+				podList, _ := clientManaged.CoreV1().Pods("openshift-gatekeeper-system").List(context.TODO(), metav1.ListOptions{LabelSelector: "control-plane=controller-manager"})
+				return fmt.Sprintf("%d/%d", len(podList.Items[0].Spec.Containers[0].Args), len(podList.Items[1].Spec.Containers[0].Args))
+			}, defaultTimeoutSeconds*6, 1).Should(Equal("6/6"))
+		})
+	})
+
 	Describe("GRC: [P1][Sev1][policy-grc] Clean up after all", func() {
+		It("Clean up mutation policies", func() {
+			utils.Kubectl("delete", "-f", GKAssignMetadataPolicyYaml, "-n", userNamespace, "--kubeconfig="+kubeconfigHub)
+			Eventually(func() interface{} {
+				managedPlc := utils.GetWithTimeout(clientManagedDynamic, gvrPolicy, userNamespace+"."+GKAssignMetadataPolicyName, clusterNamespace, false, defaultTimeoutSeconds)
+				return managedPlc
+			}, defaultTimeoutSeconds, 1).Should(BeNil())
+			utils.Kubectl("delete", "-f", GKAssignPolicyYaml, "-n", userNamespace, "--kubeconfig="+kubeconfigHub)
+			Eventually(func() interface{} {
+				managedPlc := utils.GetWithTimeout(clientManagedDynamic, gvrPolicy, userNamespace+"."+GKAssignPolicyName, clusterNamespace, false, defaultTimeoutSeconds)
+				return managedPlc
+			}, defaultTimeoutSeconds, 1).Should(BeNil())
+			out, _ := exec.Command("kubectl", "delete", "-f", "../resources/gatekeeper/pod-mutation.yaml", "-n", "default", "--kubeconfig="+kubeconfigManaged).CombinedOutput()
+			fmt.Println(string(out))
+		})
 		It("Clean up community/policy-gatekeeper-sample", func() {
 			utils.Kubectl("delete", "-f", GKPolicyYaml, "-n", userNamespace, "--kubeconfig="+kubeconfigHub)
 			Eventually(func() interface{} {
