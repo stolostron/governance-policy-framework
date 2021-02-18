@@ -82,7 +82,7 @@ var _ = Describe("", func() {
 				utils.Kubectl("delete", "-n", "openshift-gatekeeper-operator", "subscriptions.operators.coreos.com", "gatekeeper-operator-sub", "--kubeconfig="+kubeconfigManaged)
 				utils.Kubectl("delete", "-n", "openshift-gatekeeper-operator", "OperatorGroup", "gatekeeper-operator", "--kubeconfig="+kubeconfigManaged)
 				utils.Kubectl("delete", "crd", "gatekeepers.operator.gatekeeper.sh", "--kubeconfig="+kubeconfigManaged)
-				out, _ := exec.Command("kubectl", "delete", "ns", "openshift-gatekeeper-operator", "--kubeconfig="+kubeconfigManaged).CombinedOutput()
+				out, _ = exec.Command("kubectl", "delete", "ns", "openshift-gatekeeper-operator", "--kubeconfig="+kubeconfigManaged).CombinedOutput()
 				Expect(string(out)).To(ContainSubstring("namespace \"openshift-gatekeeper-operator\" deleted"))
 			}
 		})
