@@ -368,11 +368,11 @@ var _ = Describe("", func() {
 			Eventually(func() interface{} {
 				podList, _ := clientManaged.CoreV1().Pods("openshift-gatekeeper-system").List(context.TODO(), metav1.ListOptions{LabelSelector: "control-plane=controller-manager"})
 				return fmt.Sprintf("%d/%d", len(podList.Items[0].Spec.Containers[0].Args), len(podList.Items[1].Spec.Containers[0].Args))
-			}, defaultTimeoutSeconds*4, 1).Should(Equal("7/7"))
+			}, defaultTimeoutSeconds*10, 1).Should(Equal("7/7"))
 			Eventually(func() interface{} {
 				podList, _ := clientManaged.CoreV1().Pods("openshift-gatekeeper-system").List(context.TODO(), metav1.ListOptions{LabelSelector: "control-plane=controller-manager"})
 				return podList.Items[0].Spec.Containers[0].Args[6] + "/" + podList.Items[1].Spec.Containers[0].Args[6]
-			}, defaultTimeoutSeconds*6, 1).Should(Equal("--enable-mutation=true/--enable-mutation=true"))
+			}, defaultTimeoutSeconds, 1).Should(Equal("--enable-mutation=true/--enable-mutation=true"))
 		})
 	})
 
@@ -480,7 +480,7 @@ var _ = Describe("", func() {
 			Eventually(func() interface{} {
 				podList, _ := clientManaged.CoreV1().Pods("openshift-gatekeeper-system").List(context.TODO(), metav1.ListOptions{LabelSelector: "control-plane=controller-manager"})
 				return fmt.Sprintf("%d/%d", len(podList.Items[0].Spec.Containers[0].Args), len(podList.Items[1].Spec.Containers[0].Args))
-			}, defaultTimeoutSeconds*6, 1).Should(Equal("6/6"))
+			}, defaultTimeoutSeconds*10, 1).Should(Equal("6/6"))
 		})
 	})
 
