@@ -22,7 +22,7 @@ var _ = Describe("", func() {
 			Skip("Skipping as this is ocp 4.4")
 		}
 	})
-	const gatekeeperPolicyURL = "https://raw.githubusercontent.com/open-cluster-management/policy-collection/0e73d7989bfce9da2b30e693190d3f1544321b5f/stable/CM-Configuration-Management/policy-gatekeeper-operator-downstream.yaml"
+	const gatekeeperPolicyURL = "https://raw.githubusercontent.com/open-cluster-management/policy-collection/master/stable/CM-Configuration-Management/policy-gatekeeper-operator-downstream.yaml"
 	const gatekeeperPolicyName = "policy-gatekeeper-operator"
 	const GKPolicyYaml = "https://raw.githubusercontent.com/open-cluster-management/policy-collection/master/community/CM-Configuration-Management/policy-gatekeeper-sample.yaml"
 	const GKPolicyName = "policy-gatekeeper"
