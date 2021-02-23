@@ -468,6 +468,7 @@ var _ = Describe("", func() {
 			}, defaultTimeoutSeconds, 1).Should(BeNil())
 			utils.Kubectl("delete", "Gatekeeper", "gatekeeper", "--kubeconfig="+kubeconfigManaged)
 			utils.Kubectl("delete", "-n", "openshift-operators", "subscriptions.operators.coreos.com", "gatekeeper-operator-product", "--kubeconfig="+kubeconfigManaged)
+			utils.Kubectl("delete", "-n", "openshift-operators", "csv", "gatekeeper-operator-product.v0.1.1", "--kubeconfig="+kubeconfigManaged)
 			utils.Kubectl("delete", "crd", "gatekeepers.operator.gatekeeper.sh", "--kubeconfig="+kubeconfigManaged)
 			utils.Kubectl("delete", "events", "-n", clusterNamespace, "--all", "--kubeconfig="+kubeconfigManaged)
 		})
