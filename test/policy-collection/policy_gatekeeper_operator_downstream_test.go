@@ -99,11 +99,18 @@ var _ = Describe("", func() {
 		})
 		It("Gatekeeper operator pod should be running", func() {
 			By("Checking if pod gatekeeper-operator has been created")
+			var i int = 0
 			Eventually(func() interface{} {
+				if i == 60*2 || i == 60*4 {
+					fmt.Println("gatekeeper operator pod still not created, deleting subscription and let it recreate", i)
+					out, _ := exec.Command("kubectl", "delete", "-n", "openshift-operators", "subscriptions.operators.coreos.com", "gatekeeper-operator-product-sub", "--kubeconfig="+kubeconfigManaged).CombinedOutput()
+					fmt.Println(string(out))
+				}
+				i++
 				podList, err := clientManaged.CoreV1().Pods("openshift-operators").List(context.TODO(), metav1.ListOptions{LabelSelector: "control-plane=controller-manager"})
 				Expect(err).To(BeNil())
 				return len(podList.Items)
-			}, defaultTimeoutSeconds*2, 1).ShouldNot(Equal(0))
+			}, defaultTimeoutSeconds*12, 1).Should(Equal(1))
 			By("Checking if pod gatekeeper-operator is running")
 			Eventually(func() interface{} {
 				podList, err := clientManaged.CoreV1().Pods("openshift-operators").List(context.TODO(), metav1.ListOptions{LabelSelector: "control-plane=controller-manager"})
