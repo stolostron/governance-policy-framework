@@ -81,29 +81,13 @@ var _ = Describe("", func() {
 				return managedPlc.Object["spec"].(map[string]interface{})["remediationAction"]
 			}, defaultTimeoutSeconds, 1).Should(Equal("enforce"))
 		})
-		It("stable/policy-gatekeeper-operator should be compliant", func() {
-			By("Checking if the status of root policy is compliant")
-			Eventually(func() interface{} {
-				rootPlc := utils.GetWithTimeout(clientHubDynamic, gvrPolicy, gatekeeperPolicyName, userNamespace, true, defaultTimeoutSeconds)
-				var policy policiesv1.Policy
-				err := runtime.DefaultUnstructuredConverter.
-					FromUnstructured(rootPlc.UnstructuredContent(), &policy)
-				Expect(err).To(BeNil())
-				for _, statusPerCluster := range policy.Status.Status {
-					if statusPerCluster.ClusterNamespace == clusterNamespace {
-						return statusPerCluster.ComplianceState
-					}
-				}
-				return nil
-			}, defaultTimeoutSeconds*6, 1).Should(Equal(policiesv1.Compliant))
-		})
 		It("Gatekeeper operator pod should be running", func() {
 			By("Checking if pod gatekeeper-operator has been created")
 			var i int = 0
 			Eventually(func() interface{} {
 				if i == 60*2 || i == 60*4 {
 					fmt.Println("gatekeeper operator pod still not created, deleting subscription and let it recreate", i)
-					out, _ := exec.Command("kubectl", "delete", "-n", "openshift-operators", "subscriptions.operators.coreos.com", "gatekeeper-operator-product-sub", "--kubeconfig="+kubeconfigManaged).CombinedOutput()
+					out, _ := exec.Command("kubectl", "delete", "-n", "openshift-operators", "subscriptions.operators.coreos.com", "gatekeeper-operator-product", "--kubeconfig="+kubeconfigManaged).CombinedOutput()
 					fmt.Println(string(out))
 				}
 				i++
@@ -151,6 +135,22 @@ var _ = Describe("", func() {
 				Expect(err).To(BeNil())
 				return string(podList.Items[0].Status.Phase) + "/" + string(podList.Items[1].Status.Phase)
 			}, defaultTimeoutSeconds*2, 1).Should(Equal("Running/Running"))
+		})
+		It("stable/policy-gatekeeper-operator should be compliant", func() {
+			By("Checking if the status of root policy is compliant")
+			Eventually(func() interface{} {
+				rootPlc := utils.GetWithTimeout(clientHubDynamic, gvrPolicy, gatekeeperPolicyName, userNamespace, true, defaultTimeoutSeconds)
+				var policy policiesv1.Policy
+				err := runtime.DefaultUnstructuredConverter.
+					FromUnstructured(rootPlc.UnstructuredContent(), &policy)
+				Expect(err).To(BeNil())
+				for _, statusPerCluster := range policy.Status.Status {
+					if statusPerCluster.ClusterNamespace == clusterNamespace {
+						return statusPerCluster.ComplianceState
+					}
+				}
+				return nil
+			}, defaultTimeoutSeconds*6, 1).Should(Equal(policiesv1.Compliant))
 		})
 		It("Informing stable/policy-gatekeeper-operator", func() {
 			Eventually(func() interface{} {
@@ -467,7 +467,7 @@ var _ = Describe("", func() {
 				return managedPlc
 			}, defaultTimeoutSeconds, 1).Should(BeNil())
 			utils.Kubectl("delete", "Gatekeeper", "gatekeeper", "--kubeconfig="+kubeconfigManaged)
-			utils.Kubectl("delete", "-n", "openshift-operators", "subscriptions.operators.coreos.com", "gatekeeper-operator-product-sub", "--kubeconfig="+kubeconfigManaged)
+			utils.Kubectl("delete", "-n", "openshift-operators", "subscriptions.operators.coreos.com", "gatekeeper-operator-product", "--kubeconfig="+kubeconfigManaged)
 			utils.Kubectl("delete", "crd", "gatekeepers.operator.gatekeeper.sh", "--kubeconfig="+kubeconfigManaged)
 			utils.Kubectl("delete", "events", "-n", clusterNamespace, "--all", "--kubeconfig="+kubeconfigManaged)
 		})

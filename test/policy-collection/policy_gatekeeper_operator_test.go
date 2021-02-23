@@ -136,22 +136,6 @@ var _ = Describe("", func() {
 				return managedPlc.Object["spec"].(map[string]interface{})["remediationAction"]
 			}, defaultTimeoutSeconds, 1).Should(Equal("enforce"))
 		})
-		It("community/policy-gatekeeper-operator should be compliant", func() {
-			By("Checking if the status of root policy is compliant")
-			Eventually(func() interface{} {
-				rootPlc := utils.GetWithTimeout(clientHubDynamic, gvrPolicy, gatekeeperPolicyName, userNamespace, true, defaultTimeoutSeconds)
-				var policy policiesv1.Policy
-				err := runtime.DefaultUnstructuredConverter.
-					FromUnstructured(rootPlc.UnstructuredContent(), &policy)
-				Expect(err).To(BeNil())
-				for _, statusPerCluster := range policy.Status.Status {
-					if statusPerCluster.ClusterNamespace == clusterNamespace {
-						return statusPerCluster.ComplianceState
-					}
-				}
-				return nil
-			}, defaultTimeoutSeconds*6, 1).Should(Equal(policiesv1.Compliant))
-		})
 		It("Gatekeeper operator pod should be running", func() {
 			By("Checking if pod gatekeeper-operator has been created")
 			Eventually(func() interface{} {
@@ -199,6 +183,22 @@ var _ = Describe("", func() {
 				Expect(err).To(BeNil())
 				return string(podList.Items[0].Status.Phase) + "/" + string(podList.Items[1].Status.Phase)
 			}, defaultTimeoutSeconds*2, 1).Should(Equal("Running/Running"))
+		})
+		It("community/policy-gatekeeper-operator should be compliant", func() {
+			By("Checking if the status of root policy is compliant")
+			Eventually(func() interface{} {
+				rootPlc := utils.GetWithTimeout(clientHubDynamic, gvrPolicy, gatekeeperPolicyName, userNamespace, true, defaultTimeoutSeconds)
+				var policy policiesv1.Policy
+				err := runtime.DefaultUnstructuredConverter.
+					FromUnstructured(rootPlc.UnstructuredContent(), &policy)
+				Expect(err).To(BeNil())
+				for _, statusPerCluster := range policy.Status.Status {
+					if statusPerCluster.ClusterNamespace == clusterNamespace {
+						return statusPerCluster.ComplianceState
+					}
+				}
+				return nil
+			}, defaultTimeoutSeconds*6, 1).Should(Equal(policiesv1.Compliant))
 		})
 		It("Informing community/policy-gatekeeper-operator", func() {
 			Eventually(func() interface{} {
