@@ -482,6 +482,22 @@ var _ = Describe("", func() {
 				return fmt.Sprintf("%d/%d", len(podList.Items[0].Spec.Containers[0].Args), len(podList.Items[1].Spec.Containers[0].Args))
 			}, defaultTimeoutSeconds*10, 1).Should(Equal("6/6"))
 		})
+		It("Informing community/policy-gatekeeper-operator", func() {
+			Eventually(func() interface{} {
+				By("Patching remediationAction = inform on root policy")
+				rootPlc := utils.GetWithTimeout(clientHubDynamic, gvrPolicy, gatekeeperPolicyName, userNamespace, true, defaultTimeoutSeconds)
+				rootPlc.Object["spec"].(map[string]interface{})["remediationAction"] = "inform"
+				rootPlc, _ = clientHubDynamic.Resource(gvrPolicy).Namespace(userNamespace).Update(context.TODO(), rootPlc, metav1.UpdateOptions{})
+				By("Checking if remediationAction is inform for root policy")
+				rootPlc = utils.GetWithTimeout(clientHubDynamic, gvrPolicy, gatekeeperPolicyName, userNamespace, true, defaultTimeoutSeconds)
+				return rootPlc.Object["spec"].(map[string]interface{})["remediationAction"]
+			}, defaultTimeoutSeconds, 1).Should(Equal("inform"))
+			By("Checking if remediationAction is inform for replicated policy")
+			Eventually(func() interface{} {
+				managedPlc := utils.GetWithTimeout(clientManagedDynamic, gvrPolicy, userNamespace+"."+gatekeeperPolicyName, clusterNamespace, true, defaultTimeoutSeconds)
+				return managedPlc.Object["spec"].(map[string]interface{})["remediationAction"]
+			}, defaultTimeoutSeconds, 1).Should(Equal("inform"))
+		})
 	})
 
 	Describe("GRC: [P1][Sev1][policy-grc] Clean up after all", func() {
