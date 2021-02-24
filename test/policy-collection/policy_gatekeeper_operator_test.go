@@ -142,7 +142,7 @@ var _ = Describe("", func() {
 				podList, err := clientManaged.CoreV1().Pods("openshift-gatekeeper-operator").List(context.TODO(), metav1.ListOptions{LabelSelector: "control-plane=controller-manager"})
 				Expect(err).To(BeNil())
 				return len(podList.Items)
-			}, defaultTimeoutSeconds*2, 1).ShouldNot(Equal(0))
+			}, defaultTimeoutSeconds*4, 1).ShouldNot(Equal(0))
 			By("Checking if pod gatekeeper-operator is running")
 			Eventually(func() interface{} {
 				podList, err := clientManaged.CoreV1().Pods("openshift-gatekeeper-operator").List(context.TODO(), metav1.ListOptions{LabelSelector: "control-plane=controller-manager"})
