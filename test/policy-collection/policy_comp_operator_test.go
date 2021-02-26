@@ -359,7 +359,7 @@ var _ = Describe("RHACM4K-2222 GRC: [P1][Sev1][policy-grc] Test compliance opera
 			fmt.Println(out)
 			out, _ = utils.KubectlWithOutput("delete", "-n", "openshift-compliance", "OperatorGroup", "compliance-operator", "--kubeconfig="+kubeconfigManaged)
 			fmt.Println(out)
-			out, _ = utils.KubectlWithOutput("kubectl", "delete", "ns", "openshift-compliance", "--kubeconfig="+kubeconfigManaged)
+			out, _ = utils.KubectlWithOutput("delete", "ns", "openshift-compliance", "--kubeconfig="+kubeconfigManaged)
 			Expect(out).To(ContainSubstring("namespace \"openshift-compliance\" deleted"))
 			utils.KubectlWithOutput("delete", "events", "-n", clusterNamespace, "--all", "--kubeconfig="+kubeconfigManaged)
 			out, _ = utils.KubectlWithOutput("delete", "events", "-n", clusterNamespace, "--field-selector=involvedObject.name="+userNamespace+".policy-comp-operator", "--kubeconfig="+kubeconfigManaged)
