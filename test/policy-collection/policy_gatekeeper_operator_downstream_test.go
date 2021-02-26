@@ -482,11 +482,22 @@ var _ = Describe("", func() {
 				managedPlc := utils.GetWithTimeout(clientManagedDynamic, gvrPolicy, userNamespace+"."+gatekeeperPolicyName, clusterNamespace, false, defaultTimeoutSeconds)
 				return managedPlc
 			}, defaultTimeoutSeconds, 1).Should(BeNil())
-			utils.Kubectl("delete", "Gatekeeper", "gatekeeper", "--kubeconfig="+kubeconfigManaged)
-			utils.Kubectl("delete", "-n", "openshift-operators", "subscriptions.operators.coreos.com", "gatekeeper-operator-product", "--kubeconfig="+kubeconfigManaged)
-			utils.Kubectl("delete", "-n", "openshift-operators", "csv", "gatekeeper-operator-product.v0.1.1", "--kubeconfig="+kubeconfigManaged)
-			utils.Kubectl("delete", "crd", "gatekeepers.operator.gatekeeper.sh", "--kubeconfig="+kubeconfigManaged)
-			utils.Kubectl("delete", "events", "-n", clusterNamespace, "--all", "--kubeconfig="+kubeconfigManaged)
+
+			out, _ := utils.KubectlWithOutput("delete", "Gatekeeper", "gatekeeper", "--kubeconfig="+kubeconfigManaged)
+			fmt.Println(out)
+			Eventually(func() interface{} {
+				out, _ := utils.KubectlWithOutput("get", "ns", "openshift-gatekeeper-system", "--kubeconfig="+kubeconfigManaged)
+				fmt.Println(out)
+				return out
+			}, defaultTimeoutSeconds*4, 1).Should(ContainSubstring("namespaces \"openshift-gatekeeper-system\" not found"))
+			out, _ = utils.KubectlWithOutput("delete", "-n", "openshift-operators", "subscriptions.operators.coreos.com", "gatekeeper-operator-product", "--kubeconfig="+kubeconfigManaged)
+			fmt.Println(out)
+			out, _ = utils.KubectlWithOutput("delete", "-n", "openshift-operators", "csv", "gatekeeper-operator-product.v0.1.1", "--kubeconfig="+kubeconfigManaged)
+			fmt.Println(out)
+			out, _ = utils.KubectlWithOutput("delete", "crd", "gatekeepers.operator.gatekeeper.sh", "--kubeconfig="+kubeconfigManaged)
+			fmt.Println(out)
+			out, _ = utils.KubectlWithOutput("delete", "events", "-n", clusterNamespace, "--all", "--kubeconfig="+kubeconfigManaged)
+			fmt.Println(out)
 		})
 	})
 })
