@@ -309,12 +309,12 @@ var _ = Describe("", func() {
 				out, _ := exec.Command("kubectl", "get", "crd", "assign.mutations.gatekeeper.sh", "--kubeconfig="+kubeconfigManaged).CombinedOutput()
 				fmt.Println(string(out))
 				return string(out)
-			}, defaultTimeoutSeconds*4, 1).Should(ContainSubstring("CREATED AT\nassign.mutations.gatekeeper.sh"))
+			}, defaultTimeoutSeconds*8, 1).Should(ContainSubstring("CREATED AT\nassign.mutations.gatekeeper.sh"))
 			Eventually(func() interface{} {
 				out, _ := exec.Command("kubectl", "get", "crd", "assignmetadata.mutations.gatekeeper.sh", "--kubeconfig="+kubeconfigManaged).CombinedOutput()
 				fmt.Println(string(out))
 				return string(out)
-			}, defaultTimeoutSeconds*4, 1).Should(ContainSubstring("CREATED AT\nassignmetadata.mutations.gatekeeper.sh"))
+			}, defaultTimeoutSeconds*2, 1).Should(ContainSubstring("CREATED AT\nassignmetadata.mutations.gatekeeper.sh"))
 		})
 		It("Checking if gatekeeper controller manager has mutation flag on", func() {
 			Eventually(func() interface{} {
@@ -482,7 +482,7 @@ var _ = Describe("", func() {
 				managedPlc := utils.GetWithTimeout(clientManagedDynamic, gvrPolicy, userNamespace+"."+gatekeeperPolicyName, clusterNamespace, false, defaultTimeoutSeconds)
 				return managedPlc
 			}, defaultTimeoutSeconds, 1).Should(BeNil())
-
+			utils.Pause(20)
 			out, _ := utils.KubectlWithOutput("delete", "Gatekeeper", "gatekeeper", "--kubeconfig="+kubeconfigManaged)
 			fmt.Println(out)
 			Eventually(func() interface{} {
