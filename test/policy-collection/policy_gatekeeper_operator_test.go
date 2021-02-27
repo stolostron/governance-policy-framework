@@ -155,6 +155,20 @@ var _ = Describe("", func() {
 				return "nil"
 			}, defaultTimeoutSeconds*2, 1).Should(Equal("Running"))
 		})
+		// set to ignore to ensure it won't fail other tests running in parallel
+		It("Patching webhook check-ignore-label.gatekeeper.sh failurePolicy to ignore", func() {
+			By("Checking if validating webhook gatekeeper-validating-webhook-configuration exists")
+			Eventually(func() interface{} {
+				out, _ := utils.KubectlWithOutput("get", "validatingwebhookconfigurations.admissionregistration.k8s.io", "gatekeeper-validating-webhook-configuration", "--kubeconfig="+kubeconfigManaged)
+				fmt.Print(out)
+				return out
+			}, defaultTimeoutSeconds*1, 1).Should(ContainSubstring("AGE\ngatekeeper-validating-webhook-configuration"))
+			By("Patching if validating webhook gatekeeper-validating-webhook-configuration exists")
+			out, _ := utils.KubectlWithOutput("patch", "validatingwebhookconfigurations.admissionregistration.k8s.io", "gatekeeper-validating-webhook-configuration",
+				"--type=json", "-p=[{\"op\": \"replace\", \"path\": \"/webhooks/1/failurePolicy\", \"value\": \"Ignore\"}]", "--kubeconfig="+kubeconfigHub)
+			fmt.Println(out)
+			Expect(out).To(ContainSubstring("validatingwebhookconfiguration.admissionregistration.k8s.io/gatekeeper-validating-webhook-configuration patched"))
+		})
 		It("Gatekeeper audit pod should be running", func() {
 			By("Checking if pod gatekeeper-audit has been created")
 			Eventually(func() interface{} {
@@ -364,6 +378,20 @@ var _ = Describe("", func() {
 				return string(out)
 			}, defaultTimeoutSeconds*4, 1).Should(ContainSubstring("CREATED AT\nassignmetadata.mutations.gatekeeper.sh"))
 		})
+		// set to ignore to ensure it won't fail other tests running in parallel
+		It("Patching webhook check-ignore-label.gatekeeper.sh failurePolicy to ignore", func() {
+			By("Checking if validating webhook gatekeeper-validating-webhook-configuration exists")
+			Eventually(func() interface{} {
+				out, _ := utils.KubectlWithOutput("get", "validatingwebhookconfigurations.admissionregistration.k8s.io", "gatekeeper-validating-webhook-configuration", "--kubeconfig="+kubeconfigManaged)
+				fmt.Print(out)
+				return out
+			}, defaultTimeoutSeconds*1, 1).Should(ContainSubstring("AGE\ngatekeeper-validating-webhook-configuration"))
+			By("Patching if validating webhook gatekeeper-validating-webhook-configuration exists")
+			out, _ := utils.KubectlWithOutput("patch", "validatingwebhookconfigurations.admissionregistration.k8s.io", "gatekeeper-validating-webhook-configuration",
+				"--type=json", "-p=[{\"op\": \"replace\", \"path\": \"/webhooks/1/failurePolicy\", \"value\": \"Ignore\"}]", "--kubeconfig="+kubeconfigHub)
+			fmt.Println(out)
+			Expect(out).To(ContainSubstring("validatingwebhookconfiguration.admissionregistration.k8s.io/gatekeeper-validating-webhook-configuration patched"))
+		})
 		It("Checking if gatekeeper controller manager has mutation flag on", func() {
 			Eventually(func() interface{} {
 				podList, _ := clientManaged.CoreV1().Pods("openshift-gatekeeper-system").List(context.TODO(), metav1.ListOptions{LabelSelector: "control-plane=controller-manager"})
@@ -475,6 +503,20 @@ var _ = Describe("", func() {
 				fmt.Println(string(out))
 				return string(out)
 			}, defaultTimeoutSeconds*2, 1).Should(ContainSubstring("not found"))
+		})
+		// set to ignore to ensure it won't fail other tests running in parallel
+		It("Patching webhook check-ignore-label.gatekeeper.sh failurePolicy to ignore", func() {
+			By("Checking if validating webhook gatekeeper-validating-webhook-configuration exists")
+			Eventually(func() interface{} {
+				out, _ := utils.KubectlWithOutput("get", "validatingwebhookconfigurations.admissionregistration.k8s.io", "gatekeeper-validating-webhook-configuration", "--kubeconfig="+kubeconfigManaged)
+				fmt.Print(out)
+				return out
+			}, defaultTimeoutSeconds*1, 1).Should(ContainSubstring("AGE\ngatekeeper-validating-webhook-configuration"))
+			By("Patching if validating webhook gatekeeper-validating-webhook-configuration exists")
+			out, _ := utils.KubectlWithOutput("patch", "validatingwebhookconfigurations.admissionregistration.k8s.io", "gatekeeper-validating-webhook-configuration",
+				"--type=json", "-p=[{\"op\": \"replace\", \"path\": \"/webhooks/1/failurePolicy\", \"value\": \"Ignore\"}]", "--kubeconfig="+kubeconfigHub)
+			fmt.Println(out)
+			Expect(out).To(ContainSubstring("validatingwebhookconfiguration.admissionregistration.k8s.io/gatekeeper-validating-webhook-configuration patched"))
 		})
 		It("Checking if gatekeeper controller manager has mutation flag off", func() {
 			Eventually(func() interface{} {
