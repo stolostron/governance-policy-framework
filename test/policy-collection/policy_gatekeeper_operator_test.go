@@ -155,6 +155,20 @@ var _ = Describe("", func() {
 				return "nil"
 			}, defaultTimeoutSeconds*2, 1).Should(Equal("Running"))
 		})
+		// set to ignore to ensure it won't fail other tests running in parallel
+		It("Patching webhook check-ignore-label.gatekeeper.sh failurePolicy to ignore", func() {
+			By("Checking if validating webhook gatekeeper-validating-webhook-configuration exists")
+			Eventually(func() interface{} {
+				out, _ := utils.KubectlWithOutput("get", "validatingwebhookconfigurations.admissionregistration.k8s.io", "gatekeeper-validating-webhook-configuration", "--kubeconfig="+kubeconfigManaged)
+				fmt.Print(out)
+				return out
+			}, defaultTimeoutSeconds*2, 1).Should(ContainSubstring("AGE\ngatekeeper-validating-webhook-configuration"))
+			By("Patching if validating webhook gatekeeper-validating-webhook-configuration exists")
+			out, _ := utils.KubectlWithOutput("patch", "validatingwebhookconfigurations.admissionregistration.k8s.io", "gatekeeper-validating-webhook-configuration",
+				"--type=json", "-p=[{\"op\": \"replace\", \"path\": \"/webhooks/1/failurePolicy\", \"value\": \"Ignore\"}]", "--kubeconfig="+kubeconfigHub)
+			fmt.Println(out)
+			Expect(out).To(ContainSubstring("validatingwebhookconfiguration.admissionregistration.k8s.io/gatekeeper-validating-webhook-configuration patched"))
+		})
 		It("Gatekeeper audit pod should be running", func() {
 			By("Checking if pod gatekeeper-audit has been created")
 			Eventually(func() interface{} {
@@ -371,7 +385,7 @@ var _ = Describe("", func() {
 				out, _ := utils.KubectlWithOutput("get", "validatingwebhookconfigurations.admissionregistration.k8s.io", "gatekeeper-validating-webhook-configuration", "--kubeconfig="+kubeconfigManaged)
 				fmt.Print(out)
 				return out
-			}, defaultTimeoutSeconds*1, 1).Should(ContainSubstring("AGE\ngatekeeper-validating-webhook-configuration"))
+			}, defaultTimeoutSeconds*2, 1).Should(ContainSubstring("AGE\ngatekeeper-validating-webhook-configuration"))
 			By("Patching if validating webhook gatekeeper-validating-webhook-configuration exists")
 			out, _ := utils.KubectlWithOutput("patch", "validatingwebhookconfigurations.admissionregistration.k8s.io", "gatekeeper-validating-webhook-configuration",
 				"--type=json", "-p=[{\"op\": \"replace\", \"path\": \"/webhooks/1/failurePolicy\", \"value\": \"Ignore\"}]", "--kubeconfig="+kubeconfigHub)
@@ -497,7 +511,7 @@ var _ = Describe("", func() {
 				out, _ := utils.KubectlWithOutput("get", "validatingwebhookconfigurations.admissionregistration.k8s.io", "gatekeeper-validating-webhook-configuration", "--kubeconfig="+kubeconfigManaged)
 				fmt.Print(out)
 				return out
-			}, defaultTimeoutSeconds*1, 1).Should(ContainSubstring("AGE\ngatekeeper-validating-webhook-configuration"))
+			}, defaultTimeoutSeconds*2, 1).Should(ContainSubstring("AGE\ngatekeeper-validating-webhook-configuration"))
 			By("Patching if validating webhook gatekeeper-validating-webhook-configuration exists")
 			out, _ := utils.KubectlWithOutput("patch", "validatingwebhookconfigurations.admissionregistration.k8s.io", "gatekeeper-validating-webhook-configuration",
 				"--type=json", "-p=[{\"op\": \"replace\", \"path\": \"/webhooks/1/failurePolicy\", \"value\": \"Ignore\"}]", "--kubeconfig="+kubeconfigHub)
