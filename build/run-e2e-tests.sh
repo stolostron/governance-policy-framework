@@ -47,7 +47,7 @@ make kind-deploy-policy-controllers
 
 kubectl get pods -A
 
-echo "all ready! statt to test"
+echo "all ready! start to test"
 
 make e2e-test
 
