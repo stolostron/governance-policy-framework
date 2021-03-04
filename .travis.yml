@@ -8,7 +8,7 @@ services:
 
 branches:
   only:
-    - master
+    - main
     - /^release-[0-9]+\..*$/
 
 env:
@@ -32,7 +32,7 @@ jobs:
   include:
     - stage: prepare
       name: "Build the test image"
-      if: type = push AND branch = master
+      if: type = push AND branch = main
       script:
         - set -e
         - if [ "$TRAVIS_PULL_REQUEST" != "false" ]; then export COMPONENT_TAG_EXTENSION="-PR${TRAVIS_PULL_REQUEST}-${TRAVIS_COMMIT}"; fi;
@@ -45,7 +45,7 @@ jobs:
         - COMPONENT_VERSION="latest" COMPONENT_TAG_EXTENSION="-dev" make component/push;
     - stage: prepare
       name: "Patch cluster to latest"
-      if: type != pull_request AND branch = master
+      if: type != pull_request AND branch = main
       env:
         - COMPONENT_E2E_TEST_COMMAND=${TRAVIS_BUILD_DIR}/build/patch-cluster.sh
       script: 
@@ -54,7 +54,7 @@ jobs:
           make component/test/e2e
     - stage: test-e2e
       name: "Governance framework UI e2e tests"
-      if: type != pull_request AND branch = master
+      if: type != pull_request AND branch = main
       env:
         - COMPONENT_E2E_TEST_COMMAND=${TRAVIS_BUILD_DIR}/build/run-e2e-tests-ui.sh
       script: 
@@ -79,7 +79,7 @@ jobs:
           make component/test/e2e
     - stage: test-e2e
       name: "Test polices from policy-collection repo"
-      if: type != pull_request AND branch = master
+      if: type != pull_request AND branch = main
       env:
         - COMPONENT_E2E_TEST_COMMAND=${TRAVIS_BUILD_DIR}/build/run-e2e-tests-policy-framework.sh
       script: 
@@ -91,7 +91,7 @@ jobs:
           make component/test/e2e
     - stage: ff
       name: "Fast forwarding GRC repos"
-      if: type != pull_request AND branch = master
+      if: type != pull_request AND branch = main
       scripts: ./build/ff.sh
     - stage: publish
       name: "Publish the image to quay with an official version/sha tag and publish entry to integration pipeline stage"
@@ -102,7 +102,7 @@ jobs:
   
 notifications:
   slack:
-    if: branch = master
+    if: branch = main
     on_pull_requests: false
     rooms:
       secure: qaj5g0eO0XtIXz9vhwIkeH8RTtOFVMjZabgDAEk/YqUtBRrOTVADp4haRigNYBwhnew/h5gA4i+8j/rBZGbNn0W4ziPJT5WDAbqlyg6v7A/xguJozKL4LIuW29NaJaNisW1OtDCrXxJ0Pb5HjaIhoQMxl5UWKP7BJv0Xy9lq4tqfO+CJDuyerP0M6pFgnK8qYpbQ5NDh4Ou7HMLxYrJdfXf7T7YYi3pE7EctYIz05DTEYqYsh8rfOuvunmL3uBYuMROOnygJmKfApBn59rgQWtvLcoQUl6l5p1C9bR5F9yn5gFPAqKWbRPBNwStxHf+gCdCoac+iOQfwGnODlO+x+KItWYIuPSlMHdl+BrFLJ/GqraIAvArGQqkZ6zIHcIlmIHNUak+h6LZUdWSuvgQI666dZwZOBDEFqn9yWGOgO2nFYCoB8VDwHXA2zaEe1ZuWGrX+pVe0WgM7C4EYK21i6HlN9N20/gqIjyGW5CQZJWFrl55OF5uR4ZfPvclr1GwsxiQfVfGyUAU5TGgQvY+QcU8sxhL8g7OZxEbFdV06+HzUAKyVIv0N4rwlCQdr46DDR6y8nOIOYfBD3a0w5poMab6m7qLd+w1E041gFDnEqnxSE8qlFPxREwPOsPhL4EuqtKUP7NTVrXY4/6jtM1D+Dz3MMEtIEq1Kj/YE/XTxlLQ=
