@@ -162,7 +162,7 @@ var _ = Describe("", func() {
 				out, _ := utils.KubectlWithOutput("get", "validatingwebhookconfigurations.admissionregistration.k8s.io", "gatekeeper-validating-webhook-configuration", "--kubeconfig="+kubeconfigManaged)
 				fmt.Print(out)
 				return out
-			}, defaultTimeoutSeconds*1, 1).Should(ContainSubstring("AGE\ngatekeeper-validating-webhook-configuration"))
+			}, defaultTimeoutSeconds*2, 1).Should(ContainSubstring("AGE\ngatekeeper-validating-webhook-configuration"))
 			By("Patching if validating webhook gatekeeper-validating-webhook-configuration exists")
 			out, _ := utils.KubectlWithOutput("patch", "validatingwebhookconfigurations.admissionregistration.k8s.io", "gatekeeper-validating-webhook-configuration",
 				"--type=json", "-p=[{\"op\": \"replace\", \"path\": \"/webhooks/1/failurePolicy\", \"value\": \"Ignore\"}]", "--kubeconfig="+kubeconfigHub)
@@ -385,7 +385,7 @@ var _ = Describe("", func() {
 				out, _ := utils.KubectlWithOutput("get", "validatingwebhookconfigurations.admissionregistration.k8s.io", "gatekeeper-validating-webhook-configuration", "--kubeconfig="+kubeconfigManaged)
 				fmt.Print(out)
 				return out
-			}, defaultTimeoutSeconds*1, 1).Should(ContainSubstring("AGE\ngatekeeper-validating-webhook-configuration"))
+			}, defaultTimeoutSeconds*2, 1).Should(ContainSubstring("AGE\ngatekeeper-validating-webhook-configuration"))
 			By("Patching if validating webhook gatekeeper-validating-webhook-configuration exists")
 			out, _ := utils.KubectlWithOutput("patch", "validatingwebhookconfigurations.admissionregistration.k8s.io", "gatekeeper-validating-webhook-configuration",
 				"--type=json", "-p=[{\"op\": \"replace\", \"path\": \"/webhooks/1/failurePolicy\", \"value\": \"Ignore\"}]", "--kubeconfig="+kubeconfigHub)
@@ -511,7 +511,7 @@ var _ = Describe("", func() {
 				out, _ := utils.KubectlWithOutput("get", "validatingwebhookconfigurations.admissionregistration.k8s.io", "gatekeeper-validating-webhook-configuration", "--kubeconfig="+kubeconfigManaged)
 				fmt.Print(out)
 				return out
-			}, defaultTimeoutSeconds*1, 1).Should(ContainSubstring("AGE\ngatekeeper-validating-webhook-configuration"))
+			}, defaultTimeoutSeconds*2, 1).Should(ContainSubstring("AGE\ngatekeeper-validating-webhook-configuration"))
 			By("Patching if validating webhook gatekeeper-validating-webhook-configuration exists")
 			out, _ := utils.KubectlWithOutput("patch", "validatingwebhookconfigurations.admissionregistration.k8s.io", "gatekeeper-validating-webhook-configuration",
 				"--type=json", "-p=[{\"op\": \"replace\", \"path\": \"/webhooks/1/failurePolicy\", \"value\": \"Ignore\"}]", "--kubeconfig="+kubeconfigHub)
