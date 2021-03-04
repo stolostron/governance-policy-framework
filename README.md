@@ -1,5 +1,5 @@
 # Governance Policy Framework
-[![Build Status](https://travis-ci.com/open-cluster-management/governance-policy-framework.svg?token=1xoYGv8XzWhB2heDk2My&branch=master)](https://travis-ci.com/open-cluster-management/governance-policy-framework)
+[![Build Status](https://travis-ci.com/open-cluster-management/governance-policy-framework.svg?token=2jHocNax82kqKsGV1uTE&branch=main)](https://travis-ci.com/open-cluster-management/governance-policy-framework)
 
 Red Hat Advanced Cluster Management Governance - Policy Framework
 
@@ -40,4 +40,4 @@ You can bring your own policy by implementing a custom policy and controller. Fo
 
 ## More policies
 
-You can find more policies or contribute to the open repostitory, [policy-collection](https://github.com/open-cluster-management/policy-collection).
+You can find more policies or contribute to the open repository, [policy-collection](https://github.com/open-cluster-management/policy-collection).
