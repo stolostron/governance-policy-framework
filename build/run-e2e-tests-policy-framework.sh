@@ -1,4 +1,6 @@
 #!/bin/bash
+# Copyright Contributors to the Open Cluster Management project
+
 
 set -e
 TEST_IMAGE_URI=$1
