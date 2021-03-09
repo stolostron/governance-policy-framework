@@ -1,4 +1,6 @@
 #!/usr/bin/env sh
+# Copyright Contributors to the Open Cluster Management project
+
 
 # This script is aimed to be POSIX-compliant and style consistent with help of these tools:
 # - https://github.com/koalaman/shellcheck

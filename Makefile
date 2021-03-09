@@ -1,3 +1,5 @@
+# Copyright Contributors to the Open Cluster Management project
+
 TRAVIS_BUILD ?= 1
 
 PWD := $(shell pwd)
