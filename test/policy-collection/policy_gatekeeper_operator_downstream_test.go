@@ -230,12 +230,13 @@ var _ = Describe("", func() {
 			}, defaultTimeoutSeconds*6, 1).Should(ContainSubstring("namespace/e2etestsuccess created"))
 		})
 		It("Creating an invalid ns should generate a violation message", func() {
+			// Due to the ignore flag being set, namespace creation will work, but the violation is still created
 			By("Creating invalid namespace on managed")
 			Eventually(func() interface{} {
 				out, _ := exec.Command("kubectl", "create", "ns", "e2etestfail", "--kubeconfig="+kubeconfigManaged).CombinedOutput()
 				fmt.Println(string(out))
 				return string(out)
-			}, defaultTimeoutSeconds*2, 1).Should(ContainSubstring("denied by ns-must-have-gk"))
+			}, defaultTimeoutSeconds*2, 1).Should(ContainSubstring("namespace/e2etestfail created"))
 			By("Checking if status for policy template policy-gatekeeper-admission is noncompliant")
 			Eventually(func() interface{} {
 				plc := utils.GetWithTimeout(clientHubDynamic, gvrPolicy, userNamespace+"."+GKPolicyName, clusterNamespace, true, defaultTimeoutSeconds)
