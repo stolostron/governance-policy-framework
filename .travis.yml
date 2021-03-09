@@ -88,11 +88,13 @@ jobs:
           export COMPONENT_NAME="grc-policy-framework-tests"
           if [ "$TRAVIS_PULL_REQUEST" != "false" ]; then export COMPONENT_TAG_EXTENSION="-PR${TRAVIS_PULL_REQUEST}-${TRAVIS_COMMIT}"; fi;
           make component/pull
+          echo "Wait for UI to check empty resource page"
+          sleep 6m
           make component/test/e2e
     - stage: ff
       name: "Fast forwarding GRC repos"
       if: type != pull_request AND branch = main
-      scripts: ./build/ff.sh
+      script: ./build/ff.sh
     - stage: publish
       name: "Publish the image to quay with an official version/sha tag and publish entry to integration pipeline stage"
       if: type = push AND branch =~ /^release-[0-9]+\..*$/
