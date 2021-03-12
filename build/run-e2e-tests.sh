@@ -49,12 +49,6 @@ make kind-deploy-policy-controllers
 
 kubectl get pods -A
 
-# Allow UI tests to continue to check empty resource page
-if [[ "${TRAVIS_EVENT_TYPE}" != "pull_request" ]]; then
-    echo "Waiting for UI E2E to check empty resource page"
-    sleep 6m
-fi
-
 echo "all ready! start to test"
 
 make e2e-test
