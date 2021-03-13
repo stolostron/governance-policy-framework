@@ -45,5 +45,6 @@ docker run --volume $(pwd)/results:/opt/app-root/src/grc-ui/test-output/e2e \
     --env RBAC_PASS=$RBAC_PASS \
     --env PAUSE=0 \
     --env FAIL_FAST=true \
+    --env STANDALONE_TESTSUITE_EXECUTION=false \
     --env MANAGED_CLUSTER_NAME=$MANAGED_CLUSTER_NAME \
     $DOCKER_URI

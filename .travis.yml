@@ -59,7 +59,6 @@ jobs:
         - COMPONENT_E2E_TEST_COMMAND=${TRAVIS_BUILD_DIR}/build/run-e2e-tests-ui.sh
       script: 
         - |
-          export CYPRESS_STANDALONE_TESTSUITE_EXECUTION="FALSE"
           make
           make component/test/e2e
       after_failure:
