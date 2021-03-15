@@ -237,7 +237,7 @@ var _ = Describe("", func() {
 				out, _ := exec.Command("kubectl", "create", "ns", "e2etestfail", "--kubeconfig="+kubeconfigManaged).CombinedOutput()
 				fmt.Println(string(out))
 				return string(out)
-			}, defaultTimeoutSeconds*2, 1).Should(ContainSubstring("denied by ns-must-have-gk"))
+			}, defaultTimeoutSeconds*6, 1).Should(ContainSubstring("denied by ns-must-have-gk"))
 			By("Checking if status for policy template policy-gatekeeper-admission is noncompliant")
 			Eventually(func() interface{} {
 				plc := utils.GetWithTimeout(clientHubDynamic, gvrPolicy, userNamespace+"."+GKPolicyName, clusterNamespace, true, defaultTimeoutSeconds)
