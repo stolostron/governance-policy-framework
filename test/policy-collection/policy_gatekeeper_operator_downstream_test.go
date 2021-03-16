@@ -243,7 +243,7 @@ var _ = Describe("", func() {
 				plc := utils.GetWithTimeout(clientHubDynamic, gvrPolicy, userNamespace+"."+GKPolicyName, clusterNamespace, true, defaultTimeoutSeconds)
 				details := plc.Object["status"].(map[string]interface{})["details"].([]interface{})
 				return details[2].(map[string]interface{})["compliant"]
-			}, defaultTimeoutSeconds, 1).Should(Equal("NonCompliant"))
+			}, defaultTimeoutSeconds*2, 1).Should(Equal("NonCompliant"))
 			By("Checking if violation message for policy template policy-gatekeeper-admission is noncompliant")
 			Eventually(func() interface{} {
 				plc := utils.GetWithTimeout(clientHubDynamic, gvrPolicy, userNamespace+"."+GKPolicyName, clusterNamespace, true, defaultTimeoutSeconds)
