@@ -155,7 +155,7 @@ var _ = Describe("", func() {
 					}
 				}
 				return "nil"
-			}, defaultTimeoutSeconds*2, 1).Should(Equal("Running"))
+			}, defaultTimeoutSeconds*4, 1).Should(Equal("Running"))
 		})
 		// set to ignore to ensure it won't fail other tests running in parallel
 		It("Patching webhook check-ignore-label.gatekeeper.sh failurePolicy to ignore", func() {
