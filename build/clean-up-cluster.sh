@@ -18,6 +18,5 @@ export OC_CLUSTER_URL=$OC_HUB_CLUSTER_URL
 export OC_CLUSTER_PASS=$OC_HUB_CLUSTER_PASS
 make oc/login
 ./build/cluster-clean-up.sh 
-./build/cluster-clean-up.sh 
 
 ./build/install-cert-manager.sh
