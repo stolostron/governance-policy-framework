@@ -114,6 +114,7 @@ install-crds:
 	kubectl apply -f deploy/crds/apps.open-cluster-management.io_placementrules_crd.yaml --kubeconfig=$(PWD)/kubeconfig_hub
 	kubectl apply -f deploy/crds/policy.open-cluster-management.io_placementbindings_crd.yaml --kubeconfig=$(PWD)/kubeconfig_hub
 	kubectl apply -f deploy/crds/policy.open-cluster-management.io_policies_crd.yaml --kubeconfig=$(PWD)/kubeconfig_hub
+	kubectl apply -f deploy/crds/policy.open-cluster-management.io_policyautomations_crd.yaml --kubeconfig=$(PWD)/kubeconfig_hub
 	kubectl apply -f deploy/crds/cluster.open-cluster-management.io_managedclusters.yaml --kubeconfig=$(PWD)/kubeconfig_hub
 	@echo installing crds on managed
 	kubectl apply -f deploy/crds/policy.open-cluster-management.io_policies_crd.yaml --kubeconfig=$(PWD)/kubeconfig_managed

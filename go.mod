@@ -5,7 +5,7 @@ go 1.14
 require (
 	github.com/onsi/ginkgo v1.14.2
 	github.com/onsi/gomega v1.10.4
-	github.com/open-cluster-management/governance-policy-propagator v0.0.0-20210225153815-1a6e85947a25
+	github.com/open-cluster-management/governance-policy-propagator v0.0.0-20210330170457-7ccd8538eb95
 	k8s.io/api v0.18.3
 	k8s.io/apimachinery v0.18.3
 	k8s.io/client-go v12.0.0+incompatible

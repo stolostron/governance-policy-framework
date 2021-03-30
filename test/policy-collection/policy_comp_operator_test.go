@@ -1,18 +1,16 @@
 // Copyright (c) 2020 Red Hat, Inc.
 // Copyright Contributors to the Open Cluster Management project
 
-
 package e2e
 
 import (
 	"context"
 	"fmt"
-	"os/exec"
 	"strings"
 
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
-	policiesv1 "github.com/open-cluster-management/governance-policy-propagator/pkg/apis/policies/v1"
+	policiesv1 "github.com/open-cluster-management/governance-policy-propagator/pkg/apis/policy/v1"
 	"github.com/open-cluster-management/governance-policy-propagator/test/utils"
 	"k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -63,8 +61,8 @@ var _ = Describe("RHACM4K-2222 GRC: [P1][Sev1][policy-grc] Test compliance opera
 			utils.KubectlWithOutput("delete", "-f", compE8ScanPolicyURL, "-n", userNamespace, "--kubeconfig="+kubeconfigHub)
 			utils.GetWithTimeout(clientManagedDynamic, gvrPolicy, userNamespace+"."+compE8ScanPolicyName, clusterNamespace, false, defaultTimeoutSeconds)
 			By("Removing ScanSettingBinding")
-			out, _ := exec.Command("kubectl", "delete", "-n", "openshift-compliance", "ScanSettingBinding", "e8", "--kubeconfig="+kubeconfigManaged).CombinedOutput()
-			Expect(string(out)).To(ContainSubstring("scansettingbinding.compliance.openshift.io \"e8\""))
+			out, _ := utils.KubectlWithOutput("delete", "-n", "openshift-compliance", "ScanSettingBinding", "e8", "--kubeconfig="+kubeconfigManaged)
+			Expect(out).To(ContainSubstring("scansettingbinding.compliance.openshift.io \"e8\""))
 			By("Wait for ComplianceSuite to be deleted")
 			utils.KubectlWithOutput("delete", "-n", "openshift-compliance", "ComplianceSuite", "e8", "--kubeconfig="+kubeconfigManaged)
 			utils.ListWithTimeoutByNamespace(clientManagedDynamic, gvrComplianceSuite, metav1.ListOptions{}, "openshift-compliance", 0, false, defaultTimeoutSeconds)
@@ -88,8 +86,8 @@ var _ = Describe("RHACM4K-2222 GRC: [P1][Sev1][policy-grc] Test compliance opera
 			utils.KubectlWithOutput("delete", "-n", "openshift-compliance", "ProfileBundle", "--all", "--kubeconfig="+kubeconfigManaged)
 			utils.KubectlWithOutput("delete", "-n", "openshift-compliance", "subscriptions.operators.coreos.com", "compliance-operator", "--kubeconfig="+kubeconfigManaged)
 			utils.KubectlWithOutput("delete", "-n", "openshift-compliance", "OperatorGroup", "compliance-operator", "--kubeconfig="+kubeconfigManaged)
-			out, _ := exec.Command("kubectl", "delete", "ns", "openshift-compliance", "--kubeconfig="+kubeconfigManaged).CombinedOutput()
-			Expect(string(out)).To(ContainSubstring("namespace \"openshift-compliance\" deleted"))
+			out, _ := utils.KubectlWithOutput("delete", "ns", "openshift-compliance", "--kubeconfig="+kubeconfigManaged)
+			Expect(out).To(ContainSubstring("namespace \"openshift-compliance\" deleted"))
 			utils.KubectlWithOutput("delete", "events", "-n", clusterNamespace, "--all", "--kubeconfig="+kubeconfigManaged)
 		})
 	})
@@ -107,19 +105,17 @@ var _ = Describe("RHACM4K-2222 GRC: [P1][Sev1][policy-grc] Test compliance opera
 				utils.KubectlWithOutput("delete", "-n", "openshift-compliance", "ProfileBundle", "--all", "--kubeconfig="+kubeconfigManaged)
 				utils.KubectlWithOutput("delete", "-n", "openshift-compliance", "subscriptions.operators.coreos.com", "compliance-operator", "--kubeconfig="+kubeconfigManaged)
 				utils.KubectlWithOutput("delete", "-n", "openshift-compliance", "OperatorGroup", "compliance-operator", "--kubeconfig="+kubeconfigManaged)
-				out, _ := exec.Command("kubectl", "delete", "ns", "openshift-compliance", "--kubeconfig="+kubeconfigManaged).CombinedOutput()
-				Expect(string(out)).To(ContainSubstring("namespace \"openshift-compliance\" deleted"))
+				out, _ := utils.KubectlWithOutput("delete", "ns", "openshift-compliance", "--kubeconfig="+kubeconfigManaged)
+				Expect(out).To(ContainSubstring("namespace \"openshift-compliance\" deleted"))
 			}
 		})
 		It("stable/policy-comp-operator should be created on hub", func() {
 			By("Creating policy on hub")
-			out, _ := exec.Command("kubectl", "apply", "-f", compPolicyURL, "-n", userNamespace, "--kubeconfig="+kubeconfigHub).CombinedOutput()
-			fmt.Println(string(out))
+			utils.KubectlWithOutput("apply", "-f", compPolicyURL, "-n", userNamespace, "--kubeconfig="+kubeconfigHub)
 			By("Patching placement rule")
-			out, _ = exec.Command("kubectl", "patch", "-n", userNamespace, "placementrule.apps.open-cluster-management.io/placement-"+compPolicyName,
+			utils.KubectlWithOutput("patch", "-n", userNamespace, "placementrule.apps.open-cluster-management.io/placement-"+compPolicyName,
 				"--type=json", "-p=[{\"op\": \"replace\", \"path\": \"/spec/clusterSelector/matchExpressions\", \"value\":[{\"key\": \"name\", \"operator\": \"In\", \"values\": ["+clusterNamespace+"]}]}]",
-				"--kubeconfig="+kubeconfigHub).CombinedOutput()
-			fmt.Println(string(out))
+				"--kubeconfig="+kubeconfigHub)
 			By("Checking policy-comp-operator on hub cluster in ns " + userNamespace)
 			rootPlc := utils.GetWithTimeout(clientHubDynamic, gvrPolicy, compPolicyName, userNamespace, true, defaultTimeoutSeconds)
 			Expect(rootPlc).NotTo(BeNil())
@@ -183,8 +179,7 @@ var _ = Describe("RHACM4K-2222 GRC: [P1][Sev1][policy-grc] Test compliance opera
 			Eventually(func() interface{} {
 				if i == 60*2 || i == 60*4 {
 					fmt.Println("compliance operator pod still not created, deleting subscription and let it recreate", i)
-					out, _ := exec.Command("kubectl", "delete", "-n", "openshift-compliance", "subscriptions.operators.coreos.com", "compliance-operator", "--kubeconfig="+kubeconfigManaged).CombinedOutput()
-					fmt.Println(string(out))
+					utils.KubectlWithOutput("delete", "-n", "openshift-compliance", "subscriptions.operators.coreos.com", "compliance-operator", "--kubeconfig="+kubeconfigManaged)
 				}
 				i++
 				podList, err := clientManaged.CoreV1().Pods("openshift-compliance").List(context.TODO(), metav1.ListOptions{LabelSelector: "name=compliance-operator"})
@@ -244,13 +239,11 @@ var _ = Describe("RHACM4K-2222 GRC: [P1][Sev1][policy-grc] Test compliance opera
 	Describe("Test stable/policy-e8-scan", func() {
 		It("stable/policy-e8-scan should be created on hub", func() {
 			By("Creating policy on hub")
-			out, _ := exec.Command("kubectl", "apply", "-f", compE8ScanPolicyURL, "-n", userNamespace, "--kubeconfig="+kubeconfigHub).CombinedOutput()
-			fmt.Println(string(out))
+			utils.KubectlWithOutput("apply", "-f", compE8ScanPolicyURL, "-n", userNamespace, "--kubeconfig="+kubeconfigHub)
 			By("Patching placement rule")
-			out, _ = exec.Command("kubectl", "patch", "-n", userNamespace, "placementrule.apps.open-cluster-management.io/placement-"+compE8ScanPolicyName,
+			utils.KubectlWithOutput("patch", "-n", userNamespace, "placementrule.apps.open-cluster-management.io/placement-"+compE8ScanPolicyName,
 				"--type=json", "-p=[{\"op\": \"replace\", \"path\": \"/spec/clusterSelector/matchExpressions\", \"value\":[{\"key\": \"name\", \"operator\": \"In\", \"values\": ["+clusterNamespace+"]}]}]",
-				"--kubeconfig="+kubeconfigHub).CombinedOutput()
-			fmt.Println(string(out))
+				"--kubeconfig="+kubeconfigHub)
 			By("Checking policy-e8-scan on hub cluster in ns " + userNamespace)
 			rootPlc := utils.GetWithTimeout(clientHubDynamic, gvrPolicy, compE8ScanPolicyName, userNamespace, true, defaultTimeoutSeconds)
 			Expect(rootPlc).NotTo(BeNil())
@@ -296,7 +289,7 @@ var _ = Describe("RHACM4K-2222 GRC: [P1][Sev1][policy-grc] Test compliance opera
 				By("Patching remediationAction = inform on root policy")
 				rootPlc := utils.GetWithTimeout(clientHubDynamic, gvrPolicy, compE8ScanPolicyName, userNamespace, true, defaultTimeoutSeconds)
 				rootPlc.Object["spec"].(map[string]interface{})["remediationAction"] = "inform"
-				rootPlc, _ = clientHubDynamic.Resource(gvrPolicy).Namespace(userNamespace).Update(context.TODO(), rootPlc, metav1.UpdateOptions{})
+				clientHubDynamic.Resource(gvrPolicy).Namespace(userNamespace).Update(context.TODO(), rootPlc, metav1.UpdateOptions{})
 				By("Checking if remediationAction is inform for root policy")
 				rootPlc = utils.GetWithTimeout(clientHubDynamic, gvrPolicy, compE8ScanPolicyName, userNamespace, true, defaultTimeoutSeconds)
 				return rootPlc.Object["spec"].(map[string]interface{})["remediationAction"]
@@ -336,8 +329,8 @@ var _ = Describe("RHACM4K-2222 GRC: [P1][Sev1][policy-grc] Test compliance opera
 			utils.KubectlWithOutput("delete", "-f", compE8ScanPolicyURL, "-n", userNamespace, "--kubeconfig="+kubeconfigHub)
 			utils.GetWithTimeout(clientManagedDynamic, gvrPolicy, userNamespace+"."+compE8ScanPolicyName, clusterNamespace, false, defaultTimeoutSeconds)
 			By("Removing ScanSettingBinding")
-			out, _ := exec.Command("kubectl", "delete", "-n", "openshift-compliance", "ScanSettingBinding", "e8", "--kubeconfig="+kubeconfigManaged).CombinedOutput()
-			Expect(string(out)).To(ContainSubstring("scansettingbinding.compliance.openshift.io \"e8\" deleted"))
+			out, _ := utils.KubectlWithOutput("delete", "-n", "openshift-compliance", "ScanSettingBinding", "e8", "--kubeconfig="+kubeconfigManaged)
+			Expect(out).To(ContainSubstring("scansettingbinding.compliance.openshift.io \"e8\" deleted"))
 			By("Wait for ComplianceSuite to be deleted")
 			utils.KubectlWithOutput("delete", "-n", "openshift-compliance", "ComplianceSuite", "e8", "--kubeconfig="+kubeconfigManaged)
 			utils.ListWithTimeoutByNamespace(clientManagedDynamic, gvrComplianceSuite, metav1.ListOptions{}, "openshift-compliance", 0, false, defaultTimeoutSeconds)
@@ -353,20 +346,15 @@ var _ = Describe("RHACM4K-2222 GRC: [P1][Sev1][policy-grc] Test compliance opera
 			}, defaultTimeoutSeconds*4, 1).Should(Equal(3))
 		})
 		It("clean up compliance operator", func() {
-			out, _ := utils.KubectlWithOutput("delete", "-f", compPolicyURL, "-n", userNamespace, "--kubeconfig="+kubeconfigHub)
+			utils.KubectlWithOutput("delete", "-f", compPolicyURL, "-n", userNamespace, "--kubeconfig="+kubeconfigHub)
 			utils.GetWithTimeout(clientManagedDynamic, gvrPolicy, userNamespace+"."+compPolicyName, clusterNamespace, false, defaultTimeoutSeconds)
-			out, _ = utils.KubectlWithOutput("delete", "-n", "openshift-compliance", "ProfileBundle", "--all", "--kubeconfig="+kubeconfigManaged)
-			fmt.Println(out)
-			out, _ = utils.KubectlWithOutput("delete", "-n", "openshift-compliance", "subscriptions.operators.coreos.com", "compliance-operator", "--kubeconfig="+kubeconfigManaged)
-			fmt.Println(out)
-			out, _ = utils.KubectlWithOutput("delete", "-n", "openshift-compliance", "OperatorGroup", "compliance-operator", "--kubeconfig="+kubeconfigManaged)
-			fmt.Println(out)
-			out, _ = utils.KubectlWithOutput("delete", "ns", "openshift-compliance", "--kubeconfig="+kubeconfigManaged)
+			utils.KubectlWithOutput("delete", "-n", "openshift-compliance", "ProfileBundle", "--all", "--kubeconfig="+kubeconfigManaged)
+			utils.KubectlWithOutput("delete", "-n", "openshift-compliance", "subscriptions.operators.coreos.com", "compliance-operator", "--kubeconfig="+kubeconfigManaged)
+			utils.KubectlWithOutput("delete", "-n", "openshift-compliance", "OperatorGroup", "compliance-operator", "--kubeconfig="+kubeconfigManaged)
+			out, _ := utils.KubectlWithOutput("delete", "ns", "openshift-compliance", "--kubeconfig="+kubeconfigManaged)
 			Expect(out).To(ContainSubstring("namespace \"openshift-compliance\" deleted"))
-			out, _ = utils.KubectlWithOutput("delete", "events", "-n", clusterNamespace, "--field-selector=involvedObject.name="+userNamespace+".policy-comp-operator", "--kubeconfig="+kubeconfigManaged)
-			fmt.Println(out)
-			out, _ = utils.KubectlWithOutput("delete", "events", "-n", clusterNamespace, "--field-selector=involvedObject.name="+userNamespace+".policy-e8-scan", "--kubeconfig="+kubeconfigManaged)
-			fmt.Println(out)
+			utils.KubectlWithOutput("delete", "events", "-n", clusterNamespace, "--field-selector=involvedObject.name="+userNamespace+".policy-comp-operator", "--kubeconfig="+kubeconfigManaged)
+			utils.KubectlWithOutput("delete", "events", "-n", clusterNamespace, "--field-selector=involvedObject.name="+userNamespace+".policy-e8-scan", "--kubeconfig="+kubeconfigManaged)
 		})
 	})
 })
