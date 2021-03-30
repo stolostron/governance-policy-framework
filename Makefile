@@ -117,7 +117,7 @@ install-crds:
 	kubectl apply -f deploy/crds/policy.open-cluster-management.io_policyautomations_crd.yaml --kubeconfig=$(PWD)/kubeconfig_hub
 	kubectl apply -f deploy/crds/cluster.open-cluster-management.io_managedclusters.yaml --kubeconfig=$(PWD)/kubeconfig_hub
 	@echo installing crds on managed
-	kubectl apply -f deploy/crds/policy.open-cluster-management.io_policies_crd.yaml --kubeconfig=$(PWD)/kubeconfig_hub
+	kubectl apply -f deploy/crds/policy.open-cluster-management.io_policies_crd.yaml --kubeconfig=$(PWD)/kubeconfig_managed
 
 install-resources:
 	@echo creating user namespace on hub
