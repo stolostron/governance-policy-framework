@@ -53,7 +53,7 @@ func GetClusterLevelWithTimeout(
 
 const GKOPolicyYaml string = "../resources/gatekeeper/policy-gatekeeper-operator.yaml"
 
-var _ = Describe("Test gatekeeper", func() {
+var _ = FDescribe("Test gatekeeper", func() {
 	Describe("Test gatekeeper operator", func() {
 		const GKOPolicyName string = "policy-gatekeeper-operator"
 		It("gatekeeper operator policy should be created on managed", func() {
@@ -93,7 +93,7 @@ var _ = Describe("Test gatekeeper", func() {
 		})
 		It("configurationPolicies should be created on managed", func() {
 			By("Creating policy on hub")
-			utils.Kubectl("apply", "-f", GKPolicyYaml, "-n", "default", "--kubeconfig=../../kubeconfig_hub")
+			utils.KubectlWithOutput("apply", "-f", GKPolicyYaml, "-n", "default", "--kubeconfig=../../kubeconfig_hub")
 			hubPlc := utils.GetWithTimeout(clientHubDynamic, gvrPolicy, GKPolicyName, "default", true, defaultTimeoutSeconds)
 			Expect(hubPlc).NotTo(BeNil())
 			By("Patching " + GKPolicyName + " pr with decision of cluster managed")
