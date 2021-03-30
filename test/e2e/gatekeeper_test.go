@@ -1,13 +1,11 @@
 // Copyright (c) 2020 Red Hat, Inc.
 // Copyright Contributors to the Open Cluster Management project
 
-
 package e2e
 
 import (
 	"context"
 	"fmt"
-	"os/exec"
 
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
@@ -188,14 +186,14 @@ var _ = Describe("Test gatekeeper", func() {
 		})
 		It("Creating a valid ns should not be blocked by gatekeeper", func() {
 			By("Creating a namespace called e2etestsuccess on managed")
-			out, _ := exec.Command("kubectl", "apply", "-f", "../resources/gatekeeper/ns-create-valid.yaml", "--kubeconfig=../../kubeconfig_managed").CombinedOutput()
+			out, _ := utils.KubectlWithOutput("apply", "-f", "../resources/gatekeeper/ns-create-valid.yaml", "--kubeconfig=../../kubeconfig_managed")
 			Expect(out).Should(ContainSubstring("namespace/e2etestsuccess created"))
 		})
 		It("Creating an invalid ns should generate a violation message", func() {
 			By("Creating invalid namespace on managed")
 			Eventually(func() interface{} {
-				out, _ := exec.Command("kubectl", "create", "ns", "e2etestfail", "--kubeconfig=../../kubeconfig_managed").CombinedOutput()
-				return string(out)
+				out, _ := utils.KubectlWithOutput("create", "ns", "e2etestfail", "--kubeconfig=../../kubeconfig_managed")
+				return out
 			}, defaultTimeoutSeconds, 1).Should(ContainSubstring("denied by ns-must-have-gk"))
 			By("Checking if status for policy template policy-gatekeeper-admission is noncompliant")
 			Eventually(func() interface{} {
