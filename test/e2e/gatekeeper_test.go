@@ -53,7 +53,7 @@ func GetClusterLevelWithTimeout(
 
 const GKOPolicyYaml string = "../resources/gatekeeper/policy-gatekeeper-operator.yaml"
 
-var _ = FDescribe("Test gatekeeper", func() {
+var _ = Describe("Test gatekeeper", func() {
 	Describe("Test gatekeeper operator", func() {
 		const GKOPolicyName string = "policy-gatekeeper-operator"
 		It("gatekeeper operator policy should be created on managed", func() {
