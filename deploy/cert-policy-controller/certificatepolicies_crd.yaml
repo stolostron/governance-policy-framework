@@ -1,9 +1,11 @@
-apiVersion: apiextensions.k8s.io/v1beta1
+
+---
+apiVersion: apiextensions.k8s.io/v1
 kind: CustomResourceDefinition
 metadata:
+  annotations:
+    controller-gen.kubebuilder.io/version: v0.5.0
   creationTimestamp: null
-  labels:
-    controller-tools.k8s.io: "1.0"
   name: certificatepolicies.policy.open-cluster-management.io
 spec:
   group: policy.open-cluster-management.io
@@ -12,96 +14,114 @@ spec:
     listKind: CertificatePolicyList
     plural: certificatepolicies
     singular: certificatepolicy
-    shortNames:
-    - certpl
   scope: Namespaced
-  subresources:
-    status: {}
-  validation:
-    openAPIV3Schema:
-      properties:
-        apiVersion:
-          description: 'APIVersion defines the versioned schema of this representation
-            of an object. Servers should convert recognized schemas to the latest
-            internal value, and may reject unrecognized values. More info: https://git.k8s.io/community/contributors/devel/api-conventions.md#resources'
-          type: string
-        kind:
-          description: 'Kind is a string value representing the REST resource this
-            object represents. Servers may infer this from the endpoint the client
-            submits requests to. Cannot be updated. In CamelCase. More info: https://git.k8s.io/community/contributors/devel/api-conventions.md#types-kinds'
-          type: string
-        metadata:
-          type: object
-        spec:
-          properties:
-            labelSelector:
-              type: object
-            allowedSANPattern:
-              description: A pattern that must match any defined SAN entries in
-                the certificate for the certificate to be compliant.  Golang's regexp
-                symtax only
-              type: string
-            disallowedSANPattern:
-              description: A pattern that must not match any defined SAN entries
-                in the certificate for the certificate to be compliant.  Golang's
-                regexp symtax only
-              type: string
-            labelSelector:
-              additionalProperties:
-                type: string
-              type: object
-            maximumCADuration:
-              description: Maximum CA duration for a signing certificate, longer
-                duration is considered non-compliant. Golang's time units only
-              type: string
-              pattern: ^[0-9][0-9hmnsu.]+
-            maximumDuration:
-              description: Maximum duration for a certificate, longer duration is
-                considered non-compliant. Golang's time units only
-              type: string
-              pattern: ^[0-9][0-9hmnsu.]+
-            minimumCADuration:
-              description: Minimum CA duration before a signing certificate expires
-                that it is considered non-compliant. Golang's time units only
-              type: string
-              pattern: ^[0-9][0-9hmnsu.]+
-            minimumDuration:
-              description: Minimum duration before a certificate expires that it is
-                considered non-compliant. Golang's time units only
-              type: string
-              pattern: ^[0-9][0-9hmnsu.]+
-            namespaceSelector:
-              description: selecting a list of namespaces where the policy applies
-              properties:
-                exclude:
-                  items:
-                    type: string
-                  type: array
-                include:
-                  items:
-                    type: string
-                  type: array
-              type: object
-            remediationAction:
-              description: enforce, inform
-              type: string
-            severity:
-              description: low, medium, or high
-              type: string
-          type: object
-        status:
-          properties:
-            compliancyDetails:
-              description: Compliant, NonCompliant, UnkownCompliancy
-              type: object
-            compliant:
-              type: string
-          type: object
-  version: v1
   versions:
   - name: v1
+    schema:
+      openAPIV3Schema:
+        description: CertificatePolicy is the Schema for the certificatepolicies API
+        properties:
+          apiVersion:
+            description: 'APIVersion defines the versioned schema of this representation of an object. Servers should convert recognized schemas to the latest internal value, and may reject unrecognized values. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources'
+            type: string
+          kind:
+            description: 'Kind is a string value representing the REST resource this object represents. Servers may infer this from the endpoint the client submits requests to. Cannot be updated. In CamelCase. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds'
+            type: string
+          metadata:
+            type: object
+          spec:
+            description: CertificatePolicySpec defines the desired state of CertificatePolicy
+            properties:
+              allowedSANPattern:
+                description: A pattern that must match any defined SAN entries in the certificate for the certificate to be compliant.  Golang's regexp symtax only
+                type: string
+              disallowedSANPattern:
+                description: A pattern that must not match any defined SAN entries in the certificate for the certificate to be compliant. Golang's regexp symtax only
+                type: string
+              labelSelector:
+                additionalProperties:
+                  type: string
+                type: object
+              maximumCADuration:
+                description: Maximum CA duration for a signing certificate, longer duration is considered non-compliant. Golang's time units only
+                type: string
+              maximumDuration:
+                description: Maximum duration for a certificate, longer duration is considered non-compliant. Golang's time units only
+                type: string
+              minimumCADuration:
+                description: Minimum CA duration before a signing certificate expires that it is considered non-compliant. Golang's time units only
+                type: string
+              minimumDuration:
+                description: Minimum duration before a certificate expires that it is considered non-compliant. Golang's time units only
+                type: string
+              namespaceSelector:
+                description: selecting a list of namespaces where the policy applies
+                properties:
+                  exclude:
+                    items:
+                      type: string
+                    type: array
+                  include:
+                    items:
+                      type: string
+                    type: array
+                type: object
+              remediationAction:
+                description: enforce, inform
+                type: string
+              severity:
+                description: low, medium, or high
+                type: string
+            type: object
+          status:
+            description: CertificatePolicyStatus defines the observed state of CertificatePolicy
+            properties:
+              compliancyDetails:
+                additionalProperties:
+                  description: CompliancyDetails defines the all the details related to whether or not the policy is compliant
+                  properties:
+                    NonCompliantCertificates:
+                      type: integer
+                    NonCompliantCertificatesList:
+                      additionalProperties:
+                        description: Cert contains its related secret and when it expires
+                        properties:
+                          ca:
+                            type: boolean
+                          duration:
+                            description: A Duration represents the elapsed time between two instants as an int64 nanosecond count. The representation limits the largest representable duration to approximately 290 years.
+                            format: int64
+                            type: integer
+                          expiration:
+                            type: string
+                          expiry:
+                            description: A Duration represents the elapsed time between two instants as an int64 nanosecond count. The representation limits the largest representable duration to approximately 290 years.
+                            format: int64
+                            type: integer
+                          sans:
+                            items:
+                              type: string
+                            type: array
+                          secretName:
+                            type: string
+                        type: object
+                      type: object
+                    message:
+                      type: string
+                  required:
+                  - NonCompliantCertificatesList
+                  type: object
+                description: map of namespaces to its compliancy details
+                type: object
+              compliant:
+                description: Compliant, NonCompliant, UnkownCompliancy
+                type: string
+            type: object
+        type: object
     served: true
     storage: true
+    subresources:
+      status: {}
 status:
   acceptedNames:
     kind: ""
