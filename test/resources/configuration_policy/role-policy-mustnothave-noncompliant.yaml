@@ -35,6 +35,7 @@ spec:
                     resources: ["pods"]
                     verbs: ["get", "watch", "list"]
 status:
+  compliant: NonCompliant
   placement:
   - placementBinding: role-policy-mustnothave-pb
     placementRule: role-policy-mustnothave-plr
