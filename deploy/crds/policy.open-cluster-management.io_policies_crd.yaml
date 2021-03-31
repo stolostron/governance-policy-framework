@@ -82,6 +82,7 @@ spec:
                       type: array
                     templateMeta:
                       type: object
+                      x-kubernetes-preserve-unknown-fields: true
                   type: object
                 type: array
               placement:
