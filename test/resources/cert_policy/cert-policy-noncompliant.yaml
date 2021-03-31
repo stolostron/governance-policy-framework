@@ -28,6 +28,7 @@ spec:
           allowedSANPattern: ".*.test.com"
           disallowedSANPattern: "[\\*]"
 status:
+  compliant: NonCompliant
   placement:
   - placementBinding: cert-policy-pb
     placementRule: cert-policy-plr

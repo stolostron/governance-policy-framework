@@ -23,6 +23,7 @@ spec:
           remediationAction: inform # will be overridden by remediationAction in parent policy
           maxClusterRoleBindingUsers: 2
 status:
+  compliant: NonCompliant
   placement:
   - placementBinding: iam-policy-pb
     placementRule: iam-policy-plr
