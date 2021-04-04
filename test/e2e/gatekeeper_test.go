@@ -110,11 +110,11 @@ var _ = Describe("Test gatekeeper", func() {
 			Expect(admission).NotTo(BeNil())
 		})
 		It("K8sRequiredLabels ns-must-have-gk should be created on managed", func() {
-			By("Checking if K8sRequiredLabels exists")
-			k8srequiredlabelsCRD := GetClusterLevelWithTimeout(clientManagedDynamic, gvrCRD, "k8srequiredlabels.constraints.gatekeeper.sh", true, defaultTimeoutSeconds)
+			By("Checking if K8sRequiredLabels CRD exists")
+			k8srequiredlabelsCRD := GetClusterLevelWithTimeout(clientManagedDynamic, gvrCRD, "k8srequiredlabels.constraints.gatekeeper.sh", true, defaultTimeoutSeconds*2)
 			Expect(k8srequiredlabelsCRD).NotTo(BeNil())
 			By("Checking if ns-must-have-gk CR exists")
-			nsMustHaveGkCR := GetClusterLevelWithTimeout(clientManagedDynamic, gvrK8sRequiredLabels, "ns-must-have-gk", true, defaultTimeoutSeconds)
+			nsMustHaveGkCR := GetClusterLevelWithTimeout(clientManagedDynamic, gvrK8sRequiredLabels, "ns-must-have-gk", true, defaultTimeoutSeconds*2)
 			Expect(nsMustHaveGkCR).NotTo(BeNil())
 		})
 		It("K8sRequiredLabels ns-must-have-gk should be properly enforced for audit, no violation expected", func() {
