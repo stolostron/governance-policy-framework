@@ -20,6 +20,7 @@ echo "Installing ginkgo ..."
 go get github.com/onsi/ginkgo/ginkgo
 go get github.com/onsi/gomega/...
 
+export MANAGED_CLUSTER_NAME=managed
 make kind-create-cluster
 
 ./build/wait_for.sh pod -n kube-system
