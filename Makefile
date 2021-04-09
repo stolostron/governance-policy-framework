@@ -68,7 +68,7 @@ deploy-policy-framework-hub:
 deploy-policy-framework-managed:
 	kubectl config use-context kind-$(MANAGED_CLUSTER_NAME)
 	kubectl create ns $(KIND_MANAGED_NAMESPACE) || true
-	# kubectl create secret -n $(KIND_MANAGED_NAMESPACE) generic hub-kubeconfig --from-file=kubeconfig=$(PWD)/kubeconfig_$(HUB_CLUSTER_NAME)_internal
+	kubectl create secret -n $(KIND_MANAGED_NAMESPACE) generic hub-kubeconfig --from-file=kubeconfig=$(PWD)/kubeconfig_$(HUB_CLUSTER_NAME)_internal
 	@echo installing Policy CRD on managed
 	kubectl apply -f https://raw.githubusercontent.com/open-cluster-management/governance-policy-propagator/main/deploy/crds/policy.open-cluster-management.io_policies_crd.yaml
 	@echo installing policy-spec-sync on managed

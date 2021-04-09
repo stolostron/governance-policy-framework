@@ -9,4 +9,4 @@ roleRef:
 subjects:
 - kind: ServiceAccount
   name: cert-policy-controller
-  namespace: multicluster-endpoint
+  namespace: open-cluster-management-agent-addon

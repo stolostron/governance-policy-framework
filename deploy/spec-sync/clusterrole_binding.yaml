@@ -5,7 +5,7 @@ metadata:
 subjects:
 - kind: ServiceAccount
   name: governance-policy-spec-sync
-  namespace: multicluster-endpoint
+  namespace: open-cluster-management-agent-addon
 roleRef:
   kind: ClusterRole
   name: governance-policy-spec-sync

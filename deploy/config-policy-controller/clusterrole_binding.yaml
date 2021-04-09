@@ -5,7 +5,7 @@ metadata:
 subjects:
 - kind: ServiceAccount
   name: config-policy-controller
-  namespace: multicluster-endpoint
+  namespace: open-cluster-management-agent-addon
 roleRef:
   kind: ClusterRole
   name: config-policy-controller
