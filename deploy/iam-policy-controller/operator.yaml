@@ -13,8 +13,6 @@ spec:
         name: iam-policy-controller
     spec:
       serviceAccountName: iam-policy-controller
-      imagePullSecrets:
-        - name: multiclusterhub-operator-pull-secret
       containers:
         - name: iam-policy-controller
           image: quay.io/open-cluster-management/iam-policy-controller:latest-dev

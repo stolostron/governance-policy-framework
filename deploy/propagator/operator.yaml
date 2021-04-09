@@ -13,8 +13,6 @@ spec:
         name: governance-policy-propagator
     spec:
       serviceAccountName: governance-policy-propagator
-      imagePullSecrets:
-        - name: multiclusterhub-operator-pull-secret
       containers:
         - name: governance-policy-propagator
           image: quay.io/open-cluster-management/governance-policy-propagator:latest-dev

@@ -13,8 +13,6 @@ spec:
         name: governance-policy-spec-sync
     spec:
       serviceAccountName: governance-policy-spec-sync
-      imagePullSecrets:
-        - name: multiclusterhub-operator-pull-secret
       containers:
         - name: governance-policy-spec-sync
           image: quay.io/open-cluster-management/governance-policy-spec-sync:latest-dev
@@ -38,5 +36,5 @@ spec:
       volumes:
         - name: klusterlet-config
           secret:
-            secretName: endpoint-connmgr-hub-kubeconfig
+            secretName: hub-kubeconfig
             defaultMode: 420
