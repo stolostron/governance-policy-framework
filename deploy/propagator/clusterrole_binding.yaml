@@ -5,10 +5,7 @@ metadata:
 subjects:
 - kind: ServiceAccount
   name: governance-policy-propagator
-  namespace: governance
-# - kind: User
-#   apiGroup: rbac.authorization.k8s.io
-#   name: 'hcm:clusters:calamari:calamari'
+  namespace: open-cluster-management
 roleRef:
   kind: ClusterRole
   name: governance-policy-propagator

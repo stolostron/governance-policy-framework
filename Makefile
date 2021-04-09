@@ -82,7 +82,7 @@ deploy-policy-framework-managed:
 	kubectl patch deployment governance-policy-template-sync -n open-cluster-management-agent-addon -p "{\"spec\":{\"template\":{\"spec\":{\"containers\":[{\"name\":\"governance-policy-template-sync\",\"env\":[{\"name\":\"WATCH_NAMESPACE\",\"value\":\"$(MANAGED_CLUSTER_NAME)\"}]}]}}}}"
 
 
-kind-deploy-policy-framework: check-env
+kind-deploy-policy-framework:
 	@echo installing policy-propagator on hub
 	kubectl create ns $(KIND_HUB_NAMESPACE) --kubeconfig=$(PWD)/kubeconfig_$(HUB_CLUSTER_NAME)
 	kubectl apply -f deploy/propagator -n $(KIND_HUB_NAMESPACE) --kubeconfig=$(PWD)/kubeconfig_$(HUB_CLUSTER_NAME)
@@ -105,17 +105,17 @@ kind-deploy-policy-framework: check-env
 	@echo installing policy-template-sync on managed
 	kubectl apply -f deploy/template-sync -n $(KIND_MANAGED_NAMESPACE) --kubeconfig=$(PWD)/kubeconfig_$(MANAGED_CLUSTER_NAME)
 
-kind-deploy-config-policy-controller: check-env
+kind-deploy-config-policy-controller:
 	@echo installing config-policy-controller on managed
 	kubectl apply -f deploy/config-policy-controller -n $(KIND_MANAGED_NAMESPACE) --kubeconfig=$(PWD)/kubeconfig_$(MANAGED_CLUSTER_NAME)
 
-kind-deploy-cert-policy-controller: check-env
+kind-deploy-cert-policy-controller:
 	@echo installing cert-manager on managed
 	kubectl apply --validate=false -f https://github.com/jetstack/cert-manager/releases/download/v1.0.1/cert-manager.yaml --kubeconfig=$(PWD)/kubeconfig_$(MANAGED_CLUSTER_NAME)
 	@echo installing cert-policy-controller on managed
 	kubectl apply -f deploy/cert-policy-controller -n $(KIND_MANAGED_NAMESPACE) --kubeconfig=$(PWD)/kubeconfig_$(MANAGED_CLUSTER_NAME)
 
-kind-deploy-iam-policy-controller: check-env
+kind-deploy-iam-policy-controller:
 	@echo installing iam-policy-controller on managed
 	kubectl apply -f deploy/iam-policy-controller -n $(KIND_MANAGED_NAMESPACE) --kubeconfig=$(PWD)/kubeconfig_$(MANAGED_CLUSTER_NAME)
 
