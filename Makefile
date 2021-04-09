@@ -14,7 +14,11 @@ USE_VENDORIZED_BUILD_HARNESS ?=
 
 ifndef USE_VENDORIZED_BUILD_HARNESS
 	ifeq ($(TRAVIS_BUILD),1)
-	-include $(shell curl -H 'Authorization: token ${GITHUB_TOKEN}' -H 'Accept: application/vnd.github.v4.raw' -L https://api.github.com/repos/open-cluster-management/build-harness-extensions/contents/templates/Makefile.build-harness-bootstrap -o .build-harness-bootstrap; echo .build-harness-bootstrap)
+		ifndef GITHUB_TOKEN
+		-include $(shell curl -H 'Accept: application/vnd.github.v4.raw' -L https://api.github.com/repos/open-cluster-management/build-harness-extensions/contents/templates/Makefile.build-harness-bootstrap -o .build-harness-bootstrap; echo .build-harness-bootstrap)
+		else
+		-include $(shell curl -H 'Authorization: token ${GITHUB_TOKEN}' -H 'Accept: application/vnd.github.v4.raw' -L https://api.github.com/repos/open-cluster-management/build-harness-extensions/contents/templates/Makefile.build-harness-bootstrap -o .build-harness-bootstrap; echo .build-harness-bootstrap)
+		endif
 	endif
 else
 -include vbh/.build-harness-vendorized
@@ -42,6 +46,32 @@ endif
 ifndef DOCKER_PASS
 	$(error DOCKER_PASS is undefined)
 endif
+
+kind-deploy-policy-framework-hub:
+	kubectl config use-context kind-hub
+	kind get kubeconfig --name hub --internal > $(PWD)/kubeconfig_hub_internal
+	kubectl create ns governance
+	@echo installing Policy CRDs on hub
+	kubectl apply -f https://raw.githubusercontent.com/open-cluster-management/governance-policy-propagator/main/deploy/crds/policy.open-cluster-management.io_policies_crd.yaml
+	kubectl apply -f https://raw.githubusercontent.com/open-cluster-management/governance-policy-propagator/main/deploy/crds/policy.open-cluster-management.io_placementbindings_crd.yaml
+	kubectl apply -f https://raw.githubusercontent.com/open-cluster-management/governance-policy-propagator/main/deploy/crds/policy.open-cluster-management.io_policyautomations_crd.yaml
+	@echo installing policy-propagator on hub
+	kubectl apply -f https://raw.githubusercontent.com/open-cluster-management/governance-policy-propagator/e9680fc8e036b8c52a2d183c0aa0aad380767852/deploy/operator.yaml -n governance
+
+
+kind-deploy-policy-framework-managed:
+	kubectl config use-context kind-managed
+	kubectl create ns multicluster-endpoint
+	kubectl create secret -n multicluster-endpoint generic endpoint-connmgr-hub-kubeconfig --from-file=kubeconfig=$(PWD)/kubeconfig_hub_internal
+	@echo installing Policy CRD on managed
+	kubectl apply -f https://raw.githubusercontent.com/open-cluster-management/governance-policy-propagator/main/deploy/crds/policy.open-cluster-management.io_policies_crd.yaml
+	@echo installing policy-spec-sync on managed
+	kubectl apply -f https://raw.githubusercontent.com/open-cluster-management/governance-policy-spec-sync/b7d9d463cc61c956f0b89def35f32deccbbdc65b/deploy/operator.yaml -n multicluster-endpoint
+	@echo installing policy-status-sync on managed
+	kubectl apply -f https://raw.githubusercontent.com/open-cluster-management/governance-policy-status-sync/beb9df5605857dd905acb08af0ce7096dea2e65e/deploy/operator.yaml -n multicluster-endpoint
+	@echo installing policy-template-sync on managed
+	kubectl apply -f https://raw.githubusercontent.com/open-cluster-management/governance-policy-template-sync/033ca3afc2dc11250e05ce04b9bd48c8d993f246/deploy/operator.yaml -n multicluster-endpoint
+
 
 kind-deploy-policy-framework: check-env
 	@echo installing policy-propagator on hub
@@ -82,32 +112,30 @@ kind-deploy-iam-policy-controller: check-env
 	@echo installing iam-policy-controller on managed
 	kubectl apply -f deploy/iam-policy-controller -n multicluster-endpoint --kubeconfig=$(PWD)/kubeconfig_managed
 
-kind-deploy-olm: check-env
+kind-deploy-olm:
 	@echo installing OLM on managed
 	kubectl apply -f https://github.com/operator-framework/operator-lifecycle-manager/releases/download/v0.17.0/crds.yaml --kubeconfig=$(PWD)/kubeconfig_managed
 	sleep 5
 	kubectl apply -f https://github.com/operator-framework/operator-lifecycle-manager/releases/download/v0.17.0/olm.yaml --kubeconfig=$(PWD)/kubeconfig_managed
-	# @echo installing gatekeeper on managed
-	# kubectl apply -f deploy/gatekeeper --kubeconfig=$(PWD)/kubeconfig_managed
 
 kind-create-cluster:
 	@echo "creating cluster hub"
-	kind create cluster --name test-hub
-	kind get kubeconfig --name test-hub > $(PWD)/kubeconfig_hub
+	kind create cluster --name hub
+	kind get kubeconfig --name hub > $(PWD)/kubeconfig_hub
 	# needed for mangaed -> hub communication
-	kind get kubeconfig --name test-hub --internal > $(PWD)/kubeconfig_hub_internal
+	kind get kubeconfig --name hub --internal > $(PWD)/kubeconfig_hub_internal
 	if [ "$(deployOnHub)" = "true" ]; then\
 		echo import cluster hub as managed;\
-		kind get kubeconfig --name test-hub > $(PWD)/kubeconfig_managed;\
+		kind get kubeconfig --name hub > $(PWD)/kubeconfig_managed;\
 	else\
 		echo creating cluster managed;\
-		kind create cluster --name test-managed;\
-		kind get kubeconfig --name test-managed > $(PWD)/kubeconfig_managed;\
+		kind create cluster --name managed;\
+		kind get kubeconfig --name managed > $(PWD)/kubeconfig_managed;\
 	fi
 
 kind-delete-cluster:
-	kind delete cluster --name test-hub
-	kind delete cluster --name test-managed
+	kind delete cluster --name hub
+	kind delete cluster --name managed
 
 install-crds:
 	@echo installing crds on hub
