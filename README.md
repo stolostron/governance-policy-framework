@@ -11,8 +11,9 @@ The policy framework provides governance capability to gain visibility and drive
 
 View the following functions of the policy framework: 
 
-* Applies policies to managed clusters from hub cluster.
+* Distribute policies to managed clusters from hub cluster.
 * Collects policy execution results from managed cluster to hub cluster.
+* Supports multiple policy engines and policy languages.
 * Provides an extensible mechanism to bring your own policy.
 
 ## Architecutre
