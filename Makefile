@@ -45,14 +45,6 @@ kind-bootstrap-cluster-dev: kind-create-cluster install-crds install-resources
 .PHONY: kind-deploy-policy-controllers
 kind-deploy-policy-controllers: kind-deploy-cert-policy-controller kind-deploy-olm kind-deploy-config-policy-controller kind-deploy-iam-policy-controller
 
-check-env:
-ifndef DOCKER_USER
-	$(error DOCKER_USER is undefined)
-endif
-ifndef DOCKER_PASS
-	$(error DOCKER_PASS is undefined)
-endif
-
 deploy-policy-framework-hub:
 	kubectl config use-context kind-hub
 	kind get kubeconfig --name $(HUB_CLUSTER_NAME) --internal > $(PWD)/kubeconfig_$(HUB_CLUSTER_NAME)_internal
