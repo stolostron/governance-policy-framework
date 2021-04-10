@@ -3,7 +3,7 @@
 # Governance Policy Framework
 [![Build Status](https://travis-ci.com/open-cluster-management/governance-policy-framework.svg?token=2jHocNax82kqKsGV1uTE&branch=main)](https://travis-ci.com/open-cluster-management/governance-policy-framework)
 
-Open Cluter Management - Governance Policy Framework
+Open Cluster Management - Governance Policy Framework
 
 The policy framework provides governance capability to gain visibility and drive remediation for various security and configuration aspects to help meet such enterprise standards.
 
@@ -55,17 +55,14 @@ spec:
           name: policy-pod-example
         spec:
           remediationAction: inform # The value will be overridden at runtime if the global remediationAction is set.
-          severity: low
-          namespaceSelector:
-            exclude: ["kube-*"]
-            include: ["default"]
           object-templates:
             - complianceType: musthave
               objectDefinition:
                 apiVersion: v1
-                kind: Pod # nginx pod must exist
+                kind: Pod 
                 metadata:
                   name: sample-nginx-pod
+                  namespace: default
                 spec:
                   containers:
                   - image: nginx:1.7.9
