@@ -13,8 +13,6 @@ spec:
         name: cert-policy-controller
     spec:
       serviceAccountName: cert-policy-controller
-      imagePullSecrets:
-        - name: multiclusterhub-operator-pull-secret
       containers:
         - name: cert-policy-controller
           image: quay.io/open-cluster-management/cert-policy-controller:latest-dev

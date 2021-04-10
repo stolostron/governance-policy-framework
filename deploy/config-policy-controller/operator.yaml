@@ -13,8 +13,6 @@ spec:
         name: config-policy-controller
     spec:
       serviceAccountName: config-policy-controller
-      imagePullSecrets:
-        - name: multiclusterhub-operator-pull-secret
       containers:
         - image: quay.io/open-cluster-management/config-policy-controller:latest-dev
           name: config-policy-controller

@@ -13,8 +13,6 @@ spec:
         name: governance-policy-template-sync
     spec:
       serviceAccountName: governance-policy-template-sync
-      imagePullSecrets:
-        - name: multiclusterhub-operator-pull-secret
       containers:
         - name: governance-policy-template-sync
           image: quay.io/open-cluster-management/governance-policy-template-sync:latest-dev

@@ -1,7 +1,6 @@
 // Copyright (c) 2020 Red Hat, Inc.
 // Copyright Contributors to the Open Cluster Management project
 
-
 package e2e
 
 import (
@@ -49,8 +48,7 @@ var (
 	kubeconfigManaged      string
 	defaultTimeoutSeconds  int
 
-	defaultImageRegistry       string
-	defaultImagePullSecretName string
+	defaultImageRegistry string
 )
 
 func TestE2e(t *testing.T) {
@@ -84,7 +82,6 @@ var _ = BeforeSuite(func() {
 	clientManaged = NewKubeClient("", kubeconfigManaged, "")
 	clientManagedDynamic = NewKubeClientDynamic("", kubeconfigManaged, "")
 	defaultImageRegistry = "quay.io/open-cluster-management"
-	defaultImagePullSecretName = "multiclusterhub-operator-pull-secret"
 	userNamespace = "policy-test"
 	clusterNamespace = "managed"
 	timeoutStr, found := os.LookupEnv("E2E_TIMEOUT_SECONDS")
