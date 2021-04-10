@@ -104,6 +104,11 @@ spec:
     matchExpressions:
       - {key: environment, operator: In, values: ["dev"]}
 ```
+
+## How to install it
+
+You can find installation instructions from [Open Cluster Management](https://open-cluster-management.io/) website.
+
 ## Bring your own policy controller
 
 You can bring your own policy by implementing a custom policy and controller. For more information, see the blog, [Develop your own policy controller to integrate with Red Hat Advanced Cluster Management for Kubernetes](https://www.openshift.com/blog/develop-your-own-policy-controller-to-integrate-with-red-hat-advanced-cluster-management-for-kubernetes).
