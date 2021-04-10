@@ -45,16 +45,16 @@ kind: Policy
 metadata:
   name: policy-pod
 spec:
-  remediationAction: inform         # (inform/enforce) It sets the remediationAction globally.
-  disabled: false                   # (true/false) If true, the policy will not be distributed to managed cluster.
+  remediationAction: inform         # [inform/enforce] If set, it defines the remediationAction globally.
+  disabled: false                   # [true/false] If true, the policy will not be distributed to the managed cluster.
   policy-templates:             
-    - objectDefinition:             # use objectDefinition to embed the policy that needs to be distributed to managed cluster
+    - objectDefinition:             # Use `objectDefinition` to wrap the policy resource to be distributed to the managed cluster
         apiVersion: policy.open-cluster-management.io/v1
         kind: ConfigurationPolicy
         metadata:
           name: policy-pod-example
         spec:
-          remediationAction: inform # The value will be overridden at runtime if the global remediationAction is set.
+          remediationAction: inform
           object-templates:
             - complianceType: musthave
               objectDefinition:
