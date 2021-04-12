@@ -32,9 +32,10 @@ The governance policy framework consists of following components:
     - [Configuration policy controller](https://github.com/open-cluster-management/config-policy-controller)
     - [Certificate policy controller](https://github.com/open-cluster-management/cert-policy-controller)
     - [IAM policy controller](https://github.com/open-cluster-management/iam-policy-controller)
-    - [Gatekeeper](https://github.com/open-policy-agent/gatekeeper)
-    - [Kyverno](https://github.com/kyverno/kyverno/)
-    - [Bring your own](#bring-your-own-policy-controller)
+    - 3rd party
+      - [Gatekeeper](https://github.com/open-policy-agent/gatekeeper)
+      - [Kyverno](https://github.com/kyverno/kyverno/)
+      - [Bring your own](#bring-your-own-policy-controller)
 
 ## The Policy CRDs
 
