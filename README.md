@@ -3,40 +3,117 @@
 # Governance Policy Framework
 [![Build Status](https://travis-ci.com/open-cluster-management/governance-policy-framework.svg?token=2jHocNax82kqKsGV1uTE&branch=main)](https://travis-ci.com/open-cluster-management/governance-policy-framework)
 
-Red Hat Advanced Cluster Management Governance - Policy Framework
+Open Cluster Management - Governance Policy Framework
 
-The policy framework provides governance capability to gain visibility and drive remediation for various security and configuration aspects to help meet such enterprise standards.
+The policy framework provides governance capability to gain visibility, and drive remediation for various security and configuration aspects to help meet such enterprise standards.
 
 ## What it does
 
 View the following functions of the policy framework: 
 
-* Applies policies to managed clusters from hub cluster.
+* Distributes policies to managed clusters from hub cluster.
 * Collects policy execution results from managed cluster to hub cluster.
+* Supports multiple policy engines and policy languages.
 * Provides an extensible mechanism to bring your own policy.
 
 ## Architecutre
 
-The policy framework consists of following components:
-
-- [Governance dashboard](https://github.com/open-cluster-management/grc-ui)
-- [Policy propagator](https://github.com/open-cluster-management/governance-policy-propagator) 
-- [Policy spec sync](https://github.com/open-cluster-management/governance-policy-spec-sync)
-- [Policy status sync](https://github.com/open-cluster-management/governance-policy-status-sync)
-- [Policy template sync](https://github.com/open-cluster-management/governance-policy-template-sync)
-- Policy controllers: Policy controllers include predefined [out-of-box policy controllers](#out-of-box-policies-and-controllers), or you can [bring your own policy](#bring-your-own-policy).
-
 ![architecture](images/policy-framework-architecture-diagram.jpg)
 
-## Out-of-box policies and controllers
+The governance policy framework consists of following components:
 
-View the following list of predefined policy controllers that are offered with Red Hat Advanced Cluster Management:
+- [Governance dashboard](https://github.com/open-cluster-management/grc-ui): Console
+- Govenance policy framework: A framework to distribute various supported policies to managed clusters and collect results to be sent to the hub cluster.
+    - [Policy propagator](https://github.com/open-cluster-management/governance-policy-propagator) 
+    - [Policy spec sync](https://github.com/open-cluster-management/governance-policy-spec-sync)
+    - [Policy status sync](https://github.com/open-cluster-management/governance-policy-status-sync)
+    - [Policy template sync](https://github.com/open-cluster-management/governance-policy-template-sync)
+- Policy controllers: Policy engines that run on managed clusters to evaluate policy rules distributed by the policy framework and generate results.
+    - [Configuration policy controller](https://github.com/open-cluster-management/config-policy-controller)
+    - [Certificate policy controller](https://github.com/open-cluster-management/cert-policy-controller)
+    - [IAM policy controller](https://github.com/open-cluster-management/iam-policy-controller)
+    - Third-party
+      - [Gatekeeper](https://github.com/open-policy-agent/gatekeeper)
+      - [Kyverno](https://github.com/kyverno/kyverno/)
+      - [Bring your own](#bring-your-own-policy-controller)
 
-- [Configuration policy controller](https://github.com/open-cluster-management/config-policy-controller)
-- [Certificate policy controller](https://github.com/open-cluster-management/cert-policy-controller)
-- [IAM policy controller](https://github.com/open-cluster-management/iam-policy-controller)
+## The Policy CRDs
 
-## Bring your own policy
+The `Policy` is the Custom Resource Definition (CRD), created for policy framework controllers to monitor. It acts as a vehicle to deliver policies to managed cluster and collect results to send to the hub cluster.
+
+View the following example specification of a `Policy` object:
+```yaml
+apiVersion: policy.open-cluster-management.io/v1
+kind: Policy
+metadata:
+  name: policy-pod
+spec:
+  remediationAction: inform         # [inform/enforce] If set, it defines the remediationAction globally.
+  disabled: false                   # [true/false] If true, the policy will not be distributed to the managed cluster.
+  policy-templates:             
+    - objectDefinition:             # Use `objectDefinition` to wrap the policy resource to be distributed to the managed cluster
+        apiVersion: policy.open-cluster-management.io/v1
+        kind: ConfigurationPolicy
+        metadata:
+          name: policy-pod-example
+        spec:
+          remediationAction: inform
+          object-templates:
+            - complianceType: musthave
+              objectDefinition:
+                apiVersion: v1
+                kind: Pod 
+                metadata:
+                  name: sample-nginx-pod
+                  namespace: default
+                spec:
+                  containers:
+                  - image: nginx:1.7.9
+                    name: nginx
+                    ports:
+                    - containerPort: 80
+```
+
+The `PlacementBinding` CRD is used to bind the `Policy` with a `PlacementRule`. Only a bound `Policy` is distributed to a managed cluster by the policy framework.
+
+View the following example specification of a `PlacementBinding` object:
+```yaml
+apiVersion: policy.open-cluster-management.io/v1
+kind: PlacementBinding
+metadata:
+  name: binding-policy-pod
+placementRef:
+  name: placement-policy-pod
+  kind: PlacementRule
+  apiGroup: apps.open-cluster-management.io
+subjects:
+- name: policy-pod
+  kind: Policy
+  apiGroup: policy.open-cluster-management.io
+```
+
+The `PlacementRule` CRD is used to determine the target clusters to distribute policies to.
+
+View the following example specification of a `PlacementRule` object:
+```yaml
+apiVersion: apps.open-cluster-management.io/v1
+kind: PlacementRule
+metadata:
+  name: placement-policy-pod
+spec:
+  clusterConditions:
+  - status: "True"
+    type: ManagedClusterConditionAvailable
+  clusterSelector:
+    matchExpressions:
+      - {key: environment, operator: In, values: ["dev"]}
+```
+
+## How to install it
+
+You can find installation instructions from [Open Cluster Management](https://open-cluster-management.io/) website.
+
+## Bring your own policy controller
 
 You can bring your own policy by implementing a custom policy and controller. For more information, see the blog, [Develop your own policy controller to integrate with Red Hat Advanced Cluster Management for Kubernetes](https://www.openshift.com/blog/develop-your-own-policy-controller-to-integrate-with-red-hat-advanced-cluster-management-for-kubernetes).
 
