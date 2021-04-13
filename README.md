@@ -5,7 +5,7 @@
 
 Open Cluster Management - Governance Policy Framework
 
-The policy framework provides governance capability to gain visibility and drive remediation for various security and configuration aspects to help meet such enterprise standards.
+The policy framework provides governance capability to gain visibility, and drive remediation for various security and configuration aspects to help meet such enterprise standards.
 
 ## What it does
 
@@ -22,25 +22,26 @@ View the following functions of the policy framework:
 
 The governance policy framework consists of following components:
 
-- [Governance dashboard](https://github.com/open-cluster-management/grc-ui) -- UI
-- Govenance policy framework -- A framework to distribute various supported policies to managed cluster and collect results back to hub. It consists of following components:
+- [Governance dashboard](https://github.com/open-cluster-management/grc-ui): Console
+- Govenance policy framework: A framework to distribute various supported policies to managed clusters and collect results to be sent to the hub cluster.
     - [Policy propagator](https://github.com/open-cluster-management/governance-policy-propagator) 
     - [Policy spec sync](https://github.com/open-cluster-management/governance-policy-spec-sync)
     - [Policy status sync](https://github.com/open-cluster-management/governance-policy-status-sync)
     - [Policy template sync](https://github.com/open-cluster-management/governance-policy-template-sync)
-- Policy controllers -- Policy engines running on managed cluster to evaluate policy rules distributed by the policy framework and generate results.
+- Policy controllers: Policy engines that run on managed clusters to evaluate policy rules distributed by the policy framework and generate results.
     - [Configuration policy controller](https://github.com/open-cluster-management/config-policy-controller)
     - [Certificate policy controller](https://github.com/open-cluster-management/cert-policy-controller)
     - [IAM policy controller](https://github.com/open-cluster-management/iam-policy-controller)
-    - 3rd party
+    - Third-party
       - [Gatekeeper](https://github.com/open-policy-agent/gatekeeper)
       - [Kyverno](https://github.com/kyverno/kyverno/)
       - [Bring your own](#bring-your-own-policy-controller)
 
 ## The Policy CRDs
 
-The `Policy` is the Custom Resource Definition (CRD), created for policy framework controllers to monitor. It acts as a vechical to deliver policies to managed cluster and collect results back to hub.
-This is an example spec of a `Policy` object:
+The `Policy` is the Custom Resource Definition (CRD), created for policy framework controllers to monitor. It acts as a vehicle to deliver policies to managed cluster and collect results to send to the hub cluster.
+
+View the following example specification of a `Policy` object:
 ```yaml
 apiVersion: policy.open-cluster-management.io/v1
 kind: Policy
@@ -73,8 +74,9 @@ spec:
                     - containerPort: 80
 ```
 
-The `PlacementBinding` CRD is used to bind the `Policy` with `PlacementRule`. Only bound `Policy` will be distributed by policy framework to the managed cluster
-This is an example spec of a `PlacementBinding` object:
+The `PlacementBinding` CRD is used to bind the `Policy` with a `PlacementRule`. Only a bound `Policy` is distributed to a managed cluster by the policy framework.
+
+View the following example specification of a `PlacementBinding` object:
 ```yaml
 apiVersion: policy.open-cluster-management.io/v1
 kind: PlacementBinding
@@ -91,7 +93,8 @@ subjects:
 ```
 
 The `PlacementRule` CRD is used to determine the target clusters to distribute policies to.
-This is an example spec of a `PlacementRule` object:
+
+View the following example specification of a `PlacementRule` object:
 ```yaml
 apiVersion: apps.open-cluster-management.io/v1
 kind: PlacementRule
