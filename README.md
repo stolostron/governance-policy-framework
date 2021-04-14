@@ -35,7 +35,6 @@ The governance policy framework consists of following components:
     - Third-party
       - [Gatekeeper](https://github.com/open-policy-agent/gatekeeper)
       - [Kyverno](https://github.com/kyverno/kyverno/)
-      - [Bring your own](#bring-your-own-policy-controller)
 
 ## The Policy CRDs
 
@@ -112,10 +111,6 @@ spec:
 ## How to install it
 
 You can find installation instructions from [Open Cluster Management](https://open-cluster-management.io/) website.
-
-## Bring your own policy controller
-
-You can bring your own policy by implementing a custom policy and controller. For more information, see the blog, [Develop your own policy controller to integrate with Red Hat Advanced Cluster Management for Kubernetes](https://www.openshift.com/blog/develop-your-own-policy-controller-to-integrate-with-red-hat-advanced-cluster-management-for-kubernetes).
 
 ## More policies
 
