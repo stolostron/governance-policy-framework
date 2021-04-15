@@ -19,7 +19,7 @@ spec:
           command:
           - cert-policy-controller
           args:
-          - "--enable-lease=true"
+          - --enable-lease=true
           imagePullPolicy: Always
           env:
             - name: WATCH_NAMESPACE
