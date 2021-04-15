@@ -6,6 +6,8 @@ set -e
 
 DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" >/dev/null 2>&1 && pwd )"
 
+oc annotate MultiClusterHub multiclusterhub -n open-cluster-management mch-pause=false --overwrite
+
 grcui=`oc get deploy -l component=ocm-grcui -n open-cluster-management -o=jsonpath='{.items[*].metadata.name}'`
 grcuiapi=`oc get deploy -l component=ocm-grcuiapi -n open-cluster-management -o=jsonpath='{.items[*].metadata.name}'`
 consoleheader=`oc get deploy -l component=console-header -n open-cluster-management -o=jsonpath='{.items[*].metadata.name}'`
