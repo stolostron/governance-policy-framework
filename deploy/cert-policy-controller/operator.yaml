@@ -18,6 +18,8 @@ spec:
           image: quay.io/open-cluster-management/cert-policy-controller:latest-dev
           command:
           - cert-policy-controller
+          args:
+          - "--enable-lease=true"
           imagePullPolicy: Always
           env:
             - name: WATCH_NAMESPACE
