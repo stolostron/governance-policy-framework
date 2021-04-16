@@ -11,6 +11,7 @@ spec:
     metadata:
       labels:
         name: governance-policy-status-sync
+        app: policy-framework
     spec:
       serviceAccountName: governance-policy-status-sync
       containers:
@@ -20,6 +21,7 @@ spec:
           - governance-policy-status-sync
           args:
             - '--hub-cluster-configfile=/var/run/klusterlet/kubeconfig'
+            - '--enable-lease=true'
           imagePullPolicy: Always
           volumeMounts:
             - name: klusterlet-config
