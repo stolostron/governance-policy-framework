@@ -18,8 +18,6 @@ spec:
           name: config-policy-controller
           command:
           - config-policy-controller
-          args:
-          - '--enable-lease=true'
           imagePullPolicy: Always
           env:
             - name: WATCH_NAMESPACE
