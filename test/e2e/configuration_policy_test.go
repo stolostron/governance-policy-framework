@@ -190,6 +190,7 @@ var _ = Describe("Test configuration policy", func() {
 			}, defaultTimeoutSeconds, 1).Should(utils.SemanticEqual(yamlPlc.Object["status"]))
 		})
 		It("the policy should be patched after manually creating a role that has less rules", func() {
+			//test
 			By("Creating the mismatch role in default namespace on managed cluster")
 			utils.Kubectl("apply", "-f", "../resources/configuration_policy/role-policy-e2e-less.yaml", "-n", "default", "--kubeconfig=../../kubeconfig_managed")
 			By("Checking if the role has been patched to match")
