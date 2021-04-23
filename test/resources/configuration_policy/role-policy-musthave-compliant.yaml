@@ -28,12 +28,12 @@ spec:
                 metadata:
                   name: role-policy-e2e
                 rules:
-                  - apiGroups: [""]
-                    resources: ["pods"]
-                    verbs: ["get", "watch", "list"]
                   - apiGroups: ["extensions", "apps"]
                     resources: ["deployments"]
                     verbs: ["get", "list", "watch", "create", "delete","patch"]
+                  - apiGroups: [""]
+                    resources: ["pods"]
+                    verbs: ["get", "watch", "list"]
 status:
   compliant: Compliant
   placement:
