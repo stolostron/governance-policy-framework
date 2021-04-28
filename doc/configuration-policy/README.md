@@ -1,4 +1,4 @@
-# configuration policy use case
+# Configuration policy usage
 
 ## Basic usage
 ### Create
@@ -30,10 +30,10 @@
 ### Integrate with Gatekeeper
 1. [Install and configure Gatekeeper](./gatekeeper/gatekeeper-install.yaml)
 2. [Create Gatekeeper policy](./gatekeeper/gatekeeper-policy-sample.yaml#L14-L66)
-3. Report Gatekeeper violations for audit scenario
-4. Report Gatekeeper violations for admission scenario
+3. [Report Gatekeeper violations for audit scenario](./gatekeeper/gatekeeper-policy-sample.yaml#L68-L83)
+4. [Report Gatekeeper violations for admission scenario](./gatekeeper/gatekeeper-policy-sample.yaml#L85-L103)
 
 ### Integrate with Kyverno
 1. Install Kyverno
-2. Create Kyverno policy
-3. Report Kyverno violations
+2. [Create Kyverno policy](https://github.com/open-cluster-management/policy-collection/blob/main/community/CM-Configuration-Management/policy-kyverno-sample.yaml)
+3. [Report Kyverno violations](https://github.com/open-cluster-management/policy-collection/blob/main/community/CM-Configuration-Management/policy-check-reports.yaml)
