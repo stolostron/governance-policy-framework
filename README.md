@@ -30,6 +30,7 @@ The governance policy framework consists of following components:
     - [Policy template sync](https://github.com/open-cluster-management/governance-policy-template-sync)
 - Policy controllers: Policy engines that run on managed clusters to evaluate policy rules distributed by the policy framework and generate results.
     - [Configuration policy controller](https://github.com/open-cluster-management/config-policy-controller)
+      - [Usage examples](./doc/configuration-policy/README.md)
     - [Certificate policy controller](https://github.com/open-cluster-management/cert-policy-controller)
     - [IAM policy controller](https://github.com/open-cluster-management/iam-policy-controller)
     - Third-party
