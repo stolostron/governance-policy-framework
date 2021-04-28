@@ -3,8 +3,8 @@
 ## Basic usage
 ### Create
 
-1. [create a k8s resource in a single namespace](./create/create-single-ns.yaml)
-1. [create same k8s resource in multiple namespaces](./create/create-multiple-ns.yaml)
+1. [create a k8s resource in a single namespace](./create/create-role-single-ns.yaml)
+1. [create same k8s resource in multiple namespaces](./create/create-role-multiple-ns.yaml)
 
 ### Merge Patch
 
@@ -14,7 +14,7 @@
 ### Replace Patch
 
 1. [replace an existing k8s resource in a single namespace](./replace-patch/replace-patch-role-single-ns.yaml)
-1. [replace same k8s resource in multiple namespaces](.y/replace-patch/replace-patch-role-multiple-ns.yaml)
+1. [replace same k8s resource in multiple namespaces](./replace-patch/replace-patch-role-multiple-ns.yaml)
 
 ### Delete
 1. [delete a k8s resource in a single namespace](./delete/delete-role-single-ns.yaml)
