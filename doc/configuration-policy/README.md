@@ -21,10 +21,10 @@
 1. [delete same k8s resource in multiple namespaces](./delete/delete-role-multiple-ns.yaml)
 
 ### Audit
-1. [audit a single resource in a single namespace](./audit/audit-role-single-ns.yaml)
-1. [audit a single resource in multiple namespaces](./audit/audit-role-multiple-ns.yaml)
-1. [audit a kind of resource](./audit/audit-pod-kind.yaml)
-1. [audit a kind of resource with desired fields and value](./audit/audit-pod-kind-field-filter.yaml)
+1. [audit a k8s resource in a single namespace](./audit/audit-role-single-ns.yaml)
+1. [audit same k8s resource in multiple namespaces](./audit/audit-role-multiple-ns.yaml)
+1. [audit a kind of resources](./audit/audit-pod-kind.yaml)
+1. [audit a kind of resources with desired fields and value](./audit/audit-pod-kind-field-filter.yaml)
 
 ## Advanced usage
 ### Integrate with Gatekeeper
