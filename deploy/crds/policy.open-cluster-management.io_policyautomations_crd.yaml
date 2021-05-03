@@ -13,7 +13,7 @@ spec:
     singular: policyautomation
   scope: Namespaced
   versions:
-  - name: v1alpha1
+  - name: v1beta1
     schema:
       openAPIV3Schema:
         description: PolicyAutomation is the Schema for the policyautomations API
