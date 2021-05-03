@@ -303,8 +303,7 @@ var _ = Describe("RHACM4K-2222 GRC: [P1][Sev1][policy-grc] Test compliance opera
 		It("ComplianceCheckResult should be created", func() {
 			By("Checking if any ComplianceCheckResult CR exists on managed cluster")
 			Eventually(func() interface{} {
-				list, err := clientManagedDynamic.Resource(gvrComplianceCheckResult).Namespace("openshift-compliance").List(context.TODO(), metav1.ListOptions{})
-				Expect(err).To(BeNil())
+				list, _ := clientManagedDynamic.Resource(gvrComplianceCheckResult).Namespace("openshift-compliance").List(context.TODO(), metav1.ListOptions{})
 				return len(list.Items)
 			}, defaultTimeoutSeconds*8, 1).ShouldNot(Equal(0))
 		})
