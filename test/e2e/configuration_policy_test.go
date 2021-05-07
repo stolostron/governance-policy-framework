@@ -471,8 +471,15 @@ var _ = Describe("Test configuration policy", func() {
 			By("Patching remediationAction = enforce on root policy")
 			rootPlc := utils.GetWithTimeout(clientHubDynamic, gvrPolicy, rolePolicyName, userNamespace, true, defaultTimeoutSeconds)
 			rootPlc.Object["spec"].(map[string]interface{})["remediationAction"] = "enforce"
-			rootPlc, _ = clientHubDynamic.Resource(gvrPolicy).Namespace(userNamespace).Update(context.TODO(), rootPlc, metav1.UpdateOptions{})
-			Expect(rootPlc.Object["spec"].(map[string]interface{})["remediationAction"]).To(Equal("enforce"))
+			clientHubDynamic.Resource(gvrPolicy).Namespace(userNamespace).Update(context.TODO(), rootPlc, metav1.UpdateOptions{})
+			Eventually(func() interface{} {
+				rootPlc := utils.GetWithTimeout(clientHubDynamic, gvrPolicy, rolePolicyName, userNamespace, true, defaultTimeoutSeconds)
+				remediation, ok := rootPlc.Object["spec"].(map[string]interface{})["remediationAction"]
+				if !ok {
+					return nil
+				}
+				return remediation
+			}, defaultTimeoutSeconds, 1).Should(utils.SemanticEqual("enforce"))
 			By("Checking if the status of root policy is compliant")
 			yamlPlc := utils.ParseYaml("../resources/configuration_policy/" + rolePolicyName + "-compliant.yaml")
 			Eventually(func() interface{} {
