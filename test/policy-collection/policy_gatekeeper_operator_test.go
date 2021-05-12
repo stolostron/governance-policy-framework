@@ -136,7 +136,7 @@ var _ = Describe("", func() {
 				podList, err := clientManaged.CoreV1().Pods("openshift-gatekeeper-operator").List(context.TODO(), metav1.ListOptions{LabelSelector: "control-plane=controller-manager"})
 				Expect(err).To(BeNil())
 				return len(podList.Items)
-			}, defaultTimeoutSeconds*4, 1).ShouldNot(Equal(0))
+			}, defaultTimeoutSeconds*8, 1).ShouldNot(Equal(0))
 			By("Checking if pod gatekeeper-operator is running")
 			Eventually(func() interface{} {
 				podList, err := clientManaged.CoreV1().Pods("openshift-gatekeeper-operator").List(context.TODO(), metav1.ListOptions{LabelSelector: "control-plane=controller-manager"})
@@ -352,7 +352,7 @@ var _ = Describe("", func() {
 			Eventually(func() interface{} {
 				out, _ := utils.KubectlWithOutput("get", "crd", "assign.mutations.gatekeeper.sh", "--kubeconfig="+kubeconfigManaged)
 				return out
-			}, defaultTimeoutSeconds*4, 1).Should(ContainSubstring("CREATED AT\nassign.mutations.gatekeeper.sh"))
+			}, defaultTimeoutSeconds*8, 1).Should(ContainSubstring("CREATED AT\nassign.mutations.gatekeeper.sh"))
 			Eventually(func() interface{} {
 				out, _ := utils.KubectlWithOutput("get", "crd", "assignmetadata.mutations.gatekeeper.sh", "--kubeconfig="+kubeconfigManaged)
 				return out
