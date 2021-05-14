@@ -6,7 +6,7 @@ set -e
 UI_CURRENT_IMAGE=$1
 
 make docker/login
-export DOCKER_URI=quay.io/open-cluster-management/grc-ui-tests:latest-dev
+export DOCKER_URI=quay.io/open-cluster-management/grc-ui-tests:latest
 make docker/pull
 
 docker run --volume $(pwd)/build:/opt/app-root/src/grc-ui/tmp \

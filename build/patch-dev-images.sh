@@ -12,10 +12,10 @@ grcui=`oc get deploy -l component=ocm-grcui -n open-cluster-management -o=jsonpa
 grcuiapi=`oc get deploy -l component=ocm-grcuiapi -n open-cluster-management -o=jsonpath='{.items[*].metadata.name}'`
 consoleheader=`oc get deploy -l component=console-header -n open-cluster-management -o=jsonpath='{.items[*].metadata.name}'`
 policypropagator=`oc get deploy -l component=ocm-policy-propagator -n open-cluster-management -o=jsonpath='{.items[*].metadata.name}'`
-oc patch deployment $grcui -n open-cluster-management -p "{\"spec\":{\"template\":{\"spec\":{\"containers\":[{\"name\":\"grc-ui\",\"image\":\"quay.io/open-cluster-management/grc-ui:latest-dev\"}]}}}}"
-oc patch deployment $grcuiapi -n open-cluster-management -p "{\"spec\":{\"template\":{\"spec\":{\"containers\":[{\"name\":\"grc-ui-api\",\"image\":\"quay.io/open-cluster-management/grc-ui-api:latest-dev\"}]}}}}"
-oc patch deployment $policypropagator -n open-cluster-management -p "{\"spec\":{\"template\":{\"spec\":{\"containers\":[{\"name\":\"governance-policy-propagator\",\"image\":\"quay.io/open-cluster-management/governance-policy-propagator:latest-dev\"}]}}}}"
-oc patch deployment $consoleheader -n open-cluster-management -p "{\"spec\":{\"template\":{\"spec\":{\"containers\":[{\"name\":\"console-header\",\"image\":\"quay.io/open-cluster-management/console-header:latest-dev\"}]}}}}"
+oc patch deployment $grcui -n open-cluster-management -p "{\"spec\":{\"template\":{\"spec\":{\"containers\":[{\"name\":\"grc-ui\",\"image\":\"quay.io/open-cluster-management/grc-ui:latest\"}]}}}}"
+oc patch deployment $grcuiapi -n open-cluster-management -p "{\"spec\":{\"template\":{\"spec\":{\"containers\":[{\"name\":\"grc-ui-api\",\"image\":\"quay.io/open-cluster-management/grc-ui-api:latest\"}]}}}}"
+oc patch deployment $policypropagator -n open-cluster-management -p "{\"spec\":{\"template\":{\"spec\":{\"containers\":[{\"name\":\"governance-policy-propagator\",\"image\":\"quay.io/open-cluster-management/governance-policy-propagator:latest\"}]}}}}"
+oc patch deployment $consoleheader -n open-cluster-management -p "{\"spec\":{\"template\":{\"spec\":{\"containers\":[{\"name\":\"console-header\",\"image\":\"quay.io/open-cluster-management/console-header:latest\"}]}}}}"
 
 managedclusters=`oc get managedcluster -o=jsonpath='{.items[*].metadata.name}'`
 for managedcluster in $managedclusters
