@@ -15,7 +15,7 @@ spec:
       serviceAccountName: governance-policy-propagator
       containers:
         - name: governance-policy-propagator
-          image: quay.io/open-cluster-management/governance-policy-propagator:latest-dev
+          image: quay.io/open-cluster-management/governance-policy-propagator:latest
           command:
           - governance-policy-propagator
           imagePullPolicy: Always
