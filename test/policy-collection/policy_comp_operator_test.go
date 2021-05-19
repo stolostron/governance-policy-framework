@@ -205,7 +205,7 @@ var _ = Describe("RHACM4K-2222 GRC: [P1][Sev1][policy-grc] Test compliance opera
 				podList, err := clientManaged.CoreV1().Pods("openshift-compliance").List(context.TODO(), metav1.ListOptions{LabelSelector: "profile-bundle=ocp4"})
 				Expect(err).To(BeNil())
 				return string(podList.Items[0].Status.Phase)
-			}, defaultTimeoutSeconds*4, 1).Should(Equal("Running"))
+			}, defaultTimeoutSeconds*8, 1).Should(Equal("Running"))
 			By("Checking if pod rhcos4-pp has been created")
 			Eventually(func() interface{} {
 				podList, err := clientManaged.CoreV1().Pods("openshift-compliance").List(context.TODO(), metav1.ListOptions{LabelSelector: "profile-bundle=rhcos4"})
