@@ -16,7 +16,7 @@ import (
 	"k8s.io/apimachinery/pkg/runtime"
 )
 
-var _ = Describe("", func() {
+var _ = Describe("RHACM4K-3055", func() {
 	BeforeEach(func() {
 		if isOCP44() {
 			Skip("Skipping as this is ocp 4.4")
