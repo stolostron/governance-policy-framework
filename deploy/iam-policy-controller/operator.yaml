@@ -18,6 +18,9 @@ spec:
           image: quay.io/open-cluster-management/iam-policy-controller:latest
           command:
           - iam-policy-controller
+          args:
+            - "--enable-lease=true"
+            - "--hubconfig-secret-name=hub-kubeconfig"
           imagePullPolicy: Always
           env:
             - name: WATCH_NAMESPACE
