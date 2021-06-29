@@ -34,6 +34,21 @@ func isOCP46andAbove() bool {
 	return true
 }
 
+func canCreateOpenshiftNamespaces() bool {
+	// A server-side dry run will check the admission webhooks, but it needs to use the right
+	// serviceaccount because the kubeconfig might have superuser privileges to get around them.
+	out, _ := utils.KubectlWithOutput("create", "ns", "openshift-grc-test", "--kubeconfig="+kubeconfigManaged,
+		"--dry-run=server", "--as=system:serviceaccount:open-cluster-management-agent-addon:klusterlet-addon-policyctrl")
+	if strings.Contains(out, "namespace/openshift-grc-test created") {
+		return true
+	}
+	if strings.Contains(out, "namespaces \"openshift-grc-test\" already exists") {
+		// Weird situation, but probably means it could make the namespace
+		return true
+	}
+	return false
+}
+
 func cleanupRequired() bool {
 	_, err := clientManaged.CoreV1().Namespaces().Get(context.TODO(), "openshift-compliance", metav1.GetOptions{})
 	if err == nil || !errors.IsNotFound(err) {
@@ -43,13 +58,16 @@ func cleanupRequired() bool {
 }
 
 var _ = Describe("RHACM4K-2222 GRC: [P1][Sev1][policy-grc] Test compliance operator and scan", func() {
-	const compPolicyURL = "https://raw.githubusercontent.com/open-cluster-management/policy-collection/master/stable/CA-Security-Assessment-and-Authorization/policy-compliance-operator-install.yaml"
+	const compPolicyURL = "https://raw.githubusercontent.com/open-cluster-management/policy-collection/main/stable/CA-Security-Assessment-and-Authorization/policy-compliance-operator-install.yaml"
 	const compPolicyName = "policy-comp-operator"
-	const compE8ScanPolicyURL = "https://raw.githubusercontent.com/open-cluster-management/policy-collection/master/stable/CM-Configuration-Management/policy-compliance-operator-e8-scan.yaml"
+	const compE8ScanPolicyURL = "https://raw.githubusercontent.com/open-cluster-management/policy-collection/main/stable/CM-Configuration-Management/policy-compliance-operator-e8-scan.yaml"
 	const compE8ScanPolicyName = "policy-e8-scan"
 	BeforeEach(func() {
 		if !isOCP46andAbove() {
 			Skip("Skipping as compliance operator is only supported on OCP 4.6 and above")
+		}
+		if !canCreateOpenshiftNamespaces() {
+			Skip("Skipping as compliance operator requires the ability to create the openshift-compliance namespace")
 		}
 	})
 	Describe("Clean up before all", func() {
