@@ -34,6 +34,9 @@ var _ = Describe("", func() {
 		if isOCP44() {
 			Skip("Skipping as this is ocp 4.4")
 		}
+		if !canCreateOpenshiftNamespaces() {
+			Skip("Skipping as upstream gatekeeper operator requires the ability to create the openshift-gatekeeper-system namespace")
+		}
 	})
 	const gatekeeperPolicyURL = "https://raw.githubusercontent.com/open-cluster-management/policy-collection/master/community/CM-Configuration-Management/policy-gatekeeper-operator.yaml"
 	const gatekeeperPolicyName = "policy-gatekeeper-operator"
@@ -131,13 +134,13 @@ var _ = Describe("", func() {
 			}, defaultTimeoutSeconds, 1).Should(Equal("enforce"))
 		})
 		It("Gatekeeper operator pod should be running", func() {
-			By("Checking if pod gatekeeper-operator has been created")
+			By("Checking if pod gatekeeper-operator-controller-manager has been created")
 			Eventually(func() interface{} {
 				podList, err := clientManaged.CoreV1().Pods("gatekeeper-system").List(context.TODO(), metav1.ListOptions{LabelSelector: "control-plane=controller-manager"})
 				Expect(err).To(BeNil())
 				return len(podList.Items)
 			}, defaultTimeoutSeconds*8, 1).ShouldNot(Equal(0))
-			By("Checking if pod gatekeeper-operator is running")
+			By("Checking if pod gatekeeper-operator-controller-manager is running")
 			Eventually(func() interface{} {
 				podList, err := clientManaged.CoreV1().Pods("gatekeeper-system").List(context.TODO(), metav1.ListOptions{LabelSelector: "control-plane=controller-manager"})
 				Expect(err).To(BeNil())
