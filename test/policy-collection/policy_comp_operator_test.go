@@ -46,6 +46,10 @@ func canCreateOpenshiftNamespaces() bool {
 		// Weird situation, but probably means it could make the namespace
 		return true
 	}
+	if strings.Contains(out, "admission webhook \"mutation.gatekeeper.sh\" does not support dry run") {
+		// Gatekeeper is installed, so assume the namespace could be created
+		return true
+	}
 	return false
 }
 
