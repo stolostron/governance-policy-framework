@@ -40,9 +40,9 @@ var _ = Describe("", func() {
 			Skip("Skipping as this is ocp 4.4")
 		}
 	})
-	const gatekeeperPolicyURL = "https://raw.githubusercontent.com/open-cluster-management/policy-collection/master/community/CM-Configuration-Management/policy-gatekeeper-operator.yaml"
+	const gatekeeperPolicyURL = "https://raw.githubusercontent.com/open-cluster-management/policy-collection/24e0157510518555b9425f0539c556b0208d1308/community/CM-Configuration-Management/policy-gatekeeper-operator.yaml"
 	const gatekeeperPolicyName = "policy-gatekeeper-operator"
-	const GKPolicyYaml = "https://raw.githubusercontent.com/open-cluster-management/policy-collection/master/community/CM-Configuration-Management/policy-gatekeeper-sample.yaml"
+	const GKPolicyYaml = "https://raw.githubusercontent.com/open-cluster-management/policy-collection/24e0157510518555b9425f0539c556b0208d1308/community/CM-Configuration-Management/policy-gatekeeper-sample.yaml"
 	const GKPolicyName = "policy-gatekeeper"
 	Describe("RHACM4K-1692 GRC: [P1][Sev1][policy-grc] Test installing gatekeeper operator", func() {
 		It("Clean up before all", func() {
