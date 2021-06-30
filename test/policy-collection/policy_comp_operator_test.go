@@ -34,23 +34,36 @@ func isOCP46andAbove() bool {
 	return true
 }
 
+var (
+	canCreateOpenshiftNamespacesInitialized bool
+	canCreateOpenshiftNamespacesResult      bool
+)
+
 func canCreateOpenshiftNamespaces() bool {
+	// Only check once - this makes it faster and prevents the answer changing mid-suite.
+	if canCreateOpenshiftNamespacesInitialized {
+		return canCreateOpenshiftNamespacesResult
+	}
+
+	canCreateOpenshiftNamespacesInitialized = true
+	canCreateOpenshiftNamespacesResult = false
+
 	// A server-side dry run will check the admission webhooks, but it needs to use the right
 	// serviceaccount because the kubeconfig might have superuser privileges to get around them.
 	out, _ := utils.KubectlWithOutput("create", "ns", "openshift-grc-test", "--kubeconfig="+kubeconfigManaged,
 		"--dry-run=server", "--as=system:serviceaccount:open-cluster-management-agent-addon:klusterlet-addon-policyctrl")
 	if strings.Contains(out, "namespace/openshift-grc-test created") {
-		return true
+		canCreateOpenshiftNamespacesResult = true
 	}
 	if strings.Contains(out, "namespaces \"openshift-grc-test\" already exists") {
 		// Weird situation, but probably means it could make the namespace
-		return true
+		canCreateOpenshiftNamespacesResult = true
 	}
 	if strings.Contains(out, "admission webhook \"mutation.gatekeeper.sh\" does not support dry run") {
 		// Gatekeeper is installed, so assume the namespace could be created
-		return true
+		canCreateOpenshiftNamespacesResult = true
 	}
-	return false
+	return canCreateOpenshiftNamespacesResult
 }
 
 func cleanupRequired() bool {
