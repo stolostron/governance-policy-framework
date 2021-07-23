@@ -5,4 +5,4 @@ metadata:
 rules:
   - apiGroups: ["apps", "extensions"]
     resources: ["deployments"]
-    verbs: ["get", "list", "watch", "create", "delete","patch"]
+    verbs: ["create", "delete", "get", "list", "patch", "watch"]
