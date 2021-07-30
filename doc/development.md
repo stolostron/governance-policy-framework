@@ -31,6 +31,11 @@ For a hub with a managed cluster attached:
 make kind-bootstrap-cluster
 ```
 
+To delete the clusters and the `kubeconfig` files:
+```shell
+make kind-delete-cluster
+```
+
 ### On external clusters with Open Cluster Management already installed
 
 For hub-only:
