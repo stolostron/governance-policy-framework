@@ -31,7 +31,7 @@ For a hub with a managed cluster attached:
 make kind-bootstrap-cluster
 ```
 
-### On External Clusters (like Openshift)
+### On external clusters with Open Cluster Management already installed
 
 For hub-only:
 ```shell
