@@ -7,12 +7,12 @@
 
 ## Cluster configuration
 
-*Prerequisites*
+**Prerequisites**
 - `go`
 - `kubectl`
 - `kind` and `docker` (if you're running the tests on Kind)
 
-*NOTES*
+**NOTES**
 - The tests look for `kubeconfig` files in the root of the local repository directory to authenticate to a Hub and Managed cluster:
   - `kubeconfig_hub`
   - `kubeconfig_managed`
