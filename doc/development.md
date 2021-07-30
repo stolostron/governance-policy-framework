@@ -20,6 +20,7 @@
 
 ### On Local Kind Clusters
 
+For hub-only:
 ```shell
 export deployOnHub=true
 make kind-bootstrap-cluster
