@@ -381,12 +381,17 @@ var _ = Describe("", func() {
 		It("Checking if gatekeeper controller manager has mutation flag on", func() {
 			Eventually(func() interface{} {
 				podList, _ := clientManaged.CoreV1().Pods("openshift-gatekeeper-system").List(context.TODO(), metav1.ListOptions{LabelSelector: "control-plane=controller-manager"})
-				return fmt.Sprintf("%d/%d", len(podList.Items[0].Spec.Containers[0].Args), len(podList.Items[1].Spec.Containers[0].Args))
-			}, defaultTimeoutSeconds*15, 1).Should(Equal("7/7"))
+				return fmt.Sprintf("%d;%d", len(podList.Items[0].Spec.Containers[0].Args), len(podList.Items[1].Spec.Containers[0].Args))
+			}, defaultTimeoutSeconds*15, 1).Should(Equal("7;7"))
 			Eventually(func() interface{} {
 				podList, _ := clientManaged.CoreV1().Pods("openshift-gatekeeper-system").List(context.TODO(), metav1.ListOptions{LabelSelector: "control-plane=controller-manager"})
-				return podList.Items[0].Spec.Containers[0].Args[6] + "/" + podList.Items[1].Spec.Containers[0].Args[6]
-			}, defaultTimeoutSeconds, 1).Should(Equal("--enable-mutation=true/--enable-mutation=true"))
+				// create a list to avoid hard-coding checking the order the arguments
+				args := make([]string, 7)
+				for i := 0; i < 7; i++ {
+					args[i] = podList.Items[0].Spec.Containers[0].Args[i] + ";" + podList.Items[1].Spec.Containers[0].Args[i]
+				}
+				return args
+			}, defaultTimeoutSeconds, 1).Should(ContainElement("--enable-mutation=true;--enable-mutation=true"))
 		})
 	})
 
