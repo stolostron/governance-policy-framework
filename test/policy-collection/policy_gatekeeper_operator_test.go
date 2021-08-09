@@ -145,7 +145,7 @@ var _ = Describe("", func() {
 				podList, err := clientManaged.CoreV1().Pods("openshift-gatekeeper-operator").List(context.TODO(), metav1.ListOptions{LabelSelector: "control-plane in (controller-manager, gatekeeper-operator-controller-manager)"})
 				Expect(err).To(BeNil())
 				for _, item := range podList.Items {
-					if strings.HasPrefix(item.ObjectMeta.Name, "gatekeeper-operator-controller-manager") {
+					if strings.HasPrefix(item.ObjectMeta.Name, "gatekeeper-operator-controller") {
 						return string(item.Status.Phase)
 					}
 				}
