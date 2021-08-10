@@ -88,16 +88,16 @@ var _ = Describe("RHACM4K-3055", func() {
 					utils.KubectlWithOutput("delete", "-n", "openshift-operators", "subscriptions.operators.coreos.com", "gatekeeper-operator-product", "--kubeconfig="+kubeconfigManaged)
 				}
 				i++
-				podList, err := clientManaged.CoreV1().Pods("openshift-operators").List(context.TODO(), metav1.ListOptions{LabelSelector: "control-plane=controller-manager"})
+				podList, err := clientManaged.CoreV1().Pods("openshift-operators").List(context.TODO(), metav1.ListOptions{LabelSelector: "control-plane in (controller-manager, gatekeeper-operator-controller-manager)"})
 				Expect(err).To(BeNil())
 				return len(podList.Items)
 			}, defaultTimeoutSeconds*12, 1).Should(Equal(1))
 			By("Checking if pod gatekeeper-operator is running")
 			Eventually(func() interface{} {
-				podList, err := clientManaged.CoreV1().Pods("openshift-operators").List(context.TODO(), metav1.ListOptions{LabelSelector: "control-plane=controller-manager"})
+				podList, err := clientManaged.CoreV1().Pods("openshift-operators").List(context.TODO(), metav1.ListOptions{LabelSelector: "control-plane in (controller-manager, gatekeeper-operator-controller-manager)"})
 				Expect(err).To(BeNil())
 				for _, item := range podList.Items {
-					if strings.HasPrefix(item.ObjectMeta.Name, "gatekeeper-operator-controller-manager") {
+					if strings.HasPrefix(item.ObjectMeta.Name, "gatekeeper-operator-controller") {
 						return string(item.Status.Phase)
 					}
 				}
@@ -226,7 +226,10 @@ var _ = Describe("RHACM4K-3055", func() {
 			Eventually(func() interface{} {
 				out, _ := utils.KubectlWithOutput("create", "ns", "e2etestfail", "--kubeconfig="+kubeconfigManaged)
 				return out
-			}, defaultTimeoutSeconds*6, 1).Should(ContainSubstring("denied by ns-must-have-gk"))
+			}, defaultTimeoutSeconds*6, 1).Should(And(
+				ContainSubstring("validation.gatekeeper.sh"),
+				ContainSubstring("denied"),
+				ContainSubstring("ns-must-have-gk")))
 			By("Checking if status for policy template policy-gatekeeper-admission is noncompliant")
 			Eventually(func() interface{} {
 				plc := utils.GetWithTimeout(clientHubDynamic, gvrPolicy, userNamespace+"."+GKPolicyName, clusterNamespace, true, defaultTimeoutSeconds)
@@ -239,7 +242,9 @@ var _ = Describe("RHACM4K-3055", func() {
 				details := plc.Object["status"].(map[string]interface{})["details"].([]interface{})
 				fmt.Printf("%v\n", details[2].(map[string]interface{})["history"].([]interface{})[0].(map[string]interface{})["message"])
 				return details[2].(map[string]interface{})["history"].([]interface{})[0].(map[string]interface{})["message"]
-			}, defaultTimeoutSeconds, 1).Should(ContainSubstring("NonCompliant; violation - events found: [e2etestfail."))
+			}, defaultTimeoutSeconds, 1).Should(And(
+				ContainSubstring("NonCompliant; violation - events found:"),
+				ContainSubstring("e2etestfail.")))
 		})
 		It("stable/policy-gatekeeper-sample should be noncompliant", func() {
 			By("Checking if the status of root policy is noncompliant")
