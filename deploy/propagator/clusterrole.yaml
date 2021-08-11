@@ -40,6 +40,8 @@ rules:
   - cluster.open-cluster-management.io
   resources:
   - managedclusters
+  - placementdecisions
+  - placements
   verbs:
   - get
   - list
