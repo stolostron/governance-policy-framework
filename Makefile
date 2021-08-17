@@ -77,7 +77,7 @@ kind-deploy-policy-framework: check-env
 kind-deploy-config-policy-controller: check-env
 	@echo installing config-policy-controller on managed
 	kubectl apply -f deploy/config-policy-controller -n multicluster-endpoint --kubeconfig=$(PWD)/kubeconfig_managed
-	kubectl patch deployment config-policy-controller -n multicluster-endpoint --kubeconfig=$(PWD)/kubeconfig_managed -p "{\"spec\":{\"template\":{\"spec\":{\"containers\":[{\"name\":\"config-policy-controller\",\"image\":\"quay.io/open-cluster-management/config-policy-controller:$(RHACM_SNAPSHOT)\"}]}}}}"
+	kubectl patch deployment config-policy-controller -n multicluster-endpoint --kubeconfig=$(PWD)/kubeconfig_managed -p "{\"spec\":{\"template\":{\"spec\":{\"containers\":[{\"name\":\"config-policy-ctrl\",\"image\":\"quay.io/open-cluster-management/config-policy-controller:$(RHACM_SNAPSHOT)\"}]}}}}"
 
 kind-deploy-cert-policy-controller: check-env
 	@echo installing cert-manager on managed
