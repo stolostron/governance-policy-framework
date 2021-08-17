@@ -4,6 +4,9 @@ PWD := $(shell pwd)
 BASE_DIR := $(shell basename $(PWD))
 deployOnHub ?= false
 
+# Default snapshot if not provided
+RHACM_SNAPSHOT ?= 2.2.7-SNAPSHOT-2021-08-11-13-58-47
+
 # GITHUB_USER containing '@' char must be escaped with '%40'
 GITHUB_USER := $(shell echo $(GITHUB_USER) | sed 's/@/%40/g')
 GITHUB_TOKEN ?=
@@ -46,7 +49,7 @@ kind-deploy-policy-framework: check-env
 	kubectl create ns governance --kubeconfig=$(PWD)/kubeconfig_hub
 	kubectl create secret -n governance docker-registry multiclusterhub-operator-pull-secret --docker-server=quay.io --docker-username=${DOCKER_USER} --docker-password=${DOCKER_PASS} --kubeconfig=$(PWD)/kubeconfig_hub
 	kubectl apply -f deploy/propagator -n governance --kubeconfig=$(PWD)/kubeconfig_hub
-	kubectl patch deployment governance-policy-propagator -n multicluster-endpoint --kubeconfig=$(PWD)/kubeconfig_hub -p "{\"spec\":{\"template\":{\"spec\":{\"containers\":[{\"name\":\"governance-policy-propagator\",\"image\":\"quay.io/open-cluster-management/governance-policy-propagator:$(RHACM_SNAPSHOT)\"}]}}}}"
+	kubectl patch deployment governance-policy-propagator -n governance --kubeconfig=$(PWD)/kubeconfig_hub -p "{\"spec\":{\"template\":{\"spec\":{\"containers\":[{\"name\":\"governance-policy-propagator\",\"image\":\"quay.io/open-cluster-management/governance-policy-propagator:$(RHACM_SNAPSHOT)\"}]}}}}"
 	@echo creating secrets on managed
 	kubectl create ns multicluster-endpoint --kubeconfig=$(PWD)/kubeconfig_managed
 	kubectl create secret -n multicluster-endpoint docker-registry multiclusterhub-operator-pull-secret --docker-server=quay.io --docker-username=${DOCKER_USER} --docker-password=${DOCKER_PASS} --kubeconfig=$(PWD)/kubeconfig_managed
