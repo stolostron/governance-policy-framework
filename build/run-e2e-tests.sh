@@ -4,6 +4,15 @@ set -e
 
 export DOCKER_IMAGE_AND_TAG=${1}
 
+RHACM_VERSION="2.2"
+HAS_ADDITIONAL="true"
+i=0
+while [[ "${HAS_ADDITIONAL}" == "true" ]] && [[ -z "${RHACM_SNAPSHOT}" ]]; do
+    (( i += 1 ))
+    HAS_ADDITIONAL=$(curl -s "https://quay.io/api/v1/repository/open-cluster-management/acm-custom-registry/tag/?onlyActiveTags=true&page=${i}" | jq -r '.has_additional')
+    export RHACM_SNAPSHOT=$(curl -s "https://quay.io/api/v1/repository/open-cluster-management/acm-custom-registry/tag/?onlyActiveTags=true&page=${i}" | jq -r '.tags[].name' | grep -v "nonesuch\|-$" | grep -F "${RHACM_VERSION}" | head -n 1)
+done
+
 if ! which kubectl > /dev/null; then
     echo "installing kubectl"
     curl -LO https://storage.googleapis.com/kubernetes-release/release/$(curl -s https://storage.googleapis.com/kubernetes-release/release/stable.txt)/bin/linux/amd64/kubectl && chmod +x kubectl && sudo mv kubectl /usr/local/bin/
