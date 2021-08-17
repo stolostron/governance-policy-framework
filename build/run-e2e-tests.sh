@@ -4,12 +4,14 @@ set -e
 
 export DOCKER_IMAGE_AND_TAG=${1}
 
-
 RHACM_VERSION="2.2"
 HAS_ADDITIONAL="true"
 i=0
 while [[ "${HAS_ADDITIONAL}" == "true" ]] && [[ -z "${RHACM_SNAPSHOT}" ]]; do
+    echo ${i}
     (( i++ ))
+    echo ${i}
+    curl -s "https://quay.io/api/v1/repository/open-cluster-management/acm-custom-registry/tag/?onlyActiveTags=true&page=${i}" | jq -r '.has_additional'
     HAS_ADDITIONAL=$(curl -s "https://quay.io/api/v1/repository/open-cluster-management/acm-custom-registry/tag/?onlyActiveTags=true&page=${i}" | jq -r '.has_additional')
     export RHACM_SNAPSHOT=$(curl -s "https://quay.io/api/v1/repository/open-cluster-management/acm-custom-registry/tag/?onlyActiveTags=true&page=${i}" | jq -r '.tags[].name' | grep -v "nonesuch\|-$" | grep -F "${RHACM_VERSION}" | head -n 1)
 done
