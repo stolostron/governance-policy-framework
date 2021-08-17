@@ -46,7 +46,7 @@ kind-deploy-policy-framework: check-env
 	kubectl create ns governance --kubeconfig=$(PWD)/kubeconfig_hub
 	kubectl create secret -n governance docker-registry multiclusterhub-operator-pull-secret --docker-server=quay.io --docker-username=${DOCKER_USER} --docker-password=${DOCKER_PASS} --kubeconfig=$(PWD)/kubeconfig_hub
 	kubectl apply -f deploy/propagator -n governance --kubeconfig=$(PWD)/kubeconfig_hub
-	kubectl patch deployment governance-policy-propagator -n multicluster-endpoint --kubeconfig=$(PWD)/kubeconfig_hub -p "{\"spec\":{\"template\":{\"spec\":{\"containers\":[{\"name\":\"governance-policy-propagator\",\"image\":\"quay.io/open-cluster-management/governance-policy-propagator:$(RHACM_SNAPSHOT)\"}]}}}}";\
+	kubectl patch deployment governance-policy-propagator -n multicluster-endpoint --kubeconfig=$(PWD)/kubeconfig_hub -p "{\"spec\":{\"template\":{\"spec\":{\"containers\":[{\"name\":\"governance-policy-propagator\",\"image\":\"quay.io/open-cluster-management/governance-policy-propagator:$(RHACM_SNAPSHOT)\"}]}}}}"
 	@echo creating secrets on managed
 	kubectl create ns multicluster-endpoint --kubeconfig=$(PWD)/kubeconfig_managed
 	kubectl create secret -n multicluster-endpoint docker-registry multiclusterhub-operator-pull-secret --docker-server=quay.io --docker-username=${DOCKER_USER} --docker-password=${DOCKER_PASS} --kubeconfig=$(PWD)/kubeconfig_managed
@@ -69,7 +69,7 @@ kind-deploy-policy-framework: check-env
 	fi
 	@echo installing policy-template-sync on managed
 	kubectl apply -f deploy/template-sync -n multicluster-endpoint --kubeconfig=$(PWD)/kubeconfig_managed
-	kubectl patch deployment governance-policy-template-sync -n multicluster-endpoint --kubeconfig=$(PWD)/kubeconfig_managed -p "{\"spec\":{\"template\":{\"spec\":{\"containers\":[{\"name\":\"governance-policy-template-sync\",\"image\":\"quay.io/open-cluster-management/governance-policy-template-sync:$(RHACM_SNAPSHOT)\"}]}}}}";\
+	kubectl patch deployment governance-policy-template-sync -n multicluster-endpoint --kubeconfig=$(PWD)/kubeconfig_managed -p "{\"spec\":{\"template\":{\"spec\":{\"containers\":[{\"name\":\"governance-policy-template-sync\",\"image\":\"quay.io/open-cluster-management/governance-policy-template-sync:$(RHACM_SNAPSHOT)\"}]}}}}"
 
 kind-deploy-config-policy-controller: check-env
 	@echo installing config-policy-controller on managed
