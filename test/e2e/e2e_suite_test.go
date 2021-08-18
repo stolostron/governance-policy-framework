@@ -13,7 +13,6 @@ import (
 	corev1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	"k8s.io/apimachinery/pkg/runtime/schema"
 	"k8s.io/client-go/dynamic"
 	"k8s.io/client-go/kubernetes"
 	"k8s.io/klog"
@@ -28,18 +27,6 @@ var (
 	clientHubDynamic      dynamic.Interface
 	clientManaged         kubernetes.Interface
 	clientManagedDynamic  dynamic.Interface
-
-	gvrPod                 = schema.GroupVersionResource{Version: "v1", Resource: "pods"}
-	gvrNS                  = schema.GroupVersionResource{Version: "v1", Resource: "namespaces"}
-	gvrRole                = schema.GroupVersionResource{Group: "rbac.authorization.k8s.io", Version: "v1", Resource: "roles"}
-	gvrCRD                 = schema.GroupVersionResource{Group: "apiextensions.k8s.io", Version: "v1beta1", Resource: "customresourcedefinitions"}
-	gvrPolicy              = schema.GroupVersionResource{Group: "policy.open-cluster-management.io", Version: "v1", Resource: "policies"}
-	gvrConfigurationPolicy = schema.GroupVersionResource{Group: "policy.open-cluster-management.io", Version: "v1", Resource: "configurationpolicies"}
-	gvrCertPolicy          = schema.GroupVersionResource{Group: "policy.open-cluster-management.io", Version: "v1", Resource: "certificatepolicies"}
-	gvrIamPolicy           = schema.GroupVersionResource{Group: "policy.open-cluster-management.io", Version: "v1", Resource: "iampolicies"}
-	gvrPlacementBinding    = schema.GroupVersionResource{Group: "policy.open-cluster-management.io", Version: "v1", Resource: "placementbindings"}
-	gvrPlacementRule       = schema.GroupVersionResource{Group: "apps.open-cluster-management.io", Version: "v1", Resource: "placementrules"}
-	gvrK8sRequiredLabels   = schema.GroupVersionResource{Group: "constraints.gatekeeper.sh", Version: "v1beta1", Resource: "k8srequiredlabels"}
 )
 
 func TestE2e(t *testing.T) {
