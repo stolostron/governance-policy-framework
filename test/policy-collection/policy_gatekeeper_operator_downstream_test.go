@@ -14,13 +14,19 @@ import (
 	policiesv1 "github.com/open-cluster-management/governance-policy-propagator/pkg/apis/policy/v1"
 	"github.com/open-cluster-management/governance-policy-propagator/test/utils"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	"k8s.io/apimachinery/pkg/runtime"
 )
 
 var _ = Describe("RHACM4K-3055", func() {
+	var getComplianceState func(policyName string) func() interface{}
+
 	BeforeEach(func() {
 		if isOCP44() {
 			Skip("Skipping as this is ocp 4.4")
+		}
+
+		// Assign this here to avoid using nil pointers as arguments
+		getComplianceState = func(policyName string) func() interface{} {
+			return common.GetComplianceState(clientHubDynamic, userNamespace, policyName, clusterNamespace)
 		}
 	})
 	const gatekeeperPolicyURL = "https://raw.githubusercontent.com/open-cluster-management/policy-collection/main/stable/CM-Configuration-Management/policy-gatekeeper-operator-downstream.yaml"
@@ -31,6 +37,7 @@ var _ = Describe("RHACM4K-3055", func() {
 	const GKAssignPolicyName = "policy-gatekeeper-image-pull-policy"
 	const GKAssignMetadataPolicyYaml = "https://raw.githubusercontent.com/open-cluster-management/policy-collection/main/community/CM-Configuration-Management/policy-gatekeeper-annotation-owner.yaml"
 	const GKAssignMetadataPolicyName = "policy-gatekeeper-annotation-owner"
+
 	Describe("GRC: [P1][Sev1][policy-grc] Test installing gatekeeper operator", func() {
 		It("stable/policy-gatekeeper-operator should be created on hub", func() {
 			By("Creating policy on hub")
@@ -50,19 +57,7 @@ var _ = Describe("RHACM4K-3055", func() {
 		})
 		It("stable/policy-gatekeeper-operator should be noncompliant", func() {
 			By("Checking if the status of root policy is noncompliant")
-			Eventually(func() interface{} {
-				rootPlc := utils.GetWithTimeout(clientHubDynamic, common.GvrPolicy, gatekeeperPolicyName, userNamespace, true, defaultTimeoutSeconds)
-				var policy policiesv1.Policy
-				err := runtime.DefaultUnstructuredConverter.
-					FromUnstructured(rootPlc.UnstructuredContent(), &policy)
-				Expect(err).To(BeNil())
-				for _, statusPerCluster := range policy.Status.Status {
-					if statusPerCluster.ClusterNamespace == clusterNamespace {
-						return statusPerCluster.ComplianceState
-					}
-				}
-				return nil
-			}, defaultTimeoutSeconds*2, 1).Should(Equal(policiesv1.NonCompliant))
+			Eventually(getComplianceState(gatekeeperPolicyName), defaultTimeoutSeconds*2, 1).Should(Equal(policiesv1.NonCompliant))
 		})
 		It("Enforcing stable/policy-gatekeeper-operator", func() {
 			Eventually(func() interface{} {
@@ -148,19 +143,7 @@ var _ = Describe("RHACM4K-3055", func() {
 		})
 		It("stable/policy-gatekeeper-operator should be compliant", func() {
 			By("Checking if the status of root policy is compliant")
-			Eventually(func() interface{} {
-				rootPlc := utils.GetWithTimeout(clientHubDynamic, common.GvrPolicy, gatekeeperPolicyName, userNamespace, true, defaultTimeoutSeconds)
-				var policy policiesv1.Policy
-				err := runtime.DefaultUnstructuredConverter.
-					FromUnstructured(rootPlc.UnstructuredContent(), &policy)
-				Expect(err).To(BeNil())
-				for _, statusPerCluster := range policy.Status.Status {
-					if statusPerCluster.ClusterNamespace == clusterNamespace {
-						return statusPerCluster.ComplianceState
-					}
-				}
-				return nil
-			}, defaultTimeoutSeconds*6, 1).Should(Equal(policiesv1.Compliant))
+			Eventually(getComplianceState(gatekeeperPolicyName), defaultTimeoutSeconds*6, 1).Should(Equal(policiesv1.Compliant))
 		})
 		It("Informing stable/policy-gatekeeper-operator", func() {
 			Eventually(func() interface{} {
@@ -195,19 +178,7 @@ var _ = Describe("RHACM4K-3055", func() {
 		})
 		It("stable/policy-gatekeeper-sample should be compliant", func() {
 			By("Checking if the status of root policy is compliant")
-			Eventually(func() interface{} {
-				rootPlc := utils.GetWithTimeout(clientHubDynamic, common.GvrPolicy, GKPolicyName, userNamespace, true, defaultTimeoutSeconds)
-				var policy policiesv1.Policy
-				err := runtime.DefaultUnstructuredConverter.
-					FromUnstructured(rootPlc.UnstructuredContent(), &policy)
-				Expect(err).To(BeNil())
-				for _, statusPerCluster := range policy.Status.Status {
-					if statusPerCluster.ClusterNamespace == clusterNamespace {
-						return statusPerCluster.ComplianceState
-					}
-				}
-				return nil
-			}, defaultTimeoutSeconds*6, 1).Should(Equal(policiesv1.Compliant))
+			Eventually(getComplianceState(GKPolicyName), defaultTimeoutSeconds*6, 1).Should(Equal(policiesv1.Compliant))
 			By("Checking if status for policy template policy-gatekeeper-audit is compliant")
 			Eventually(func() interface{} {
 				plc := utils.GetWithTimeout(clientHubDynamic, common.GvrPolicy, userNamespace+"."+GKPolicyName, clusterNamespace, true, defaultTimeoutSeconds)
@@ -249,19 +220,7 @@ var _ = Describe("RHACM4K-3055", func() {
 		})
 		It("stable/policy-gatekeeper-sample should be noncompliant", func() {
 			By("Checking if the status of root policy is noncompliant")
-			Eventually(func() interface{} {
-				rootPlc := utils.GetWithTimeout(clientHubDynamic, common.GvrPolicy, GKPolicyName, userNamespace, true, defaultTimeoutSeconds)
-				var policy policiesv1.Policy
-				err := runtime.DefaultUnstructuredConverter.
-					FromUnstructured(rootPlc.UnstructuredContent(), &policy)
-				Expect(err).To(BeNil())
-				for _, statusPerCluster := range policy.Status.Status {
-					if statusPerCluster.ClusterNamespace == clusterNamespace {
-						return statusPerCluster.ComplianceState
-					}
-				}
-				return nil
-			}, defaultTimeoutSeconds*4, 1).Should(Equal(policiesv1.NonCompliant))
+			Eventually(getComplianceState(GKPolicyName), defaultTimeoutSeconds*4, 1).Should(Equal(policiesv1.NonCompliant))
 		})
 	})
 
@@ -295,19 +254,7 @@ var _ = Describe("RHACM4K-3055", func() {
 		})
 		It("policy-gatekeeper-operator should be compliant", func() {
 			By("Checking if the status of root policy is compliant")
-			Eventually(func() interface{} {
-				rootPlc := utils.GetWithTimeout(clientHubDynamic, common.GvrPolicy, gatekeeperPolicyName, userNamespace, true, defaultTimeoutSeconds)
-				var policy policiesv1.Policy
-				err := runtime.DefaultUnstructuredConverter.
-					FromUnstructured(rootPlc.UnstructuredContent(), &policy)
-				Expect(err).To(BeNil())
-				for _, statusPerCluster := range policy.Status.Status {
-					if statusPerCluster.ClusterNamespace == clusterNamespace {
-						return statusPerCluster.ComplianceState
-					}
-				}
-				return nil
-			}, defaultTimeoutSeconds*2, 1).Should(Equal(policiesv1.Compliant))
+			Eventually(getComplianceState(gatekeeperPolicyName), defaultTimeoutSeconds*2, 1).Should(Equal(policiesv1.Compliant))
 		})
 		It("Checking if Assign/AssingnMetadata CRDs have been created", func() {
 			Eventually(func() interface{} {
@@ -365,35 +312,11 @@ var _ = Describe("RHACM4K-3055", func() {
 		})
 		It(GKAssignPolicyName+" should be compliant", func() {
 			By("Checking if the status of root policy is compliant")
-			Eventually(func() interface{} {
-				rootPlc := utils.GetWithTimeout(clientHubDynamic, common.GvrPolicy, GKAssignPolicyName, userNamespace, true, defaultTimeoutSeconds)
-				var policy policiesv1.Policy
-				err := runtime.DefaultUnstructuredConverter.
-					FromUnstructured(rootPlc.UnstructuredContent(), &policy)
-				Expect(err).To(BeNil())
-				for _, statusPerCluster := range policy.Status.Status {
-					if statusPerCluster.ClusterNamespace == clusterNamespace {
-						return statusPerCluster.ComplianceState
-					}
-				}
-				return nil
-			}, defaultTimeoutSeconds*2, 1).Should(Equal(policiesv1.Compliant))
+			Eventually(getComplianceState(GKAssignPolicyName), defaultTimeoutSeconds*2, 1).Should(Equal(policiesv1.Compliant))
 		})
 		It(GKAssignMetadataPolicyName+" should be compliant", func() {
 			By("Checking if the status of root policy is compliant")
-			Eventually(func() interface{} {
-				rootPlc := utils.GetWithTimeout(clientHubDynamic, common.GvrPolicy, GKAssignMetadataPolicyName, userNamespace, true, defaultTimeoutSeconds)
-				var policy policiesv1.Policy
-				err := runtime.DefaultUnstructuredConverter.
-					FromUnstructured(rootPlc.UnstructuredContent(), &policy)
-				Expect(err).To(BeNil())
-				for _, statusPerCluster := range policy.Status.Status {
-					if statusPerCluster.ClusterNamespace == clusterNamespace {
-						return statusPerCluster.ComplianceState
-					}
-				}
-				return nil
-			}, defaultTimeoutSeconds*2, 1).Should(Equal(policiesv1.Compliant))
+			Eventually(getComplianceState(GKAssignMetadataPolicyName), defaultTimeoutSeconds*2, 1).Should(Equal(policiesv1.Compliant))
 		})
 
 	})

@@ -15,7 +15,6 @@ import (
 	"github.com/open-cluster-management/governance-policy-propagator/test/utils"
 	"k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	"k8s.io/apimachinery/pkg/runtime"
 )
 
 func isOCP46andAbove() bool {
@@ -80,6 +79,8 @@ var _ = Describe("RHACM4K-2222 GRC: [P1][Sev1][policy-grc] Test compliance opera
 	const compPolicyName = "policy-comp-operator"
 	const compE8ScanPolicyURL = "https://raw.githubusercontent.com/open-cluster-management/policy-collection/main/stable/CM-Configuration-Management/policy-compliance-operator-e8-scan.yaml"
 	const compE8ScanPolicyName = "policy-e8-scan"
+	var getComplianceState func() interface{}
+
 	BeforeEach(func() {
 		if !isOCP46andAbove() {
 			Skip("Skipping as compliance operator is only supported on OCP 4.6 and above")
@@ -87,6 +88,9 @@ var _ = Describe("RHACM4K-2222 GRC: [P1][Sev1][policy-grc] Test compliance opera
 		if !canCreateOpenshiftNamespaces() {
 			Skip("Skipping as compliance operator requires the ability to create the openshift-compliance namespace")
 		}
+
+		// Assign this here to avoid using nil pointers as arguments
+		getComplianceState = common.GetComplianceState(clientHubDynamic, userNamespace, compPolicyName, clusterNamespace)
 	})
 	Describe("Clean up before all", func() {
 		It("clean up compliance scan e8", func() {
@@ -163,19 +167,7 @@ var _ = Describe("RHACM4K-2222 GRC: [P1][Sev1][policy-grc] Test compliance opera
 		})
 		It("stable/policy-comp-operator should be noncompliant", func() {
 			By("Checking if the status of root policy is noncompliant")
-			Eventually(func() interface{} {
-				rootPlc := utils.GetWithTimeout(clientHubDynamic, common.GvrPolicy, compPolicyName, userNamespace, true, defaultTimeoutSeconds)
-				var policy policiesv1.Policy
-				err := runtime.DefaultUnstructuredConverter.
-					FromUnstructured(rootPlc.UnstructuredContent(), &policy)
-				Expect(err).To(BeNil())
-				for _, statusPerCluster := range policy.Status.Status {
-					if statusPerCluster.ClusterNamespace == clusterNamespace {
-						return statusPerCluster.ComplianceState
-					}
-				}
-				return nil
-			}, defaultTimeoutSeconds*2, 1).Should(Equal(policiesv1.NonCompliant))
+			Eventually(getComplianceState, defaultTimeoutSeconds*2, 1).Should(Equal(policiesv1.NonCompliant))
 		})
 		It("Enforcing stable/policy-comp-operator", func() {
 			Eventually(func() interface{} {
@@ -195,19 +187,7 @@ var _ = Describe("RHACM4K-2222 GRC: [P1][Sev1][policy-grc] Test compliance opera
 		})
 		It("stable/policy-comp-operator should be compliant", func() {
 			By("Checking if the status of root policy is compliant")
-			Eventually(func() interface{} {
-				rootPlc := utils.GetWithTimeout(clientHubDynamic, common.GvrPolicy, compPolicyName, userNamespace, true, defaultTimeoutSeconds)
-				var policy policiesv1.Policy
-				err := runtime.DefaultUnstructuredConverter.
-					FromUnstructured(rootPlc.UnstructuredContent(), &policy)
-				Expect(err).To(BeNil())
-				for _, statusPerCluster := range policy.Status.Status {
-					if statusPerCluster.ClusterNamespace == clusterNamespace {
-						return statusPerCluster.ComplianceState
-					}
-				}
-				return nil
-			}, defaultTimeoutSeconds*4, 1).Should(Equal(policiesv1.Compliant))
+			Eventually(getComplianceState, defaultTimeoutSeconds*4, 1).Should(Equal(policiesv1.Compliant))
 		})
 		It("Compliance operator pod should be running", func() {
 			By("Checking if pod compliance-operator has been created")
