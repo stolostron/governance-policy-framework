@@ -7,6 +7,10 @@ import (
 	"os/user"
 	"path/filepath"
 
+	"github.com/onsi/gomega"
+	policiesv1 "github.com/open-cluster-management/governance-policy-propagator/pkg/apis/policy/v1"
+	"github.com/open-cluster-management/governance-policy-propagator/test/utils"
+	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/client-go/dynamic"
 	"k8s.io/client-go/kubernetes"
 	"k8s.io/client-go/rest"
@@ -89,4 +93,22 @@ func LoadConfig(url, kubeconfig, context string) (*rest.Config, error) {
 	}
 
 	return nil, fmt.Errorf("could not create a valid kubeconfig")
+}
+
+// GetComplianceState returns a function that requires no arguments that retrieves the
+// compliance state of the input policy.
+func GetComplianceState(clientHubDynamic dynamic.Interface, namespace, policyName, clusterNamespace string) func() interface{} {
+	return func() interface{} {
+		rootPlc := utils.GetWithTimeout(clientHubDynamic, GvrPolicy, policyName, namespace, true, DefaultTimeoutSeconds)
+		var policy policiesv1.Policy
+		err := runtime.DefaultUnstructuredConverter.FromUnstructured(rootPlc.UnstructuredContent(), &policy)
+		gomega.Expect(err).To(gomega.BeNil())
+		for _, statusPerCluster := range policy.Status.Status {
+			if statusPerCluster.ClusterNamespace == clusterNamespace {
+				return statusPerCluster.ComplianceState
+			}
+		}
+
+		return nil
+	}
 }
