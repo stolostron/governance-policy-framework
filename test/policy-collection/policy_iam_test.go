@@ -1,15 +1,21 @@
 package e2e
 
 import (
+	"context"
+
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
 	"github.com/open-cluster-management/governance-policy-framework/test/common"
 	policiesv1 "github.com/open-cluster-management/governance-policy-propagator/pkg/apis/policy/v1"
 	"github.com/open-cluster-management/governance-policy-propagator/test/utils"
+	corev1 "k8s.io/api/core/v1"
+	"k8s.io/apimachinery/pkg/api/errors"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
 const iamPolicyName = "policy-limitclusteradmin"
 const iamPolicyURL = "https://raw.githubusercontent.com/open-cluster-management/policy-collection/main/stable/AC-Access-Control/" + iamPolicyName + ".yaml"
+const iamPolicyManagedNamespace = "iam-policy-test"
 
 // Note that these tests must be run on OpenShift since the tests create an OpenShift group
 var _ = Describe("Test the stable IAM policy", func() {
@@ -51,11 +57,28 @@ var _ = Describe("Test the stable IAM policy", func() {
 	})
 
 	It("Make the policy noncompliant", func() {
+		By("Creating the" + iamPolicyManagedNamespace + " namespace on the managed cluster")
+		namespaces := clientManaged.CoreV1().Namespaces()
+		_, err := namespaces.Create(
+			context.TODO(), &corev1.Namespace{
+				ObjectMeta: metav1.ObjectMeta{
+					Name: iamPolicyManagedNamespace,
+				},
+			},
+			metav1.CreateOptions{},
+		)
+
+		if err != nil {
+			Expect(errors.IsAlreadyExists(err)).Should(BeTrue())
+		}
+
+		Expect(namespaces.Get(context.TODO(), iamPolicyManagedNamespace, metav1.GetOptions{})).NotTo(BeNil())
+
 		By("Creating an OpenShift group (RHBZ#1981127)")
-		utils.KubectlWithOutput("apply", "-f", "../resources/iam_policy/group.yaml", "-n", userNamespace, "--kubeconfig="+kubeconfigHub)
+		utils.KubectlWithOutput("apply", "-f", "../resources/iam_policy/group.yaml", "-n", iamPolicyManagedNamespace, "--kubeconfig="+kubeconfigManaged)
 
 		By("Creating a cluster role binding")
-		utils.KubectlWithOutput("apply", "-f", "../resources/iam_policy/clusterrolebinding.yaml", "-n", userNamespace, "--kubeconfig="+kubeconfigHub)
+		utils.KubectlWithOutput("apply", "-f", "../resources/iam_policy/clusterrolebinding.yaml", "-n", iamPolicyManagedNamespace, "--kubeconfig="+kubeconfigManaged)
 	})
 
 	It("stable/"+iamPolicyName+" should be noncompliant", func() {
@@ -65,7 +88,7 @@ var _ = Describe("Test the stable IAM policy", func() {
 
 	It("Make stable/"+iamPolicyName+" be compliant", func() {
 		By("Deleting the OpenShift group")
-		utils.KubectlWithOutput("delete", "-f", "../resources/iam_policy/group.yaml", "-n", userNamespace, "--kubeconfig="+kubeconfigHub)
+		utils.KubectlWithOutput("delete", "-f", "../resources/iam_policy/group.yaml", "-n", iamPolicyManagedNamespace, "--kubeconfig="+kubeconfigManaged)
 	})
 
 	It("stable/"+iamPolicyName+" should be compliant", func() {
@@ -74,8 +97,10 @@ var _ = Describe("Test the stable IAM policy", func() {
 	})
 
 	It("Clean up stable/"+iamPolicyName, func() {
+		err := clientManaged.CoreV1().Namespaces().Delete(context.TODO(), iamPolicyManagedNamespace, metav1.DeleteOptions{})
+		Expect(err).Should(BeNil())
 		utils.KubectlWithOutput("delete", "-f", iamPolicyURL, "-n", userNamespace, "--kubeconfig="+kubeconfigHub)
-		utils.KubectlWithOutput("delete", "-f", "../resources/iam_policy/clusterrolebinding.yaml", "-n", userNamespace, "--kubeconfig="+kubeconfigHub)
+
 		Eventually(
 			func() interface{} {
 				managedPlc := utils.GetWithTimeout(
