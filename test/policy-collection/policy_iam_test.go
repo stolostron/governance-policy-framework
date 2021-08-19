@@ -52,10 +52,10 @@ var _ = Describe("Test the stable IAM policy", func() {
 
 	It("Make the policy noncompliant", func() {
 		By("Creating an OpenShift group (RHBZ#1981127)")
-		utils.KubectlWithOutput("apply", "-f", "../resources/iam_policy/group.yaml", "-n", userNamespace, "--kubeconfig="+kubeconfigHub)
+		utils.KubectlWithOutput("apply", "-f", "../resources/iam_policy/group.yaml", "-n", userNamespace, "--kubeconfig="+kubeconfigManaged)
 
 		By("Creating a cluster role binding")
-		utils.KubectlWithOutput("apply", "-f", "../resources/iam_policy/clusterrolebinding.yaml", "-n", userNamespace, "--kubeconfig="+kubeconfigHub)
+		utils.KubectlWithOutput("apply", "-f", "../resources/iam_policy/clusterrolebinding.yaml", "-n", userNamespace, "--kubeconfig="+kubeconfigManaged)
 	})
 
 	It("stable/"+iamPolicyName+" should be noncompliant", func() {
@@ -65,7 +65,7 @@ var _ = Describe("Test the stable IAM policy", func() {
 
 	It("Make stable/"+iamPolicyName+" be compliant", func() {
 		By("Deleting the OpenShift group")
-		utils.KubectlWithOutput("delete", "-f", "../resources/iam_policy/group.yaml", "-n", userNamespace, "--kubeconfig="+kubeconfigHub)
+		utils.KubectlWithOutput("delete", "-f", "../resources/iam_policy/group.yaml", "-n", userNamespace, "--kubeconfig="+kubeconfigManaged)
 	})
 
 	It("stable/"+iamPolicyName+" should be compliant", func() {
@@ -75,7 +75,7 @@ var _ = Describe("Test the stable IAM policy", func() {
 
 	It("Clean up stable/"+iamPolicyName, func() {
 		utils.KubectlWithOutput("delete", "-f", iamPolicyURL, "-n", userNamespace, "--kubeconfig="+kubeconfigHub)
-		utils.KubectlWithOutput("delete", "-f", "../resources/iam_policy/clusterrolebinding.yaml", "-n", userNamespace, "--kubeconfig="+kubeconfigHub)
+		utils.KubectlWithOutput("delete", "-f", "../resources/iam_policy/clusterrolebinding.yaml", "-n", userNamespace, "--kubeconfig="+kubeconfigManaged)
 		Eventually(
 			func() interface{} {
 				managedPlc := utils.GetWithTimeout(
