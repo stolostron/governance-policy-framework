@@ -1,3 +1,5 @@
+// Copyright Contributors to the Open Cluster Management project
+
 package common
 
 import "k8s.io/apimachinery/pkg/runtime/schema"
@@ -18,4 +20,5 @@ var (
 	GvrComplianceScan        = schema.GroupVersionResource{Group: "compliance.openshift.io", Version: "v1alpha1", Resource: "compliancescans"}
 	GvrComplianceSuite       = schema.GroupVersionResource{Group: "compliance.openshift.io", Version: "v1alpha1", Resource: "compliancesuites"}
 	GvrComplianceCheckResult = schema.GroupVersionResource{Group: "compliance.openshift.io", Version: "v1alpha1", Resource: "compliancecheckresults"}
+	GvrRoute                 = schema.GroupVersionResource{Group: "route.openshift.io", Version: "v1", Resource: "routes"}
 )
