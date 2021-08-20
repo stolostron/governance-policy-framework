@@ -4,8 +4,13 @@ package integration
 
 import (
 	"context"
+	"crypto/tls"
 	"fmt"
+	"io"
+	"net/http"
 	"os/exec"
+	"strings"
+	"time"
 
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
@@ -66,11 +71,11 @@ var _ = Describe("Test policy_governance_info metric", func() {
 	})
 	It("Checks that the endpoint does not expose metrics without auth", func() {
 		Eventually(func() interface{} {
-			resp, err := curlMetricsRoute()
+			_, status, err := getMetricsFromRoute("")
 			if err != nil {
 				return err
 			}
-			return resp
+			return status
 		}, defaultTimeoutSeconds, 1).Should(ContainSubstring("Unauthorized"))
 	})
 	It("Checks that endpoint has a HELP comment for the metric", func() {
@@ -81,7 +86,7 @@ var _ = Describe("Test policy_governance_info metric", func() {
 		token, err := oc("whoami", "-t")
 		Expect(err).To(BeNil())
 		Eventually(func() interface{} {
-			resp, err := curlMetricsRoute("--header", "Authorization: Bearer "+token)
+			resp, _, err := getMetricsFromRoute(strings.TrimSpace(token))
 			if err != nil {
 				return err
 			}
@@ -102,7 +107,7 @@ var _ = Describe("Test policy_governance_info metric", func() {
 		Expect(err).To(BeNil())
 		regex := `(?m)` + metricName + `{.*policy="` + compliantPolicyName + `.*} 0$`
 		Eventually(func() interface{} {
-			resp, err := curlMetricsRoute("--header", "Authorization: Bearer "+token)
+			resp, _, err := getMetricsFromRoute(strings.TrimSpace(token))
 			if err != nil {
 				return err
 			}
@@ -123,7 +128,7 @@ var _ = Describe("Test policy_governance_info metric", func() {
 		Expect(err).To(BeNil())
 		regex := `(?m)` + metricName + `{.*policy="` + noncompliantPolicyName + `.*} 1$`
 		Eventually(func() interface{} {
-			resp, err := curlMetricsRoute("--header", "Authorization: Bearer "+token)
+			resp, _, err := getMetricsFromRoute(strings.TrimSpace(token))
 			if err != nil {
 				return err
 			}
@@ -145,9 +150,27 @@ func oc(args ...string) (string, error) {
 	return string(output), err
 }
 
-func curlMetricsRoute(args ...string) (string, error) {
-	argList := []string{"-k", "https://" + routeURL + "/metrics"}
-	argList = append(argList, args...)
-	output, err := exec.Command("curl", argList...).CombinedOutput()
-	return string(output), err
+func getMetricsFromRoute(authToken string) (body, status string, err error) {
+	client := &http.Client{
+		Transport: &http.Transport{
+			TLSClientConfig: &tls.Config{
+				InsecureSkipVerify: true,
+			},
+		},
+		Timeout: 5 * time.Second,
+	}
+	req, err := http.NewRequest("GET", "https://"+routeURL+"/metrics", nil)
+	if err != nil {
+		return "", "", err
+	}
+	if len(authToken) > 0 {
+		req.Header.Add("Authorization", "Bearer "+authToken)
+	}
+	resp, err := client.Do(req)
+	if err != nil {
+		return "", "", err
+	}
+	defer resp.Body.Close()
+	bodyBytes, err := io.ReadAll(resp.Body)
+	return string(bodyBytes), resp.Status, err
 }
