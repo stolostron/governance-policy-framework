@@ -31,7 +31,7 @@ const (
 	noncompliantPolicyName    = "policy-metric-noncompliant"
 )
 
-var routeURL string
+var routeHost string
 
 var _ = Describe("Test policy_governance_info metric", func() {
 	It("Sets up the metrics service endpoint for tests", func() {
@@ -67,8 +67,8 @@ var _ = Describe("Test policy_governance_info metric", func() {
 			}, defaultTimeoutSeconds, 1).Should(Equal(1))
 		}
 
-		routeURL = routeList.Items[0].Object["spec"].(map[string]interface{})["host"].(string)
-		By("Got the metrics route url: " + routeURL)
+		routeHost = routeList.Items[0].Object["spec"].(map[string]interface{})["host"].(string)
+		By("Got the metrics route url: " + routeHost)
 	})
 	It("Checks that the endpoint does not expose metrics without auth", func() {
 		Eventually(func() interface{} {
@@ -160,11 +160,11 @@ func getMetricsFromRoute(authToken string) (body, status string, err error) {
 		},
 		Timeout: 5 * time.Second,
 	}
-	req, err := http.NewRequest("GET", "https://"+routeURL+"/metrics", nil)
+	req, err := http.NewRequest("GET", "https://"+routeHost+"/metrics", nil)
 	if err != nil {
 		return "", "", err
 	}
-	if len(authToken) > 0 {
+	if authToken != "" {
 		req.Header.Add("Authorization", "Bearer "+authToken)
 	}
 	resp, err := client.Do(req)
