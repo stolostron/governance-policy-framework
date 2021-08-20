@@ -14,6 +14,7 @@ import (
 
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
+	"github.com/onsi/gomega/types"
 	"github.com/open-cluster-management/governance-policy-framework/test/common"
 	policiesv1 "github.com/open-cluster-management/governance-policy-propagator/pkg/apis/policy/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -105,14 +106,14 @@ var _ = Describe("Test policy_governance_info metric", func() {
 		By("Checking the policy metric")
 		token, err := oc("whoami", "-t")
 		Expect(err).To(BeNil())
-		regex := `(?m)` + metricName + `{.*policy="` + compliantPolicyName + `.*} 0$`
+		policyLabel := `policy="` + compliantPolicyName + `"`
 		Eventually(func() interface{} {
 			resp, _, err := getMetricsFromRoute(strings.TrimSpace(token))
 			if err != nil {
 				return err
 			}
 			return resp
-		}, defaultTimeoutSeconds, 1).Should(MatchRegexp(regex))
+		}, defaultTimeoutSeconds, 1).Should(matchMetricValue(metricName, policyLabel, "0"))
 	})
 	It("Checks that a noncompliant policy reports a metric of 1", func() {
 		By("Creating a noncompliant policy")
@@ -126,14 +127,14 @@ var _ = Describe("Test policy_governance_info metric", func() {
 		By("Checking the policy metric")
 		token, err := oc("whoami", "-t")
 		Expect(err).To(BeNil())
-		regex := `(?m)` + metricName + `{.*policy="` + noncompliantPolicyName + `.*} 1$`
+		policyLabel := `policy="` + noncompliantPolicyName + `"`
 		Eventually(func() interface{} {
 			resp, _, err := getMetricsFromRoute(strings.TrimSpace(token))
 			if err != nil {
 				return err
 			}
 			return resp
-		}, defaultTimeoutSeconds, 1).Should(MatchRegexp(regex))
+		}, defaultTimeoutSeconds, 1).Should(matchMetricValue(metricName, policyLabel, "1"))
 	})
 	It("Cleans up", func() {
 		oc("delete", "-f", compliantPolicyYaml, "-n", userNamespace, "--kubeconfig="+kubeconfigHub)
@@ -173,4 +174,12 @@ func getMetricsFromRoute(authToken string) (body, status string, err error) {
 	defer resp.Body.Close()
 	bodyBytes, err := io.ReadAll(resp.Body)
 	return string(bodyBytes), resp.Status, err
+}
+
+func matchMetricValue(name, label, value string) types.GomegaMatcher {
+	regex := `(?m)`              // multiline mode (makes ^ and $ work)
+	regex += "^" + name + "{"    // full name of metric at start of line
+	regex += ".*" + label + ".*" // label somewhere inside the {...}
+	regex += "} " + value + "$"  // value at the end of line
+	return MatchRegexp(regex)
 }
