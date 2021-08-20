@@ -74,6 +74,10 @@ var _ = Describe("Test policy_governance_info metric", func() {
 		}, defaultTimeoutSeconds, 1).Should(ContainSubstring("Unauthorized"))
 	})
 	It("Checks that endpoint has a HELP comment for the metric", func() {
+		By("Creating a policy")
+		oc("apply", "-f", compliantPolicyYaml, "-n", userNamespace, "--kubeconfig="+kubeconfigHub)
+		// Don't need to check compliance - just need to guarantee there is a policy in the cluster
+
 		token, err := oc("whoami", "-t")
 		Expect(err).To(BeNil())
 		Eventually(func() interface{} {
