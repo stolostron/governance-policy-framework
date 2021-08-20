@@ -61,13 +61,13 @@ var _ = BeforeSuite(func() {
 	}
 
 	By("Create Namespace if needed")
-	namespaces := clientHub.CoreV1().Namespaces()
-	if _, err := namespaces.Get(context.TODO(), userNamespace, metav1.GetOptions{}); err != nil && errors.IsNotFound(err) {
-		Expect(namespaces.Create(context.TODO(), &corev1.Namespace{
-			ObjectMeta: metav1.ObjectMeta{
-				Name: userNamespace,
-			},
-		}, metav1.CreateOptions{})).NotTo(BeNil())
+	_, err := clientHub.CoreV1().Namespaces().Create(context.TODO(), &corev1.Namespace{
+		ObjectMeta: metav1.ObjectMeta{
+			Name: userNamespace,
+		},
+	}, metav1.CreateOptions{})
+	if err != nil {
+		Expect(errors.IsAlreadyExists(err)).Should(BeTrue())
 	}
-	Expect(namespaces.Get(context.TODO(), userNamespace, metav1.GetOptions{})).NotTo(BeNil())
+	Expect(clientHub.CoreV1().Namespaces().Get(context.TODO(), userNamespace, metav1.GetOptions{})).NotTo(BeNil())
 })
