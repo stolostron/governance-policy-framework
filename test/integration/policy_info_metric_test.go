@@ -6,7 +6,7 @@ import (
 	"context"
 	"crypto/tls"
 	"fmt"
-	"io"
+	"io/ioutil"
 	"net/http"
 	"os/exec"
 	"strings"
@@ -172,7 +172,7 @@ func getMetricsFromRoute(authToken string) (body, status string, err error) {
 		return "", "", err
 	}
 	defer resp.Body.Close()
-	bodyBytes, err := io.ReadAll(resp.Body)
+	bodyBytes, err := ioutil.ReadAll(resp.Body)
 	return string(bodyBytes), resp.Status, err
 }
 
