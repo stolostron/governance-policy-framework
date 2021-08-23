@@ -54,7 +54,7 @@ var _ = Describe("Test policy_governance_info metric", func() {
 
 		if len(routeList.Items) == 0 {
 			By("Exposing the metrics service as a route")
-			_, err = oc("expose", "service", metricsSvc.Name, "-n", ocmNS, `--overrides={"spec":{"tls":{"termination":"reencrypt"}}}`)
+			_, err = ocHub("expose", "service", metricsSvc.Name, "-n", ocmNS, `--overrides={"spec":{"tls":{"termination":"reencrypt"}}}`)
 			Expect(err).To(BeNil())
 
 			Eventually(func() interface{} {
@@ -81,10 +81,10 @@ var _ = Describe("Test policy_governance_info metric", func() {
 	})
 	It("Checks that endpoint has a HELP comment for the metric", func() {
 		By("Creating a policy")
-		oc("apply", "-f", compliantPolicyYaml, "-n", userNamespace, "--kubeconfig="+kubeconfigHub)
+		ocHub("apply", "-f", compliantPolicyYaml, "-n", userNamespace)
 		// Don't need to check compliance - just need to guarantee there is a policy in the cluster
 
-		token, err := oc("whoami", "-t")
+		token, err := ocHub("whoami", "-t")
 		Expect(err).To(BeNil())
 		Eventually(func() interface{} {
 			resp, _, err := getMetricsFromRoute(strings.TrimSpace(token))
@@ -96,7 +96,7 @@ var _ = Describe("Test policy_governance_info metric", func() {
 	})
 	It("Checks that a compliant policy reports a metric of 0", func() {
 		By("Creating a compliant policy")
-		oc("apply", "-f", compliantPolicyYaml, "-n", userNamespace, "--kubeconfig="+kubeconfigHub)
+		ocHub("apply", "-f", compliantPolicyYaml, "-n", userNamespace)
 		Eventually(
 			getComplianceState(compliantPolicyName),
 			defaultTimeoutSeconds,
@@ -104,7 +104,7 @@ var _ = Describe("Test policy_governance_info metric", func() {
 		).Should(Equal(policiesv1.Compliant))
 
 		By("Checking the policy metric")
-		token, err := oc("whoami", "-t")
+		token, err := ocHub("whoami", "-t")
 		Expect(err).To(BeNil())
 		policyLabel := `policy="` + compliantPolicyName + `"`
 		Eventually(func() interface{} {
@@ -117,7 +117,7 @@ var _ = Describe("Test policy_governance_info metric", func() {
 	})
 	It("Checks that a noncompliant policy reports a metric of 1", func() {
 		By("Creating a noncompliant policy")
-		oc("apply", "-f", noncompliantPolicyYaml, "-n", userNamespace, "--kubeconfig="+kubeconfigHub)
+		ocHub("apply", "-f", noncompliantPolicyYaml, "-n", userNamespace)
 		Eventually(
 			getComplianceState(noncompliantPolicyName),
 			defaultTimeoutSeconds,
@@ -125,7 +125,7 @@ var _ = Describe("Test policy_governance_info metric", func() {
 		).Should(Equal(policiesv1.NonCompliant))
 
 		By("Checking the policy metric")
-		token, err := oc("whoami", "-t")
+		token, err := ocHub("whoami", "-t")
 		Expect(err).To(BeNil())
 		policyLabel := `policy="` + noncompliantPolicyName + `"`
 		Eventually(func() interface{} {
@@ -137,13 +137,14 @@ var _ = Describe("Test policy_governance_info metric", func() {
 		}, defaultTimeoutSeconds, 1).Should(matchMetricValue(metricName, policyLabel, "1"))
 	})
 	It("Cleans up", func() {
-		oc("delete", "-f", compliantPolicyYaml, "-n", userNamespace, "--kubeconfig="+kubeconfigHub)
-		oc("delete", "-f", noncompliantPolicyYaml, "-n", userNamespace, "--kubeconfig="+kubeconfigHub)
-		oc("delete", "route", "-n", ocmNS, "-l", propagatorMetricsSelector)
+		ocHub("delete", "-f", compliantPolicyYaml, "-n", userNamespace)
+		ocHub("delete", "-f", noncompliantPolicyYaml, "-n", userNamespace)
+		ocHub("delete", "route", "-n", ocmNS, "-l", propagatorMetricsSelector)
 	})
 })
 
-func oc(args ...string) (string, error) {
+func ocHub(args ...string) (string, error) {
+	args = append([]string{"--kubeconfig=" + kubeconfigHub}, args...)
 	output, err := exec.Command("oc", args...).CombinedOutput()
 	if len(args) > 0 && args[0] != "whoami" {
 		fmt.Println(string(output))
