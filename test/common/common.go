@@ -6,6 +6,7 @@ import (
 	"flag"
 	"fmt"
 	"os"
+	"os/exec"
 	"os/user"
 	"path/filepath"
 
@@ -113,4 +114,22 @@ func GetComplianceState(clientHubDynamic dynamic.Interface, namespace, policyNam
 
 		return nil
 	}
+}
+
+func OcHub(args ...string) (string, error) {
+	args = append([]string{"--kubeconfig=" + KubeconfigHub}, args...)
+	output, err := exec.Command("oc", args...).CombinedOutput()
+	if len(args) > 0 && args[0] != "whoami" {
+		fmt.Println(string(output))
+	}
+	return string(output), err
+}
+
+func OcManaged(args ...string) (string, error) {
+	args = append([]string{"--kubeconfig=" + KubeconfigManaged}, args...)
+	output, err := exec.Command("oc", args...).CombinedOutput()
+	if len(args) > 0 && args[0] != "whoami" {
+		fmt.Println(string(output))
+	}
+	return string(output), err
 }
