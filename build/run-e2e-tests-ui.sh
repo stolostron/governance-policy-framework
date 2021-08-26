@@ -23,5 +23,4 @@ docker run --volume $(pwd)/results:/opt/app-root/src/grc-ui/test-output/e2e \
     --env CYPRESS_TAGS_INCLUDE=$CYPRESS_TAGS_INCLUDE \
     --env CYPRESS_TAGS_EXCLUDE=$CYPRESS_TAGS_EXCLUDE \
     --env MANAGED_CLUSTER_NAME=$MANAGED_CLUSTER_NAME \
-    --env SKIP_CLEANUP=true \
     $DOCKER_URI
