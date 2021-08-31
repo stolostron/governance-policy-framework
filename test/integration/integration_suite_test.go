@@ -1,7 +1,6 @@
-// Copyright (c) 2020 Red Hat, Inc.
 // Copyright Contributors to the Open Cluster Management project
 
-package e2e
+package integration
 
 import (
 	"context"
@@ -30,12 +29,13 @@ var (
 	clientHubDynamic      dynamic.Interface
 	clientManaged         kubernetes.Interface
 	clientManagedDynamic  dynamic.Interface
+	getComplianceState    func(policyName string) func() interface{}
 )
 
-func TestE2e(t *testing.T) {
+func TestIntegration(t *testing.T) {
 	RegisterFailHandler(Fail)
-	junitReporter := reporters.NewJUnitReporter("../../test-output/policy-collection.xml")
-	RunSpecsWithDefaultAndCustomReporters(t, "Policy collection repo e2e Suite", []Reporter{junitReporter})
+	junitReporter := reporters.NewJUnitReporter("../../test-output/integration.xml")
+	RunSpecsWithDefaultAndCustomReporters(t, "Policy Framework repo integration Suite", []Reporter{junitReporter})
 }
 
 func init() {
@@ -56,14 +56,18 @@ var _ = BeforeSuite(func() {
 	clientManaged = common.NewKubeClient("", kubeconfigManaged, "")
 	clientManagedDynamic = common.NewKubeClientDynamic("", kubeconfigManaged, "")
 
-	By("Create Namespace if needed")
-	namespaces := clientHub.CoreV1().Namespaces()
-	if _, err := namespaces.Get(context.TODO(), userNamespace, metav1.GetOptions{}); err != nil && errors.IsNotFound(err) {
-		Expect(namespaces.Create(context.TODO(), &corev1.Namespace{
-			ObjectMeta: metav1.ObjectMeta{
-				Name: userNamespace,
-			},
-		}, metav1.CreateOptions{})).NotTo(BeNil())
+	getComplianceState = func(policyName string) func() interface{} {
+		return common.GetComplianceState(clientHubDynamic, userNamespace, policyName, clusterNamespace)
 	}
-	Expect(namespaces.Get(context.TODO(), userNamespace, metav1.GetOptions{})).NotTo(BeNil())
+
+	By("Create Namespace if needed")
+	_, err := clientHub.CoreV1().Namespaces().Create(context.TODO(), &corev1.Namespace{
+		ObjectMeta: metav1.ObjectMeta{
+			Name: userNamespace,
+		},
+	}, metav1.CreateOptions{})
+	if err != nil {
+		Expect(errors.IsAlreadyExists(err)).Should(BeTrue())
+	}
+	Expect(clientHub.CoreV1().Namespaces().Get(context.TODO(), userNamespace, metav1.GetOptions{})).NotTo(BeNil())
 })

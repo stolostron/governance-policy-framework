@@ -13,8 +13,11 @@ GITHUB_TOKEN ?=
 # Handle KinD configuration
 KIND_HUB_NAMESPACE ?= open-cluster-management
 KIND_MANAGED_NAMESPACE ?= open-cluster-management-agent-addon
-MANAGED_CLUSTER_NAME ?= cluster1
+MANAGED_CLUSTER_NAME ?= managed
 HUB_CLUSTER_NAME ?= hub
+
+# Test configuration
+TEST_FILE ?=
 
 USE_VENDORIZED_BUILD_HARNESS ?=
 
@@ -91,13 +94,13 @@ kind-deploy-policy-framework:
 	@echo creating secrets on managed
 	kubectl create ns $(KIND_MANAGED_NAMESPACE) --kubeconfig=$(PWD)/kubeconfig_$(MANAGED_CLUSTER_NAME)
 	kubectl create secret -n $(KIND_MANAGED_NAMESPACE) generic hub-kubeconfig --from-file=kubeconfig=$(PWD)/kubeconfig_$(HUB_CLUSTER_NAME)_internal --kubeconfig=$(PWD)/kubeconfig_$(MANAGED_CLUSTER_NAME)
-	if [ "$(deployOnHub)" = "true" ]; then\
+	@if [ "$(deployOnHub)" = "true" ]; then\
 		echo skipping installing policy-spec-sync on managed;\
 	else\
 		echo installing policy-spec-sync on managed;\
 		kubectl apply -f deploy/spec-sync -n $(KIND_MANAGED_NAMESPACE) --kubeconfig=$(PWD)/kubeconfig_$(MANAGED_CLUSTER_NAME);\
 	fi
-	if [ "$(deployOnHub)" = "true" ]; then\
+	@if [ "$(deployOnHub)" = "true" ]; then\
 		echo installing policy-status-sync with ON_MULTICLUSTERHUB;\
 		kubectl apply -k deploy/status-sync -n $(KIND_MANAGED_NAMESPACE) --kubeconfig=$(PWD)/kubeconfig_$(MANAGED_CLUSTER_NAME);\
 	else\
@@ -131,9 +134,9 @@ kind-create-cluster:
 	@echo "creating cluster hub"
 	kind create cluster --name $(HUB_CLUSTER_NAME)
 	kind get kubeconfig --name $(HUB_CLUSTER_NAME) > $(PWD)/kubeconfig_$(HUB_CLUSTER_NAME)
-	# needed for mangaed -> hub communication
+	# needed for managed -> hub communication
 	kind get kubeconfig --name $(HUB_CLUSTER_NAME) --internal > $(PWD)/kubeconfig_$(HUB_CLUSTER_NAME)_internal
-	if [ "$(deployOnHub)" = "true" ]; then\
+	@if [ "$(deployOnHub)" = "true" ]; then\
 		echo import cluster hub as managed;\
 		kind get kubeconfig --name $(HUB_CLUSTER_NAME) > $(PWD)/kubeconfig_$(MANAGED_CLUSTER_NAME);\
 	else\
@@ -145,11 +148,16 @@ kind-create-cluster:
 kind-delete-cluster:
 	kind delete cluster --name $(HUB_CLUSTER_NAME)
 	kind delete cluster --name $(MANAGED_CLUSTER_NAME)
+	rm $(PWD)/kubeconfig_$(HUB_CLUSTER_NAME) || true
+	rm $(PWD)/kubeconfig_$(HUB_CLUSTER_NAME)_internal || true
+	rm $(PWD)/kubeconfig_$(MANAGED_CLUSTER_NAME) || true
 
 install-crds:
 	@echo installing crds on hub
 	kubectl apply -f deploy/crds/apps.open-cluster-management.io_placementrules_crd.yaml --kubeconfig=$(PWD)/kubeconfig_$(HUB_CLUSTER_NAME)
 	kubectl apply -f deploy/crds/cluster.open-cluster-management.io_managedclusters.yaml --kubeconfig=$(PWD)/kubeconfig_$(HUB_CLUSTER_NAME)
+	kubectl apply -f deploy/crds/cluster.open-cluster-management.io_placementdecisions_crd.yaml --kubeconfig=$(PWD)/kubeconfig_$(HUB_CLUSTER_NAME)
+	kubectl apply -f deploy/crds/cluster.open-cluster-management.io_placements_crd.yaml --kubeconfig=$(PWD)/kubeconfig_$(HUB_CLUSTER_NAME)
 	kubectl apply -f deploy/crds/policy.open-cluster-management.io_placementbindings_crd.yaml --kubeconfig=$(PWD)/kubeconfig_$(HUB_CLUSTER_NAME)
 	kubectl apply -f deploy/crds/policy.open-cluster-management.io_policies_crd.yaml --kubeconfig=$(PWD)/kubeconfig_$(HUB_CLUSTER_NAME)
 	kubectl apply -f deploy/crds/policy.open-cluster-management.io_policyautomations_crd.yaml --kubeconfig=$(PWD)/kubeconfig_$(HUB_CLUSTER_NAME)
@@ -164,10 +172,19 @@ install-resources:
 	kubectl apply -f test/resources/managed-cluster.yaml --kubeconfig=$(PWD)/kubeconfig_$(HUB_CLUSTER_NAME)
 	
 e2e-test:
-	ginkgo -v --slowSpecThreshold=10 test/e2e
+	@if [ -z "$(TEST_FILE)" ]; then\
+		ginkgo -v --slowSpecThreshold=10 test/e2e;\
+	else\
+		ginkgo -v --slowSpecThreshold=10 --regexScansFilePath=true --focus=$(TEST_FILE) test/e2e;\
+	fi
 
 policy-collection-test:
-	ginkgo -v --slowSpecThreshold=10 test/policy-collection
+	@if [ -z "$(TEST_FILE)" ]; then\
+		ginkgo -v --slowSpecThreshold=10 test/policy-collection;\
+	else\
+		ginkgo -v --slowSpecThreshold=10 --regexScansFilePath=true --focus=$(TEST_FILE) test/policy-collection;\
+	fi
+	
 
 travis-slack-reporter:
 	docker run --volume $(PWD)/results:/opt/app-root/src/grc-ui/test-output/e2e \

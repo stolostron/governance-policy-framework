@@ -16,7 +16,7 @@ View the following functions of the policy framework:
 * Supports multiple policy engines and policy languages.
 * Provides an extensible mechanism to bring your own policy.
 
-## Architecutre
+## Architecture
 
 ![architecture](images/policy-framework-architecture-diagram.jpg)
 
