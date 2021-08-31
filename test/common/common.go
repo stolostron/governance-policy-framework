@@ -118,10 +118,16 @@ func GetComplianceState(clientHubDynamic dynamic.Interface, namespace, policyNam
 
 func OcHub(args ...string) (string, error) {
 	args = append([]string{"--kubeconfig=" + KubeconfigHub}, args...)
-	output, err := exec.Command("oc", args...).CombinedOutput()
+	output, err := exec.Command("oc", args...).Output()
 	if len(args) > 0 && args[0] != "whoami" {
 		fmt.Println(string(output))
 	}
+	if exitError, ok := err.(*exec.ExitError); ok {
+		if (exitError.Stderr == nil) {
+			return string(output), nil
+		}
+        return string(output), fmt.Errorf(string(exitError.Stderr))
+    }
 	return string(output), err
 }
 
