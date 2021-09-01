@@ -5,6 +5,7 @@ package integration
 import (
 	"context"
 	"strings"
+	"fmt"
 
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
@@ -18,6 +19,9 @@ const (
 	propagatorMetricsSelector = "component=ocm-policy-propagator"
 	ocmNS                     = "open-cluster-management"
 	metricName                = "policy_governance_info"
+	saName					  = "grc-framework-sa"
+	saNamespace				  = "kube-system"
+	roleBindingName			  = "grc-framework-role-binding"
 	compliantPolicyYaml       = "../resources/policy_info_metric/compliant.yaml"
 	compliantPolicyName       = "policy-metric-compliant"
 	noncompliantPolicyYaml    = "../resources/policy_info_metric/noncompliant.yaml"
@@ -78,8 +82,16 @@ var _ = Describe("Test policy_governance_info metric", func() {
 		common.OcHub("apply", "-f", compliantPolicyYaml, "-n", userNamespace)
 		// Don't need to check compliance - just need to guarantee there is a policy in the cluster
 
-		token, err := common.OcHub("whoami", "-t")
+		//get token from SA
+		_, err := common.OcHub("create", "serviceaccount", saName, "-n", saNamespace)
 		Expect(err).To(BeNil())
+		_, err = common.OcHub("create", "clusterrolebinding", roleBindingName, "--clusterrole=cluster-admin", fmt.Sprintf("--serviceaccount=%s:%s", saNamespace, saName))
+		Expect(err).To(BeNil())
+		tokenName, err := common.OcHub("get", fmt.Sprintf("serviceaccount/%s", saName), "-n", saNamespace, "-o", "jsonpath='{.secrets[0].name}'")
+		Expect(err).To(BeNil())
+		token, err := common.OcHub("get", "secret", tokenName, "-n", saNamespace, "-o", "jsonpath='{.data.token}'| base64 --decode")
+		Expect(err).To(BeNil())
+
 		Eventually(func() interface{} {
 			resp, _, err := common.GetWithToken(propagatorMetricsURL, strings.TrimSpace(token))
 			if err != nil {
