@@ -4,8 +4,8 @@ package integration
 
 import (
 	"context"
-	"strings"
 	"fmt"
+	"strings"
 
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
@@ -19,9 +19,8 @@ const (
 	propagatorMetricsSelector = "component=ocm-policy-propagator"
 	ocmNS                     = "open-cluster-management"
 	metricName                = "policy_governance_info"
-	saName					  = "grc-framework-sa"
-	saNamespace				  = "kube-system"
-	roleBindingName			  = "grc-framework-role-binding"
+	saName                    = "grc-framework-sa"
+	roleBindingName           = "grc-framework-role-binding"
 	compliantPolicyYaml       = "../resources/policy_info_metric/compliant.yaml"
 	compliantPolicyName       = "policy-metric-compliant"
 	noncompliantPolicyYaml    = "../resources/policy_info_metric/noncompliant.yaml"
@@ -83,13 +82,13 @@ var _ = Describe("Test policy_governance_info metric", func() {
 		// Don't need to check compliance - just need to guarantee there is a policy in the cluster
 
 		//get token from SA
-		_, err := common.OcHub("create", "serviceaccount", saName, "-n", saNamespace)
+		_, err := common.OcHub("create", "serviceaccount", saName, "-n", userNamespace)
 		Expect(err).To(BeNil())
-		_, err = common.OcHub("create", "clusterrolebinding", roleBindingName, "--clusterrole=cluster-admin", fmt.Sprintf("--serviceaccount=%s:%s", saNamespace, saName))
+		_, err = common.OcHub("create", "clusterrolebinding", roleBindingName, "--clusterrole=cluster-admin", fmt.Sprintf("--serviceaccount=%s:%s", userNamespace, saName))
 		Expect(err).To(BeNil())
-		tokenName, err := common.OcHub("get", fmt.Sprintf("serviceaccount/%s", saName), "-n", saNamespace, "-o", "jsonpath='{.secrets[0].name}'")
+		tokenName, err := common.OcHub("get", fmt.Sprintf("serviceaccount/%s", saName), "-n", userNamespace, "-o", "jsonpath='{.secrets[0].name}'")
 		Expect(err).To(BeNil())
-		token, err := common.OcHub("get", "secret", tokenName, "-n", saNamespace, "-o", "jsonpath='{.data.token}'| base64 --decode")
+		token, err := common.OcHub("get", "secret", tokenName, "-n", userNamespace, "-o", "jsonpath='{.data.token}'| base64 --decode")
 		Expect(err).To(BeNil())
 
 		Eventually(func() interface{} {
@@ -146,5 +145,7 @@ var _ = Describe("Test policy_governance_info metric", func() {
 		common.OcHub("delete", "-f", compliantPolicyYaml, "-n", userNamespace)
 		common.OcHub("delete", "-f", noncompliantPolicyYaml, "-n", userNamespace)
 		common.OcHub("delete", "route", "-n", ocmNS, "-l", propagatorMetricsSelector)
+		common.OcHub("delete", "clusterrolebinding", "-n", roleBindingName)
+		common.OcHub("delete", "serviceaccount", saName, "-n", userNamespace)
 	})
 })
