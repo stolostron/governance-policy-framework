@@ -29,6 +29,8 @@ const (
 
 var propagatorMetricsURL string
 
+var token string
+
 var _ = Describe("Test policy_governance_info metric", func() {
 	It("Sets up the metrics service endpoint for tests", func() {
 		By("Ensuring the metrics service exists")
@@ -66,6 +68,16 @@ var _ = Describe("Test policy_governance_info metric", func() {
 		routeHost := routeList.Items[0].Object["spec"].(map[string]interface{})["host"].(string)
 		By("Got the metrics route url: " + routeHost)
 		propagatorMetricsURL = "https://" + routeHost + "/metrics"
+
+		//get auth token from service account
+		_, err = common.OcHub("create", "serviceaccount", saName, "-n", userNamespace)
+		Expect(err).To(BeNil())
+		_, err = common.OcHub("create", "clusterrolebinding", roleBindingName, "--clusterrole=cluster-admin", fmt.Sprintf("--serviceaccount=%s:%s", userNamespace, saName))
+		Expect(err).To(BeNil())
+		tokenName, err := common.OcHub("get", fmt.Sprintf("serviceaccount/%s", saName), "-n", userNamespace, "-o", "jsonpath='{.secrets[0].name}'")
+		Expect(err).To(BeNil())
+		token, err = common.OcHub("get", "secret", tokenName, "-n", userNamespace, "-o", "jsonpath='{.data.token}'| base64 --decode")
+		Expect(err).To(BeNil())
 	})
 	It("Checks that the endpoint does not expose metrics without auth", func() {
 		Eventually(func() interface{} {
@@ -80,16 +92,6 @@ var _ = Describe("Test policy_governance_info metric", func() {
 		By("Creating a policy")
 		common.OcHub("apply", "-f", compliantPolicyYaml, "-n", userNamespace)
 		// Don't need to check compliance - just need to guarantee there is a policy in the cluster
-
-		//get token from SA
-		_, err := common.OcHub("create", "serviceaccount", saName, "-n", userNamespace)
-		Expect(err).To(BeNil())
-		_, err = common.OcHub("create", "clusterrolebinding", roleBindingName, "--clusterrole=cluster-admin", fmt.Sprintf("--serviceaccount=%s:%s", userNamespace, saName))
-		Expect(err).To(BeNil())
-		tokenName, err := common.OcHub("get", fmt.Sprintf("serviceaccount/%s", saName), "-n", userNamespace, "-o", "jsonpath='{.secrets[0].name}'")
-		Expect(err).To(BeNil())
-		token, err := common.OcHub("get", "secret", tokenName, "-n", userNamespace, "-o", "jsonpath='{.data.token}'| base64 --decode")
-		Expect(err).To(BeNil())
 
 		Eventually(func() interface{} {
 			resp, _, err := common.GetWithToken(propagatorMetricsURL, strings.TrimSpace(token))
@@ -109,8 +111,6 @@ var _ = Describe("Test policy_governance_info metric", func() {
 		).Should(Equal(policiesv1.Compliant))
 
 		By("Checking the policy metric")
-		token, err := common.OcHub("whoami", "-t")
-		Expect(err).To(BeNil())
 		policyLabel := `policy="` + compliantPolicyName + `"`
 		Eventually(func() interface{} {
 			resp, _, err := common.GetWithToken(propagatorMetricsURL, strings.TrimSpace(token))
@@ -130,8 +130,6 @@ var _ = Describe("Test policy_governance_info metric", func() {
 		).Should(Equal(policiesv1.NonCompliant))
 
 		By("Checking the policy metric")
-		token, err := common.OcHub("whoami", "-t")
-		Expect(err).To(BeNil())
 		policyLabel := `policy="` + noncompliantPolicyName + `"`
 		Eventually(func() interface{} {
 			resp, _, err := common.GetWithToken(propagatorMetricsURL, strings.TrimSpace(token))
