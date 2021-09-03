@@ -31,7 +31,7 @@ var propagatorMetricsURL string
 
 var token string
 
-var _ = Describe("Test policy_governance_info metric", func() {
+var _ = Describe("GRC: [P1][Sev1][policy-grc] Test policy_governance_info metric", func() {
 	It("Sets up the metrics service endpoint for tests", func() {
 		By("Ensuring the metrics service exists")
 		svcList, err := clientHub.CoreV1().Services(ocmNS).List(context.TODO(), metav1.ListOptions{LabelSelector: propagatorMetricsSelector})
