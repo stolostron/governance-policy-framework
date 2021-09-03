@@ -1,10 +1,12 @@
+//oc get deployments -n open-cluster-management -l component=insights-client -o name
+//oc set env deployment.apps/policyreport-57d8d-insights-client -n open-cluster-management POLL_INTERVAL=1
+
 // Copyright Contributors to the Open Cluster Management project
 
 package integration
 
 import (
 	"context"
-	"encoding/base64"
 	"fmt"
 	"strings"
 
@@ -17,34 +19,38 @@ import (
 )
 
 const (
-	propagatorMetricsSelector = "component=ocm-policy-propagator"
-	ocmNS                     = "open-cluster-management"
-	metricName                = "policy_governance_info"
-	saName                    = "grc-framework-sa"
-	roleBindingName           = "grc-framework-role-binding"
-	compliantPolicyYaml       = "../resources/policy_info_metric/compliant.yaml"
-	compliantPolicyName       = "policy-metric-compliant"
-	noncompliantPolicyYaml    = "../resources/policy_info_metric/noncompliant.yaml"
-	noncompliantPolicyName    = "policy-metric-noncompliant"
+	insightsMetricsSelector = "component=insights-client"
+	// ocmNS                     = "open-cluster-management"
+	insightsMetricName           = "policyreport_info"
+	// compliantPolicyYaml       = "../resources/policy_info_metric/compliant.yaml"
+	// compliantPolicyName       = "policy-metric-compliant"
+	// noncompliantPolicyYaml    = "../resources/policy_info_metric/noncompliant.yaml"
+	// noncompliantPolicyName    = "policy-metric-noncompliant"
 )
 
-var propagatorMetricsURL string
+var insightsMetricsURL string
 
-var metricToken string
+var insightsToken string
 
-var _ = Describe("GRC: [P1][Sev1][policy-grc] Test policy_governance_info metric", func() {
+var _ = Describe("Test policy_governance_info metric", func() {
 	It("Sets up the metrics service endpoint for tests", func() {
 		By("Ensuring the metrics service exists")
-		svcList, err := clientHub.CoreV1().Services(ocmNS).List(context.TODO(), metav1.ListOptions{LabelSelector: propagatorMetricsSelector})
+		svcList, err := clientHub.CoreV1().Services(ocmNS).List(context.TODO(), metav1.ListOptions{LabelSelector: insightsMetricsSelector})
 		Expect(err).To(BeNil())
 		Expect(len(svcList.Items)).To(Equal(1))
 		metricsSvc := svcList.Items[0]
+
+		//set up insights-client to poll every minute
+		insightsClient, err := common.OcHub("get", "deployments", "-n", ocmNS, "-l", insightsMetricsSelector, "-o", "name")
+		Expect(err).To(BeNil())
+		_, err = common.OcHub("set", "env", insightsClient, "-n", ocmNS, "POLL_INTERVAL=1")
+		Expect(err).To(BeNil())
 
 		By("Checking for an existing metrics route")
 		var routeList *unstructured.UnstructuredList
 		Eventually(func() interface{} {
 			var err error
-			routeList, err = clientHubDynamic.Resource(common.GvrRoute).Namespace(ocmNS).List(context.TODO(), metav1.ListOptions{LabelSelector: propagatorMetricsSelector})
+			routeList, err = clientHubDynamic.Resource(common.GvrRoute).Namespace(ocmNS).List(context.TODO(), metav1.ListOptions{LabelSelector: insightsMetricsSelector})
 			if err != nil {
 				return err
 			}
@@ -52,13 +58,13 @@ var _ = Describe("GRC: [P1][Sev1][policy-grc] Test policy_governance_info metric
 		}, defaultTimeoutSeconds, 1).Should(Or(Equal(0), Equal(1)))
 
 		if len(routeList.Items) == 0 {
-			By("Exposing the metrics service as a route")
+			By("Exposing the insights metrics service as a route")
 			_, err = common.OcHub("expose", "service", metricsSvc.Name, "-n", ocmNS, `--overrides={"spec":{"tls":{"termination":"reencrypt"}}}`)
 			Expect(err).To(BeNil())
 
 			Eventually(func() interface{} {
 				var err error
-				routeList, err = clientHubDynamic.Resource(common.GvrRoute).Namespace(ocmNS).List(context.TODO(), metav1.ListOptions{LabelSelector: propagatorMetricsSelector})
+				routeList, err = clientHubDynamic.Resource(common.GvrRoute).Namespace(ocmNS).List(context.TODO(), metav1.ListOptions{LabelSelector: insightsMetricsSelector})
 				if err != nil {
 					return err
 				}
@@ -68,32 +74,21 @@ var _ = Describe("GRC: [P1][Sev1][policy-grc] Test policy_governance_info metric
 
 		routeHost := routeList.Items[0].Object["spec"].(map[string]interface{})["host"].(string)
 		By("Got the metrics route url: " + routeHost)
-		propagatorMetricsURL = "https://" + routeHost + "/metrics"
+		insightsMetricsURL = "https://" + routeHost + "/metrics"
 
 		//get auth token from service account
-		By("Setting up ServiceAccount for authentication")
 		_, err = common.OcHub("create", "serviceaccount", saName, "-n", userNamespace)
 		Expect(err).To(BeNil())
 		_, err = common.OcHub("create", "clusterrolebinding", roleBindingName, "--clusterrole=cluster-admin", fmt.Sprintf("--serviceaccount=%s:%s", userNamespace, saName))
 		Expect(err).To(BeNil())
-		tokenNames, err := common.OcHub("get", fmt.Sprintf("serviceaccount/%s", saName), "-n", userNamespace, "-o", "jsonpath={.secrets[*].name}")
+		tokenName, err := common.OcHub("get", fmt.Sprintf("serviceaccount/%s", saName), "-n", userNamespace, "-o", "jsonpath='{.secrets[0].name}'")
 		Expect(err).To(BeNil())
-		tokenNameArr := strings.Split(tokenNames, " ")
-		var tokenName string
-		for _, name := range tokenNameArr {
-			if strings.HasPrefix(name, saName+"-token-") {
-				tokenName = name
-			}
-		}
-		encodedtoken, err := common.OcHub("get", "secret", tokenName, "-n", userNamespace, "-o", "jsonpath={.data.token}")
+		insightsToken, err = common.OcHub("get", "secret", tokenName, "-n", userNamespace, "-o", "jsonpath='{.data.token}'| base64 --decode")
 		Expect(err).To(BeNil())
-		decodedToken, err := base64.StdEncoding.DecodeString(encodedtoken)
-		Expect(err).To(BeNil())
-		metricToken = string(decodedToken)
 	})
 	It("Checks that the endpoint does not expose metrics without auth", func() {
 		Eventually(func() interface{} {
-			_, status, err := common.GetWithToken(propagatorMetricsURL, "")
+			_, status, err := common.GetWithToken(insightsMetricsURL, "")
 			if err != nil {
 				return err
 			}
@@ -106,12 +101,12 @@ var _ = Describe("GRC: [P1][Sev1][policy-grc] Test policy_governance_info metric
 		// Don't need to check compliance - just need to guarantee there is a policy in the cluster
 
 		Eventually(func() interface{} {
-			resp, _, err := common.GetWithToken(propagatorMetricsURL, strings.TrimSpace(metricToken))
+			resp, _, err := common.GetWithToken(insightsMetricsURL, strings.TrimSpace(insightsToken))
 			if err != nil {
 				return err
 			}
 			return resp
-		}, defaultTimeoutSeconds, 1).Should(ContainSubstring("HELP " + metricName))
+		}, defaultTimeoutSeconds, 1).Should(ContainSubstring("HELP " + insightsMetricName))
 	})
 	It("Checks that a compliant policy reports a metric of 0", func() {
 		By("Creating a compliant policy")
@@ -125,12 +120,12 @@ var _ = Describe("GRC: [P1][Sev1][policy-grc] Test policy_governance_info metric
 		By("Checking the policy metric")
 		policyLabel := `policy="` + compliantPolicyName + `"`
 		Eventually(func() interface{} {
-			resp, _, err := common.GetWithToken(propagatorMetricsURL, strings.TrimSpace(metricToken))
+			resp, _, err := common.GetWithToken(insightsMetricsURL, strings.TrimSpace(insightsToken))
 			if err != nil {
 				return err
 			}
 			return resp
-		}, defaultTimeoutSeconds, 1).Should(common.MatchMetricValue(metricName, policyLabel, "0"))
+		}, defaultTimeoutSeconds, 1).Should(common.MatchMetricValue(insightsMetricName, policyLabel, "0"))
 	})
 	It("Checks that a noncompliant policy reports a metric of 1", func() {
 		By("Creating a noncompliant policy")
@@ -144,20 +139,18 @@ var _ = Describe("GRC: [P1][Sev1][policy-grc] Test policy_governance_info metric
 		By("Checking the policy metric")
 		policyLabel := `policy="` + noncompliantPolicyName + `"`
 		Eventually(func() interface{} {
-			resp, _, err := common.GetWithToken(propagatorMetricsURL, strings.TrimSpace(metricToken))
+			resp, _, err := common.GetWithToken(insightsMetricsURL, strings.TrimSpace(insightsToken))
 			if err != nil {
 				return err
 			}
 			return resp
-		}, defaultTimeoutSeconds, 1).Should(common.MatchMetricValue(metricName, policyLabel, "1"))
+		}, defaultTimeoutSeconds, 1).Should(common.MatchMetricValue(insightsMetricName, policyLabel, "1"))
 	})
 	It("Cleans up", func() {
 		common.OcHub("delete", "-f", compliantPolicyYaml, "-n", userNamespace)
 		common.OcHub("delete", "-f", noncompliantPolicyYaml, "-n", userNamespace)
-		common.OcHub("delete", "route", "-n", ocmNS, "-l", propagatorMetricsSelector)
-		common.OcHub("delete", "clusterrolebinding", roleBindingName)
+		common.OcHub("delete", "route", "-n", ocmNS, "-l", insightsMetricsSelector)
+		common.OcHub("delete", "clusterrolebinding", "-n", roleBindingName)
 		common.OcHub("delete", "serviceaccount", saName, "-n", userNamespace)
-		common.OcHub("delete", "namespace", userNamespace)
-		common.OcHub("delete", "namespace", "policy-metric-test-compliant")
 	})
 })
