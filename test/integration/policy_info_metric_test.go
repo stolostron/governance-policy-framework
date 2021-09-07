@@ -6,6 +6,7 @@ import (
 	"context"
 	"fmt"
 	"strings"
+	"encoding/base64"
 
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
@@ -76,8 +77,11 @@ var _ = Describe("GRC: [P1][Sev1][policy-grc] Test policy_governance_info metric
 		Expect(err).To(BeNil())
 		tokenName, err := common.OcHub("get", fmt.Sprintf("serviceaccount/%s", saName), "-n", userNamespace, "-o", "jsonpath='{.secrets[0].name}'")
 		Expect(err).To(BeNil())
-		token, err = common.OcHub("get", "secret", tokenName, "-n", userNamespace, "-o", "jsonpath='{.data.token}'| base64 --decode")
+		encodedtoken, err := common.OcHub("get", "secret", tokenName, "-n", userNamespace, "-o", "jsonpath='{.data.token}'")
 		Expect(err).To(BeNil())
+		decodedToken, err := base64.StdEncoding.DecodeString(encodedtoken)
+		Expect(err).To(BeNil())
+		token = string(decodedToken)
 	})
 	It("Checks that the endpoint does not expose metrics without auth", func() {
 		Eventually(func() interface{} {
