@@ -77,6 +77,10 @@ var _ = Describe("GRC: [P1][Sev1][policy-grc] Test policy_governance_info metric
 		Expect(err).To(BeNil())
 		tokenName, err := common.OcHub("get", fmt.Sprintf("serviceaccount/%s", saName), "-n", userNamespace, "-o", "jsonpath='{.secrets[0].name}'")
 		Expect(err).To(BeNil())
+		Eventually(func() interface{} {
+			_, err := common.OcHub("get", "secret", tokenName, "-n", userNamespace)
+			return err
+		}, defaultTimeoutSeconds, 1).Should(BeNil())
 		encodedtoken, err := common.OcHub("get", "secret", tokenName, "-n", userNamespace, "-o", "jsonpath='{.data.token}'")
 		Expect(err).To(BeNil())
 		decodedToken, err := base64.StdEncoding.DecodeString(encodedtoken)
