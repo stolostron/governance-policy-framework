@@ -108,6 +108,25 @@ var _ = Describe("Test policy_governance_info metric", func() {
 			return resp
 		}, defaultTimeoutSeconds, 1).Should(ContainSubstring("HELP " + insightsMetricName))
 	})
+	It("Checks that a noncompliant policy reports a metric", func() {
+		By("Creating a noncompliant policy")
+		common.OcHub("apply", "-f", noncompliantPolicyYaml, "-n", userNamespace)
+		Eventually(
+			getComplianceState(noncompliantPolicyName),
+			defaultTimeoutSeconds,
+			1,
+		).Should(Equal(policiesv1.NonCompliant))
+
+		By("Checking the policy metric")
+		policyLabel := `policy="` + noncompliantPolicyName + `"`
+		Eventually(func() interface{} {
+			resp, _, err := common.GetWithToken(insightsMetricsURL, strings.TrimSpace(insightsToken))
+			if err != nil {
+				return err
+			}
+			return resp
+		}, defaultTimeoutSeconds, 1).Should(common.MatchMetricValue(insightsMetricName, policyLabel, "1"))
+	})
 	It("Checks that a compliant policy reports a metric of 0", func() {
 		By("Creating a compliant policy")
 		common.OcHub("apply", "-f", compliantPolicyYaml, "-n", userNamespace)
@@ -126,25 +145,6 @@ var _ = Describe("Test policy_governance_info metric", func() {
 			}
 			return resp
 		}, defaultTimeoutSeconds, 1).Should(common.MatchMetricValue(insightsMetricName, policyLabel, "0"))
-	})
-	It("Checks that a noncompliant policy reports a metric of 1", func() {
-		By("Creating a noncompliant policy")
-		common.OcHub("apply", "-f", noncompliantPolicyYaml, "-n", userNamespace)
-		Eventually(
-			getComplianceState(noncompliantPolicyName),
-			defaultTimeoutSeconds,
-			1,
-		).Should(Equal(policiesv1.NonCompliant))
-
-		By("Checking the policy metric")
-		policyLabel := `policy="` + noncompliantPolicyName + `"`
-		Eventually(func() interface{} {
-			resp, _, err := common.GetWithToken(insightsMetricsURL, strings.TrimSpace(insightsToken))
-			if err != nil {
-				return err
-			}
-			return resp
-		}, defaultTimeoutSeconds, 1).Should(common.MatchMetricValue(insightsMetricName, policyLabel, "1"))
 	})
 	It("Cleans up", func() {
 		common.OcHub("delete", "-f", compliantPolicyYaml, "-n", userNamespace)
