@@ -34,6 +34,6 @@
 4. [Report Gatekeeper violations for admission scenario](./gatekeeper/gatekeeper-policy-sample.yaml#L85-L103)
 
 ### Integrate with Kyverno
-1. Install Kyverno
+1. [Install Kyverno](https://github.com/open-cluster-management/policy-collection/blob/main/community/CM-Configuration-Management/policy-install-kyverno.yaml)
 2. [Create Kyverno policy](https://github.com/open-cluster-management/policy-collection/blob/main/community/CM-Configuration-Management/policy-kyverno-sample.yaml)
 3. [Report Kyverno violations](https://github.com/open-cluster-management/policy-collection/blob/main/community/CM-Configuration-Management/policy-check-reports.yaml)
