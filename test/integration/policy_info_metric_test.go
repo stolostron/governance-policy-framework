@@ -157,5 +157,7 @@ var _ = Describe("GRC: [P1][Sev1][policy-grc] Test policy_governance_info metric
 		common.OcHub("delete", "route", "-n", ocmNS, "-l", propagatorMetricsSelector)
 		common.OcHub("delete", "clusterrolebinding", roleBindingName)
 		common.OcHub("delete", "serviceaccount", saName, "-n", userNamespace)
+		common.OcHub("delete", "namespace", userNamespace)
+		common.OcHub("delete", "namespace", "policy-metric-test-compliant")
 	})
 })
