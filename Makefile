@@ -178,6 +178,13 @@ e2e-test:
 		ginkgo -v --slowSpecThreshold=10 --regexScansFilePath=true --focus=$(TEST_FILE) test/e2e;\
 	fi
 
+integration-test:
+	@if [ -z "$(TEST_FILE)" ]; then\
+		ginkgo -v --slowSpecThreshold=10 test/integration;\
+	else\
+		ginkgo -v --slowSpecThreshold=10 --regexScansFilePath=true --focus=$(TEST_FILE) test/integration;\
+	fi
+
 policy-collection-test:
 	@if [ -z "$(TEST_FILE)" ]; then\
 		ginkgo -v --slowSpecThreshold=10 test/policy-collection;\
