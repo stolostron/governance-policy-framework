@@ -9,6 +9,7 @@ import (
 	"os/exec"
 	"os/user"
 	"path/filepath"
+	"strings"
 
 	"github.com/onsi/gomega"
 	policiesv1 "github.com/open-cluster-management/governance-policy-propagator/pkg/apis/policy/v1"
@@ -118,16 +119,24 @@ func GetComplianceState(clientHubDynamic dynamic.Interface, namespace, policyNam
 
 func OcHub(args ...string) (string, error) {
 	args = append([]string{"--kubeconfig=" + KubeconfigHub}, args...)
+	// Determine whether output should be logged
+	printOutput := true
+	for _, a := range args {
+		if a == "whoami" || strings.HasPrefix(a, "secret") {
+			printOutput = false
+			break
+		}
+	}
 	output, err := exec.Command("oc", args...).Output()
-	if len(args) > 0 && args[0] != "whoami" {
+	if len(args) > 0 && printOutput {
 		fmt.Println(string(output))
 	}
 	if exitError, ok := err.(*exec.ExitError); ok {
-		if (exitError.Stderr == nil) {
+		if exitError.Stderr == nil {
 			return string(output), nil
 		}
-        return string(output), fmt.Errorf(string(exitError.Stderr))
-    }
+		return string(output), fmt.Errorf(string(exitError.Stderr))
+	}
 	return string(output), err
 }
 
