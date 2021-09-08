@@ -4,9 +4,9 @@ package integration
 
 import (
 	"context"
+	"encoding/base64"
 	"fmt"
 	"strings"
-	"encoding/base64"
 
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
@@ -71,17 +71,21 @@ var _ = Describe("GRC: [P1][Sev1][policy-grc] Test policy_governance_info metric
 		propagatorMetricsURL = "https://" + routeHost + "/metrics"
 
 		//get auth token from service account
+		By("Setting up ServiceAccount for authentication")
 		_, err = common.OcHub("create", "serviceaccount", saName, "-n", userNamespace)
 		Expect(err).To(BeNil())
 		_, err = common.OcHub("create", "clusterrolebinding", roleBindingName, "--clusterrole=cluster-admin", fmt.Sprintf("--serviceaccount=%s:%s", userNamespace, saName))
 		Expect(err).To(BeNil())
-		tokenName, err := common.OcHub("get", fmt.Sprintf("serviceaccount/%s", saName), "-n", userNamespace, "-o", "jsonpath='{.secrets[0].name}'")
+		tokenNames, err := common.OcHub("get", fmt.Sprintf("serviceaccount/%s", saName), "-n", userNamespace, "-o", "jsonpath={.secrets[*].name}")
 		Expect(err).To(BeNil())
-		Eventually(func() interface{} {
-			_, err := common.OcHub("get", "secret", tokenName, "-n", userNamespace)
-			return err
-		}, defaultTimeoutSeconds, 1).Should(BeNil())
-		encodedtoken, err := common.OcHub("get", "secret", tokenName, "-n", userNamespace, "-o", "jsonpath='{.data.token}'")
+		tokenNameArr := strings.Split(tokenNames, " ")
+		var tokenName string
+		for _, name := range tokenNameArr {
+			if strings.HasPrefix(name, saName+"-token-") {
+				tokenName = name
+			}
+		}
+		encodedtoken, err := common.OcHub("get", "secret", tokenName, "-n", userNamespace, "-o", "jsonpath={.data.token}")
 		Expect(err).To(BeNil())
 		decodedToken, err := base64.StdEncoding.DecodeString(encodedtoken)
 		Expect(err).To(BeNil())
