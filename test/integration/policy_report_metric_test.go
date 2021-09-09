@@ -9,6 +9,7 @@ import (
 	"context"
 	"fmt"
 	"strings"
+	"encoding/base64"
 
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
@@ -24,8 +25,8 @@ const (
 	insightsMetricName           = "policyreport_info"
 	// compliantPolicyYaml       = "../resources/policy_info_metric/compliant.yaml"
 	// compliantPolicyName       = "policy-metric-compliant"
-	// noncompliantPolicyYaml    = "../resources/policy_info_metric/noncompliant.yaml"
-	// noncompliantPolicyName    = "policy-metric-noncompliant"
+	noncompliantPolicyYamlReport   	= "../resources/policy_report_metric/noncompliant.yaml"
+	noncompliantPolicyNameReport    = "policy-metric-noncompliant"
 )
 
 var insightsMetricsURL string
@@ -77,14 +78,25 @@ var _ = Describe("Test policy_governance_info metric", func() {
 		insightsMetricsURL = "https://" + routeHost + "/metrics"
 
 		//get auth token from service account
+		By("Setting up ServiceAccount for authentication")
 		_, err = common.OcHub("create", "serviceaccount", saName, "-n", userNamespace)
 		Expect(err).To(BeNil())
 		_, err = common.OcHub("create", "clusterrolebinding", roleBindingName, "--clusterrole=cluster-admin", fmt.Sprintf("--serviceaccount=%s:%s", userNamespace, saName))
 		Expect(err).To(BeNil())
-		tokenName, err := common.OcHub("get", fmt.Sprintf("serviceaccount/%s", saName), "-n", userNamespace, "-o", "jsonpath='{.secrets[0].name}'")
+		tokenNames, err := common.OcHub("get", fmt.Sprintf("serviceaccount/%s", saName), "-n", userNamespace, "-o", "jsonpath={.secrets[*].name}")
 		Expect(err).To(BeNil())
-		insightsToken, err = common.OcHub("get", "secret", tokenName, "-n", userNamespace, "-o", "jsonpath='{.data.token}'| base64 --decode")
+		tokenNameArr := strings.Split(tokenNames, " ")
+		var tokenName string
+		for _, name := range tokenNameArr {
+			if strings.HasPrefix(name, saName+"-token-") {
+				tokenName = name
+			}
+		}
+		encodedtoken, err := common.OcHub("get", "secret", tokenName, "-n", userNamespace, "-o", "jsonpath={.data.token}")
 		Expect(err).To(BeNil())
+		decodedToken, err := base64.StdEncoding.DecodeString(encodedtoken)
+		Expect(err).To(BeNil())
+		insightsToken = string(decodedToken)
 	})
 	It("Checks that the endpoint does not expose metrics without auth", func() {
 		Eventually(func() interface{} {
@@ -110,15 +122,15 @@ var _ = Describe("Test policy_governance_info metric", func() {
 	})
 	It("Checks that a noncompliant policy reports a metric", func() {
 		By("Creating a noncompliant policy")
-		common.OcHub("apply", "-f", noncompliantPolicyYaml, "-n", userNamespace)
+		common.OcHub("apply", "-f", noncompliantPolicyYamlReport, "-n", userNamespace)
 		Eventually(
-			getComplianceState(noncompliantPolicyName),
+			getComplianceState(noncompliantPolicyNameReport),
 			defaultTimeoutSeconds,
 			1,
 		).Should(Equal(policiesv1.NonCompliant))
 
 		By("Checking the policy metric")
-		policyLabel := `policy="` + noncompliantPolicyName + `"`
+		policyLabel := `policy="` + noncompliantPolicyNameReport + `"`
 		Eventually(func() interface{} {
 			resp, _, err := common.GetWithToken(insightsMetricsURL, strings.TrimSpace(insightsToken))
 			if err != nil {
@@ -127,30 +139,32 @@ var _ = Describe("Test policy_governance_info metric", func() {
 			return resp
 		}, defaultTimeoutSeconds, 1).Should(common.MatchMetricValue(insightsMetricName, policyLabel, "1"))
 	})
-	It("Checks that a compliant policy reports a metric of 0", func() {
-		By("Creating a compliant policy")
-		common.OcHub("apply", "-f", compliantPolicyYaml, "-n", userNamespace)
-		Eventually(
-			getComplianceState(compliantPolicyName),
-			defaultTimeoutSeconds,
-			1,
-		).Should(Equal(policiesv1.Compliant))
+	// It("Checks that a compliant policy reports a metric of 0", func() {
+	// 	By("Creating a compliant policy")
+	// 	common.OcHub("apply", "-f", compliantPolicyYaml, "-n", userNamespace)
+	// 	Eventually(
+	// 		getComplianceState(compliantPolicyName),
+	// 		defaultTimeoutSeconds,
+	// 		1,
+	// 	).Should(Equal(policiesv1.Compliant))
 
-		By("Checking the policy metric")
-		policyLabel := `policy="` + compliantPolicyName + `"`
-		Eventually(func() interface{} {
-			resp, _, err := common.GetWithToken(insightsMetricsURL, strings.TrimSpace(insightsToken))
-			if err != nil {
-				return err
-			}
-			return resp
-		}, defaultTimeoutSeconds, 1).Should(common.MatchMetricValue(insightsMetricName, policyLabel, "0"))
-	})
+	// 	By("Checking the policy metric")
+	// 	policyLabel := `policy="` + compliantPolicyName + `"`
+	// 	Eventually(func() interface{} {
+	// 		resp, _, err := common.GetWithToken(insightsMetricsURL, strings.TrimSpace(insightsToken))
+	// 		if err != nil {
+	// 			return err
+	// 		}
+	// 		return resp
+	// 	}, defaultTimeoutSeconds, 1).Should(common.MatchMetricValue(insightsMetricName, policyLabel, "0"))
+	// })
 	It("Cleans up", func() {
 		common.OcHub("delete", "-f", compliantPolicyYaml, "-n", userNamespace)
 		common.OcHub("delete", "-f", noncompliantPolicyYaml, "-n", userNamespace)
-		common.OcHub("delete", "route", "-n", ocmNS, "-l", insightsMetricsSelector)
-		common.OcHub("delete", "clusterrolebinding", "-n", roleBindingName)
+		common.OcHub("delete", "route", "-n", ocmNS, "-l", propagatorMetricsSelector)
+		common.OcHub("delete", "clusterrolebinding", roleBindingName)
 		common.OcHub("delete", "serviceaccount", saName, "-n", userNamespace)
+		common.OcHub("delete", "namespace", userNamespace)
+		common.OcHub("delete", "namespace", "policy-metric-test-compliant")
 	})
 })
