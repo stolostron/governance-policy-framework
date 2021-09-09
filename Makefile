@@ -170,7 +170,7 @@ install-resources:
 	@echo creating cluster namespace on hub 
 	kubectl create ns managed --kubeconfig=$(PWD)/kubeconfig_$(HUB_CLUSTER_NAME)
 	kubectl apply -f test/resources/managed-cluster.yaml --kubeconfig=$(PWD)/kubeconfig_$(HUB_CLUSTER_NAME)
-	
+
 e2e-test:
 	@if [ -z "$(TEST_FILE)" ]; then\
 		ginkgo -v --slowSpecThreshold=10 test/e2e;\
@@ -191,7 +191,6 @@ policy-collection-test:
 	else\
 		ginkgo -v --slowSpecThreshold=10 --regexScansFilePath=true --focus=$(TEST_FILE) test/policy-collection;\
 	fi
-	
 
 travis-slack-reporter:
 	docker run --volume $(PWD)/results:/opt/app-root/src/grc-ui/test-output/e2e \
