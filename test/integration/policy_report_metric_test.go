@@ -1,6 +1,3 @@
-//oc get deployments -n open-cluster-management -l component=insights-client -o name
-//oc set env deployment.apps/policyreport-57d8d-insights-client -n open-cluster-management POLL_INTERVAL=1
-
 // Copyright Contributors to the Open Cluster Management project
 
 package integration
@@ -21,10 +18,7 @@ import (
 
 const (
 	insightsMetricsSelector = "component=insights-client"
-	// ocmNS                     = "open-cluster-management"
 	insightsMetricName           = "policyreport_info"
-	// compliantPolicyYaml       = "../resources/policy_info_metric/compliant.yaml"
-	// compliantPolicyName       = "policy-metric-compliant"
 	noncompliantPolicyYamlReport   	= "../resources/policy_report_metric/noncompliant.yaml"
 	noncompliantPolicyNameReport    = "policy-metric-noncompliant"
 )
@@ -137,27 +131,27 @@ var _ = Describe("Test policy_governance_info metric", func() {
 				return err
 			}
 			return resp
-		}, defaultTimeoutSeconds, 1).Should(common.MatchMetricValue(insightsMetricName, policyLabel, "1"))
+		}, 120, 1).Should(common.MatchMetricValue(insightsMetricName, policyLabel, "1"))
 	})
-	// It("Checks that a compliant policy reports a metric of 0", func() {
-	// 	By("Creating a compliant policy")
-	// 	common.OcHub("apply", "-f", compliantPolicyYaml, "-n", userNamespace)
-	// 	Eventually(
-	// 		getComplianceState(compliantPolicyName),
-	// 		defaultTimeoutSeconds,
-	// 		1,
-	// 	).Should(Equal(policiesv1.Compliant))
+	It("Checks that changing the policy to compliant removes the metric", func() {
+		By("Creating a compliant policy")
+		common.OcHub("apply", "-f", compliantPolicyYaml, "-n", userNamespace)
+		Eventually(
+			getComplianceState(compliantPolicyName),
+			defaultTimeoutSeconds,
+			1,
+		).Should(Equal(policiesv1.Compliant))
 
-	// 	By("Checking the policy metric")
-	// 	policyLabel := `policy="` + compliantPolicyName + `"`
-	// 	Eventually(func() interface{} {
-	// 		resp, _, err := common.GetWithToken(insightsMetricsURL, strings.TrimSpace(insightsToken))
-	// 		if err != nil {
-	// 			return err
-	// 		}
-	// 		return resp
-	// 	}, defaultTimeoutSeconds, 1).Should(common.MatchMetricValue(insightsMetricName, policyLabel, "0"))
-	// })
+		By("Checking the policy metric")
+		policyLabel := `policy="` + compliantPolicyName + `"`
+		Eventually(func() interface{} {
+			resp, _, err := common.GetWithToken(insightsMetricsURL, strings.TrimSpace(insightsToken))
+			if err != nil {
+				return err
+			}
+			return resp
+		}, defaultTimeoutSeconds, 1).Should(common.MatchMetricValue(insightsMetricName, policyLabel, "None"))
+	})
 	It("Cleans up", func() {
 		common.OcHub("delete", "-f", compliantPolicyYaml, "-n", userNamespace)
 		common.OcHub("delete", "-f", noncompliantPolicyYaml, "-n", userNamespace)
