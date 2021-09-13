@@ -14,6 +14,7 @@ require (
 
 replace (
 	github.com/Azure/go-autorest => github.com/Azure/go-autorest v13.3.2+incompatible // Required by OLM
+	github.com/gogo/protobuf => github.com/gogo/protobuf v1.3.2
 	howett.net/plist => github.com/DHowett/go-plist v0.0.0-20181124034731-591f970eefbb
 	k8s.io/client-go => k8s.io/client-go v0.18.3 // Required by prometheus-operator
 )
