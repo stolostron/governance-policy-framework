@@ -30,20 +30,20 @@ spec:
 apiVersion: policy.open-cluster-management.io/v1
 kind: PlacementBinding
 metadata:
-  name: binding-policy-metric-noncompliant
+  name: binding-policyreport-metric-noncompliant
 placementRef:
-  name: placement-policy-metric-noncompliant
+  name: placement-policyreport-metric-noncompliant
   kind: PlacementRule
   apiGroup: apps.open-cluster-management.io
 subjects:
-  - name: policy-metric-noncompliant
+  - name: policyreport-metric-noncompliant
     kind: Policy
     apiGroup: policy.open-cluster-management.io
 ---
 apiVersion: apps.open-cluster-management.io/v1
 kind: PlacementRule
 metadata:
-  name: placement-policy-metric-noncompliant
+  name: placement-policyreport-metric-noncompliant
 spec:
   clusterConditions:
     - status: 'True'

@@ -14,32 +14,51 @@ import (
 	policiesv1 "github.com/open-cluster-management/governance-policy-propagator/pkg/apis/policy/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
+	corev1 "k8s.io/api/core/v1"
+	"k8s.io/apimachinery/pkg/api/errors"
 )
 
 const (
-	insightsMetricsSelector = "component=insights-client"
+	insightsClientSelector = "component=insights-client"
+	insightsMetricsSelector = "component=insights-metrics"
 	insightsMetricName           = "policyreport_info"
 	noncompliantPolicyYamlReport   	= "../resources/policy_report_metric/noncompliant.yaml"
-	noncompliantPolicyNameReport    = "policy-metric-noncompliant"
+	noncompliantPolicyNameReport    = "policyreport-metric-noncompliant"
+	compliantPolicyYamlReport   	= "../resources/policy_report_metric/compliant.yaml"
+	compliantPolicyNameReport    = "policyreport-metric-noncompliant"
 )
 
 var insightsMetricsURL string
 
 var insightsToken string
 
-var _ = Describe("Test policy_governance_info metric", func() {
+var _ = Describe("Test policyreport_info metric", func() {
 	It("Sets up the metrics service endpoint for tests", func() {
+		By("Create Namespace if needed")
+		_, err := clientHub.CoreV1().Namespaces().Create(context.TODO(), &corev1.Namespace{
+			ObjectMeta: metav1.ObjectMeta{
+				Name: userNamespace,
+			},
+		}, metav1.CreateOptions{})
+		if err != nil {
+			fmt.Println("---- create ns error ----")
+			fmt.Println(err)
+			Expect(errors.IsAlreadyExists(err)).Should(BeTrue())
+		}
+		Expect(clientHub.CoreV1().Namespaces().Get(context.TODO(), userNamespace, metav1.GetOptions{})).NotTo(BeNil())
+
+		//set up insights-client to poll every minute
+		insightsClient, err := common.OcHub("get", "deployments", "-n", ocmNS, "-l", insightsClientSelector, "-o", "name")
+		Expect(err).To(BeNil())
+		insightsClient = strings.TrimSpace(insightsClient)
+		_, err = common.OcHub("set", "env", "-n", ocmNS, insightsClient, "POLL_INTERVAL=1")
+		Expect(err).To(BeNil())
+
 		By("Ensuring the metrics service exists")
 		svcList, err := clientHub.CoreV1().Services(ocmNS).List(context.TODO(), metav1.ListOptions{LabelSelector: insightsMetricsSelector})
 		Expect(err).To(BeNil())
 		Expect(len(svcList.Items)).To(Equal(1))
 		metricsSvc := svcList.Items[0]
-
-		//set up insights-client to poll every minute
-		insightsClient, err := common.OcHub("get", "deployments", "-n", ocmNS, "-l", insightsMetricsSelector, "-o", "name")
-		Expect(err).To(BeNil())
-		_, err = common.OcHub("set", "env", insightsClient, "-n", ocmNS, "POLL_INTERVAL=1")
-		Expect(err).To(BeNil())
 
 		By("Checking for an existing metrics route")
 		var routeList *unstructured.UnstructuredList
@@ -92,28 +111,6 @@ var _ = Describe("Test policy_governance_info metric", func() {
 		Expect(err).To(BeNil())
 		insightsToken = string(decodedToken)
 	})
-	It("Checks that the endpoint does not expose metrics without auth", func() {
-		Eventually(func() interface{} {
-			_, status, err := common.GetWithToken(insightsMetricsURL, "")
-			if err != nil {
-				return err
-			}
-			return status
-		}, defaultTimeoutSeconds, 1).Should(ContainSubstring("Unauthorized"))
-	})
-	It("Checks that endpoint has a HELP comment for the metric", func() {
-		By("Creating a policy")
-		common.OcHub("apply", "-f", compliantPolicyYaml, "-n", userNamespace)
-		// Don't need to check compliance - just need to guarantee there is a policy in the cluster
-
-		Eventually(func() interface{} {
-			resp, _, err := common.GetWithToken(insightsMetricsURL, strings.TrimSpace(insightsToken))
-			if err != nil {
-				return err
-			}
-			return resp
-		}, defaultTimeoutSeconds, 1).Should(ContainSubstring("HELP " + insightsMetricName))
-	})
 	It("Checks that a noncompliant policy reports a metric", func() {
 		By("Creating a noncompliant policy")
 		common.OcHub("apply", "-f", noncompliantPolicyYamlReport, "-n", userNamespace)
@@ -124,7 +121,7 @@ var _ = Describe("Test policy_governance_info metric", func() {
 		).Should(Equal(policiesv1.NonCompliant))
 
 		By("Checking the policy metric")
-		policyLabel := `policy="` + noncompliantPolicyNameReport + `"`
+		policyLabel := `policy="` + userNamespace + "." + noncompliantPolicyNameReport + `"`
 		Eventually(func() interface{} {
 			resp, _, err := common.GetWithToken(insightsMetricsURL, strings.TrimSpace(insightsToken))
 			if err != nil {
@@ -135,27 +132,26 @@ var _ = Describe("Test policy_governance_info metric", func() {
 	})
 	It("Checks that changing the policy to compliant removes the metric", func() {
 		By("Creating a compliant policy")
-		common.OcHub("apply", "-f", compliantPolicyYaml, "-n", userNamespace)
+		common.OcHub("apply", "-f", compliantPolicyYamlReport, "-n", userNamespace)
 		Eventually(
-			getComplianceState(compliantPolicyName),
-			defaultTimeoutSeconds,
+			getComplianceState(compliantPolicyNameReport),
+			defaultTimeoutSeconds*2,
 			1,
 		).Should(Equal(policiesv1.Compliant))
 
-		By("Checking the policy metric")
-		policyLabel := `policy="` + compliantPolicyName + `"`
+		By("Checking the policy metric displays nothing")
+		policyLabel := `policy="` + userNamespace + "." + noncompliantPolicyNameReport + `"`
 		Eventually(func() interface{} {
 			resp, _, err := common.GetWithToken(insightsMetricsURL, strings.TrimSpace(insightsToken))
 			if err != nil {
 				return err
 			}
 			return resp
-		}, defaultTimeoutSeconds, 1).Should(common.MatchMetricValue(insightsMetricName, policyLabel, "None"))
+		}, defaultTimeoutSeconds*2, 1).Should(common.MatchMetricValue(insightsMetricName, policyLabel, "1"))
 	})
 	It("Cleans up", func() {
-		common.OcHub("delete", "-f", compliantPolicyYaml, "-n", userNamespace)
-		common.OcHub("delete", "-f", noncompliantPolicyYaml, "-n", userNamespace)
-		common.OcHub("delete", "route", "-n", ocmNS, "-l", propagatorMetricsSelector)
+		common.OcHub("delete", "-f", compliantPolicyYamlReport, "-n", userNamespace)
+		common.OcHub("delete", "route", "-n", ocmNS, "-l", insightsMetricsSelector)
 		common.OcHub("delete", "clusterrolebinding", roleBindingName)
 		common.OcHub("delete", "serviceaccount", saName, "-n", userNamespace)
 		common.OcHub("delete", "namespace", userNamespace)

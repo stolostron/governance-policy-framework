@@ -14,6 +14,8 @@ import (
 	policiesv1 "github.com/open-cluster-management/governance-policy-propagator/pkg/apis/policy/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
+	corev1 "k8s.io/api/core/v1"
+	"k8s.io/apimachinery/pkg/api/errors"
 )
 
 const (
@@ -34,6 +36,19 @@ var metricToken string
 
 var _ = Describe("GRC: [P1][Sev1][policy-grc] Test policy_governance_info metric", func() {
 	It("Sets up the metrics service endpoint for tests", func() {
+		By("Create Namespace if needed")
+		_, err := clientHub.CoreV1().Namespaces().Create(context.TODO(), &corev1.Namespace{
+			ObjectMeta: metav1.ObjectMeta{
+				Name: userNamespace,
+			},
+		}, metav1.CreateOptions{})
+		if err != nil {
+			fmt.Println("---- create ns error ----")
+			fmt.Println(err)
+			Expect(errors.IsAlreadyExists(err)).Should(BeTrue())
+		}
+		Expect(clientHub.CoreV1().Namespaces().Get(context.TODO(), userNamespace, metav1.GetOptions{})).NotTo(BeNil())
+
 		By("Ensuring the metrics service exists")
 		svcList, err := clientHub.CoreV1().Services(ocmNS).List(context.TODO(), metav1.ListOptions{LabelSelector: propagatorMetricsSelector})
 		Expect(err).To(BeNil())
