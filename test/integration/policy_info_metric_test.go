@@ -43,8 +43,6 @@ var _ = Describe("GRC: [P1][Sev1][policy-grc] Test policy_governance_info metric
 			},
 		}, metav1.CreateOptions{})
 		if err != nil {
-			fmt.Println("---- create ns error ----")
-			fmt.Println(err)
 			Expect(errors.IsAlreadyExists(err)).Should(BeTrue())
 		}
 		Expect(clientHub.CoreV1().Namespaces().Get(context.TODO(), userNamespace, metav1.GetOptions{})).NotTo(BeNil())

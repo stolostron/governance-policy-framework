@@ -41,8 +41,6 @@ var _ = Describe("Test policyreport_info metric", func() {
 			},
 		}, metav1.CreateOptions{})
 		if err != nil {
-			fmt.Println("---- create ns error ----")
-			fmt.Println(err)
 			Expect(errors.IsAlreadyExists(err)).Should(BeTrue())
 		}
 		Expect(clientHub.CoreV1().Namespaces().Get(context.TODO(), userNamespace, metav1.GetOptions{})).NotTo(BeNil())
