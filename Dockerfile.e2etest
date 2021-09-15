@@ -23,6 +23,4 @@ COPY vendor ./vendor
 
 RUN ./build/download-clis.sh
 
-RUN GO111MODULE=on go get github.com/onsi/ginkgo/ginkgo@v1.14.2
-
 CMD ["./build/run-test-image.sh"]
