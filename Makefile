@@ -172,7 +172,6 @@ install-resources:
 	kubectl apply -f test/resources/managed-cluster.yaml --kubeconfig=$(PWD)/kubeconfig_$(HUB_CLUSTER_NAME)
 
 e2e-test:
-	go mod download
 	@if [ -z "$(TEST_FILE)" ]; then\
 		ginkgo -v --slowSpecThreshold=10 test/e2e;\
 	else\
@@ -180,7 +179,6 @@ e2e-test:
 	fi
 
 integration-test:
-	go mod download
 	@if [ -z "$(TEST_FILE)" ]; then\
 		ginkgo -v --slowSpecThreshold=10 test/integration;\
 	else\
@@ -188,7 +186,6 @@ integration-test:
 	fi
 
 policy-collection-test:
-	go mod download
 	@if [ -z "$(TEST_FILE)" ]; then\
 		ginkgo -v --slowSpecThreshold=10 test/policy-collection;\
 	else\
