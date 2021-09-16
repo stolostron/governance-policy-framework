@@ -8,6 +8,7 @@ FROM registry.access.redhat.com/ubi8/ubi-minimal:latest
 RUN  microdnf update -y \
         && microdnf install tar \
         && microdnf install gzip \
+        && microdnf install golang \
         && microdnf install git \
         && microdnf install which \
         && microdnf clean all
@@ -22,6 +23,8 @@ RUN mkdir -p $GOPATH/src/github.com/open-cluster-management/governance-policy-fr
 
 WORKDIR $GOPATH/src/github.com/open-cluster-management/governance-policy-framework
 
+COPY go.mod .
+COPY go.sum .
 COPY test ./test
 COPY build ./build
 COPY vendor ./vendor
