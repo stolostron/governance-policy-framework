@@ -1,7 +1,7 @@
 # Copyright (c) 2020 Red Hat, Inc.
 
 # Stage 1: Use image builder to build the target binaries
-FROM golang:1.16 AS builder
+FROM registry.ci.openshift.org/open-cluster-management/builder:go1.16-linux AS builder
 
 FROM registry.access.redhat.com/ubi8/ubi-minimal:latest
 
@@ -34,4 +34,4 @@ RUN ./build/download-clis.sh
 RUN go get github.com/onsi/ginkgo/ginkgo
 RUN go get github.com/onsi/gomega/...
 
-CMD ["./build/run-test-image.sh"]
+# CMD ["./build/run-test-image.sh"]
