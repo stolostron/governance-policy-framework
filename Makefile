@@ -54,12 +54,8 @@ kind-policy-framework-hub-setup:
 
 deploy-policy-framework-hub-crd-operator:
 	kubectl create ns $(KIND_HUB_NAMESPACE) || true
-	@echo installing Policy CRDs on hub
-	kubectl apply -f https://raw.githubusercontent.com/open-cluster-management/governance-policy-propagator/main/deploy/crds/policy.open-cluster-management.io_policies_crd.yaml
-	kubectl apply -f https://raw.githubusercontent.com/open-cluster-management/governance-policy-propagator/main/deploy/crds/policy.open-cluster-management.io_placementbindings_crd.yaml
-	kubectl apply -f https://raw.githubusercontent.com/open-cluster-management/governance-policy-propagator/main/deploy/crds/policy.open-cluster-management.io_policyautomations_crd.yaml
-	@echo installing policy-propagator on hub
-	kubectl apply -f https://raw.githubusercontent.com/open-cluster-management/governance-policy-propagator/main/deploy/operator.yaml -n $(KIND_HUB_NAMESPACE)
+	@echo installing policy-propagator on hub (including its required CRDs)
+	kubectl apply -k "https://github.com/JustinKuli/governance-policy-propagator.git/config/default?ref=upgrade-operator-sdk" -n $(KIND_HUB_NAMESPACE)
 
 deploy-policy-framework-hub: kind-policy-framework-hub-setup deploy-policy-framework-hub-crd-operator
 
@@ -72,7 +68,7 @@ kind-policy-framework-managed-setup:
 
 deploy-policy-framework-managed-crd-operator:
 	@echo installing Policy CRD on managed
-	kubectl apply -f https://raw.githubusercontent.com/open-cluster-management/governance-policy-propagator/main/deploy/crds/policy.open-cluster-management.io_policies_crd.yaml
+	kubectl apply -f https://raw.githubusercontent.com/JustinKuli/governance-policy-propagator/upgrade-operator-sdk/config/crd/bases/policy.open-cluster-management.io_policies.yaml
 	@echo installing policy-spec-sync on managed
 	kubectl apply -f https://raw.githubusercontent.com/open-cluster-management/governance-policy-spec-sync/main/deploy/operator.yaml -n $(KIND_MANAGED_NAMESPACE)
 	kubectl patch deployment governance-policy-spec-sync -n $(KIND_MANAGED_NAMESPACE) -p "{\"spec\":{\"template\":{\"spec\":{\"containers\":[{\"name\":\"governance-policy-spec-sync\",\"env\":[{\"name\":\"WATCH_NAMESPACE\",\"value\":\"$(MANAGED_CLUSTER_NAME)\"}]}]}}}}"
@@ -90,7 +86,7 @@ deploy-community-policy-framework-managed: deploy-policy-framework-managed-crd-o
 kind-deploy-policy-framework:
 	@echo installing policy-propagator on hub
 	kubectl create ns $(KIND_HUB_NAMESPACE) --kubeconfig=$(PWD)/kubeconfig_$(HUB_CLUSTER_NAME)
-	kubectl apply -f deploy/propagator -n $(KIND_HUB_NAMESPACE) --kubeconfig=$(PWD)/kubeconfig_$(HUB_CLUSTER_NAME)
+	kubectl apply -k "https://github.com/JustinKuli/governance-policy-propagator.git/config/default?ref=upgrade-operator-sdk" -n $(KIND_HUB_NAMESPACE) --kubeconfig=$(PWD)/kubeconfig_$(HUB_CLUSTER_NAME)
 	@echo creating secrets on managed
 	kubectl create ns $(KIND_MANAGED_NAMESPACE) --kubeconfig=$(PWD)/kubeconfig_$(MANAGED_CLUSTER_NAME)
 	kubectl create secret -n $(KIND_MANAGED_NAMESPACE) generic hub-kubeconfig --from-file=kubeconfig=$(PWD)/kubeconfig_$(HUB_CLUSTER_NAME)_internal --kubeconfig=$(PWD)/kubeconfig_$(MANAGED_CLUSTER_NAME)
@@ -154,15 +150,9 @@ kind-delete-cluster:
 
 install-crds:
 	@echo installing crds on hub
-	kubectl apply -f deploy/crds/apps.open-cluster-management.io_placementrules_crd.yaml --kubeconfig=$(PWD)/kubeconfig_$(HUB_CLUSTER_NAME)
-	kubectl apply -f deploy/crds/cluster.open-cluster-management.io_managedclusters.yaml --kubeconfig=$(PWD)/kubeconfig_$(HUB_CLUSTER_NAME)
-	kubectl apply -f deploy/crds/cluster.open-cluster-management.io_placementdecisions_crd.yaml --kubeconfig=$(PWD)/kubeconfig_$(HUB_CLUSTER_NAME)
-	kubectl apply -f deploy/crds/cluster.open-cluster-management.io_placements_crd.yaml --kubeconfig=$(PWD)/kubeconfig_$(HUB_CLUSTER_NAME)
-	kubectl apply -f deploy/crds/policy.open-cluster-management.io_placementbindings_crd.yaml --kubeconfig=$(PWD)/kubeconfig_$(HUB_CLUSTER_NAME)
-	kubectl apply -f deploy/crds/policy.open-cluster-management.io_policies_crd.yaml --kubeconfig=$(PWD)/kubeconfig_$(HUB_CLUSTER_NAME)
-	kubectl apply -f deploy/crds/policy.open-cluster-management.io_policyautomations_crd.yaml --kubeconfig=$(PWD)/kubeconfig_$(HUB_CLUSTER_NAME)
+	kubectl apply -k "https://github.com/JustinKuli/governance-policy-propagator.git/config/crd?ref=upgrade-operator-sdk" --kubeconfig=$(PWD)/kubeconfig_$(HUB_CLUSTER_NAME)
 	@echo installing crds on managed
-	kubectl apply -f deploy/crds/policy.open-cluster-management.io_policies_crd.yaml --kubeconfig=$(PWD)/kubeconfig_$(MANAGED_CLUSTER_NAME)
+	kubectl apply -f https://raw.githubusercontent.com/JustinKuli/governance-policy-propagator/upgrade-operator-sdk/config/crd/bases/policy.open-cluster-management.io_policies.yaml --kubeconfig=$(PWD)/kubeconfig_$(MANAGED_CLUSTER_NAME)
 
 install-resources:
 	@echo creating user namespace on hub
@@ -197,7 +187,7 @@ travis-slack-reporter:
 		--volume $(PWD)/results-cypress:/opt/app-root/src/grc-ui/test-output/cypress \
 		--env SLACK_TOKEN=$(SLACK_TOKEN) \
 		--env TRAVIS_REPO_SLUG=$(TRAVIS_REPO_SLUG) \
-  	  	--env TRAVIS_PULL_REQUEST=$(TRAVIS_PULL_REQUEST) \
-   		--env TRAVIS_BRANCH=$(TRAVIS_BRANCH) \
+		--env TRAVIS_PULL_REQUEST=$(TRAVIS_PULL_REQUEST) \
+		--env TRAVIS_BRANCH=$(TRAVIS_BRANCH) \
 		--env TRAVIS_BUILD_WEB_URL=$(TRAVIS_BUILD_WEB_URL) \
 		quay.io/open-cluster-management/grc-ui-tests:latest node ./tests/utils/slack-reporter.js
