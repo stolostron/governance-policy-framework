@@ -109,6 +109,15 @@ var _ = Describe("Test policyreport_info metric", func() {
 		Expect(err).To(BeNil())
 		insightsToken = string(decodedToken)
 	})
+	It("Checks that the endpoint does not expose metrics without auth", func() {
+		Eventually(func() interface{} {
+			_, status, err := common.GetWithToken(insightsMetricsURL, "")
+			if err != nil {
+				return err
+			}
+			return status
+		}, defaultTimeoutSeconds, 1).Should(ContainSubstring("Unauthorized"))
+	})
 	It("Checks that a noncompliant policy reports a metric", func() {
 		By("Creating a noncompliant policy")
 		common.OcHub("apply", "-f", noncompliantPolicyYamlReport, "-n", userNamespace)
