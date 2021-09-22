@@ -3,15 +3,11 @@
 package integration
 
 import (
-	"context"
 	"testing"
 
 	. "github.com/onsi/ginkgo"
 	"github.com/onsi/ginkgo/reporters"
 	. "github.com/onsi/gomega"
-	corev1 "k8s.io/api/core/v1"
-	"k8s.io/apimachinery/pkg/api/errors"
-	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/client-go/dynamic"
 	"k8s.io/client-go/kubernetes"
 	"k8s.io/klog"
@@ -59,15 +55,4 @@ var _ = BeforeSuite(func() {
 	getComplianceState = func(policyName string) func() interface{} {
 		return common.GetComplianceState(clientHubDynamic, userNamespace, policyName, clusterNamespace)
 	}
-
-	By("Create Namespace if needed")
-	_, err := clientHub.CoreV1().Namespaces().Create(context.TODO(), &corev1.Namespace{
-		ObjectMeta: metav1.ObjectMeta{
-			Name: userNamespace,
-		},
-	}, metav1.CreateOptions{})
-	if err != nil {
-		Expect(errors.IsAlreadyExists(err)).Should(BeTrue())
-	}
-	Expect(clientHub.CoreV1().Namespaces().Get(context.TODO(), userNamespace, metav1.GetOptions{})).NotTo(BeNil())
 })
