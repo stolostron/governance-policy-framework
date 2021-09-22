@@ -45,7 +45,7 @@ var _ = Describe("Test policyreport_info metric", func() {
 		}
 		Expect(clientHub.CoreV1().Namespaces().Get(context.TODO(), userNamespace, metav1.GetOptions{})).NotTo(BeNil())
 
-		//set up insights-client to poll every minute
+		By("Setting the insights client to poll every minute")
 		insightsClient, err := common.OcHub("get", "deployments", "-n", ocmNS, "-l", insightsClientSelector, "-o", "name")
 		Expect(err).To(BeNil())
 		insightsClient = strings.TrimSpace(insightsClient)
@@ -123,7 +123,7 @@ var _ = Describe("Test policyreport_info metric", func() {
 		common.OcHub("apply", "-f", noncompliantPolicyYamlReport, "-n", userNamespace)
 		Eventually(
 			getComplianceState(noncompliantPolicyNameReport),
-			defaultTimeoutSeconds,
+			defaultTimeoutSeconds*2,
 			1,
 		).Should(Equal(policiesv1.NonCompliant))
 
@@ -154,7 +154,7 @@ var _ = Describe("Test policyreport_info metric", func() {
 				return err
 			}
 			return resp
-		}, defaultTimeoutSeconds*2, 1).Should(common.MatchMetricValue(insightsMetricName, policyLabel, "1"))
+		}, defaultTimeoutSeconds*2, 1).ShouldNot(common.MatchMetricValue(insightsMetricName, policyLabel, "1"))
 	})
 	It("Cleans up", func() {
 		common.OcHub("delete", "-f", compliantPolicyYamlReport, "-n", userNamespace)
