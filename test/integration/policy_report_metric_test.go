@@ -135,7 +135,7 @@ var _ = Describe("Test policyreport_info metric", func() {
 				return err
 			}
 			return resp
-		}, 120, 1).Should(common.MatchMetricValue(insightsMetricName, policyLabel, "1"))
+		}, defaultTimeoutSeconds*5, 1).Should(common.MatchMetricValue(insightsMetricName, policyLabel, "1"))
 	})
 	It("Checks that changing the policy to compliant removes the metric", func() {
 		By("Creating a compliant policy")
