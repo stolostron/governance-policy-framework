@@ -6,6 +6,7 @@ require (
 	github.com/onsi/ginkgo v1.16.4
 	github.com/onsi/gomega v1.16.0
 	github.com/open-cluster-management/governance-policy-propagator v0.0.0-20210330170457-7ccd8538eb95
+	golang.org/x/crypto v0.0.0-20200622213623-75b288015ac9
 	k8s.io/api v0.18.3
 	k8s.io/apimachinery v0.18.3
 	k8s.io/client-go v12.0.0+incompatible
