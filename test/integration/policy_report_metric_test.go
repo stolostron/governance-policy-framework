@@ -4,27 +4,27 @@ package integration
 
 import (
 	"context"
+	"encoding/base64"
 	"fmt"
 	"strings"
-	"encoding/base64"
 
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
 	"github.com/open-cluster-management/governance-policy-framework/test/common"
 	policiesv1 "github.com/open-cluster-management/governance-policy-propagator/pkg/apis/policy/v1"
-	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	corev1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/api/errors"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 )
 
 const (
-	insightsClientSelector = "component=insights-client"
-	insightsMetricsSelector = "component=insights-metrics"
+	insightsClientSelector       = "component=insights-client"
+	insightsMetricsSelector      = "component=insights-metrics"
 	insightsMetricName           = "policyreport_info"
-	noncompliantPolicyYamlReport   	= "../resources/policy_report_metric/noncompliant.yaml"
-	noncompliantPolicyNameReport    = "policyreport-metric-noncompliant"
-	compliantPolicyYamlReport   	= "../resources/policy_report_metric/compliant.yaml"
+	noncompliantPolicyYamlReport = "../resources/policy_report_metric/noncompliant.yaml"
+	noncompliantPolicyNameReport = "policyreport-metric-noncompliant"
+	compliantPolicyYamlReport    = "../resources/policy_report_metric/compliant.yaml"
 	compliantPolicyNameReport    = "policyreport-metric-noncompliant"
 )
 
@@ -32,7 +32,7 @@ var insightsMetricsURL string
 
 var insightsToken string
 
-var _ = Describe("Test policyreport_info metric", func() {
+var _ = Describe("GRC: [P1][Sev1][policy-grc] Test policyreport_info metric", func() {
 	It("Sets up the metrics service endpoint for tests", func() {
 		By("Create Namespace if needed")
 		_, err := clientHub.CoreV1().Namespaces().Create(context.TODO(), &corev1.Namespace{
