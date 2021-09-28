@@ -135,7 +135,7 @@ var _ = Describe("GRC: [P1][Sev1][policy-grc] Test policyreport_info metric", fu
 				return err
 			}
 			return resp
-		}, defaultTimeoutSeconds*5, 1).Should(common.MatchMetricValue(insightsMetricName, policyLabel, "1"))
+		}, defaultTimeoutSeconds*8, 1).Should(common.MatchMetricValue(insightsMetricName, policyLabel, "1"))
 	})
 	It("Checks that changing the policy to compliant removes the metric", func() {
 		By("Creating a compliant policy")
