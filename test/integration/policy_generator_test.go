@@ -96,6 +96,7 @@ var _ = Describe("GRC: [P1][Sev1][policy-grc] Test the Policy Generator in an Ap
 		hubServerURL = strings.TrimSuffix(hubServerURL, "\n")
 		// Use eventually since it can take a while for OpenShift to configure itself with the new
 		// identity provider (IDP).
+		const fiveMinutes = 5 * 60
 		var kubeconfigSubAdmin string
 		Eventually(
 			func() error {
@@ -105,7 +106,7 @@ var _ = Describe("GRC: [P1][Sev1][policy-grc] Test the Policy Generator in an Ap
 				)
 				return err
 			},
-			defaultTimeoutSeconds*4,
+			fiveMinutes,
 			1,
 		).Should(BeNil())
 		// Delete the kubeconfig file after the test.
