@@ -59,17 +59,35 @@ func cleanup(namespace string, secret string, user common.OCPUser) {
 var _ = Describe("GRC: [P1][Sev1][policy-grc] Test the Policy Generator in an App subscription", func() {
 	const namespace = "grc-e2e-policy-generator"
 	const secret = "grc-e2e-subscription-admin-user"
+	const subAdminBinding = "open-cluster-management:subscription-admin"
 	ocpUser := common.OCPUser{
 		ClusterRoles: []string{"open-cluster-management:admin:local-cluster"},
 		// To be considered a subscription-admin you must be part of this cluster role binding.
 		// Having the proper role in another cluster role binding does not work. See:
 		// https://github.com/open-cluster-management/multicloud-operators-subscription/blob/release-2.4/pkg/utils/gitrepo.go#L930-L962
-		ClusterRoleBindings: []string{"open-cluster-management:subscription-admin"},
+		ClusterRoleBindings: []string{subAdminBinding},
 		Password:            "",
 		Username:            "grc-e2e-subscription-admin",
 	}
 
 	It("Sets up the application subscription", func() {
+		By("Verifying that the subscription-admin ClusterRoleBinding exists")
+		const fiveMinutes = 5 * 60
+		// Occasionally, the subscription-admin ClusterRoleBinding may not exist
+		// for a short period of time. This ClusterRoleBinding is managed by the
+		// App Lifecycle controllers and thus it is out of the control of this
+		// test to create it. This just accounts for such a delay.
+		Eventually(
+			func() error {
+				_, err := clientHub.RbacV1().ClusterRoleBindings().Get(
+					context.TODO(), subAdminBinding, metav1.GetOptions{},
+				)
+				return err
+			},
+			fiveMinutes,
+			5,
+		).Should(BeNil())
+
 		By("Cleaning up any existing subscription-admin user config")
 		cleanup(namespace, secret, ocpUser)
 
@@ -96,7 +114,6 @@ var _ = Describe("GRC: [P1][Sev1][policy-grc] Test the Policy Generator in an Ap
 		hubServerURL = strings.TrimSuffix(hubServerURL, "\n")
 		// Use eventually since it can take a while for OpenShift to configure itself with the new
 		// identity provider (IDP).
-		const fiveMinutes = 5 * 60
 		var kubeconfigSubAdmin string
 		Eventually(
 			func() error {
