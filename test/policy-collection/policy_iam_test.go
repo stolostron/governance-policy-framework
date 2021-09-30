@@ -53,7 +53,7 @@ var _ = Describe("GRC: [P1][Sev1][policy-grc] Test the stable IAM policy", func(
 
 	It("stable/"+iamPolicyName+" should be compliant", func() {
 		By("Checking if the status of the root policy is compliant")
-		Eventually(getIAMComplianceState, defaultTimeoutSeconds*2, 1).Should(Equal(policiesv1.Compliant))
+		Eventually(getIAMComplianceState, defaultTimeoutSeconds*10, 1).Should(Equal(policiesv1.Compliant))
 	})
 
 	It("Make the policy noncompliant", func() {
@@ -93,7 +93,7 @@ var _ = Describe("GRC: [P1][Sev1][policy-grc] Test the stable IAM policy", func(
 
 	It("stable/"+iamPolicyName+" should be compliant", func() {
 		By("Checking if the status of the root policy is compliant")
-		Eventually(getIAMComplianceState, defaultTimeoutSeconds*2, 1).Should(Equal(policiesv1.Compliant))
+		Eventually(getIAMComplianceState, defaultTimeoutSeconds*10, 1).Should(Equal(policiesv1.Compliant))
 	})
 
 	It("Clean up stable/"+iamPolicyName, func() {
