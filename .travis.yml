@@ -31,18 +31,6 @@ before_script:
 jobs:
   include:
     - stage: prepare
-      name: "Build the test image"
-      if: type = push AND branch = main
-      script:
-        - set -e
-        - if [ "$TRAVIS_PULL_REQUEST" != "false" ]; then export COMPONENT_TAG_EXTENSION="-PR${TRAVIS_PULL_REQUEST}-${TRAVIS_COMMIT}"; fi;
-        - export COMPONENT_BUILD_COMMAND="docker build . -f Dockerfile.e2etest -t "
-        - export COMPONENT_NAME="grc-policy-framework-tests"
-        - make component/build
-        - make component/push
-        - COMPONENT_NEWTAG="latest" make component/tag;
-        - COMPONENT_VERSION="latest" COMPONENT_TAG_EXTENSION="" make component/push;
-    - stage: prepare
       name: "Patch cluster to latest"
       if: type != pull_request AND branch = main
       env:
@@ -86,6 +74,7 @@ jobs:
         - make travis-slack-reporter
     - stage: test-e2e
       name: "Governance framework e2e tests"
+      if: type != pull_request AND branch = main
       script:
         - |
           make
@@ -94,6 +83,7 @@ jobs:
         - make e2e-debug-dump
     - stage: test-e2e
       name: "Governance framework e2e tests with deployOnHub=true"
+      if: type != pull_request AND branch = main
       env:
         - deployOnHub=true
       script:
@@ -121,13 +111,7 @@ jobs:
       name: "Fast forwarding GRC repos"
       if: type != pull_request AND branch = main
       script: ./build/ff.sh
-    - stage: publish
-      name: "Publish the image to quay with an official version/sha tag and publish entry to integration pipeline stage"
-      if: type = push AND branch =~ /^release-[0-9]+\..*$/
-      script:
-        - set -e
-        - make pipeline-manifest/update COMPONENT_NAME=grc-policy-framework-tests PIPELINE_MANIFEST_COMPONENT_SHA256=${TRAVIS_COMMIT} PIPELINE_MANIFEST_COMPONENT_REPO=${TRAVIS_REPO_SLUG} PIPELINE_MANIFEST_BRANCH=${TRAVIS_BRANCH}
-  
+
 notifications:
   slack:
     if: branch = main
