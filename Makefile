@@ -221,10 +221,19 @@ e2e-debug-kind: e2e-debug
 e2e-debug-acm: e2e-debug
 	@for APP in $(ACM_COMPONENTS); do\
 		for CONTAINER in $$(kubectl get pod -l $(ACM_COMPONENT_SELECTOR)=$${APP} -n $(KIND_MANAGED_NAMESPACE) -o jsonpath={.items[*].spec.containers[*].name}  --kubeconfig=$(PWD)/kubeconfig_$(MANAGED_CLUSTER_NAME)); do\
-			echo "* Logs for Label: $(ACM_COMPONENT_SELECTOR)=$${APP}, Container: $${CONTAINER}" > $(DEBUG_DIR)/managed_logs_$${CONTAINER}.log;\
+			echo -e "* Logs for Label: $(ACM_COMPONENT_SELECTOR)=$${APP}, Container: $${CONTAINER}\n" > $(DEBUG_DIR)/managed_logs_$${CONTAINER}.log;\
 			kubectl logs -l $(ACM_COMPONENT_SELECTOR)=$${APP} -n $(KIND_MANAGED_NAMESPACE) -c $${CONTAINER} --kubeconfig=$(PWD)/kubeconfig_$(MANAGED_CLUSTER_NAME) >> $(DEBUG_DIR)/managed_logs_$${CONTAINER}.log;\
 			echo "";\
 		done;\
+	done
+
+e2e-debug-dump:
+	@echo -e "* DEBUG LOG DUMP..."
+	@echo -e "\n=====\n"
+	@for FILE in $$(ls ./$(DEBUG_DIR)/*); do\
+			echo -e "* Log file: $${FILE}\n";\
+			cat $${FILE};\
+			echo -e "\n=====\n";\
 	done
 
 integration-test:

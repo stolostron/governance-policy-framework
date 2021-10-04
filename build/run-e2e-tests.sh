@@ -54,9 +54,9 @@ echo "* All ready! Start to test..."
 
 make e2e-test || ERROR_CODE=$?
 
-if [[ -n "${ERROR_CODE}" ]] && [[ -n "${ARTIFACT_DIR}" ]]; then
+if [[ -n "${ERROR_CODE}" ]]; then
     echo "* Detected test failure. Collecting debug logs..."
-    make e2e-debug
+    make e2e-debug-kind
 fi
 
 echo "* Deleting Kind cluster..."
