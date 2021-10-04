@@ -48,9 +48,30 @@ var _ = Describe("GRC: [P1][Sev1][policy-grc] Test policyreport_info metric", fu
 		By("Setting the insights client to poll every minute")
 		insightsClient, err := common.OcHub("get", "deployments", "-n", ocmNS, "-l", insightsClientSelector, "-o", "name")
 		Expect(err).To(BeNil())
+		insightsClientPod, err := common.OcHub("get", "pods", "-n", ocmNS, "-l", insightsClientSelector, "-o", "name")
+		Expect(err).To(BeNil())
+		insightsClientPod = strings.Split(insightsClientPod, "pod/")[1]
 		insightsClient = strings.TrimSpace(insightsClient)
 		_, err = common.OcHub("set", "env", "-n", ocmNS, insightsClient, "POLL_INTERVAL=1")
 		Expect(err).To(BeNil())
+		//checking if new pod has spun up
+		Eventually(func() interface{} {
+			var err error
+			pod, err := common.OcHub("get", "pods", "-n", ocmNS, "-l", insightsClientSelector, "--field-selector=status.phase=Running,metadata.name!="+insightsClientPod)
+			if err != nil {
+				return err
+			}
+			return pod
+		}, defaultTimeoutSeconds*2, 1).ShouldNot(Equal(""))
+		//checking if old pod with slow refresh has been taken down
+		Eventually(func() interface{} {
+			var err error
+			pod, err := common.OcHub("get", "pods", "-n", ocmNS, "-l", insightsClientSelector, "--field-selector=status.phase=Running,metadata.name="+insightsClientPod)
+			if err != nil {
+				return err
+			}
+			return pod
+		}, defaultTimeoutSeconds*10, 1).Should(Equal(""))
 
 		By("Ensuring the metrics service exists")
 		svcList, err := clientHub.CoreV1().Services(ocmNS).List(context.TODO(), metav1.ListOptions{LabelSelector: insightsMetricsSelector})
@@ -157,6 +178,12 @@ var _ = Describe("GRC: [P1][Sev1][policy-grc] Test policyreport_info metric", fu
 		}, defaultTimeoutSeconds*2, 1).ShouldNot(common.MatchMetricValue(insightsMetricName, policyLabel, "1"))
 	})
 	It("Cleans up", func() {
+		//unset poll interval
+		insightsClient, err := common.OcHub("get", "deployments", "-n", ocmNS, "-l", insightsClientSelector, "-o", "name")
+		Expect(err).To(BeNil())
+		insightsClient = strings.TrimSpace(insightsClient)
+		_, err = common.OcHub("set", "env", "-n", ocmNS, insightsClient, "POLL_INTERVAL-")
+		Expect(err).To(BeNil())
 		common.OcHub("delete", "-f", compliantPolicyYamlReport, "-n", userNamespace)
 		common.OcHub("delete", "route", "-n", ocmNS, "-l", insightsMetricsSelector)
 		common.OcHub("delete", "clusterrolebinding", roleBindingName)
