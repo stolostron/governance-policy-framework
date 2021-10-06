@@ -16,6 +16,13 @@ KIND_MANAGED_NAMESPACE ?= open-cluster-management-agent-addon
 MANAGED_CLUSTER_NAME ?= managed
 HUB_CLUSTER_NAME ?= hub
 
+# Debugging configuration
+KIND_COMPONENTS := config-policy-controller cert-policy-controller iam-policy-controller governance-policy-spec-sync governance-policy-status-sync governance-policy-template-sync
+KIND_COMPONENT_SELECTOR := name
+ACM_COMPONENTS := cert-policy-controller klusterlet-addon-iampolicyctrl policy-config-policy policy-framework
+ACM_COMPONENT_SELECTOR := app
+DEBUG_DIR := test-output/debug
+
 # Test configuration
 TEST_FILE ?=
 
@@ -171,12 +178,63 @@ install-resources:
 	kubectl create ns managed --kubeconfig=$(PWD)/kubeconfig_$(HUB_CLUSTER_NAME)
 	kubectl apply -f test/resources/managed-cluster.yaml --kubeconfig=$(PWD)/kubeconfig_$(HUB_CLUSTER_NAME)
 
+e2e-dependencies:
+	go get github.com/onsi/ginkgo/ginkgo
+	go get github.com/onsi/gomega/...
+
 e2e-test:
 	@if [ -z "$(TEST_FILE)" ]; then\
 		ginkgo -v --slowSpecThreshold=10 test/e2e;\
 	else\
 		ginkgo -v --slowSpecThreshold=10 --regexScansFilePath=true --focus=$(TEST_FILE) test/e2e;\
 	fi
+
+e2e-debug: e2e-debug-hub e2e-debug-managed
+
+e2e-debug-hub:
+	mkdir -p $(DEBUG_DIR)
+	kubectl get namespaces --kubeconfig=$(PWD)/kubeconfig_$(HUB_CLUSTER_NAME) > $(DEBUG_DIR)/hub_get_namespaces.log
+	kubectl get all -n $(KIND_HUB_NAMESPACE) --kubeconfig=$(PWD)/kubeconfig_$(HUB_CLUSTER_NAME) > $(DEBUG_DIR)/hub_get_all_$(KIND_HUB_NAMESPACE).log
+	kubectl get all -n $(MANAGED_CLUSTER_NAME) --kubeconfig=$(PWD)/kubeconfig_$(HUB_CLUSTER_NAME) > $(DEBUG_DIR)/hub_get_all_$(MANAGED_CLUSTER_NAME).log
+	kubectl get leases -n $(KIND_HUB_NAMESPACE) --kubeconfig=$(PWD)/kubeconfig_$(HUB_CLUSTER_NAME) > $(DEBUG_DIR)/hub_get_leases_$(KIND_HUB_NAMESPACE).log
+	kubectl describe pods -n $(KIND_HUB_NAMESPACE) --kubeconfig=$(PWD)/kubeconfig_$(HUB_CLUSTER_NAME) > $(DEBUG_DIR)/hub_describe_pods_$(KIND_HUB_NAMESPACE).log
+
+e2e-debug-managed:
+	mkdir -p $(DEBUG_DIR)
+	kubectl get namespaces --kubeconfig=$(PWD)/kubeconfig_$(MANAGED_CLUSTER_NAME) > $(DEBUG_DIR)/managed_get_namespaces.log
+	kubectl get all -n $(KIND_MANAGED_NAMESPACE) --kubeconfig=$(PWD)/kubeconfig_$(MANAGED_CLUSTER_NAME) > $(DEBUG_DIR)/managed_get_all_$(KIND_MANAGED_NAMESPACE).log
+	kubectl get leases -n $(KIND_MANAGED_NAMESPACE) --kubeconfig=$(PWD)/kubeconfig_$(MANAGED_CLUSTER_NAME) > $(DEBUG_DIR)/managed_get_leases_$(KIND_MANAGED_NAMESPACE).log
+	kubectl get configurationpolicies.policy.open-cluster-management.io --all-namespaces --kubeconfig=$(PWD)/kubeconfig_$(MANAGED_CLUSTER_NAME) > $(DEBUG_DIR)/managed_get_configurationpolicies.log
+	kubectl get certificatepolicies.policy.open-cluster-management.io --all-namespaces --kubeconfig=$(PWD)/kubeconfig_$(MANAGED_CLUSTER_NAME) > $(DEBUG_DIR)/managed_get_certificatepolicies.log
+	kubectl get iampolicies.policy.open-cluster-management.io --all-namespaces --kubeconfig=$(PWD)/kubeconfig_$(MANAGED_CLUSTER_NAME) > $(DEBUG_DIR)/managed_get_iampolicies.log
+	kubectl describe pods -n $(KIND_MANAGED_NAMESPACE) --kubeconfig=$(PWD)/kubeconfig_$(MANAGED_CLUSTER_NAME) > $(DEBUG_DIR)/managed_describe_pods_$(KIND_MANAGED_NAMESPACE).log
+	kubectl logs -l name=governance-policy-propagator -c governance-policy-propagator -n $(KIND_HUB_NAMESPACE) --kubeconfig=$(PWD)/kubeconfig_$(HUB_CLUSTER_NAME) > $(DEBUG_DIR)/managed_logs_governance-policy-propagator.log
+
+e2e-debug-kind: e2e-debug
+	@for APP in $(KIND_COMPONENTS); do\
+		for CONTAINER in $$(kubectl get pod -l $(KIND_COMPONENT_SELECTOR)=$${APP} -n $(KIND_MANAGED_NAMESPACE) -o jsonpath={.items[*].spec.containers[*].name}  --kubeconfig=$(PWD)/kubeconfig_$(MANAGED_CLUSTER_NAME)); do\
+			echo "* Logs for Label: $(KIND_COMPONENT_SELECTOR)=$${APP}, Container: $${CONTAINER}" > $(DEBUG_DIR)/managed_logs_$${CONTAINER}.log;\
+			kubectl logs -l $(KIND_COMPONENT_SELECTOR)=$${APP} -n $(KIND_MANAGED_NAMESPACE) -c $${CONTAINER} --kubeconfig=$(PWD)/kubeconfig_$(MANAGED_CLUSTER_NAME) >> $(DEBUG_DIR)/managed_logs_$${CONTAINER}.log;\
+		done;\
+	done
+
+e2e-debug-acm: e2e-debug
+	@for APP in $(ACM_COMPONENTS); do\
+		for CONTAINER in $$(kubectl get pod -l $(ACM_COMPONENT_SELECTOR)=$${APP} -n $(KIND_MANAGED_NAMESPACE) -o jsonpath={.items[*].spec.containers[*].name}  --kubeconfig=$(PWD)/kubeconfig_$(MANAGED_CLUSTER_NAME)); do\
+			echo -e "* Logs for Label: $(ACM_COMPONENT_SELECTOR)=$${APP}, Container: $${CONTAINER}\n" > $(DEBUG_DIR)/managed_logs_$${CONTAINER}.log;\
+			kubectl logs -l $(ACM_COMPONENT_SELECTOR)=$${APP} -n $(KIND_MANAGED_NAMESPACE) -c $${CONTAINER} --kubeconfig=$(PWD)/kubeconfig_$(MANAGED_CLUSTER_NAME) >> $(DEBUG_DIR)/managed_logs_$${CONTAINER}.log;\
+			echo "";\
+		done;\
+	done
+
+e2e-debug-dump:
+	@echo -e "* DEBUG LOG DUMP..."
+	@echo -e "\n=====\n"
+	@for FILE in $$(ls ./$(DEBUG_DIR)/*); do\
+			echo -e "* Log file: $${FILE}\n";\
+			cat $${FILE};\
+			echo -e "\n=====\n";\
+	done
 
 integration-test:
 	@if [ -z "$(TEST_FILE)" ]; then\
