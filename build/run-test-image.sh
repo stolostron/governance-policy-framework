@@ -7,6 +7,9 @@ ginkgo -v --slowSpecThreshold=10 test/policy-collection test/integration -- -clu
 
 if [[ -n "${ERROR_CODE}" ]]; then
     echo "* Detected test failure. Collecting debug logs..."
+    # For debugging, the managed cluster might have a different name (i.e. 'local-cluster') but the
+    # kubeconfig is still called 'kubeconfig_managed'
+    export MANAGED_CLUSTER_NAME="managed"
     make e2e-debug-acm
 fi
 
