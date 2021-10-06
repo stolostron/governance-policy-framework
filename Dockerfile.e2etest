@@ -12,6 +12,7 @@ RUN  microdnf update -y \
         && microdnf install golang \
         && microdnf install git \
         && microdnf install which \
+        && microdnf install make \
         && microdnf clean all
 
 COPY --from=builder /usr/local/go /usr/local/go
@@ -26,12 +27,13 @@ WORKDIR $GOPATH/src/github.com/open-cluster-management/governance-policy-framewo
 
 COPY go.mod .
 COPY go.sum .
+COPY Makefile .
 COPY test ./test
 COPY build ./build
-COPY vendor ./vendor
 
 RUN ./build/download-clis.sh
 
+RUN go mod vendor
 RUN go get github.com/onsi/ginkgo/ginkgo
 RUN go get github.com/onsi/gomega/...
 
