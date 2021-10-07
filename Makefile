@@ -21,7 +21,7 @@ KIND_COMPONENTS := config-policy-controller cert-policy-controller iam-policy-co
 KIND_COMPONENT_SELECTOR := name
 ACM_COMPONENTS := cert-policy-controller klusterlet-addon-iampolicyctrl policy-config-policy policy-framework
 ACM_COMPONENT_SELECTOR := app
-DEBUG_DIR := test-output/debug
+DEBUG_DIR ?= test-output/debug
 
 # Test configuration
 TEST_FILE ?=
