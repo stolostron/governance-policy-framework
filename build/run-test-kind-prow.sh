@@ -13,18 +13,23 @@ OPT=(-q -o "UserKnownHostsFile=/dev/null" -o "StrictHostKeyChecking=no" -i "${KE
 ssh "${OPT[@]}" "${HOST}" "echo ${IMAGE_REF} > /tmp/image_ref"
 
 # Set the environment on the KinD instance
-ssh "${OPT[@]}" "${HOST}" "export deployOnHub=${deployOnHub}"
-ssh "${OPT[@]}" "${HOST}" "mkdir -p /tmp/build/"
-
-# Copy the KinD scripts to the KinD instance
+echo "* Copying over test files..."
+ssh "${OPT[@]}" "${HOST}" "mkdir -p /tmp/build/ /tmp/test/"
 scp "${OPT[@]}" Makefile "${HOST}:/tmp/Makefile"
 scp "${OPT[@]}" build/wait_for.sh "${HOST}:/tmp/build/wait_for.sh"
 scp "${OPT[@]}" build/run-e2e-tests.sh "${HOST}:/tmp/build/run-e2e-tests.sh"
+scp -r "${OPT[@]}" test "${HOST}:/tmp/test"
 
 # Run the KinD script on the KinD instance
-ssh "${OPT[@]}" "${HOST}" "cd /tmp && ./build/run-e2e-tests.sh" > >(tee "${ARTIFACT_DIR}/test-e2e.log") 2>&1
+echo "* Running E2E script on Kind cluster..."
+KIND_COMMAND="cd /tmp && export deployOnHub=${deployOnHub} && ./build/run-e2e-tests.sh"
+ssh "${OPT[@]}" "${HOST}" "${KIND_COMMAND}" > >(tee "${ARTIFACT_DIR}/test-e2e.log") 2>&1 || ERROR_CODE=$?
 
 # Copy any debug logs
+echo "* Checking for debug logs..."
 if ssh "${OPT[@]}" "${HOST}" "ls /tmp/test-output/debug"; then
   scp -r "${OPT[@]}" "${HOST}:/tmp/test-output/*" ${ARTIFACT_DIR}
 fi
+
+# Manually exit in case an exit code was captured
+exit ${ERROR_CODE}
