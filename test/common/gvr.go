@@ -22,4 +22,6 @@ var (
 	GvrComplianceCheckResult = schema.GroupVersionResource{Group: "compliance.openshift.io", Version: "v1alpha1", Resource: "compliancecheckresults"}
 	GvrRoute                 = schema.GroupVersionResource{Group: "route.openshift.io", Version: "v1", Resource: "routes"}
 	GvrOAuth                 = schema.GroupVersionResource{Group: "config.openshift.io", Version: "v1", Resource: "oauths"}
+	GvrUser                  = schema.GroupVersionResource{Group: "user.openshift.io", Version: "v1", Resource: "users"}
+	GvrIdentity              = schema.GroupVersionResource{Group: "user.openshift.io", Version: "v1", Resource: "identities"}
 )
