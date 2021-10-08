@@ -14,21 +14,26 @@ ssh "${OPT[@]}" "${HOST}" "echo ${IMAGE_REF} > /tmp/image_ref"
 
 # Set the environment on the KinD instance
 echo "* Copying over test files..."
-ssh "${OPT[@]}" "${HOST}" "mkdir -p /tmp/build/ /tmp/test/"
-scp "${OPT[@]}" Makefile "${HOST}:/tmp/Makefile"
-scp "${OPT[@]}" build/wait_for.sh "${HOST}:/tmp/build/wait_for.sh"
-scp "${OPT[@]}" build/run-e2e-tests.sh "${HOST}:/tmp/build/run-e2e-tests.sh"
-scp -r "${OPT[@]}" test "${HOST}:/tmp/test"
+# We have to use a subdirectory since Go refuses to use a 'go.mod' file in '/tmp'
+WORK_DIR=/tmp/governance-policy-framework
+ssh "${OPT[@]}" "${HOST}" "mkdir -p ${WORK_DIR}/build/"
+scp "${OPT[@]}" go.mod "${HOST}:${WORK_DIR}/"
+scp "${OPT[@]}" go.sum "${HOST}:${WORK_DIR}/"
+scp "${OPT[@]}" Makefile "${HOST}:${WORK_DIR}/"
+scp "${OPT[@]}" build/wait_for.sh "${HOST}:${WORK_DIR}/build/"
+scp "${OPT[@]}" build/run-e2e-tests.sh "${HOST}:${WORK_DIR}/build/"
+scp -r "${OPT[@]}" deploy/ "${HOST}:${WORK_DIR}/"
+scp -r "${OPT[@]}" test/ "${HOST}:${WORK_DIR}/"
 
 # Run the KinD script on the KinD instance
 echo "* Running E2E script on Kind cluster..."
-KIND_COMMAND="cd /tmp && export deployOnHub=${deployOnHub} && ./build/run-e2e-tests.sh"
+KIND_COMMAND="cd ${WORK_DIR} && deployOnHub=${deployOnHub} CGO_ENABLED=0 ./build/run-e2e-tests.sh"
 ssh "${OPT[@]}" "${HOST}" "${KIND_COMMAND}" > >(tee "${ARTIFACT_DIR}/test-e2e.log") 2>&1 || ERROR_CODE=$?
 
 # Copy any debug logs
-echo "* Checking for debug logs..."
-if ssh "${OPT[@]}" "${HOST}" "ls /tmp/test-output/debug"; then
-  scp -r "${OPT[@]}" "${HOST}:/tmp/test-output/*" ${ARTIFACT_DIR}
+if [[ -n "${ERROR_CODE}" ]]; then
+  echo "* Checking for debug logs..."
+  scp -r "${OPT[@]}" "${HOST}:${WORK_DIR}/test-output/" ${ARTIFACT_DIR}/
 fi
 
 # Manually exit in case an exit code was captured
