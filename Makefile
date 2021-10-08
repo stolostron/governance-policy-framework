@@ -10,6 +10,14 @@ deployOnHub ?= false
 GITHUB_USER := $(shell echo $(GITHUB_USER) | sed 's/@/%40/g')
 GITHUB_TOKEN ?=
 
+# Keep an existing GOPATH, make a private one if it is undefined
+GOPATH_DEFAULT := $(PWD)/.go
+export GOPATH ?= $(GOPATH_DEFAULT)
+GOBIN_DEFAULT := $(GOPATH)/bin
+export GOBIN ?= $(GOBIN_DEFAULT)
+GOARCH = $(shell go env GOARCH)
+GOOS = $(shell go env GOOS)
+
 # Handle KinD configuration
 KIND_HUB_NAMESPACE ?= open-cluster-management
 KIND_MANAGED_NAMESPACE ?= open-cluster-management-agent-addon
@@ -184,9 +192,9 @@ e2e-dependencies:
 
 e2e-test:
 	@if [ -z "$(TEST_FILE)" ]; then\
-		ginkgo -v --slowSpecThreshold=10 test/e2e;\
+		$(GOPATH)/bin/ginkgo -v --slowSpecThreshold=10 test/e2e;\
 	else\
-		ginkgo -v --slowSpecThreshold=10 --regexScansFilePath=true --focus=$(TEST_FILE) test/e2e;\
+		$(GOPATH)/bin/ginkgo -v --slowSpecThreshold=10 --regexScansFilePath=true --focus=$(TEST_FILE) test/e2e;\
 	fi
 
 e2e-debug: e2e-debug-hub e2e-debug-managed
@@ -237,16 +245,16 @@ e2e-debug-dump:
 
 integration-test:
 	@if [ -z "$(TEST_FILE)" ]; then\
-		ginkgo -v --slowSpecThreshold=10 test/integration;\
+		$(GOPATH)/bin/ginkgo -v --slowSpecThreshold=10 test/integration;\
 	else\
-		ginkgo -v --slowSpecThreshold=10 --regexScansFilePath=true --focus=$(TEST_FILE) test/integration;\
+		$(GOPATH)/bin/ginkgo -v --slowSpecThreshold=10 --regexScansFilePath=true --focus=$(TEST_FILE) test/integration;\
 	fi
 
 policy-collection-test:
 	@if [ -z "$(TEST_FILE)" ]; then\
-		ginkgo -v --slowSpecThreshold=10 test/policy-collection;\
+		$(GOPATH)/bin/ginkgo -v --slowSpecThreshold=10 test/policy-collection;\
 	else\
-		ginkgo -v --slowSpecThreshold=10 --regexScansFilePath=true --focus=$(TEST_FILE) test/policy-collection;\
+		$(GOPATH)/bin/ginkgo -v --slowSpecThreshold=10 --regexScansFilePath=true --focus=$(TEST_FILE) test/policy-collection;\
 	fi
 
 travis-slack-reporter:
