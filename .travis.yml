@@ -9,12 +9,12 @@ services:
 branches:
   only:
     - main
-    - /^release-[0-9]+\..*$/
 
 env:
   global:
     - OS=linux
-    - COMPONENT_TAG_EXTENSION="-${TRAVIS_COMMIT}"
+    - COMPONENT_VERSION="latest"
+    - COMPONENT_TAG_EXTENSION=""
     # Component Specific
     - COMPONENT_INIT_COMMAND=${TRAVIS_BUILD_DIR}/build/install-dependencies.sh
     - COMPONENT_E2E_TEST_COMMAND=${TRAVIS_BUILD_DIR}/build/run-e2e-tests.sh
@@ -23,7 +23,6 @@ stages:
   - prepare
   - test-e2e
   - ff
-  - publish
 
 before_script:
   - make init
@@ -32,7 +31,7 @@ jobs:
   include:
     - stage: prepare
       name: "Patch cluster to latest"
-      if: type != pull_request AND branch = main
+      if: type != pull_request AND type != push
       env:
         - COMPONENT_E2E_TEST_COMMAND=${TRAVIS_BUILD_DIR}/build/patch-cluster.sh
       script: 
@@ -41,7 +40,7 @@ jobs:
           make component/test/e2e
     - stage: prepare
       name: "Clean up cluster"
-      if: type != pull_request AND branch = main
+      if: type != pull_request AND type != push
       env:
         - COMPONENT_E2E_TEST_COMMAND=${TRAVIS_BUILD_DIR}/build/clean-up-cluster.sh
       script: 
@@ -50,7 +49,7 @@ jobs:
           make component/test/e2e
     - stage: test-e2e
       name: "Governance framework UI e2e tests -- basic"
-      if: type != pull_request AND branch = main
+      if: type != pull_request AND type != push
       env:
         - COMPONENT_E2E_TEST_COMMAND=${TRAVIS_BUILD_DIR}/build/run-e2e-tests-ui.sh
         - CYPRESS_TAGS_EXCLUDE=@extended
@@ -62,7 +61,7 @@ jobs:
         - make travis-slack-reporter
     - stage: test-e2e
       name: "Governance framework UI e2e tests -- extended"
-      if: type != pull_request AND branch = main
+      if: type != pull_request AND type != push
       env:
         - COMPONENT_E2E_TEST_COMMAND=${TRAVIS_BUILD_DIR}/build/run-e2e-tests-ui.sh
         - CYPRESS_TAGS_INCLUDE=@extended
@@ -74,7 +73,7 @@ jobs:
         - make travis-slack-reporter
     - stage: test-e2e
       name: "Governance framework e2e tests"
-      if: type != pull_request AND branch = main
+      if: type != pull_request AND type != push
       script:
         - |
           make
@@ -83,7 +82,7 @@ jobs:
         - make e2e-debug-dump
     - stage: test-e2e
       name: "Governance framework e2e tests with deployOnHub=true"
-      if: type != pull_request AND branch = main
+      if: type != pull_request AND type != push
       env:
         - deployOnHub=true
       script:
@@ -94,14 +93,13 @@ jobs:
         - make e2e-debug-dump
     - stage: test-e2e
       name: "Test policies from policy-collection repo"
-      if: type != pull_request AND branch = main
+      if: type != pull_request AND type != push
       env:
         - COMPONENT_E2E_TEST_COMMAND=${TRAVIS_BUILD_DIR}/build/run-e2e-tests-policy-framework.sh
       script: 
         - |
           make
           export COMPONENT_NAME="grc-policy-framework-tests"
-          if [ "$TRAVIS_PULL_REQUEST" != "false" ]; then export COMPONENT_TAG_EXTENSION="-PR${TRAVIS_PULL_REQUEST}-${TRAVIS_COMMIT}"; fi;
           make component/pull
           make component/test/e2e
       after_failure:
@@ -109,18 +107,16 @@ jobs:
         - make e2e-debug-dump
     - stage: ff
       name: "Fast forwarding GRC repos"
-      if: type != pull_request AND branch = main
+      if: type != pull_request AND type != push
       script: ./build/ff.sh
 
 notifications:
   slack:
-    if: branch = main
     on_pull_requests: false
     rooms:
       secure: qaj5g0eO0XtIXz9vhwIkeH8RTtOFVMjZabgDAEk/YqUtBRrOTVADp4haRigNYBwhnew/h5gA4i+8j/rBZGbNn0W4ziPJT5WDAbqlyg6v7A/xguJozKL4LIuW29NaJaNisW1OtDCrXxJ0Pb5HjaIhoQMxl5UWKP7BJv0Xy9lq4tqfO+CJDuyerP0M6pFgnK8qYpbQ5NDh4Ou7HMLxYrJdfXf7T7YYi3pE7EctYIz05DTEYqYsh8rfOuvunmL3uBYuMROOnygJmKfApBn59rgQWtvLcoQUl6l5p1C9bR5F9yn5gFPAqKWbRPBNwStxHf+gCdCoac+iOQfwGnODlO+x+KItWYIuPSlMHdl+BrFLJ/GqraIAvArGQqkZ6zIHcIlmIHNUak+h6LZUdWSuvgQI666dZwZOBDEFqn9yWGOgO2nFYCoB8VDwHXA2zaEe1ZuWGrX+pVe0WgM7C4EYK21i6HlN9N20/gqIjyGW5CQZJWFrl55OF5uR4ZfPvclr1GwsxiQfVfGyUAU5TGgQvY+QcU8sxhL8g7OZxEbFdV06+HzUAKyVIv0N4rwlCQdr46DDR6y8nOIOYfBD3a0w5poMab6m7qLd+w1E041gFDnEqnxSE8qlFPxREwPOsPhL4EuqtKUP7NTVrXY4/6jtM1D+Dz3MMEtIEq1Kj/YE/XTxlLQ=
     template:
       - GRC integration e2e test %{result} in %{duration}
-      # - "%{repository_slug} (%{commit}) : %{message}"
       - "Build details: %{build_url}"
     on_success: always
     on_failure: always
