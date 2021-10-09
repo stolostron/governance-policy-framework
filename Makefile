@@ -33,6 +33,7 @@ DEBUG_DIR ?= test-output/debug
 
 # Test configuration
 TEST_FILE ?=
+TEST_ARGS ?=
 
 USE_VENDORIZED_BUILD_HARNESS ?=
 
@@ -192,9 +193,9 @@ e2e-dependencies:
 
 e2e-test:
 	@if [ -z "$(TEST_FILE)" ]; then\
-		$(GOPATH)/bin/ginkgo -v --slowSpecThreshold=10 test/e2e;\
+		$(GOPATH)/bin/ginkgo -v $(TEST_ARGS) --slowSpecThreshold=10 test/e2e;\
 	else\
-		$(GOPATH)/bin/ginkgo -v --slowSpecThreshold=10 --regexScansFilePath=true --focus=$(TEST_FILE) test/e2e;\
+		$(GOPATH)/bin/ginkgo -v $(TEST_ARGS) --slowSpecThreshold=10 --regexScansFilePath=true --focus=$(TEST_FILE) test/e2e;\
 	fi
 
 e2e-debug: e2e-debug-hub e2e-debug-managed
@@ -245,16 +246,16 @@ e2e-debug-dump:
 
 integration-test:
 	@if [ -z "$(TEST_FILE)" ]; then\
-		$(GOPATH)/bin/ginkgo -v --slowSpecThreshold=10 test/integration;\
+		$(GOPATH)/bin/ginkgo -v $(TEST_ARGS) --slowSpecThreshold=10 test/integration;\
 	else\
-		$(GOPATH)/bin/ginkgo -v --slowSpecThreshold=10 --regexScansFilePath=true --focus=$(TEST_FILE) test/integration;\
+		$(GOPATH)/bin/ginkgo -v $(TEST_ARGS) --slowSpecThreshold=10 --regexScansFilePath=true --focus=$(TEST_FILE) test/integration;\
 	fi
 
 policy-collection-test:
 	@if [ -z "$(TEST_FILE)" ]; then\
-		$(GOPATH)/bin/ginkgo -v --slowSpecThreshold=10 test/policy-collection;\
+		$(GOPATH)/bin/ginkgo -v $(TEST_ARGS) --slowSpecThreshold=10 test/policy-collection;\
 	else\
-		$(GOPATH)/bin/ginkgo -v --slowSpecThreshold=10 --regexScansFilePath=true --focus=$(TEST_FILE) test/policy-collection;\
+		$(GOPATH)/bin/ginkgo -v $(TEST_ARGS) --slowSpecThreshold=10 --regexScansFilePath=true --focus=$(TEST_FILE) test/policy-collection;\
 	fi
 
 travis-slack-reporter:
