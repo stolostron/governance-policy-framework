@@ -92,7 +92,7 @@ jobs:
       after_failure:
         - make e2e-debug-dump
     - stage: test-e2e
-      name: "Test policies from policy-collection repo"
+      name: "Test grc-framework"
       if: type != pull_request AND type != push
       env:
         - COMPONENT_E2E_TEST_COMMAND=${TRAVIS_BUILD_DIR}/build/run-e2e-tests-policy-framework.sh
