@@ -141,7 +141,7 @@ var _ = Describe("Test gatekeeper", func() {
 			Eventually(func() interface{} {
 				nsMustHaveGkCR := GetClusterLevelWithTimeout(clientManagedDynamic, common.GvrK8sRequiredLabels, "ns-must-have-gk", true, defaultTimeoutSeconds)
 				return len(nsMustHaveGkCR.Object["status"].(map[string]interface{})["byPod"].([]interface{}))
-			}, defaultTimeoutSeconds*4, 1).Should(Equal(3))
+			}, defaultTimeoutSeconds*8, 1).Should(Equal(3))
 		})
 		It("should generate statuses properly on hub, no violation expected", func() {
 			By("Checking if status for policy template policy-gatekeeper-k8srequiredlabels is compliant")
