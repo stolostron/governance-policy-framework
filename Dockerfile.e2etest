@@ -33,8 +33,10 @@ COPY build ./build
 
 RUN ./build/download-clis.sh
 
-RUN go mod vendor
+
 RUN go get github.com/onsi/ginkgo/ginkgo
 RUN go get github.com/onsi/gomega/...
+
+RUN go mod vendor
 
 CMD ["./build/run-test-image.sh"]
