@@ -3,7 +3,7 @@ module github.com/open-cluster-management/governance-policy-framework
 go 1.16
 
 require (
-	github.com/onsi/ginkgo v1.16.4
+	github.com/onsi/ginkgo v1.16.5
 	github.com/onsi/gomega v1.16.0
 	github.com/open-cluster-management/governance-policy-propagator v0.0.0-20210330170457-7ccd8538eb95
 	k8s.io/api v0.18.3
