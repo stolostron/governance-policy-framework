@@ -14,6 +14,7 @@ import (
 
 	"github.com/open-cluster-management/governance-policy-framework/test/common"
 	corev1 "k8s.io/api/core/v1"
+	rbacv1 "k8s.io/api/rbac/v1"
 	k8serrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
@@ -72,21 +73,26 @@ var _ = Describe("GRC: [P1][Sev1][policy-grc] Test the Policy Generator in an Ap
 
 	It("Sets up the application subscription", func() {
 		By("Verifying that the subscription-admin ClusterRoleBinding exists")
-		const fiveMinutes = 5 * 60
-		// Occasionally, the subscription-admin ClusterRoleBinding may not exist
-		// for a short period of time. This ClusterRoleBinding is managed by the
-		// App Lifecycle controllers and thus it is out of the control of this
-		// test to create it. This just accounts for such a delay.
-		Eventually(
-			func() error {
-				_, err := clientHub.RbacV1().ClusterRoleBindings().Get(
-					context.TODO(), subAdminBinding, metav1.GetOptions{},
-				)
-				return err
+		// Occasionally, the subscription-admin ClusterRoleBinding may not exist due to some unknown
+		// error. This ClusterRoleBinding is supposed to have been created by the App Lifecycle
+		// controllers. In this unusual case, create the ClusterRoleBinding based on the advice from
+		// the Application Lifecycle squad.
+		subAdminBindingObj := rbacv1.ClusterRoleBinding{
+			ObjectMeta: metav1.ObjectMeta{
+				Name: subAdminBinding,
 			},
-			fiveMinutes,
-			5,
-		).Should(BeNil())
+			RoleRef: rbacv1.RoleRef{
+				APIGroup: "rbac.authorization.k8s.io",
+				Kind:     "ClusterRole",
+				Name:     subAdminBinding,
+			},
+		}
+		_, err := clientHub.RbacV1().ClusterRoleBindings().Create(
+			context.TODO(), &subAdminBindingObj, metav1.CreateOptions{},
+		)
+		if err != nil {
+			Expect(k8serrors.IsAlreadyExists(err)).Should(BeTrue())
+		}
 
 		By("Cleaning up any existing subscription-admin user config")
 		cleanup(namespace, secret, ocpUser)
@@ -94,7 +100,7 @@ var _ = Describe("GRC: [P1][Sev1][policy-grc] Test the Policy Generator in an Ap
 		By("Creating a subscription-admin user and configuring IDP")
 		// Create a namespace to house the subscription configuration.
 		nsObj := corev1.Namespace{ObjectMeta: metav1.ObjectMeta{Name: namespace}}
-		_, err := clientHub.CoreV1().Namespaces().Create(
+		_, err = clientHub.CoreV1().Namespaces().Create(
 			context.TODO(), &nsObj, metav1.CreateOptions{},
 		)
 		Expect(err).Should(BeNil())
@@ -115,6 +121,7 @@ var _ = Describe("GRC: [P1][Sev1][policy-grc] Test the Policy Generator in an Ap
 		// Use eventually since it can take a while for OpenShift to configure itself with the new
 		// identity provider (IDP).
 		var kubeconfigSubAdmin string
+		const fiveMinutes = 5 * 60
 		Eventually(
 			func() error {
 				var err error
