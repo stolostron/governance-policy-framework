@@ -149,12 +149,24 @@ var _ = Describe("GRC: [P1][Sev1][policy-grc] Test policyreport_info metric", fu
 		).Should(Equal(policiesv1.NonCompliant))
 
 		By("Checking the policy metric")
+		insightsClient, err := common.OcHub("get", "deployments", "-n", ocmNS, "-l", insightsClientSelector, "-o", "name")
+		Expect(err).To(BeNil())
+		insightsClient = strings.TrimSpace(insightsClient)
+		output, err := common.OcHub("set", "env", "-n", ocmNS, insightsClient, "--list")
+		Expect(err).To(BeNil())
+		fmt.Println("INSIGHTS CLIENT ENV VARIABLES:")
+		fmt.Println(output)
+
 		policyLabel := `policy="` + userNamespace + "." + noncompliantPolicyNameReport + `"`
 		Eventually(func() interface{} {
 			resp, _, err := common.GetWithToken(insightsMetricsURL, strings.TrimSpace(insightsToken))
 			if err != nil {
+				fmt.Println("ERROR GETTING METRIC:")
+				fmt.Println(err)
 				return err
 			}
+			fmt.Println("metric response received:")
+			fmt.Println(resp)
 			return resp
 		}, defaultTimeoutSeconds*8, 1).Should(common.MatchMetricValue(insightsMetricName, policyLabel, "1"))
 	})
@@ -168,12 +180,24 @@ var _ = Describe("GRC: [P1][Sev1][policy-grc] Test policyreport_info metric", fu
 		).Should(Equal(policiesv1.Compliant))
 
 		By("Checking the policy metric displays nothing")
+		insightsClient, err := common.OcHub("get", "deployments", "-n", ocmNS, "-l", insightsClientSelector, "-o", "name")
+		Expect(err).To(BeNil())
+		insightsClient = strings.TrimSpace(insightsClient)
+		output, err := common.OcHub("set", "env", "-n", ocmNS, insightsClient, "--list")
+		Expect(err).To(BeNil())
+		fmt.Println("INSIGHTS CLIENT ENV VARIABLES:")
+		fmt.Println(output)
+
 		policyLabel := `policy="` + userNamespace + "." + noncompliantPolicyNameReport + `"`
 		Eventually(func() interface{} {
 			resp, _, err := common.GetWithToken(insightsMetricsURL, strings.TrimSpace(insightsToken))
 			if err != nil {
+				fmt.Println("ERROR GETTING METRIC:")
+				fmt.Println(err)
 				return err
 			}
+			fmt.Println("metric response received:")
+			fmt.Println(resp)
 			return resp
 		}, defaultTimeoutSeconds*8, 1).ShouldNot(common.MatchMetricValue(insightsMetricName, policyLabel, "1"))
 	})
