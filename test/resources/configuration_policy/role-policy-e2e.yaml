@@ -3,9 +3,9 @@ kind: Role
 metadata:
   name: role-policy-e2e
 rules:
-  - apiGroups: ["extensions", "apps"]
+  - apiGroups: ["apps", "extensions"]
     resources: ["deployments"]
-    verbs: ["get", "list", "watch", "create", "delete","patch"]
+    verbs: ["create", "delete", "get", "list", "patch", "watch"]
   - apiGroups: [""]
     resources: ["pods"]
-    verbs: ["get", "watch", "list"]
+    verbs: ["get", "list", "watch"]
