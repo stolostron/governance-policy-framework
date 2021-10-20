@@ -49,4 +49,8 @@ spec:
     - status: 'True'
       type: ManagedClusterConditionAvailable
   clusterSelector:
-    matchExpressions: []
+    matchExpressions:
+      - key: local-cluster
+        operator: In
+        values:
+          - 'true'
