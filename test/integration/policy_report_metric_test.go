@@ -144,7 +144,7 @@ var _ = Describe("GRC: [P1][Sev1][policy-grc] Test policyreport_info metric", fu
 		common.OcHub("apply", "-f", noncompliantPolicyYamlReport, "-n", userNamespace)
 		Eventually(
 			getComplianceState(noncompliantPolicyNameReport),
-			defaultTimeoutSeconds*2,
+			defaultTimeoutSeconds*4,
 			1,
 		).Should(Equal(policiesv1.NonCompliant))
 
@@ -182,7 +182,7 @@ var _ = Describe("GRC: [P1][Sev1][policy-grc] Test policyreport_info metric", fu
 		common.OcHub("apply", "-f", compliantPolicyYamlReport, "-n", userNamespace)
 		Eventually(
 			getComplianceState(compliantPolicyNameReport),
-			defaultTimeoutSeconds*2,
+			defaultTimeoutSeconds*4,
 			1,
 		).Should(Equal(policiesv1.Compliant))
 
