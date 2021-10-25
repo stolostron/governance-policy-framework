@@ -116,12 +116,11 @@ kind-deploy-policy-framework:
 		echo installing policy-spec-sync on managed;\
 		kubectl apply -f deploy/spec-sync -n $(KIND_MANAGED_NAMESPACE) --kubeconfig=$(PWD)/kubeconfig_$(MANAGED_CLUSTER_NAME);\
 	fi
+	echo installing policy-status-sync
+	kubectl apply -n $(KIND_MANAGED_NAMESPACE) -f https://raw.githubusercontent.com/open-cluster-management/governance-policy-status-sync/main/deploy/operator.yaml --kubeconfig=$(PWD)/kubeconfig_$(MANAGED_CLUSTER_NAME)
 	@if [ "$(deployOnHub)" = "true" ]; then\
-		echo installing policy-status-sync with ON_MULTICLUSTERHUB;\
-		kubectl apply -k deploy/status-sync -n $(KIND_MANAGED_NAMESPACE) --kubeconfig=$(PWD)/kubeconfig_$(MANAGED_CLUSTER_NAME);\
-	else\
-		echo installing policy-status-sync on managed;\
-		kubectl apply -f deploy/status-sync/yamls -n $(KIND_MANAGED_NAMESPACE) --kubeconfig=$(PWD)/kubeconfig_$(MANAGED_CLUSTER_NAME);\
+		echo patching policy-status-sync with ON_MULTICLUSTERHUB=true;\
+		kubectl set env -n $(KIND_MANAGED_NAMESPACE) deployments.app governance-policy-status-sync ON_MULTICLUSTERHUB=true --kubeconfig=$(PWD)/kubeconfig_$(MANAGED_CLUSTER_NAME);\
 	fi
 	@echo installing policy-template-sync on managed
 	kubectl apply -f deploy/template-sync -n $(KIND_MANAGED_NAMESPACE) --kubeconfig=$(PWD)/kubeconfig_$(MANAGED_CLUSTER_NAME)
