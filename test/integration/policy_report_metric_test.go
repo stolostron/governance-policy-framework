@@ -115,15 +115,23 @@ var _ = Describe("GRC: [P1][Sev1][policy-grc] Test policyreport_info metric", fu
 		Expect(err).To(BeNil())
 		_, err = common.OcHub("create", "clusterrolebinding", roleBindingName, "--clusterrole=cluster-admin", fmt.Sprintf("--serviceaccount=%s:%s", userNamespace, saName))
 		Expect(err).To(BeNil())
-		tokenNames, err := common.OcHub("get", fmt.Sprintf("serviceaccount/%s", saName), "-n", userNamespace, "-o", "jsonpath={.secrets[*].name}")
-		Expect(err).To(BeNil())
-		tokenNameArr := strings.Split(tokenNames, " ")
+
+		// The secret can take a moment to be created, retry until it is in the cluster.
 		var tokenName string
-		for _, name := range tokenNameArr {
-			if strings.HasPrefix(name, saName+"-token-") {
-				tokenName = name
+		Eventually(func() interface{} {
+			tokenNames, err := common.OcHub("get", fmt.Sprintf("serviceaccount/%s", saName), "-n", userNamespace, "-o", "jsonpath={.secrets[*].name}")
+			if err != nil {
+				return err
 			}
-		}
+			tokenNameArr := strings.Split(tokenNames, " ")
+			for _, name := range tokenNameArr {
+				if strings.HasPrefix(name, saName+"-token-") {
+					tokenName = name
+				}
+			}
+			return tokenName
+		}, defaultTimeoutSeconds, 1).Should(ContainSubstring(saName + "-token-"))
+
 		encodedtoken, err := common.OcHub("get", "secret", tokenName, "-n", userNamespace, "-o", "jsonpath={.data.token}")
 		Expect(err).To(BeNil())
 		decodedToken, err := base64.StdEncoding.DecodeString(encodedtoken)
