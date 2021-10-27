@@ -144,7 +144,7 @@ var _ = Describe("GRC: [P1][Sev1][policy-grc] Test policyreport_info metric", fu
 		common.OcHub("apply", "-f", noncompliantPolicyYamlReport, "-n", userNamespace)
 		Eventually(
 			getComplianceState(noncompliantPolicyNameReport),
-			defaultTimeoutSeconds*4,
+			defaultTimeoutSeconds*8,
 			1,
 		).Should(Equal(policiesv1.NonCompliant))
 
@@ -167,13 +167,6 @@ var _ = Describe("GRC: [P1][Sev1][policy-grc] Test policyreport_info metric", fu
 			}
 			fmt.Println("metric response received:")
 			fmt.Println(resp)
-			fmt.Println("----- policyreport data: -----")
-			pr, err := common.OcHub("get", "policyreport", "-n", "local-cluster", "local-cluster-policyreport", "-o", "yaml")
-			if err != nil {
-				fmt.Println(err)
-			} else {
-				fmt.Println(pr)
-			}
 			return resp
 		}, defaultTimeoutSeconds*8, 1).Should(common.MatchMetricValue(insightsMetricName, policyLabel, "1"))
 	})
@@ -182,7 +175,7 @@ var _ = Describe("GRC: [P1][Sev1][policy-grc] Test policyreport_info metric", fu
 		common.OcHub("apply", "-f", compliantPolicyYamlReport, "-n", userNamespace)
 		Eventually(
 			getComplianceState(compliantPolicyNameReport),
-			defaultTimeoutSeconds*4,
+			defaultTimeoutSeconds*8,
 			1,
 		).Should(Equal(policiesv1.Compliant))
 
@@ -205,13 +198,6 @@ var _ = Describe("GRC: [P1][Sev1][policy-grc] Test policyreport_info metric", fu
 			}
 			fmt.Println("metric response received:")
 			fmt.Println(resp)
-			fmt.Println("----- policyreport data: -----")
-			pr, err := common.OcHub("get", "policyreport", "-n", "local-cluster", "local-cluster-policyreport", "-o", "yaml")
-			if err != nil {
-				fmt.Println(err)
-			} else {
-				fmt.Println(pr)
-			}
 			return resp
 		}, defaultTimeoutSeconds*8, 1).ShouldNot(common.MatchMetricValue(insightsMetricName, policyLabel, "1"))
 	})
