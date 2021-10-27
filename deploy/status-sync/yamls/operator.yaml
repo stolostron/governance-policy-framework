@@ -16,7 +16,7 @@ spec:
       serviceAccountName: governance-policy-status-sync
       containers:
         - name: governance-policy-status-sync
-          image: quay.io/open-cluster-management/governance-policy-status-sync:latest
+          image: quay.io/open-cluster-management/governance-policy-status-sync:latest-2.4
           command:
           - governance-policy-status-sync
           args:
