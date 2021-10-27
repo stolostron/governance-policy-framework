@@ -4,7 +4,7 @@
 FROM golang:1.16 AS builder
 
 # Stage 2: Copy Go binaries and run tests on ubi-minimal
-FROM registry.access.redhat.com/ubi8/ubi-minimal:latest-2.4
+FROM registry.access.redhat.com/ubi8/ubi-minimal:latest
 
 RUN  microdnf update -y \
         && microdnf install tar \
