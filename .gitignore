@@ -8,3 +8,5 @@ test/e2e/debug.test
 test/policy-collection/policy-collection.test
 test/policy-collection/debug.test
 .DS_Store
+
+.go
