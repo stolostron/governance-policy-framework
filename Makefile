@@ -136,7 +136,11 @@ kind-deploy-cert-policy-controller:
 	@echo installing cert-manager on managed
 	kubectl apply --validate=false -f https://github.com/jetstack/cert-manager/releases/download/v1.0.1/cert-manager.yaml --kubeconfig=$(PWD)/kubeconfig_$(MANAGED_CLUSTER_NAME)
 	@echo installing cert-policy-controller on managed
-	kubectl apply -f deploy/cert-policy-controller -n $(KIND_MANAGED_NAMESPACE) --kubeconfig=$(PWD)/kubeconfig_$(MANAGED_CLUSTER_NAME)
+	kubectl apply -f https://raw.githubusercontent.com/open-cluster-management/cert-policy-controller/main/deploy/crds/policy.open-cluster-management.io_certificatepolicies.yaml --kubeconfig=$(PWD)/kubeconfig_$(MANAGED_CLUSTER_NAME)
+	kubectl apply -f https://raw.githubusercontent.com/open-cluster-management/cert-policy-controller/main/deploy/operator.yaml -n $(KIND_MANAGED_NAMESPACE) --kubeconfig=$(PWD)/kubeconfig_$(MANAGED_CLUSTER_NAME)
+	kubectl patch deployment cert-policy-controller \
+		-n $(KIND_MANAGED_NAMESPACE) -p '{"spec": {"template": {"spec": {"containers": [{"name":"cert-policy-controller", "args": ["--enable-lease=true", "--hubconfig-secret-name=hub-kubeconfig"]}]}}}}' \
+		--kubeconfig=$(PWD)/kubeconfig_$(MANAGED_CLUSTER_NAME)
 
 kind-deploy-iam-policy-controller:
 	@echo installing iam-policy-controller on managed
