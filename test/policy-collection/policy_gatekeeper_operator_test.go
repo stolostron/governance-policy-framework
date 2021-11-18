@@ -171,7 +171,7 @@ var _ = Describe("", func() {
 				podList, err := clientManaged.CoreV1().Pods("openshift-gatekeeper-system").List(context.TODO(), metav1.ListOptions{LabelSelector: "control-plane=audit-controller"})
 				Expect(err).To(BeNil())
 				return string(podList.Items[0].Status.Phase)
-			}, defaultTimeoutSeconds*2, 1).Should(Equal("Running"))
+			}, defaultTimeoutSeconds*4, 1).Should(Equal("Running"))
 		})
 
 		It("Gatekeeper controller manager pods should be running", func() {
@@ -186,7 +186,7 @@ var _ = Describe("", func() {
 				podList, err := clientManaged.CoreV1().Pods("openshift-gatekeeper-system").List(context.TODO(), metav1.ListOptions{LabelSelector: "control-plane=controller-manager"})
 				Expect(err).To(BeNil())
 				return string(podList.Items[0].Status.Phase) + "/" + string(podList.Items[1].Status.Phase)
-			}, defaultTimeoutSeconds*2, 1).Should(Equal("Running/Running"))
+			}, defaultTimeoutSeconds*4, 1).Should(Equal("Running/Running"))
 		})
 		It("community/policy-gatekeeper-operator should be compliant", func() {
 			By("Checking if the status of root policy is compliant")
