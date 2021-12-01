@@ -177,6 +177,7 @@ var _ = Describe("RHACM4K-3055", func() {
 				"patch", "-n", userNamespace, common.GvrPolicy.Resource+"."+common.GvrPlacementBinding.Group, GKPolicyName,
 				"--type=json", "-p=[{\"op\":\"remove\", \"path\": "+
 					"\"/spec/policy-templates/0/objectDefinition/spec/object-templates/1/objectDefinition/spec/enforcementAction\"}]",
+				"--kubeconfig="+kubeconfigHub,
 			)
 			By("Checking policy-gatekeeper namespace on hub cluster in ns " + userNamespace)
 			rootPlc := utils.GetWithTimeout(clientHubDynamic, common.GvrPolicy, GKPolicyName, userNamespace, true, defaultTimeoutSeconds)
