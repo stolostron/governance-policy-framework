@@ -221,7 +221,7 @@ var _ = Describe("", func() {
 				"--kubeconfig="+kubeconfigHub)
 			By("Patching to remove dryrun")
 			utils.KubectlWithOutput(
-				"patch", "-n", userNamespace, common.GvrPolicy.Resource+"."+common.GvrPlacementBinding.Group, GKPolicyName,
+				"patch", "-n", userNamespace, common.GvrPolicy.Resource+"."+common.GvrPolicy.Group, GKPolicyName,
 				"--type=json", "-p=[{\"op\":\"remove\", \"path\": "+
 					"\"/spec/policy-templates/0/objectDefinition/spec/object-templates/1/objectDefinition/spec/enforcementAction\"}]",
 				"--kubeconfig="+kubeconfigHub,
