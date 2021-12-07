@@ -213,6 +213,12 @@ var _ = Describe("", func() {
 				"--type=json", "-p=[{\"op\": \"replace\", \"path\": \"/spec/clusterSelector/matchExpressions\", \"value\":[{\"key\": \"name\", \"operator\": \"In\", \"values\": ["+clusterNamespace+"]}]}]",
 				"--kubeconfig="+kubeconfigHub).CombinedOutput()
 			fmt.Println(string(out))
+			By("Patching to remove dryrun")
+			out, _ = exec.Command("kubectl", "patch", "-n", userNamespace, gvrPolicy.Resource+"."+gvrPolicy.Group, GKPolicyName,
+				"--type=json", "-p=[{\"op\":\"remove\", \"path\": "+
+					"\"/spec/policy-templates/0/objectDefinition/spec/object-templates/1/objectDefinition/spec/enforcementAction\"}]",
+				"--kubeconfig="+kubeconfigHub).CombinedOutput()
+			fmt.Println(string(out))
 			By("Checking policy-gatekeeper namespace on hub cluster in ns " + userNamespace)
 			rootPlc := utils.GetWithTimeout(clientHubDynamic, gvrPolicy, GKPolicyName, userNamespace, true, defaultTimeoutSeconds)
 			Expect(rootPlc).NotTo(BeNil())
