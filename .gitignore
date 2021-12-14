@@ -10,3 +10,4 @@ test/policy-collection/debug.test
 .DS_Store
 
 .go
+bin/

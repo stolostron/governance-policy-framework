@@ -4,6 +4,7 @@ TRAVIS_BUILD ?= 1
 
 PWD := $(shell pwd)
 BASE_DIR := $(shell basename $(PWD))
+PROJECT_DIR := $(shell dirname $(abspath $(lastword $(MAKEFILE_LIST))))
 deployOnHub ?= false
 
 # GITHUB_USER containing '@' char must be escaped with '%40'
@@ -17,6 +18,7 @@ GOBIN_DEFAULT := $(GOPATH)/bin
 export GOBIN ?= $(GOBIN_DEFAULT)
 GOARCH = $(shell go env GOARCH)
 GOOS = $(shell go env GOOS)
+export PATH=$(shell echo $$PATH):$(PWD)/bin
 
 # Handle KinD configuration
 KIND_HUB_NAMESPACE ?= open-cluster-management
@@ -68,6 +70,11 @@ kind-policy-framework-hub-setup:
 	kubectl config use-context kind-$(HUB_CLUSTER_NAME)
 	kind get kubeconfig --name $(HUB_CLUSTER_NAME) --internal > $(PWD)/kubeconfig_$(HUB_CLUSTER_NAME)_internal
 
+.PHONY: kustomize
+KUSTOMIZE = $(PWD)/bin/kustomize
+kustomize: ## Download kustomize locally if necessary.
+	$(call go-get-tool,$(KUSTOMIZE),sigs.k8s.io/kustomize/kustomize/v3@v3.8.7)
+
 deploy-policy-framework-hub-crd-operator:
 	kubectl create ns $(KIND_HUB_NAMESPACE) || true
 	@echo installing Policy CRDs on hub
@@ -103,7 +110,7 @@ deploy-policy-framework-managed: kind-policy-framework-managed-setup deploy-poli
 
 deploy-community-policy-framework-managed: deploy-policy-framework-managed-crd-operator
 
-kind-deploy-policy-framework:
+kind-deploy-policy-framework: kustomize
 	@echo installing policy-propagator on hub
 	kubectl create ns $(KIND_HUB_NAMESPACE) --kubeconfig=$(PWD)/kubeconfig_$(HUB_CLUSTER_NAME)
 	kubectl apply -f https://raw.githubusercontent.com/open-cluster-management/governance-policy-propagator/main/deploy/operator.yaml -n $(KIND_HUB_NAMESPACE) --kubeconfig=$(PWD)/kubeconfig_$(HUB_CLUSTER_NAME)
@@ -125,7 +132,7 @@ kind-deploy-policy-framework:
 		kubectl apply -f https://raw.githubusercontent.com/open-cluster-management/governance-policy-status-sync/main/deploy/operator.yaml -n $(KIND_MANAGED_NAMESPACE) --kubeconfig=$(PWD)/kubeconfig_$(MANAGED_CLUSTER_NAME);\
 	fi
 	@echo installing policy-template-sync on managed
-	kubectl apply -f https://raw.githubusercontent.com/open-cluster-management/governance-policy-template-sync/main/deploy/operator.yaml -n $(KIND_MANAGED_NAMESPACE) --kubeconfig=$(PWD)/kubeconfig_$(MANAGED_CLUSTER_NAME)
+	kustomize build deploy/template-sync | kubectl apply -n $(KIND_MANAGED_NAMESPACE) --kubeconfig=$(PWD)/kubeconfig_$(MANAGED_CLUSTER_NAME) -f -
 
 kind-deploy-config-policy-controller:
 	@echo installing config-policy-controller on managed
@@ -277,3 +284,17 @@ travis-slack-reporter:
 		--env TRAVIS_BRANCH=$(TRAVIS_BRANCH) \
 		--env TRAVIS_BUILD_WEB_URL=$(TRAVIS_BUILD_WEB_URL) \
 		quay.io/open-cluster-management/grc-ui-tests:latest node ./tests/utils/slack-reporter.js
+
+
+# go-get-tool will 'go get' any package $2 and install it to $1.
+define go-get-tool
+@[ -f $(1) ] || { \
+set -e ;\
+TMP_DIR=$$(mktemp -d) ;\
+cd $$TMP_DIR ;\
+go mod init tmp ;\
+echo "Downloading $(2)" ;\
+GOBIN=$(PROJECT_DIR)/bin go get $(2) ;\
+rm -rf $$TMP_DIR ;\
+}
+endef
