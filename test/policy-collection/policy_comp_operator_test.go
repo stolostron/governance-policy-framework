@@ -192,6 +192,27 @@ var _ = Describe("RHACM4K-2222 GRC: [P1][Sev1][policy-grc] Test compliance opera
 				return managedPlc.Object["spec"].(map[string]interface{})["remediationAction"]
 			}, defaultTimeoutSeconds, 1).Should(Equal("enforce"))
 		})
+		It("Compliance operator pod should be running", func() {
+			By("Checking if pod compliance-operator has been created")
+			var i int = 0
+			Eventually(func() interface{} {
+				if i == 60*2 || i == 60*4 {
+					fmt.Println("compliance operator pod still not created, deleting subscription and let it recreate", i)
+					utils.KubectlWithOutput("get", "-n", "openshift-compliance", "subscriptions.operators.coreos.com", "compliance-operator", "-oyaml", "--kubeconfig="+kubeconfigManaged)
+					utils.KubectlWithOutput("delete", "-n", "openshift-compliance", "subscriptions.operators.coreos.com", "compliance-operator", "--kubeconfig="+kubeconfigManaged)
+				}
+				i++
+				podList, err := clientManaged.CoreV1().Pods("openshift-compliance").List(context.TODO(), metav1.ListOptions{LabelSelector: "name=compliance-operator"})
+				Expect(err).To(BeNil())
+				return len(podList.Items)
+			}, defaultTimeoutSeconds*12, 1).Should(Equal(1))
+			By("Checking if pod compliance-operator is running")
+			Eventually(func() interface{} {
+				podList, err := clientManaged.CoreV1().Pods("openshift-compliance").List(context.TODO(), metav1.ListOptions{LabelSelector: "name=compliance-operator"})
+				Expect(err).To(BeNil())
+				return string(podList.Items[0].Status.Phase)
+			}, defaultTimeoutSeconds*2, 1).Should(Equal("Running"))
+		})
 		It("stable/policy-comp-operator should be compliant", func() {
 			By("Checking if the status of root policy is compliant")
 			Eventually(func() interface{} {
@@ -207,26 +228,6 @@ var _ = Describe("RHACM4K-2222 GRC: [P1][Sev1][policy-grc] Test compliance opera
 				}
 				return nil
 			}, defaultTimeoutSeconds*4, 1).Should(Equal(policiesv1.Compliant))
-		})
-		It("Compliance operator pod should be running", func() {
-			By("Checking if pod compliance-operator has been created")
-			var i int = 0
-			Eventually(func() interface{} {
-				if i == 60*2 || i == 60*4 {
-					fmt.Println("compliance operator pod still not created, deleting subscription and let it recreate", i)
-					utils.KubectlWithOutput("delete", "-n", "openshift-compliance", "subscriptions.operators.coreos.com", "compliance-operator", "--kubeconfig="+kubeconfigManaged)
-				}
-				i++
-				podList, err := clientManaged.CoreV1().Pods("openshift-compliance").List(context.TODO(), metav1.ListOptions{LabelSelector: "name=compliance-operator"})
-				Expect(err).To(BeNil())
-				return len(podList.Items)
-			}, defaultTimeoutSeconds*12, 1).Should(Equal(1))
-			By("Checking if pod compliance-operator is running")
-			Eventually(func() interface{} {
-				podList, err := clientManaged.CoreV1().Pods("openshift-compliance").List(context.TODO(), metav1.ListOptions{LabelSelector: "name=compliance-operator"})
-				Expect(err).To(BeNil())
-				return string(podList.Items[0].Status.Phase)
-			}, defaultTimeoutSeconds*2, 1).Should(Equal("Running"))
 		})
 		It("Profile bundle pods should be running", func() {
 			By("Checking if pod ocp4-pp has been created")

@@ -1,7 +1,6 @@
 // Copyright (c) 2020 Red Hat, Inc.
 // Copyright Contributors to the Open Cluster Management project
 
-
 package e2e
 
 import (
@@ -39,6 +38,7 @@ var (
 	gvrComplianceScan        schema.GroupVersionResource
 	gvrComplianceCheckResult schema.GroupVersionResource
 	gvrPolicy                schema.GroupVersionResource
+	gvrPlacementBinding      schema.GroupVersionResource
 	kubeconfigHub            string
 	kubeconfigManaged        string
 	defaultTimeoutSeconds    int
@@ -67,6 +67,7 @@ var _ = BeforeSuite(func() {
 	gvrComplianceSuite = schema.GroupVersionResource{Group: "compliance.openshift.io", Version: "v1alpha1", Resource: "compliancesuites"}
 	gvrComplianceCheckResult = schema.GroupVersionResource{Group: "compliance.openshift.io", Version: "v1alpha1", Resource: "compliancecheckresults"}
 	gvrPolicy = schema.GroupVersionResource{Group: "policy.open-cluster-management.io", Version: "v1", Resource: "policies"}
+	gvrPlacementBinding = schema.GroupVersionResource{Group: "policy.open-cluster-management.io", Version: "v1", Resource: "placementbindings"}
 	clientHub = NewKubeClient("", kubeconfigHub, "")
 	clientHubDynamic = NewKubeClientDynamic("", kubeconfigHub, "")
 	clientManaged = NewKubeClient("", kubeconfigManaged, "")
