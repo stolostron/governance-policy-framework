@@ -108,8 +108,6 @@ spec:
                       type: object
                     message:
                       type: string
-                  required:
-                  - NonCompliantCertificatesList
                   type: object
                 description: map of namespaces to its compliancy details
                 type: object
