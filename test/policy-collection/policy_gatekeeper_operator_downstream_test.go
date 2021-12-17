@@ -190,7 +190,7 @@ var _ = Describe("RHACM4K-3055", func() {
 				"--kubeconfig="+kubeconfigHub)
 			By("Patching to remove dryrun")
 			utils.KubectlWithOutput(
-				"patch", "-n", userNamespace, common.GvrPolicy.Resource+"."+common.GvrPlacementBinding.Group, GKPolicyName,
+				"patch", "-n", userNamespace, gvrPolicy.Resource+"."+gvrPlacementBinding.Group, GKPolicyName,
 				"--type=json", "-p=[{\"op\":\"remove\", \"path\": "+
 					"\"/spec/policy-templates/0/objectDefinition/spec/object-templates/1/objectDefinition/spec/enforcementAction\"}]",
 				"--kubeconfig="+kubeconfigHub,
@@ -276,11 +276,11 @@ var _ = Describe("RHACM4K-3055", func() {
 			Eventually(func() interface{} {
 				By("Patching mutatingWebhook = Enabled on root policy")
 				rootPlc := utils.GetWithTimeout(clientHubDynamic, gvrPolicy, gatekeeperPolicyName, userNamespace, true, defaultTimeoutSeconds)
-				rootPlc.Object["spec"].(map[string]interface{})["policy-templates"].([]interface{})[1].(map[string]interface{})["objectDefinition"].(map[string]interface{})["spec"].(map[string]interface{})["object-templates"].([]interface{})[0].(map[string]interface{})["objectDefinition"].(map[string]interface{})["spec"].(map[string]interface{})["mutatingWebhook"] = "Enabled"
+				rootPlc.Object["spec"].(map[string]interface{})["policy-templates"].([]interface{})[2].(map[string]interface{})["objectDefinition"].(map[string]interface{})["spec"].(map[string]interface{})["object-templates"].([]interface{})[0].(map[string]interface{})["objectDefinition"].(map[string]interface{})["spec"].(map[string]interface{})["mutatingWebhook"] = "Enabled"
 				clientHubDynamic.Resource(gvrPolicy).Namespace(userNamespace).Update(context.TODO(), rootPlc, metav1.UpdateOptions{})
 				By("Checking if mutatingWebhook is Enabled for root policy")
 				rootPlc = utils.GetWithTimeout(clientHubDynamic, gvrPolicy, gatekeeperPolicyName, userNamespace, true, defaultTimeoutSeconds)
-				return rootPlc.Object["spec"].(map[string]interface{})["policy-templates"].([]interface{})[1].(map[string]interface{})["objectDefinition"].(map[string]interface{})["spec"].(map[string]interface{})["object-templates"].([]interface{})[0].(map[string]interface{})["objectDefinition"].(map[string]interface{})["spec"].(map[string]interface{})["mutatingWebhook"]
+				return rootPlc.Object["spec"].(map[string]interface{})["policy-templates"].([]interface{})[2].(map[string]interface{})["objectDefinition"].(map[string]interface{})["spec"].(map[string]interface{})["object-templates"].([]interface{})[0].(map[string]interface{})["objectDefinition"].(map[string]interface{})["spec"].(map[string]interface{})["mutatingWebhook"]
 			}, defaultTimeoutSeconds, 1).Should(Equal("Enabled"))
 		})
 		It("Enforcing policy-gatekeeper-operator to enable mutation feature", func() {
@@ -429,11 +429,11 @@ var _ = Describe("RHACM4K-3055", func() {
 			Eventually(func() interface{} {
 				By("Patching mutatingWebhook = Disabled on root policy")
 				rootPlc := utils.GetWithTimeout(clientHubDynamic, gvrPolicy, gatekeeperPolicyName, userNamespace, true, defaultTimeoutSeconds)
-				rootPlc.Object["spec"].(map[string]interface{})["policy-templates"].([]interface{})[1].(map[string]interface{})["objectDefinition"].(map[string]interface{})["spec"].(map[string]interface{})["object-templates"].([]interface{})[0].(map[string]interface{})["objectDefinition"].(map[string]interface{})["spec"].(map[string]interface{})["mutatingWebhook"] = "Disabled"
+				rootPlc.Object["spec"].(map[string]interface{})["policy-templates"].([]interface{})[2].(map[string]interface{})["objectDefinition"].(map[string]interface{})["spec"].(map[string]interface{})["object-templates"].([]interface{})[0].(map[string]interface{})["objectDefinition"].(map[string]interface{})["spec"].(map[string]interface{})["mutatingWebhook"] = "Disabled"
 				clientHubDynamic.Resource(gvrPolicy).Namespace(userNamespace).Update(context.TODO(), rootPlc, metav1.UpdateOptions{})
 				By("Checking if mutatingWebhook is Disabled for root policy")
 				rootPlc = utils.GetWithTimeout(clientHubDynamic, gvrPolicy, gatekeeperPolicyName, userNamespace, true, defaultTimeoutSeconds)
-				return rootPlc.Object["spec"].(map[string]interface{})["policy-templates"].([]interface{})[1].(map[string]interface{})["objectDefinition"].(map[string]interface{})["spec"].(map[string]interface{})["object-templates"].([]interface{})[0].(map[string]interface{})["objectDefinition"].(map[string]interface{})["spec"].(map[string]interface{})["mutatingWebhook"]
+				return rootPlc.Object["spec"].(map[string]interface{})["policy-templates"].([]interface{})[2].(map[string]interface{})["objectDefinition"].(map[string]interface{})["spec"].(map[string]interface{})["object-templates"].([]interface{})[0].(map[string]interface{})["objectDefinition"].(map[string]interface{})["spec"].(map[string]interface{})["mutatingWebhook"]
 			}, defaultTimeoutSeconds, 1).Should(Equal("Disabled"))
 		})
 		It("Checking if Assign/AssingnMetadata CRDs have been removed", func() {
