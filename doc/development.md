@@ -3,7 +3,7 @@
 ## Test folders
 
  - `e2e`: Tests for functionality across all components
- - `policy-collection`: Tests for policies in the [policy-collection](https://github.com/open-cluster-management/policy-collection) repository
+ - `policy-collection`: Tests for policies in the [policy-collection](https://github.com/stolostron/policy-collection) repository
 
 ## Cluster configuration
 

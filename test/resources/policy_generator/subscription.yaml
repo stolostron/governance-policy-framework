@@ -23,7 +23,7 @@ metadata:
   name: grc-e2e-policy-generator
 spec:
   type: Git
-  pathname: https://github.com/open-cluster-management/grc-e2e-policy-generator-test.git
+  pathname: https://github.com/stolostron/grc-e2e-policy-generator-test.git
 ---
 apiVersion: apps.open-cluster-management.io/v1
 kind: Subscription

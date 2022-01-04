@@ -1,4 +1,4 @@
 resources:
-  - https://raw.githubusercontent.com/open-cluster-management/governance-policy-template-sync/main/deploy/operator.yaml
+  - https://raw.githubusercontent.com/stolostron/governance-policy-template-sync/main/deploy/operator.yaml
 patchesStrategicMerge:
   - debug-logs.yaml
