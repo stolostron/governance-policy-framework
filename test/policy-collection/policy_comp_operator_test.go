@@ -75,9 +75,9 @@ func cleanupRequired() bool {
 }
 
 var _ = Describe("RHACM4K-2222 GRC: [P1][Sev1][policy-grc] Test compliance operator and scan", func() {
-	const compPolicyURL = "https://raw.githubusercontent.com/open-cluster-management/policy-collection/main/stable/CA-Security-Assessment-and-Authorization/policy-compliance-operator-install.yaml"
+	const compPolicyURL = "https://raw.githubusercontent.com/stolostron/policy-collection/main/stable/CA-Security-Assessment-and-Authorization/policy-compliance-operator-install.yaml"
 	const compPolicyName = "policy-comp-operator"
-	const compE8ScanPolicyURL = "https://raw.githubusercontent.com/open-cluster-management/policy-collection/main/stable/CM-Configuration-Management/policy-compliance-operator-e8-scan.yaml"
+	const compE8ScanPolicyURL = "https://raw.githubusercontent.com/stolostron/policy-collection/main/stable/CM-Configuration-Management/policy-compliance-operator-e8-scan.yaml"
 	const compE8ScanPolicyName = "policy-e8-scan"
 	BeforeEach(func() {
 		if !isOCP46andAbove() {
