@@ -35,5 +35,5 @@
 
 ### Integrate with Kyverno
 1. Install Kyverno
-2. [Create Kyverno policy](https://github.com/open-cluster-management/policy-collection/blob/main/community/CM-Configuration-Management/policy-kyverno-sample.yaml)
-3. [Report Kyverno violations](https://github.com/open-cluster-management/policy-collection/blob/main/community/CM-Configuration-Management/policy-check-reports.yaml)
+2. [Create Kyverno policy](https://github.com/stolostron/policy-collection/blob/main/community/CM-Configuration-Management/policy-kyverno-sample.yaml)
+3. [Report Kyverno violations](https://github.com/stolostron/policy-collection/blob/main/community/CM-Configuration-Management/policy-check-reports.yaml)
