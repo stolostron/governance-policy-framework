@@ -42,9 +42,9 @@ USE_VENDORIZED_BUILD_HARNESS ?=
 ifndef USE_VENDORIZED_BUILD_HARNESS
 	ifeq ($(TRAVIS_BUILD),1)
 		ifndef GITHUB_TOKEN
-		-include $(shell curl -H 'Accept: application/vnd.github.v4.raw' -L https://api.github.com/repos/open-cluster-management/build-harness-extensions/contents/templates/Makefile.build-harness-bootstrap -o .build-harness-bootstrap; echo .build-harness-bootstrap)
+		-include $(shell curl -H 'Accept: application/vnd.github.v4.raw' -L https://api.github.com/repos/stolostron/build-harness-extensions/contents/templates/Makefile.build-harness-bootstrap -o .build-harness-bootstrap; echo .build-harness-bootstrap)
 		else
-		-include $(shell curl -H 'Authorization: token ${GITHUB_TOKEN}' -H 'Accept: application/vnd.github.v4.raw' -L https://api.github.com/repos/open-cluster-management/build-harness-extensions/contents/templates/Makefile.build-harness-bootstrap -o .build-harness-bootstrap; echo .build-harness-bootstrap)
+		-include $(shell curl -H 'Authorization: token ${GITHUB_TOKEN}' -H 'Accept: application/vnd.github.v4.raw' -L https://api.github.com/repos/stolostron/build-harness-extensions/contents/templates/Makefile.build-harness-bootstrap -o .build-harness-bootstrap; echo .build-harness-bootstrap)
 		endif
 	endif
 else
@@ -78,11 +78,11 @@ kustomize: ## Download kustomize locally if necessary.
 deploy-policy-framework-hub-crd-operator:
 	kubectl create ns $(KIND_HUB_NAMESPACE) || true
 	@echo installing Policy CRDs on hub
-	kubectl apply -f https://raw.githubusercontent.com/open-cluster-management/governance-policy-propagator/main/deploy/crds/policy.open-cluster-management.io_policies.yaml
-	kubectl apply -f https://raw.githubusercontent.com/open-cluster-management/governance-policy-propagator/main/deploy/crds/policy.open-cluster-management.io_placementbindings.yaml
-	kubectl apply -f https://raw.githubusercontent.com/open-cluster-management/governance-policy-propagator/main/deploy/crds/policy.open-cluster-management.io_policyautomations.yaml
+	kubectl apply -f https://raw.githubusercontent.com/stolostron/governance-policy-propagator/main/deploy/crds/policy.open-cluster-management.io_policies.yaml
+	kubectl apply -f https://raw.githubusercontent.com/stolostron/governance-policy-propagator/main/deploy/crds/policy.open-cluster-management.io_placementbindings.yaml
+	kubectl apply -f https://raw.githubusercontent.com/stolostron/governance-policy-propagator/main/deploy/crds/policy.open-cluster-management.io_policyautomations.yaml
 	@echo installing policy-propagator on hub
-	kubectl apply -f https://raw.githubusercontent.com/open-cluster-management/governance-policy-propagator/main/deploy/operator.yaml -n $(KIND_HUB_NAMESPACE)
+	kubectl apply -f https://raw.githubusercontent.com/stolostron/governance-policy-propagator/main/deploy/operator.yaml -n $(KIND_HUB_NAMESPACE)
 
 deploy-policy-framework-hub: kind-policy-framework-hub-setup deploy-policy-framework-hub-crd-operator
 
@@ -95,15 +95,15 @@ kind-policy-framework-managed-setup:
 
 deploy-policy-framework-managed-crd-operator:
 	@echo installing Policy CRD on managed
-	kubectl apply -f https://raw.githubusercontent.com/open-cluster-management/governance-policy-propagator/main/deploy/crds/policy.open-cluster-management.io_policies.yaml
+	kubectl apply -f https://raw.githubusercontent.com/stolostron/governance-policy-propagator/main/deploy/crds/policy.open-cluster-management.io_policies.yaml
 	@echo installing policy-spec-sync on managed
-	kubectl apply -f https://raw.githubusercontent.com/open-cluster-management/governance-policy-spec-sync/main/deploy/operator.yaml -n $(KIND_MANAGED_NAMESPACE)
+	kubectl apply -f https://raw.githubusercontent.com/stolostron/governance-policy-spec-sync/main/deploy/operator.yaml -n $(KIND_MANAGED_NAMESPACE)
 	kubectl patch deployment governance-policy-spec-sync -n $(KIND_MANAGED_NAMESPACE) -p "{\"spec\":{\"template\":{\"spec\":{\"containers\":[{\"name\":\"governance-policy-spec-sync\",\"env\":[{\"name\":\"WATCH_NAMESPACE\",\"value\":\"$(MANAGED_CLUSTER_NAME)\"}]}]}}}}"
 	@echo installing policy-status-sync on managed
-	kubectl apply -f https://raw.githubusercontent.com/open-cluster-management/governance-policy-status-sync/main/deploy/operator.yaml -n $(KIND_MANAGED_NAMESPACE)
+	kubectl apply -f https://raw.githubusercontent.com/stolostron/governance-policy-status-sync/main/deploy/operator.yaml -n $(KIND_MANAGED_NAMESPACE)
 	kubectl patch deployment governance-policy-status-sync -n $(KIND_MANAGED_NAMESPACE) -p "{\"spec\":{\"template\":{\"spec\":{\"containers\":[{\"name\":\"governance-policy-status-sync\",\"env\":[{\"name\":\"WATCH_NAMESPACE\",\"value\":\"$(MANAGED_CLUSTER_NAME)\"}]}]}}}}"
 	@echo installing policy-template-sync on managed
-	kubectl apply -f https://raw.githubusercontent.com/open-cluster-management/governance-policy-template-sync/main/deploy/operator.yaml -n $(KIND_MANAGED_NAMESPACE)
+	kubectl apply -f https://raw.githubusercontent.com/stolostron/governance-policy-template-sync/main/deploy/operator.yaml -n $(KIND_MANAGED_NAMESPACE)
 	kubectl patch deployment governance-policy-template-sync -n $(KIND_MANAGED_NAMESPACE) -p "{\"spec\":{\"template\":{\"spec\":{\"containers\":[{\"name\":\"governance-policy-template-sync\",\"env\":[{\"name\":\"WATCH_NAMESPACE\",\"value\":\"$(MANAGED_CLUSTER_NAME)\"}]}]}}}}"
 
 deploy-policy-framework-managed: kind-policy-framework-managed-setup deploy-policy-framework-managed-crd-operator
@@ -113,7 +113,7 @@ deploy-community-policy-framework-managed: deploy-policy-framework-managed-crd-o
 kind-deploy-policy-framework: kustomize
 	@echo installing policy-propagator on hub
 	kubectl create ns $(KIND_HUB_NAMESPACE) --kubeconfig=$(PWD)/kubeconfig_$(HUB_CLUSTER_NAME)
-	kubectl apply -f https://raw.githubusercontent.com/open-cluster-management/governance-policy-propagator/main/deploy/operator.yaml -n $(KIND_HUB_NAMESPACE) --kubeconfig=$(PWD)/kubeconfig_$(HUB_CLUSTER_NAME)
+	kubectl apply -f https://raw.githubusercontent.com/stolostron/governance-policy-propagator/main/deploy/operator.yaml -n $(KIND_HUB_NAMESPACE) --kubeconfig=$(PWD)/kubeconfig_$(HUB_CLUSTER_NAME)
 	@echo creating secrets on managed
 	kubectl create ns $(KIND_MANAGED_NAMESPACE) --kubeconfig=$(PWD)/kubeconfig_$(MANAGED_CLUSTER_NAME)
 	kubectl create secret -n $(KIND_MANAGED_NAMESPACE) generic hub-kubeconfig --from-file=kubeconfig=$(PWD)/kubeconfig_$(HUB_CLUSTER_NAME)_internal --kubeconfig=$(PWD)/kubeconfig_$(MANAGED_CLUSTER_NAME)
@@ -121,38 +121,38 @@ kind-deploy-policy-framework: kustomize
 		echo skipping installing policy-spec-sync on managed;\
 	else\
 		echo installing policy-spec-sync on managed;\
-		kubectl apply -f https://raw.githubusercontent.com/open-cluster-management/governance-policy-spec-sync/main/deploy/operator.yaml -n $(KIND_MANAGED_NAMESPACE) --kubeconfig=$(PWD)/kubeconfig_$(MANAGED_CLUSTER_NAME);\
+		kubectl apply -f https://raw.githubusercontent.com/stolostron/governance-policy-spec-sync/main/deploy/operator.yaml -n $(KIND_MANAGED_NAMESPACE) --kubeconfig=$(PWD)/kubeconfig_$(MANAGED_CLUSTER_NAME);\
 	fi
 	@if [ "$(deployOnHub)" = "true" ]; then\
 		echo installing policy-status-sync with ON_MULTICLUSTERHUB;\
-		kubectl apply -f https://raw.githubusercontent.com/open-cluster-management/governance-policy-status-sync/main/deploy/operator.yaml -n $(KIND_MANAGED_NAMESPACE) --kubeconfig=$(PWD)/kubeconfig_$(MANAGED_CLUSTER_NAME);\
+		kubectl apply -f https://raw.githubusercontent.com/stolostron/governance-policy-status-sync/main/deploy/operator.yaml -n $(KIND_MANAGED_NAMESPACE) --kubeconfig=$(PWD)/kubeconfig_$(MANAGED_CLUSTER_NAME);\
 		kubectl set env deployment/governance-policy-status-sync ON_MULTICLUSTERHUB=true -n $(KIND_MANAGED_NAMESPACE) --kubeconfig=$(PWD)/kubeconfig_$(MANAGED_CLUSTER_NAME);\
 	else\
 		echo installing policy-status-sync on managed;\
-		kubectl apply -f https://raw.githubusercontent.com/open-cluster-management/governance-policy-status-sync/main/deploy/operator.yaml -n $(KIND_MANAGED_NAMESPACE) --kubeconfig=$(PWD)/kubeconfig_$(MANAGED_CLUSTER_NAME);\
+		kubectl apply -f https://raw.githubusercontent.com/stolostron/governance-policy-status-sync/main/deploy/operator.yaml -n $(KIND_MANAGED_NAMESPACE) --kubeconfig=$(PWD)/kubeconfig_$(MANAGED_CLUSTER_NAME);\
 	fi
 	@echo installing policy-template-sync on managed
 	kustomize build deploy/template-sync | kubectl apply -n $(KIND_MANAGED_NAMESPACE) --kubeconfig=$(PWD)/kubeconfig_$(MANAGED_CLUSTER_NAME) -f -
 
 kind-deploy-config-policy-controller:
 	@echo installing config-policy-controller on managed
-	kubectl apply -f https://raw.githubusercontent.com/open-cluster-management/config-policy-controller/main/deploy/operator.yaml -n $(KIND_MANAGED_NAMESPACE) --kubeconfig=$(PWD)/kubeconfig_$(MANAGED_CLUSTER_NAME)
-	kubectl apply -f https://raw.githubusercontent.com/open-cluster-management/config-policy-controller/main/deploy/crds/policy.open-cluster-management.io_configurationpolicies.yaml -n $(KIND_MANAGED_NAMESPACE) --kubeconfig=$(PWD)/kubeconfig_$(MANAGED_CLUSTER_NAME)
+	kubectl apply -f https://raw.githubusercontent.com/stolostron/config-policy-controller/main/deploy/operator.yaml -n $(KIND_MANAGED_NAMESPACE) --kubeconfig=$(PWD)/kubeconfig_$(MANAGED_CLUSTER_NAME)
+	kubectl apply -f https://raw.githubusercontent.com/stolostron/config-policy-controller/main/deploy/crds/policy.open-cluster-management.io_configurationpolicies.yaml -n $(KIND_MANAGED_NAMESPACE) --kubeconfig=$(PWD)/kubeconfig_$(MANAGED_CLUSTER_NAME)
 
 kind-deploy-cert-policy-controller:
 	@echo installing cert-manager on managed
 	kubectl apply --validate=false -f https://github.com/jetstack/cert-manager/releases/download/v1.0.1/cert-manager.yaml --kubeconfig=$(PWD)/kubeconfig_$(MANAGED_CLUSTER_NAME)
 	@echo installing cert-policy-controller on managed
-	kubectl apply -f https://raw.githubusercontent.com/open-cluster-management/cert-policy-controller/main/deploy/crds/policy.open-cluster-management.io_certificatepolicies.yaml --kubeconfig=$(PWD)/kubeconfig_$(MANAGED_CLUSTER_NAME)
-	kubectl apply -f https://raw.githubusercontent.com/open-cluster-management/cert-policy-controller/main/deploy/operator.yaml -n $(KIND_MANAGED_NAMESPACE) --kubeconfig=$(PWD)/kubeconfig_$(MANAGED_CLUSTER_NAME)
+	kubectl apply -f https://raw.githubusercontent.com/stolostron/cert-policy-controller/main/deploy/crds/policy.open-cluster-management.io_certificatepolicies.yaml --kubeconfig=$(PWD)/kubeconfig_$(MANAGED_CLUSTER_NAME)
+	kubectl apply -f https://raw.githubusercontent.com/stolostron/cert-policy-controller/main/deploy/operator.yaml -n $(KIND_MANAGED_NAMESPACE) --kubeconfig=$(PWD)/kubeconfig_$(MANAGED_CLUSTER_NAME)
 	kubectl patch deployment cert-policy-controller \
 		-n $(KIND_MANAGED_NAMESPACE) -p '{"spec": {"template": {"spec": {"containers": [{"name":"cert-policy-controller", "args": ["--enable-lease=true", "--hubconfig-secret-name=hub-kubeconfig"]}]}}}}' \
 		--kubeconfig=$(PWD)/kubeconfig_$(MANAGED_CLUSTER_NAME)
 
 kind-deploy-iam-policy-controller:
 	@echo installing iam-policy-controller on managed
-	kubectl apply -f https://raw.githubusercontent.com/open-cluster-management/iam-policy-controller/main/deploy/crds/policy.open-cluster-management.io_iampolicies.yaml --kubeconfig=$(PWD)/kubeconfig_$(MANAGED_CLUSTER_NAME)
-	kubectl apply -f https://raw.githubusercontent.com/open-cluster-management/iam-policy-controller/main/deploy/operator.yaml -n $(KIND_MANAGED_NAMESPACE) --kubeconfig=$(PWD)/kubeconfig_$(MANAGED_CLUSTER_NAME)
+	kubectl apply -f https://raw.githubusercontent.com/stolostron/iam-policy-controller/main/deploy/crds/policy.open-cluster-management.io_iampolicies.yaml --kubeconfig=$(PWD)/kubeconfig_$(MANAGED_CLUSTER_NAME)
+	kubectl apply -f https://raw.githubusercontent.com/stolostron/iam-policy-controller/main/deploy/operator.yaml -n $(KIND_MANAGED_NAMESPACE) --kubeconfig=$(PWD)/kubeconfig_$(MANAGED_CLUSTER_NAME)
 	kubectl patch deployment iam-policy-controller \
 		-n $(KIND_MANAGED_NAMESPACE) -p '{"spec": {"template": {"spec": {"containers": [{"name":"iam-policy-controller", "args": ["--enable-lease=true", "--hubconfig-secret-name=hub-kubeconfig"]}]}}}}' \
 		--kubeconfig=$(PWD)/kubeconfig_$(MANAGED_CLUSTER_NAME)
@@ -187,15 +187,15 @@ kind-delete-cluster:
 
 install-crds:
 	@echo installing crds on hub
-	kubectl apply -f https://raw.githubusercontent.com/open-cluster-management/multicloud-operators-placementrule/main/deploy/crds/apps.open-cluster-management.io_placementrules_crd.yaml --kubeconfig=$(PWD)/kubeconfig_$(HUB_CLUSTER_NAME)
-	kubectl apply -f https://raw.githubusercontent.com/open-cluster-management/api/main/cluster/v1/0000_00_clusters.open-cluster-management.io_managedclusters.crd.yaml --kubeconfig=$(PWD)/kubeconfig_$(HUB_CLUSTER_NAME)
-	kubectl apply -f https://raw.githubusercontent.com/open-cluster-management/api/main/cluster/v1alpha1/0000_04_clusters.open-cluster-management.io_placementdecisions.crd.yaml --kubeconfig=$(PWD)/kubeconfig_$(HUB_CLUSTER_NAME)
-	kubectl apply -f https://raw.githubusercontent.com/open-cluster-management/api/main/cluster/v1alpha1/0000_03_clusters.open-cluster-management.io_placements.crd.yaml --kubeconfig=$(PWD)/kubeconfig_$(HUB_CLUSTER_NAME)
-	kubectl apply -f https://raw.githubusercontent.com/open-cluster-management/governance-policy-propagator/main/deploy/crds/policy.open-cluster-management.io_placementbindings.yaml --kubeconfig=$(PWD)/kubeconfig_$(HUB_CLUSTER_NAME)
-	kubectl apply -f https://raw.githubusercontent.com/open-cluster-management/governance-policy-propagator/main/deploy/crds/policy.open-cluster-management.io_policies.yaml --kubeconfig=$(PWD)/kubeconfig_$(HUB_CLUSTER_NAME)
-	kubectl apply -f https://raw.githubusercontent.com/open-cluster-management/governance-policy-propagator/main/deploy/crds/policy.open-cluster-management.io_policyautomations.yaml --kubeconfig=$(PWD)/kubeconfig_$(HUB_CLUSTER_NAME)
+	kubectl apply -f https://raw.githubusercontent.com/stolostron/multicloud-operators-placementrule/main/deploy/crds/apps.open-cluster-management.io_placementrules_crd.yaml --kubeconfig=$(PWD)/kubeconfig_$(HUB_CLUSTER_NAME)
+	kubectl apply -f https://raw.githubusercontent.com/stolostron/api/main/cluster/v1/0000_00_clusters.open-cluster-management.io_managedclusters.crd.yaml --kubeconfig=$(PWD)/kubeconfig_$(HUB_CLUSTER_NAME)
+	kubectl apply -f https://raw.githubusercontent.com/stolostron/api/main/cluster/v1alpha1/0000_04_clusters.open-cluster-management.io_placementdecisions.crd.yaml --kubeconfig=$(PWD)/kubeconfig_$(HUB_CLUSTER_NAME)
+	kubectl apply -f https://raw.githubusercontent.com/stolostron/api/main/cluster/v1alpha1/0000_03_clusters.open-cluster-management.io_placements.crd.yaml --kubeconfig=$(PWD)/kubeconfig_$(HUB_CLUSTER_NAME)
+	kubectl apply -f https://raw.githubusercontent.com/stolostron/governance-policy-propagator/main/deploy/crds/policy.open-cluster-management.io_placementbindings.yaml --kubeconfig=$(PWD)/kubeconfig_$(HUB_CLUSTER_NAME)
+	kubectl apply -f https://raw.githubusercontent.com/stolostron/governance-policy-propagator/main/deploy/crds/policy.open-cluster-management.io_policies.yaml --kubeconfig=$(PWD)/kubeconfig_$(HUB_CLUSTER_NAME)
+	kubectl apply -f https://raw.githubusercontent.com/stolostron/governance-policy-propagator/main/deploy/crds/policy.open-cluster-management.io_policyautomations.yaml --kubeconfig=$(PWD)/kubeconfig_$(HUB_CLUSTER_NAME)
 	@echo installing crds on managed
-	kubectl apply -f https://raw.githubusercontent.com/open-cluster-management/governance-policy-propagator/main/deploy/crds/policy.open-cluster-management.io_policies.yaml --kubeconfig=$(PWD)/kubeconfig_$(MANAGED_CLUSTER_NAME)
+	kubectl apply -f https://raw.githubusercontent.com/stolostron/governance-policy-propagator/main/deploy/crds/policy.open-cluster-management.io_policies.yaml --kubeconfig=$(PWD)/kubeconfig_$(MANAGED_CLUSTER_NAME)
 
 install-resources:
 	@echo creating user namespace on hub

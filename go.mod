@@ -1,4 +1,4 @@
-module github.com/open-cluster-management/governance-policy-framework
+module github.com/stolostron/governance-policy-framework
 
 go 1.16
 
