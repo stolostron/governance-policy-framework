@@ -10,9 +10,9 @@ import (
 
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
-	"github.com/open-cluster-management/governance-policy-framework/test/common"
 	policiesv1 "github.com/open-cluster-management/governance-policy-propagator/pkg/apis/policy/v1"
 	"github.com/open-cluster-management/governance-policy-propagator/test/utils"
+	"github.com/stolostron/governance-policy-framework/test/common"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
@@ -29,13 +29,13 @@ var _ = Describe("RHACM4K-3055", func() {
 			return common.GetComplianceState(clientHubDynamic, userNamespace, policyName, clusterNamespace)
 		}
 	})
-	const gatekeeperPolicyURL = "https://raw.githubusercontent.com/open-cluster-management/policy-collection/main/stable/CM-Configuration-Management/policy-gatekeeper-operator-downstream.yaml"
+	const gatekeeperPolicyURL = "https://raw.githubusercontent.com/stolostron/policy-collection/main/stable/CM-Configuration-Management/policy-gatekeeper-operator-downstream.yaml"
 	const gatekeeperPolicyName = "policy-gatekeeper-operator"
-	const GKPolicyYaml = "https://raw.githubusercontent.com/open-cluster-management/policy-collection/main/community/CM-Configuration-Management/policy-gatekeeper-sample.yaml"
+	const GKPolicyYaml = "https://raw.githubusercontent.com/stolostron/policy-collection/main/community/CM-Configuration-Management/policy-gatekeeper-sample.yaml"
 	const GKPolicyName = "policy-gatekeeper"
-	const GKAssignPolicyYaml = "https://raw.githubusercontent.com/open-cluster-management/policy-collection/main/community/CM-Configuration-Management/policy-gatekeeper-image-pull-policy.yaml"
+	const GKAssignPolicyYaml = "https://raw.githubusercontent.com/stolostron/policy-collection/main/community/CM-Configuration-Management/policy-gatekeeper-image-pull-policy.yaml"
 	const GKAssignPolicyName = "policy-gatekeeper-image-pull-policy"
-	const GKAssignMetadataPolicyYaml = "https://raw.githubusercontent.com/open-cluster-management/policy-collection/main/community/CM-Configuration-Management/policy-gatekeeper-annotation-owner.yaml"
+	const GKAssignMetadataPolicyYaml = "https://raw.githubusercontent.com/stolostron/policy-collection/main/community/CM-Configuration-Management/policy-gatekeeper-annotation-owner.yaml"
 	const GKAssignMetadataPolicyName = "policy-gatekeeper-annotation-owner"
 
 	Describe("GRC: [P1][Sev1][policy-grc] Test installing gatekeeper operator", func() {

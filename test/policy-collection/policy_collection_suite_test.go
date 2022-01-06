@@ -17,7 +17,7 @@ import (
 	"k8s.io/client-go/kubernetes"
 	"k8s.io/klog"
 
-	"github.com/open-cluster-management/governance-policy-framework/test/common"
+	"github.com/stolostron/governance-policy-framework/test/common"
 )
 
 var (
