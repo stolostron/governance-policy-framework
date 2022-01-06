@@ -1,7 +1,7 @@
 [comment]: # ( Copyright Contributors to the Open Cluster Management project )
 
 # Governance Policy Framework
-[![Build Status](https://travis-ci.com/open-cluster-management/governance-policy-framework.svg?token=2jHocNax82kqKsGV1uTE&branch=main)](https://travis-ci.com/open-cluster-management/governance-policy-framework)
+[![Build Status](https://app.travis-ci.com/stolostron/governance-policy-framework.svg?branch=main)](https://app.travis-ci.com/stolostron/governance-policy-framework)
 
 Open Cluster Management - Governance Policy Framework
 
@@ -22,17 +22,17 @@ View the following functions of the policy framework:
 
 The governance policy framework consists of following components:
 
-- [Governance dashboard](https://github.com/open-cluster-management/grc-ui): Console
+- [Governance dashboard](https://github.com/stolostron/grc-ui): Console
 - Govenance policy framework: A framework to distribute various supported policies to managed clusters and collect results to be sent to the hub cluster.
-    - [Policy propagator](https://github.com/open-cluster-management/governance-policy-propagator) 
-    - [Policy spec sync](https://github.com/open-cluster-management/governance-policy-spec-sync)
-    - [Policy status sync](https://github.com/open-cluster-management/governance-policy-status-sync)
-    - [Policy template sync](https://github.com/open-cluster-management/governance-policy-template-sync)
+    - [Policy propagator](https://github.com/stolostron/governance-policy-propagator) 
+    - [Policy spec sync](https://github.com/stolostron/governance-policy-spec-sync)
+    - [Policy status sync](https://github.com/stolostron/governance-policy-status-sync)
+    - [Policy template sync](https://github.com/stolostron/governance-policy-template-sync)
 - Policy controllers: Policy engines that run on managed clusters to evaluate policy rules distributed by the policy framework and generate results.
-    - [Configuration policy controller](https://github.com/open-cluster-management/config-policy-controller)
+    - [Configuration policy controller](https://github.com/stolostron/config-policy-controller)
       - [Usage examples](./doc/configuration-policy/README.md)
-    - [Certificate policy controller](https://github.com/open-cluster-management/cert-policy-controller)
-    - [IAM policy controller](https://github.com/open-cluster-management/iam-policy-controller)
+    - [Certificate policy controller](https://github.com/stolostron/cert-policy-controller)
+    - [IAM policy controller](https://github.com/stolostron/iam-policy-controller)
     - Third-party
       - [Gatekeeper](https://github.com/open-policy-agent/gatekeeper)
       - [Kyverno](https://github.com/kyverno/kyverno/)
@@ -115,7 +115,7 @@ You can find installation instructions from [Open Cluster Management](https://op
 
 ## More policies
 
-You can find more policies or contribute to the open repository, [policy-collection](https://github.com/open-cluster-management/policy-collection).
+You can find more policies or contribute to the open repository, [policy-collection](https://github.com/stolostron/policy-collection).
 
 <!---
 Date: 10/12/2021
