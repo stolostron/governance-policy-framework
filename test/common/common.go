@@ -12,8 +12,8 @@ import (
 	"strings"
 
 	"github.com/onsi/gomega"
-	policiesv1 "github.com/open-cluster-management/governance-policy-propagator/pkg/apis/policy/v1"
-	"github.com/open-cluster-management/governance-policy-propagator/test/utils"
+	policiesv1 "github.com/stolostron/governance-policy-propagator/api/v1"
+	"github.com/stolostron/governance-policy-propagator/test/utils"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/client-go/dynamic"
 	"k8s.io/client-go/kubernetes"

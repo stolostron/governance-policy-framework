@@ -1,1 +1,1 @@
-[{"op":"replace","path":"/spec/workload/manifests/0/spec/global/imageOverrides/cert_policy_controller","value":"quay.io/open-cluster-management/cert-policy-controller:latest"},{"op":"replace","path":"/spec/workload/manifests/0/spec/global/imagePullPolicy","value":"Always"}]
+[{"op":"replace","path":"/spec/workload/manifests/0/spec/global/imageOverrides/cert_policy_controller","value":"quay.io/stolostron/cert-policy-controller:latest"},{"op":"replace","path":"/spec/workload/manifests/0/spec/global/imagePullPolicy","value":"Always"}]
