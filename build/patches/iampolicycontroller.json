@@ -1,1 +1,1 @@
-[{"op":"replace","path":"/spec/workload/manifests/0/spec/global/imageOverrides/iam_policy_controller","value":"quay.io/open-cluster-management/iam-policy-controller:latest-2.4"}]
+[{"op":"replace","path":"/spec/workload/manifests/0/spec/global/imageOverrides/iam_policy_controller","value":"quay.io/stolostron/iam-policy-controller:latest-2.4"}]
