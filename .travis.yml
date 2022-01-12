@@ -41,8 +41,8 @@ jobs:
         - go mod vendor
         - make component/build
         - make component/push
-        - COMPONENT_NEWTAG="latest" make component/tag;
-        - COMPONENT_VERSION="latest" COMPONENT_TAG_EXTENSION="" make component/push;
+        - COMPONENT_NEWTAG="latest-2.3" make component/tag;
+        - COMPONENT_VERSION="latest" COMPONENT_TAG_EXTENSION="-2.3" make component/push;
     - stage: prepare
       name: "Patch cluster to latest"
       if: type != pull_request AND branch = main
