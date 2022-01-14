@@ -17,7 +17,7 @@ spec:
         - name: multiclusterhub-operator-pull-secret
       containers:
         - name: iam-policy-controller
-          image: quay.io/open-cluster-management/iam-policy-controller:latest-dev
+          image: quay.io/open-cluster-management/iam-policy-controller:latest-2.2
           command:
           - iam-policy-controller
           imagePullPolicy: Always

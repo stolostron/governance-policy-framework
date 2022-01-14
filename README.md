@@ -1,5 +1,5 @@
 # Governance Policy Framework
-[![Build Status](https://travis-ci.com/open-cluster-management/governance-policy-framework.svg?token=1xoYGv8XzWhB2heDk2My&branch=master)](https://travis-ci.com/open-cluster-management/governance-policy-framework)
+[![Build Status](https://travis-ci.com/stolostron/governance-policy-framework.svg?token=1xoYGv8XzWhB2heDk2My&branch=master)](https://travis-ci.com/stolostron/governance-policy-framework)
 
 Red Hat Advanced Cluster Management Governance - Policy Framework
 
@@ -17,11 +17,11 @@ View the following functions of the policy framework:
 
 The policy framework consists of following components:
 
-- [Governance dashboard](https://github.com/open-cluster-management/grc-ui)
-- [Policy propagator](https://github.com/open-cluster-management/governance-policy-propagator) 
-- [Policy spec sync](https://github.com/open-cluster-management/governance-policy-spec-sync)
-- [Policy status sync](https://github.com/open-cluster-management/governance-policy-status-sync)
-- [Policy template sync](https://github.com/open-cluster-management/governance-policy-template-sync)
+- [Governance dashboard](https://github.com/stolostron/grc-ui)
+- [Policy propagator](https://github.com/stolostron/governance-policy-propagator) 
+- [Policy spec sync](https://github.com/stolostron/governance-policy-spec-sync)
+- [Policy status sync](https://github.com/stolostron/governance-policy-status-sync)
+- [Policy template sync](https://github.com/stolostron/governance-policy-template-sync)
 - Policy controllers: Policy controllers include predefined [out-of-box policy controllers](#out-of-box-policies-and-controllers), or you can [bring your own policy](#bring-your-own-policy).
 
 ![architecture](images/policy-framework-architecture-diagram.jpg)
@@ -30,9 +30,9 @@ The policy framework consists of following components:
 
 View the following list of predefined policy controllers that are offered with Red Hat Advanced Cluster Management:
 
-- [Configuration policy controller](https://github.com/open-cluster-management/config-policy-controller)
-- [Certificate policy controller](https://github.com/open-cluster-management/cert-policy-controller)
-- [IAM policy controller](https://github.com/open-cluster-management/iam-policy-controller)
+- [Configuration policy controller](https://github.com/stolostron/config-policy-controller)
+- [Certificate policy controller](https://github.com/stolostron/cert-policy-controller)
+- [IAM policy controller](https://github.com/stolostron/iam-policy-controller)
 
 ## Bring your own policy
 
@@ -40,4 +40,4 @@ You can bring your own policy by implementing a custom policy and controller. Fo
 
 ## More policies
 
-You can find more policies or contribute to the open repostitory, [policy-collection](https://github.com/open-cluster-management/policy-collection).
+You can find more policies or contribute to the open repostitory, [policy-collection](https://github.com/stolostron/policy-collection).
