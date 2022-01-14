@@ -99,12 +99,9 @@ jobs:
       if: type = push AND branch =~ /^release-[0-9]+\..*$/
       script:
         - set -e
-        - export COMPONENT_BUILD_COMMAND="docker build . -f Dockerfile.e2etest -t "
-        - export COMPONENT_NAME="grc-policy-framework-tests"
-        - go mod vendor
-        - make component/build
-        - make component/push
-        - make pipeline-manifest/update COMPONENT_NAME=grc-policy-framework-tests PIPELINE_MANIFEST_COMPONENT_SHA256=${TRAVIS_COMMIT} PIPELINE_MANIFEST_COMPONENT_REPO=${TRAVIS_REPO_SLUG} PIPELINE_MANIFEST_BRANCH=${TRAVIS_BRANCH}
+        - |
+          make
+          make pipeline-manifest/update PIPELINE_MANIFEST_COMPONENT_SHA256=${TRAVIS_COMMIT} PIPELINE_MANIFEST_COMPONENT_REPO=${TRAVIS_REPO_SLUG} PIPELINE_MANIFEST_BRANCH=${TRAVIS_BRANCH}
   
 notifications:
   slack:
