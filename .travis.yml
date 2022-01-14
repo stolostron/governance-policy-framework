@@ -32,7 +32,6 @@ jobs:
   include:
     - stage: prepare
       name: "Build the test image"
-      if: type = push AND branch = master
       script:
         - set -e
         - if [ "$TRAVIS_PULL_REQUEST" != "false" ]; then export COMPONENT_TAG_EXTENSION="-PR${TRAVIS_PULL_REQUEST}-${TRAVIS_COMMIT}"; fi;
@@ -41,8 +40,10 @@ jobs:
         - go mod vendor
         - make component/build
         - make component/push
-        - COMPONENT_NEWTAG="latest-dev" make component/tag;
-        - COMPONENT_VERSION="latest" COMPONENT_TAG_EXTENSION="-dev" make component/push;
+        - if [ "$TRAVIS_PULL_REQUEST" == "false" -a "$TRAVIS_BRANCH" == "release-2.2" ]; then 
+            COMPONENT_NEWTAG="latest-2.2" make component/tag;
+            COMPONENT_VERSION="latest" COMPONENT_TAG_EXTENSION="-2.2" make component/push;
+          fi;
     - stage: prepare
       name: "Patch cluster to latest"
       if: type != pull_request AND branch = master

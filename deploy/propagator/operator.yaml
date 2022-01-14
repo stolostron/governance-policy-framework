@@ -17,7 +17,7 @@ spec:
         - name: multiclusterhub-operator-pull-secret
       containers:
         - name: governance-policy-propagator
-          image: quay.io/open-cluster-management/governance-policy-propagator:latest-dev
+          image: quay.io/open-cluster-management/governance-policy-propagator:latest-2.2
           command:
           - governance-policy-propagator
           imagePullPolicy: Always

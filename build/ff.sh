@@ -14,7 +14,7 @@ if [ $FF == 'true' ]; then
       -H "Travis-API-Version: 3" \
       -H "Authorization: token $TRAVIS_TOKEN" \
       -d "$body" \
-      https://api.travis-ci.com/repo/open-cluster-management%2Fpolicy-grc-squad/requests
+      https://api.travis-ci.com/repo/stolostron%2Fpolicy-grc-squad/requests
 else
   echo 'skipping fast forward'
 fi
