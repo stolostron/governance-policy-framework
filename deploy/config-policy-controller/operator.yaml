@@ -14,7 +14,7 @@ spec:
     spec:
       serviceAccountName: config-policy-controller
       containers:
-        - image: quay.io/open-cluster-management/config-policy-controller:latest-2.3
+        - image: quay.io/stolostron/config-policy-controller:latest-2.3
           name: config-policy-controller
           command:
           - config-policy-controller

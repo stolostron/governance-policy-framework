@@ -15,7 +15,7 @@ spec:
       serviceAccountName: iam-policy-controller
       containers:
         - name: iam-policy-controller
-          image: quay.io/open-cluster-management/iam-policy-controller:latest-2.3
+          image: quay.io/stolostron/iam-policy-controller:latest-2.3
           command:
           - iam-policy-controller
           args:
