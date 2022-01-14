@@ -15,7 +15,7 @@ spec:
       serviceAccountName: cert-policy-controller
       containers:
         - name: cert-policy-controller
-          image: quay.io/open-cluster-management/cert-policy-controller:latest-2.3
+          image: quay.io/stolostron/cert-policy-controller:latest-2.3
           command:
           - cert-policy-controller
           args:
