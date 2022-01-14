@@ -65,7 +65,7 @@ var _ = Describe("GRC: [P1][Sev1][policy-grc] Test the Policy Generator in an Ap
 		ClusterRoles: []string{"open-cluster-management:admin:local-cluster"},
 		// To be considered a subscription-admin you must be part of this cluster role binding.
 		// Having the proper role in another cluster role binding does not work. See:
-		// https://github.com/open-cluster-management/multicloud-operators-subscription/blob/release-2.4/pkg/utils/gitrepo.go#L930-L962
+		// https://github.com/stolostron/multicloud-operators-subscription/blob/release-2.4/pkg/utils/gitrepo.go#L930-L962
 		ClusterRoleBindings: []string{subAdminBinding},
 		Password:            "",
 		Username:            "grc-e2e-subscription-admin",
