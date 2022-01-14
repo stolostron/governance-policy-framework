@@ -11,8 +11,8 @@ oc annotate MultiClusterHub multiclusterhub -n open-cluster-management mch-pause
 grcui=`oc get deploy -l component=ocm-grcui -n open-cluster-management -o=jsonpath='{.items[*].metadata.name}'`
 grcuiapi=`oc get deploy -l component=ocm-grcuiapi -n open-cluster-management -o=jsonpath='{.items[*].metadata.name}'`
 policypropagator=`oc get deploy -l component=ocm-policy-propagator -n open-cluster-management -o=jsonpath='{.items[*].metadata.name}'`
-oc patch deployment $grcui -n open-cluster-management -p "{\"spec\":{\"template\":{\"spec\":{\"containers\":[{\"name\":\"grc-ui\",\"image\":\"quay.io/open-cluster-management/grc-ui:latest-2.4\"}]}}}}"
-oc patch deployment $grcuiapi -n open-cluster-management -p "{\"spec\":{\"template\":{\"spec\":{\"containers\":[{\"name\":\"grc-ui-api\",\"image\":\"quay.io/open-cluster-management/grc-ui-api:latest-2.4\"}]}}}}"
+oc patch deployment $grcui -n open-cluster-management -p "{\"spec\":{\"template\":{\"spec\":{\"containers\":[{\"name\":\"grc-ui\",\"image\":\"quay.io/stolostron/grc-ui:latest-2.4\"}]}}}}"
+oc patch deployment $grcuiapi -n open-cluster-management -p "{\"spec\":{\"template\":{\"spec\":{\"containers\":[{\"name\":\"grc-ui-api\",\"image\":\"quay.io/stolostron/grc-ui-api:latest-2.4\"}]}}}}"
 oc patch deployment $policypropagator -n open-cluster-management -p "{\"spec\":{\"template\":{\"spec\":{\"containers\":[{\"name\":\"governance-policy-propagator\",\"image\":\"quay.io/stolostron/governance-policy-propagator:latest-2.4\"}]}}}}"
 
 managedclusters=`oc get managedcluster -o=jsonpath='{.items[*].metadata.name}'`
