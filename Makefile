@@ -5,7 +5,7 @@ BASE_DIR := $(shell basename $(PWD))
 deployOnHub ?= false
 
 # Default snapshot if not provided
-RHACM_SNAPSHOT ?= 2.2.7-SNAPSHOT-2021-08-11-13-58-47
+RHACM_SNAPSHOT ?= 2.2.11-SNAPSHOT-2022-01-14-23-54-01
 
 # GITHUB_USER containing '@' char must be escaped with '%40'
 GITHUB_USER := $(shell echo $(GITHUB_USER) | sed 's/@/%40/g')
@@ -49,7 +49,7 @@ kind-deploy-policy-framework: check-env
 	kubectl create ns governance --kubeconfig=$(PWD)/kubeconfig_hub
 	kubectl create secret -n governance docker-registry multiclusterhub-operator-pull-secret --docker-server=quay.io --docker-username=${DOCKER_USER} --docker-password=${DOCKER_PASS} --kubeconfig=$(PWD)/kubeconfig_hub
 	kubectl apply -f deploy/propagator -n governance --kubeconfig=$(PWD)/kubeconfig_hub
-	kubectl patch deployment governance-policy-propagator -n governance --kubeconfig=$(PWD)/kubeconfig_hub -p "{\"spec\":{\"template\":{\"spec\":{\"containers\":[{\"name\":\"governance-policy-propagator\",\"image\":\"quay.io/open-cluster-management/governance-policy-propagator:$(RHACM_SNAPSHOT)\"}]}}}}"
+	kubectl patch deployment governance-policy-propagator -n governance --kubeconfig=$(PWD)/kubeconfig_hub -p "{\"spec\":{\"template\":{\"spec\":{\"containers\":[{\"name\":\"governance-policy-propagator\",\"image\":\"quay.io/stolostron/governance-policy-propagator:$(RHACM_SNAPSHOT)\"}]}}}}"
 	@echo creating secrets on managed
 	kubectl create ns multicluster-endpoint --kubeconfig=$(PWD)/kubeconfig_managed
 	kubectl create secret -n multicluster-endpoint docker-registry multiclusterhub-operator-pull-secret --docker-server=quay.io --docker-username=${DOCKER_USER} --docker-password=${DOCKER_PASS} --kubeconfig=$(PWD)/kubeconfig_managed
@@ -59,37 +59,37 @@ kind-deploy-policy-framework: check-env
 	else\
 		echo installing policy-spec-sync on managed;\
 		kubectl apply -f deploy/spec-sync -n multicluster-endpoint --kubeconfig=$(PWD)/kubeconfig_managed;\
-		kubectl patch deployment governance-policy-spec-sync -n multicluster-endpoint --kubeconfig=$(PWD)/kubeconfig_managed -p "{\"spec\":{\"template\":{\"spec\":{\"containers\":[{\"name\":\"governance-policy-spec-sync\",\"image\":\"quay.io/open-cluster-management/governance-policy-spec-sync:$(RHACM_SNAPSHOT)\"}]}}}}";\
+		kubectl patch deployment governance-policy-spec-sync -n multicluster-endpoint --kubeconfig=$(PWD)/kubeconfig_managed -p "{\"spec\":{\"template\":{\"spec\":{\"containers\":[{\"name\":\"governance-policy-spec-sync\",\"image\":\"quay.io/stolostron/governance-policy-spec-sync:$(RHACM_SNAPSHOT)\"}]}}}}";\
 	fi
 	if [ "$(deployOnHub)" = "true" ]; then\
 		echo installing policy-status-sync with ON_MULTICLUSTERHUB;\
 		kubectl apply -k deploy/status-sync -n multicluster-endpoint --kubeconfig=$(PWD)/kubeconfig_managed;\
-		kubectl patch deployment governance-policy-status-sync -n multicluster-endpoint --kubeconfig=$(PWD)/kubeconfig_managed -p "{\"spec\":{\"template\":{\"spec\":{\"containers\":[{\"name\":\"governance-policy-status-sync\",\"image\":\"quay.io/open-cluster-management/governance-policy-status-sync:$(RHACM_SNAPSHOT)\"}]}}}}";\
+		kubectl patch deployment governance-policy-status-sync -n multicluster-endpoint --kubeconfig=$(PWD)/kubeconfig_managed -p "{\"spec\":{\"template\":{\"spec\":{\"containers\":[{\"name\":\"governance-policy-status-sync\",\"image\":\"quay.io/stolostron/governance-policy-status-sync:$(RHACM_SNAPSHOT)\"}]}}}}";\
 	else\
 		echo installing policy-status-sync on managed;\
 		kubectl apply -f deploy/status-sync/yamls -n multicluster-endpoint --kubeconfig=$(PWD)/kubeconfig_managed;\
-		kubectl patch deployment governance-policy-status-sync -n multicluster-endpoint --kubeconfig=$(PWD)/kubeconfig_managed -p "{\"spec\":{\"template\":{\"spec\":{\"containers\":[{\"name\":\"governance-policy-status-sync\",\"image\":\"quay.io/open-cluster-management/governance-policy-status-sync:$(RHACM_SNAPSHOT)\"}]}}}}";\
+		kubectl patch deployment governance-policy-status-sync -n multicluster-endpoint --kubeconfig=$(PWD)/kubeconfig_managed -p "{\"spec\":{\"template\":{\"spec\":{\"containers\":[{\"name\":\"governance-policy-status-sync\",\"image\":\"quay.io/stolostron/governance-policy-status-sync:$(RHACM_SNAPSHOT)\"}]}}}}";\
 	fi
 	@echo installing policy-template-sync on managed
 	kubectl apply -f deploy/template-sync -n multicluster-endpoint --kubeconfig=$(PWD)/kubeconfig_managed
-	kubectl patch deployment governance-policy-template-sync -n multicluster-endpoint --kubeconfig=$(PWD)/kubeconfig_managed -p "{\"spec\":{\"template\":{\"spec\":{\"containers\":[{\"name\":\"governance-policy-template-sync\",\"image\":\"quay.io/open-cluster-management/governance-policy-template-sync:$(RHACM_SNAPSHOT)\"}]}}}}"
+	kubectl patch deployment governance-policy-template-sync -n multicluster-endpoint --kubeconfig=$(PWD)/kubeconfig_managed -p "{\"spec\":{\"template\":{\"spec\":{\"containers\":[{\"name\":\"governance-policy-template-sync\",\"image\":\"quay.io/stolostron/governance-policy-template-sync:$(RHACM_SNAPSHOT)\"}]}}}}"
 
 kind-deploy-config-policy-controller: check-env
 	@echo installing config-policy-controller on managed
 	kubectl apply -f deploy/config-policy-controller -n multicluster-endpoint --kubeconfig=$(PWD)/kubeconfig_managed
-	kubectl patch deployment config-policy-ctrl -n multicluster-endpoint --kubeconfig=$(PWD)/kubeconfig_managed -p "{\"spec\":{\"template\":{\"spec\":{\"containers\":[{\"name\":\"config-policy-ctrl\",\"image\":\"quay.io/open-cluster-management/config-policy-controller:$(RHACM_SNAPSHOT)\"}]}}}}"
+	kubectl patch deployment config-policy-ctrl -n multicluster-endpoint --kubeconfig=$(PWD)/kubeconfig_managed -p "{\"spec\":{\"template\":{\"spec\":{\"containers\":[{\"name\":\"config-policy-ctrl\",\"image\":\"quay.io/stolostron/config-policy-controller:$(RHACM_SNAPSHOT)\"}]}}}}"
 
 kind-deploy-cert-policy-controller: check-env
 	@echo installing cert-manager on managed
 	kubectl apply --validate=false -f https://github.com/jetstack/cert-manager/releases/download/v1.0.1/cert-manager.yaml --kubeconfig=$(PWD)/kubeconfig_managed
 	@echo installing cert-policy-controller on managed
 	kubectl apply -f deploy/cert-policy-controller -n multicluster-endpoint --kubeconfig=$(PWD)/kubeconfig_managed
-	kubectl patch deployment cert-policy-controller -n multicluster-endpoint --kubeconfig=$(PWD)/kubeconfig_managed -p "{\"spec\":{\"template\":{\"spec\":{\"containers\":[{\"name\":\"cert-policy-controller\",\"image\":\"quay.io/open-cluster-management/cert-policy-controller:$(RHACM_SNAPSHOT)\"}]}}}}"
+	kubectl patch deployment cert-policy-controller -n multicluster-endpoint --kubeconfig=$(PWD)/kubeconfig_managed -p "{\"spec\":{\"template\":{\"spec\":{\"containers\":[{\"name\":\"cert-policy-controller\",\"image\":\"quay.io/stolostron/cert-policy-controller:$(RHACM_SNAPSHOT)\"}]}}}}"
 
 kind-deploy-iam-policy-controller: check-env
 	@echo installing iam-policy-controller on managed
 	kubectl apply -f deploy/iam-policy-controller -n multicluster-endpoint --kubeconfig=$(PWD)/kubeconfig_managed
-	kubectl patch deployment iam-policy-controller -n multicluster-endpoint --kubeconfig=$(PWD)/kubeconfig_managed -p "{\"spec\":{\"template\":{\"spec\":{\"containers\":[{\"name\":\"iam-policy-controller\",\"image\":\"quay.io/open-cluster-management/iam-policy-controller:$(RHACM_SNAPSHOT)\"}]}}}}"
+	kubectl patch deployment iam-policy-controller -n multicluster-endpoint --kubeconfig=$(PWD)/kubeconfig_managed -p "{\"spec\":{\"template\":{\"spec\":{\"containers\":[{\"name\":\"iam-policy-controller\",\"image\":\"quay.io/stolostron/iam-policy-controller:$(RHACM_SNAPSHOT)\"}]}}}}"
 
 kind-deploy-olm: check-env
 	@echo installing OLM on managed

@@ -17,7 +17,7 @@ spec:
         - name: multiclusterhub-operator-pull-secret
       containers:
         - name: cert-policy-controller
-          image: quay.io/open-cluster-management/cert-policy-controller:latest-2.2
+          image: quay.io/stolostron/cert-policy-controller:latest-2.2
           command:
           - cert-policy-controller
           imagePullPolicy: Always
