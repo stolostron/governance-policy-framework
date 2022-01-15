@@ -148,4 +148,4 @@ travis-slack-reporter:
 		--env TRAVIS_PULL_REQUEST=$(TRAVIS_PULL_REQUEST) \
 		--env TRAVIS_BRANCH=$(TRAVIS_BRANCH) \
 		--env TRAVIS_BUILD_WEB_URL=$(TRAVIS_BUILD_WEB_URL) \
-		quay.io/open-cluster-management/grc-ui-tests:latest-dev node ./tests/utils/slack-reporter.js
+		quay.io/stolostron/grc-ui-tests:latest-2.2 node ./tests/utils/slack-reporter.js
