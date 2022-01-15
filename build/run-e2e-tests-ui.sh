@@ -6,7 +6,7 @@ set -e
 UI_CURRENT_IMAGE=$1
 
 make docker/login
-export DOCKER_URI=quay.io/open-cluster-management/grc-ui-tests:latest-2.3
+export DOCKER_URI=quay.io/stolostron/grc-ui-tests:latest-2.3
 make docker/pull
 
 printenv
