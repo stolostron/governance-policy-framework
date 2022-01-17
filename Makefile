@@ -284,7 +284,7 @@ travis-slack-reporter:
 		--env TRAVIS_PULL_REQUEST=$(TRAVIS_PULL_REQUEST) \
 		--env TRAVIS_BRANCH=$(TRAVIS_BRANCH) \
 		--env TRAVIS_BUILD_WEB_URL=$(TRAVIS_BUILD_WEB_URL) \
-		quay.io/open-cluster-management/grc-ui-tests:latest node ./tests/utils/slack-reporter.js
+		quay.io/stolostron/grc-ui-tests:latest node ./tests/utils/slack-reporter.js
 
 
 # go-get-tool will 'go get' any package $2 and install it to $1.
