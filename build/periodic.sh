@@ -17,7 +17,7 @@ cloneRepos() {
 	REPOS=$(cat policy-grc-squad/main-branch-sync/repo.txt | grep policy | grep -v framework)
 	for repo in $REPOS; do
 		printf '%s\n' "Updating $repo ...."
-		git clone git@github.com:$repo.git $repo
+		git clone https://github.com/$repo.git $repo
 	done
 }
 
