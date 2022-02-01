@@ -60,7 +60,7 @@ checkProwJob() {
 		STATUS=$(echo "$JSON" | jq '.Result')
 		if [ "$STATUS" = \"FAILURE\" ]; then
 			echo "****"
-			echo "WARNING!!!  Prow job failure: $repo $release."
+			echo "ERROR!!!  Prow job failure: $repo $release."
 			LINK=https://prow.ci.openshift.org$(echo "$JSON" | jq '.SpyglassLink' | sed 's/"//g')
 			echo "   Link: $LINK"
 			echo "***"
@@ -94,7 +94,7 @@ for repo in $REPOS; do
 
 		if [ "$gitsha" != "$pipelinesha" ]; then
 			echo "****"
-			echo "WARNING!!!  SHA mismatch in pipeline and $repo $RELEASE repositories."
+			echo "ERROR!!!  SHA mismatch in pipeline and $repo $RELEASE repositories."
         		echo "   pipeline: $pipelinesha"
         		echo "   $repo: $gitsha"
 			echo "***"
@@ -105,7 +105,7 @@ for repo in $REPOS; do
 		FOUND=$(curl -s "https://quay.io/api/v1/repository/${COMPONENT_ORG}/${repo}/tag/?onlyActiveTags=true&specificTag=${imagetag}" | jq '.tags | length')
 		if [ "${FOUND}" != "1" ]; then
 			echo "****"
-			echo "WARNING!!!  Tag not found for image in quay: $repo:${imagetag}"
+			echo "ERROR!!!  Tag not found for image in quay: $repo:${imagetag}"
 			echo "***"
 			rc=1
 		fi
