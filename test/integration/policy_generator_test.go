@@ -147,6 +147,30 @@ var _ = Describe("GRC: [P1][Sev1][policy-grc] Test the Policy Generator in an Ap
 		)
 		Expect(err).Should(BeNil())
 
+		By("Checking that the policy set was created")
+		policySetRsrc := clientHubDynamic.Resource(common.GvrPolicySet)
+		var policyset *unstructured.Unstructured
+		Eventually(
+			func() error {
+				var err error
+				policyset, err = policySetRsrc.Namespace(namespace).Get(
+					context.TODO(), "e2e-policyset", metav1.GetOptions{},
+				)
+				return err
+			},
+			defaultTimeoutSeconds*2,
+			1,
+		).Should(BeNil())
+
+		// Perform some basic validation on the generated policySet. There isn't a need to do any more
+		// than this since the policy generator unit tests cover this scenario well. This test is
+		// meant to verify that the integration is successful.
+		policies, found, err := unstructured.NestedSlice(policyset.Object, "spec", "policies")
+		Expect(err).Should(BeNil())
+		Expect(found).Should(BeTrue())
+		Expect(len(policies)).Should(Equal(1))
+		Expect(policies[0]).Should(Equal("e2e-grc-policy-app"))
+
 		By("Checking that the root policy was created")
 		policyRsrc := clientHubDynamic.Resource(common.GvrPolicy)
 		var policy *unstructured.Unstructured
