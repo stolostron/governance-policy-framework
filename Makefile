@@ -206,8 +206,8 @@ install-resources:
 	kubectl apply -f test/resources/managed-cluster.yaml --kubeconfig=$(PWD)/kubeconfig_$(HUB_CLUSTER_NAME)
 
 e2e-dependencies:
-	go get github.com/onsi/ginkgo/ginkgo
-	go get github.com/onsi/gomega/...
+	go get github.com/onsi/ginkgo/ginkgo@v1.16.5
+	go get github.com/onsi/gomega/...@v1.16.0
 
 e2e-test:
 	@if [ -z "$(TEST_FILE)" ]; then\
