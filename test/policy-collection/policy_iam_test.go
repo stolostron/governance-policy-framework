@@ -5,17 +5,20 @@ import (
 
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
-	"github.com/stolostron/governance-policy-framework/test/common"
 	policiesv1 "github.com/stolostron/governance-policy-propagator/api/v1"
 	"github.com/stolostron/governance-policy-propagator/test/utils"
 	corev1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+
+	"github.com/stolostron/governance-policy-framework/test/common"
 )
 
-const iamPolicyName = "policy-limitclusteradmin"
-const iamPolicyURL = "https://raw.githubusercontent.com/stolostron/policy-collection/main/stable/AC-Access-Control/" + iamPolicyName + ".yaml"
-const iamPolicyManagedNamespace = "iam-policy-test"
+const (
+	iamPolicyName             = "policy-limitclusteradmin"
+	iamPolicyURL              = "https://raw.githubusercontent.com/stolostron/policy-collection/main/stable/AC-Access-Control/" + iamPolicyName + ".yaml"
+	iamPolicyManagedNamespace = "iam-policy-test"
+)
 
 // Note that these tests must be run on OpenShift since the tests create an OpenShift group
 var _ = Describe("GRC: [P1][Sev1][policy-grc] Test the stable IAM policy", func() {
@@ -69,7 +72,6 @@ var _ = Describe("GRC: [P1][Sev1][policy-grc] Test the stable IAM policy", func(
 			},
 			metav1.CreateOptions{},
 		)
-
 		if err != nil {
 			Expect(errors.IsAlreadyExists(err)).Should(BeTrue())
 		}

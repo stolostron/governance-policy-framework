@@ -1,0 +1,16 @@
+apiVersion: policy.open-cluster-management.io/v1
+kind: PolicySet
+metadata:
+  name: test-policyset
+spec:
+  policies:
+  - test-policy
+status:
+  placement:
+  - placementBinding: test-policyset-pb
+    placementRule: test-policyset-plr
+  results:
+  - message: test-policy is disabled
+    policy: test-policy
+  - message: policyset-does-not-exist not found
+    policy: policyset-does-not-exist

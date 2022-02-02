@@ -55,6 +55,22 @@ default::
 	@echo "Build Harness Bootstrapped"
 
 ############################################################
+# format section
+############################################################
+
+fmt-dependencies:
+	$(call go-get-tool,$(PWD)/bin/gci,github.com/daixiang0/gci@v0.2.9)
+	$(call go-get-tool,$(PWD)/bin/gofumpt,mvdan.cc/gofumpt@v0.2.0)
+
+# All available format: format-go format-protos format-python
+# Default value will run all formats, override these make target with your requirements:
+#    eg: fmt: format-go format-protos
+fmt: fmt-dependencies
+	find . -not \( -path "./.go" -prune \) -name "*.go" | xargs gofmt -s -w
+	find . -not \( -path "./.go" -prune \) -name "*.go" | xargs gofumpt -l -w
+	find . -not \( -path "./.go" -prune \) -name "*.go" | xargs gci -w -local "$(shell cat go.mod | head -1 | cut -d " " -f 2)"
+
+############################################################
 # e2e test section
 ############################################################
 .PHONY: kind-bootstrap-cluster
