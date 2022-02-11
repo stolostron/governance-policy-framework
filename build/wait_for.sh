@@ -10,7 +10,8 @@ trap "exit 1" TERM
 TOP_PID=$$
 
 OC_ARGS=""
-WAIT_TIME="${WAIT_TIME:-2}" # seconds
+WAIT_TIME="${WAIT_TIME:-5}" # seconds
+TIMEOUT="${TIMEOUT:-300}" # timeout in seconds (default: 5 min)
 DEBUG="${DEBUG:-0}"
 TREAT_ERRORS_AS_READY=0
 alias oc=kubectl
