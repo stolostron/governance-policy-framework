@@ -6,14 +6,19 @@ FROM golang:1.17 AS builder
 # Stage 2: Copy Go binaries and run tests on ubi-minimal
 FROM registry.access.redhat.com/ubi8/ubi-minimal:latest
 
-RUN  microdnf update -y \
+RUN microdnf update -y \
         && microdnf install tar \
         && microdnf install gzip \
         && microdnf install golang \
         && microdnf install git \
         && microdnf install which \
         && microdnf install make \
+        && microdnf install findutils \
         && microdnf clean all
+
+# prepare jq
+ADD https://github.com/stedolan/jq/releases/download/jq-1.6/jq-linux64 /usr/local/bin/jq
+RUN chmod +x /usr/local/bin/jq
 
 COPY --from=builder /usr/local/go /usr/local/go
 COPY --from=builder /go /go
@@ -38,5 +43,8 @@ RUN go get github.com/onsi/ginkgo/ginkgo@v1.16.5
 RUN go get github.com/onsi/gomega/...@v1.16.0
 
 RUN go mod vendor
+
+# Give write permissions for the directory
+RUN chmod -R go+w $GOPATH/src/github.com/stolostron/governance-policy-framework
 
 CMD ["./build/run-test-image.sh"]
