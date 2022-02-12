@@ -53,7 +53,7 @@ for MANAGED_CLUSTER in ${MANAGED_CLUSTERS}; do
     done
     oc annotate klusterletaddonconfig -n ${MANAGED_CLUSTER} ${MANAGED_CLUSTER} klusterletaddonconfig-pause=true --overwrite=true
     for COMPONENT in $(ls ${DIR}/patches); do
-      oc patch manifestwork -n ${MANAGED_CLUSTER} ${MANAGED_CLUSTER}-klusterlet-addon-${COMPONENT} --type='json' -p=`cat $DIR/patches/${COMPONENT} | sed 's/:latest/:'${VERSION_TAG}'/g'` || true
+      oc patch manifestwork -n ${MANAGED_CLUSTER} ${MANAGED_CLUSTER}-klusterlet-addon-${COMPONENT} --type='json' -p=`cat $DIR/patches/${COMPONENT} | sed 's/:latest-2.4/:'${VERSION_TAG}'/g'` || true
     done
 done
 
