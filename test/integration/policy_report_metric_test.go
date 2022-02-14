@@ -12,8 +12,6 @@ import (
 	. "github.com/onsi/gomega"
 	"github.com/stolostron/governance-policy-framework/test/common"
 	policiesv1 "github.com/stolostron/governance-policy-propagator/api/v1"
-	corev1 "k8s.io/api/core/v1"
-	"k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 )
@@ -34,17 +32,6 @@ var insightsToken string
 
 var _ = Describe("GRC: [P1][Sev1][policy-grc] Test policyreport_info metric", func() {
 	It("Sets up the metrics service endpoint for tests", func() {
-		By("Create Namespace if needed")
-		_, err := clientHub.CoreV1().Namespaces().Create(context.TODO(), &corev1.Namespace{
-			ObjectMeta: metav1.ObjectMeta{
-				Name: userNamespace,
-			},
-		}, metav1.CreateOptions{})
-		if err != nil {
-			Expect(errors.IsAlreadyExists(err)).Should(BeTrue())
-		}
-		Expect(clientHub.CoreV1().Namespaces().Get(context.TODO(), userNamespace, metav1.GetOptions{})).NotTo(BeNil())
-
 		By("Setting the insights client to poll every minute")
 		insightsClient, err := common.OcHub("get", "deployments", "-n", ocmNS, "-l", insightsClientSelector, "-o", "name")
 		Expect(err).To(BeNil())
@@ -220,7 +207,6 @@ var _ = Describe("GRC: [P1][Sev1][policy-grc] Test policyreport_info metric", fu
 		common.OcHub("delete", "route", "-n", ocmNS, "-l", insightsMetricsSelector)
 		common.OcHub("delete", "clusterrolebinding", roleBindingName)
 		common.OcHub("delete", "serviceaccount", saName, "-n", userNamespace)
-		common.OcHub("delete", "namespace", userNamespace)
 		common.OcHub("delete", "namespace", "policy-metric-test-compliant")
 	})
 })
