@@ -67,3 +67,9 @@ var _ = BeforeSuite(func() {
 	}
 	Expect(namespaces.Get(context.TODO(), userNamespace, metav1.GetOptions{})).NotTo(BeNil())
 })
+
+var _ = AfterSuite(func() {
+	By("Delete Namespace if needed")
+	_, err := common.OcHub("delete", "namespace", userNamespace)
+	Expect(err).Should(BeNil())
+})
