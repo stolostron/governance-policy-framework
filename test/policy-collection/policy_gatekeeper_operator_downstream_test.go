@@ -42,6 +42,11 @@ var _ = Describe("RHACM4K-3055", func() {
 		It("stable/policy-gatekeeper-operator should be created on hub", func() {
 			By("Creating policy on hub")
 			utils.KubectlWithOutput("apply", "-f", gatekeeperPolicyURL, "-n", userNamespace, "--kubeconfig="+kubeconfigHub)
+			By("Patching Policy Gatekeeper CR template with namespaceSelector to kubernetes.io/metadata.name=" + userNamespace)
+			utils.KubectlWithOutput("patch", "-n", userNamespace, "policy", gatekeeperPolicyName,
+				"--type=json", "-p=[{\"op\": \"add\", \"path\": \"/spec/policy-templates/2/objectDefinition/spec/object-templates/0/objectDefinition/spec/webhook/namespaceSelector\","+
+					" \"value\":{\"matchExpressions\":[{\"key\": \"kubernetes.io/metadata.name\",\"operator\":\"In\",\"values\":["+userNamespace+", \"e2etestfail\"]}]}}]",
+				"--kubeconfig="+kubeconfigHub)
 			By("Patching placement rule")
 			utils.KubectlWithOutput("patch", "-n", userNamespace, "placementrule.apps.open-cluster-management.io/placement-"+gatekeeperPolicyName,
 				"--type=json", "-p=[{\"op\": \"replace\", \"path\": \"/spec/clusterSelector/matchExpressions\", \"value\":[{\"key\": \"name\", \"operator\": \"In\", \"values\": ["+clusterNamespace+"]}]}]",
@@ -332,16 +337,16 @@ var _ = Describe("RHACM4K-3055", func() {
 		It("Verify mutation feature", func() {
 			Eventually(func() interface{} {
 				By("Creating a pod to test AssignMetadata")
-				utils.KubectlWithOutput("apply", "-f", "../resources/gatekeeper/pod-mutation.yaml", "-n", "default", "--kubeconfig="+kubeconfigManaged)
+				utils.KubectlWithOutput("apply", "-f", "../resources/gatekeeper/pod-mutation.yaml", "-n", userNamespace, "--kubeconfig="+kubeconfigManaged)
 				By("Check if pod contains annotation owner=admin")
-				pod, _ := clientManaged.CoreV1().Pods("default").Get(context.TODO(), "pod-mutation", metav1.GetOptions{})
+				pod, _ := clientManaged.CoreV1().Pods(userNamespace).Get(context.TODO(), "pod-mutation", metav1.GetOptions{})
 				return pod.Annotations["owner"]
 			}, defaultTimeoutSeconds*6, 1).Should(Equal("admin"))
 			Eventually(func() interface{} {
 				By("Creating a pod to test Assign")
-				utils.KubectlWithOutput("apply", "-f", "../resources/gatekeeper/pod-mutation.yaml", "-n", "default", "--kubeconfig="+kubeconfigManaged)
+				utils.KubectlWithOutput("apply", "-f", "../resources/gatekeeper/pod-mutation.yaml", "-n", userNamespace, "--kubeconfig="+kubeconfigManaged)
 				By("Check if imagepullpolicy has been mutated to Always")
-				pod, _ := clientManaged.CoreV1().Pods("default").Get(context.TODO(), "pod-mutation", metav1.GetOptions{})
+				pod, _ := clientManaged.CoreV1().Pods(userNamespace).Get(context.TODO(), "pod-mutation", metav1.GetOptions{})
 				return string(pod.Spec.Containers[0].ImagePullPolicy)
 			}, defaultTimeoutSeconds*6, 1).Should(Equal("Always"))
 
@@ -418,8 +423,7 @@ var _ = Describe("RHACM4K-3055", func() {
 				managedPlc := utils.GetWithTimeout(clientManagedDynamic, common.GvrPolicy, userNamespace+"."+GKAssignPolicyName, clusterNamespace, false, defaultTimeoutSeconds)
 				return managedPlc
 			}, defaultTimeoutSeconds, 1).Should(BeNil())
-			utils.KubectlWithOutput("delete", "-f", "../resources/gatekeeper/pod-mutation.yaml", "-n", "default", "--kubeconfig="+kubeconfigManaged)
-
+			utils.KubectlWithOutput("delete", "-f", "../resources/gatekeeper/pod-mutation.yaml", "-n", userNamespace, "--kubeconfig="+kubeconfigManaged)
 		})
 		It("Clean up stable/policy-gatekeeper-sample", func() {
 			utils.KubectlWithOutput("delete", "-f", GKPolicyYaml, "-n", userNamespace, "--kubeconfig="+kubeconfigHub)
