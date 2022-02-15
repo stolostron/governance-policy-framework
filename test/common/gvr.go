@@ -8,7 +8,7 @@ var (
 	GvrPod                   = schema.GroupVersionResource{Version: "v1", Resource: "pods"}
 	GvrNS                    = schema.GroupVersionResource{Version: "v1", Resource: "namespaces"}
 	GvrRole                  = schema.GroupVersionResource{Group: "rbac.authorization.k8s.io", Version: "v1", Resource: "roles"}
-	GvrCRD                   = schema.GroupVersionResource{Group: "apiextensions.k8s.io", Version: "v1beta1", Resource: "customresourcedefinitions"}
+	GvrCRD                   = schema.GroupVersionResource{Group: "apiextensions.k8s.io", Version: "v1", Resource: "customresourcedefinitions"}
 	GvrPolicy                = schema.GroupVersionResource{Group: "policy.open-cluster-management.io", Version: "v1", Resource: "policies"}
 	GvrConfigurationPolicy   = schema.GroupVersionResource{Group: "policy.open-cluster-management.io", Version: "v1", Resource: "configurationpolicies"}
 	GvrCertPolicy            = schema.GroupVersionResource{Group: "policy.open-cluster-management.io", Version: "v1", Resource: "certificatepolicies"}
