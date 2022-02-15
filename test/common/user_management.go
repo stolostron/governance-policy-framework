@@ -64,7 +64,6 @@ func GetKubeConfig(server, username, password string) (string, error) {
 		password,
 		"--insecure-skip-tls-verify=true",
 	).CombinedOutput()
-
 	if err != nil {
 		return "", fmt.Errorf("failed to login: %s", output)
 	}

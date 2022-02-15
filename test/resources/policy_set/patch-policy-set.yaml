@@ -1,0 +1,8 @@
+apiVersion: policy.open-cluster-management.io/v1
+kind: PolicySet
+metadata:
+  name: test-policyset
+spec:
+  policies:
+  - test-policy
+  - policyset-does-not-exist

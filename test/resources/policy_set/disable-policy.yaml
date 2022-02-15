@@ -1,0 +1,34 @@
+apiVersion: policy.open-cluster-management.io/v1
+kind: Policy
+metadata:
+  name: test-policy
+spec:
+  remediationAction: inform
+  disabled: true
+  policy-templates:
+    - objectDefinition:
+        apiVersion: policy.open-cluster-management.io/v1
+        kind: ConfigurationPolicy
+        metadata:
+          name: test-policy-pod
+        spec:
+          remediationAction: inform
+          severity: low
+          namespaceSelector:
+            exclude:
+              - kube-*
+            include:
+              - default
+          object-templates:
+            - complianceType: musthave
+              objectDefinition:
+                apiVersion: v1
+                kind: Pod
+                metadata:
+                  name: pod-that-does-not-exist
+                spec:
+                  containers:
+                    - image: nginx:1.18.0
+                      name: nginx
+                      ports:
+                        - containerPort: 80

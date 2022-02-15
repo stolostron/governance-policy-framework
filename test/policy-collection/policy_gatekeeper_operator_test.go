@@ -10,11 +10,12 @@ import (
 
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
-	"github.com/stolostron/governance-policy-framework/test/common"
 	policiesv1 "github.com/stolostron/governance-policy-propagator/api/v1"
 	"github.com/stolostron/governance-policy-propagator/test/utils"
 	"k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+
+	"github.com/stolostron/governance-policy-framework/test/common"
 )
 
 func isOCP44() bool {
@@ -208,7 +209,6 @@ var _ = Describe("", func() {
 				return managedPlc.Object["spec"].(map[string]interface{})["remediationAction"]
 			}, defaultTimeoutSeconds, 1).Should(Equal("inform"))
 		})
-
 	})
 
 	Describe("RHACM4K-1274/RHACM4K-1282 GRC: [P1][Sev1][policy-grc] Test community/policy-gatekeeper-sample", func() {
@@ -372,7 +372,6 @@ var _ = Describe("", func() {
 			By("Checking if the status of root policy is compliant")
 			Eventually(getComplianceState(GKAssignMetadataPolicyName), defaultTimeoutSeconds*2, 1).Should(Equal(policiesv1.Compliant))
 		})
-
 	})
 
 	Describe("GRC: [P1][Sev1][policy-grc] Test gatekeeper mutation feature", func() {

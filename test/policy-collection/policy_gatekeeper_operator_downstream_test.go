@@ -10,10 +10,11 @@ import (
 
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
-	"github.com/stolostron/governance-policy-framework/test/common"
 	policiesv1 "github.com/stolostron/governance-policy-propagator/api/v1"
 	"github.com/stolostron/governance-policy-propagator/test/utils"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+
+	"github.com/stolostron/governance-policy-framework/test/common"
 )
 
 var _ = Describe("RHACM4K-3055", func() {
@@ -161,7 +162,6 @@ var _ = Describe("RHACM4K-3055", func() {
 				return managedPlc.Object["spec"].(map[string]interface{})["remediationAction"]
 			}, defaultTimeoutSeconds, 1).Should(Equal("inform"))
 		})
-
 	})
 
 	Describe("GRC: [P1][Sev1][policy-grc] Test stable/policy-gatekeeper-sample", func() {
@@ -325,7 +325,6 @@ var _ = Describe("RHACM4K-3055", func() {
 			By("Checking if the status of root policy is compliant")
 			Eventually(getComplianceState(GKAssignMetadataPolicyName), defaultTimeoutSeconds*2, 1).Should(Equal(policiesv1.Compliant))
 		})
-
 	})
 
 	Describe("GRC: [P1][Sev1][policy-grc] Test gatekeeper mutation feature", func() {
@@ -344,7 +343,6 @@ var _ = Describe("RHACM4K-3055", func() {
 				pod, _ := clientManaged.CoreV1().Pods("default").Get(context.TODO(), "pod-mutation", metav1.GetOptions{})
 				return string(pod.Spec.Containers[0].ImagePullPolicy)
 			}, defaultTimeoutSeconds*6, 1).Should(Equal("Always"))
-
 		})
 	})
 
@@ -419,7 +417,6 @@ var _ = Describe("RHACM4K-3055", func() {
 				return managedPlc
 			}, defaultTimeoutSeconds, 1).Should(BeNil())
 			utils.KubectlWithOutput("delete", "-f", "../resources/gatekeeper/pod-mutation.yaml", "-n", "default", "--kubeconfig="+kubeconfigManaged)
-
 		})
 		It("Clean up stable/policy-gatekeeper-sample", func() {
 			utils.KubectlWithOutput("delete", "-f", GKPolicyYaml, "-n", userNamespace, "--kubeconfig="+kubeconfigHub)

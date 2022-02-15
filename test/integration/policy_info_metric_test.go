@@ -10,10 +10,11 @@ import (
 
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
-	"github.com/stolostron/governance-policy-framework/test/common"
 	policiesv1 "github.com/stolostron/governance-policy-propagator/api/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
+
+	"github.com/stolostron/governance-policy-framework/test/common"
 )
 
 const (
@@ -70,7 +71,7 @@ var _ = Describe("GRC: [P1][Sev1][policy-grc] Test policy_governance_info metric
 		By("Got the metrics route url: " + routeHost)
 		propagatorMetricsURL = "https://" + routeHost + "/metrics"
 
-		//get auth token from service account
+		// get auth token from service account
 		By("Setting up ServiceAccount for authentication")
 		_, err = common.OcHub("create", "serviceaccount", saName, "-n", userNamespace)
 		Expect(err).To(BeNil())

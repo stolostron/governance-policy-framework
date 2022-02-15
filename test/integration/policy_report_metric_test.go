@@ -10,10 +10,11 @@ import (
 
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
-	"github.com/stolostron/governance-policy-framework/test/common"
 	policiesv1 "github.com/stolostron/governance-policy-propagator/api/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
+
+	"github.com/stolostron/governance-policy-framework/test/common"
 )
 
 const (
@@ -41,7 +42,7 @@ var _ = Describe("GRC: [P1][Sev1][policy-grc] Test policyreport_info metric", fu
 		insightsClient = strings.TrimSpace(insightsClient)
 		_, err = common.OcHub("set", "env", "-n", ocmNS, insightsClient, "POLL_INTERVAL=1")
 		Expect(err).To(BeNil())
-		//checking if new pod has spun up
+		// checking if new pod has spun up
 		Eventually(func() interface{} {
 			var err error
 			pod, err := common.OcHub("get", "pods", "-n", ocmNS, "-l", insightsClientSelector, "--field-selector=status.phase=Running,metadata.name!="+insightsClientPod)
@@ -50,7 +51,7 @@ var _ = Describe("GRC: [P1][Sev1][policy-grc] Test policyreport_info metric", fu
 			}
 			return pod
 		}, defaultTimeoutSeconds*2, 1).ShouldNot(Equal(""))
-		//checking if old pod with slow refresh has been taken down
+		// checking if old pod with slow refresh has been taken down
 		Eventually(func() interface{} {
 			var err error
 			pod, err := common.OcHub("get", "pods", "-n", ocmNS, "-l", insightsClientSelector, "--field-selector=status.phase=Running,metadata.name="+insightsClientPod)
@@ -96,7 +97,7 @@ var _ = Describe("GRC: [P1][Sev1][policy-grc] Test policyreport_info metric", fu
 		By("Got the metrics route url: " + routeHost)
 		insightsMetricsURL = "https://" + routeHost + "/metrics"
 
-		//get auth token from service account
+		// get auth token from service account
 		By("Setting up ServiceAccount for authentication")
 		_, err = common.OcHub("create", "serviceaccount", saName, "-n", userNamespace)
 		Expect(err).To(BeNil())
@@ -197,7 +198,7 @@ var _ = Describe("GRC: [P1][Sev1][policy-grc] Test policyreport_info metric", fu
 		}, defaultTimeoutSeconds*8, 1).ShouldNot(common.MatchMetricValue(insightsMetricName, policyLabel, "1"))
 	})
 	It("Cleans up", func() {
-		//unset poll interval
+		// unset poll interval
 		insightsClient, err := common.OcHub("get", "deployments", "-n", ocmNS, "-l", insightsClientSelector, "-o", "name")
 		Expect(err).To(BeNil())
 		insightsClient = strings.TrimSpace(insightsClient)
