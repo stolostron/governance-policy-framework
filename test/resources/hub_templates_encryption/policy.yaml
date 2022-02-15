@@ -1,0 +1,65 @@
+apiVersion: policy.open-cluster-management.io/v1
+kind: Policy
+metadata:
+  name: test-hub-encryption
+  annotations:
+    policy.open-cluster.management.io/standards: NIST-CSF
+    policy.open-cluster.management.io/categories: PR.PT Protective Technology
+    policy.open-cluster.management.io/controls: PR.PT-3 Least Functionality
+spec:
+  remediationAction: inform
+  disabled: false
+  policy-templates:
+    - objectDefinition:
+        apiVersion: policy.open-cluster-management.io/v1
+        kind: ConfigurationPolicy
+        metadata:
+          name: test-hub-encryption
+        spec:
+          remediationAction: inform
+          object-templates:
+            - complianceType: musthave
+              objectDefinition:
+                apiVersion: v1
+                kind: Secret
+                metadata:
+                  name: test-hub-encryption-copy
+                  namespace: default
+                data:
+                  city: '{{hub fromSecret "" "test-hub-encryption" "city" hub}}'
+                  state: '{{hub (lookup "v1" "Secret" "" "test-hub-encryption").data.state | protect hub}}'
+            - complianceType: musthave
+              objectDefinition:
+                apiVersion: v1
+                kind: ConfigMap
+                metadata:
+                  name: test-hub-encryption-copy
+                  namespace: default
+                data:
+                  cert: |
+                    {{ "{{hub fromConfigMap "" "test-hub-encryption" "cert" | protect hub}}" | autoindent }}
+---
+apiVersion: policy.open-cluster-management.io/v1
+kind: PlacementBinding
+metadata:
+  name: test-hub-encryption-pb
+placementRef:
+  apiGroup: apps.open-cluster-management.io
+  kind: PlacementRule
+  name: test-hub-encryption-plr
+subjects:
+- apiGroup: policy.open-cluster-management.io
+  kind: Policy
+  name: test-hub-encryption
+---
+apiVersion: apps.open-cluster-management.io/v1
+kind: PlacementRule
+metadata:
+  name: test-hub-encryption-plr
+spec:
+  clusterConditions:
+  - status: "True"
+    type: ManagedClusterConditionAvailable
+  clusterSelector:
+    matchExpressions:
+      []
