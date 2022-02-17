@@ -7,7 +7,6 @@ import (
 	"testing"
 
 	. "github.com/onsi/ginkgo/v2"
-	"github.com/onsi/ginkgo/v2/reporters"
 	. "github.com/onsi/gomega"
 	corev1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/api/errors"
@@ -34,8 +33,7 @@ var (
 
 func TestIntegration(t *testing.T) {
 	RegisterFailHandler(Fail)
-	junitReporter := reporters.NewJUnitReporter("../../test-output/integration.xml")
-	RunSpecsWithDefaultAndCustomReporters(t, "Policy Framework repo integration Suite", []Reporter{junitReporter})
+	RunSpecs(t, "Policy Framework repo integration Suite")
 }
 
 func init() {
