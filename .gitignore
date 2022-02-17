@@ -11,3 +11,4 @@ test/policy-collection/debug.test
 
 .go
 bin/
+vendor/
