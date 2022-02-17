@@ -3,7 +3,12 @@
 
 set -e
 
-ginkgo -v --slowSpecThreshold=10 test/policy-collection test/integration -- -cluster_namespace=$MANAGED_CLUSTER_NAME || ERROR_CODE=$?
+for TEST_SUITE in integration policy-collection; do
+  CGO_ENABLED=0 ginkgo -v --slow-spec-threshold=10s --junit-report=${TEST_SUITE}.xml --output-dir=test-output test/${TEST_SUITE} -- -cluster_namespace=$MANAGED_CLUSTER_NAME || EXIT_CODE=$?
+  if [[ "${EXIT_CODE}" != "0" ]]; then
+    ERROR_CODE=${EXIT_CODE}
+  fi
+done
 
 if [[ -n "${ERROR_CODE}" ]]; then
     echo "* Detected test failure. Collecting debug logs..."
