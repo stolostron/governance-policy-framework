@@ -46,7 +46,7 @@ var _ = Describe("RHACM4K-3055", func() {
 			By("Patching Policy Gatekeeper CR template with namespaceSelector to kubernetes.io/metadata.name=" + userNamespace)
 			utils.KubectlWithOutput("patch", "-n", userNamespace, "policy", gatekeeperPolicyName,
 				"--type=json", "-p=[{\"op\": \"add\", \"path\": \"/spec/policy-templates/2/objectDefinition/spec/object-templates/0/objectDefinition/spec/webhook/namespaceSelector\","+
-					" \"value\":{\"matchExpressions\":[{\"key\": \"kubernetes.io/metadata.name\",\"operator\":\"In\",\"values\":["+userNamespace+", \"e2etestfail\", \"e2etestsuccess\"]}]}}]",
+					" \"value\":{\"matchExpressions\":[{\"key\": \"grc\",\"operator\":\"In\",\"values\":[\"true\"]}]}}]",
 				"--kubeconfig="+kubeconfigHub)
 			By("Patching placement rule")
 			utils.KubectlWithOutput("patch", "-n", userNamespace, "placementrule.apps.open-cluster-management.io/placement-"+gatekeeperPolicyName,
@@ -106,17 +106,23 @@ var _ = Describe("RHACM4K-3055", func() {
 				return "nil"
 			}, defaultTimeoutSeconds*4, 1).Should(Equal("Running"))
 		})
-		// set to ignore to ensure it won't fail other tests running in parallel
-		It("Patching webhook check-ignore-label.gatekeeper.sh failurePolicy to ignore", func() {
+		It("Checking if validating webhook gatekeeper-validating-webhook-configuration is scoped to grc test namespaces", func() {
 			By("Checking if validating webhook gatekeeper-validating-webhook-configuration exists")
 			Eventually(func() interface{} {
 				out, _ := utils.KubectlWithOutput("get", "validatingwebhookconfigurations.admissionregistration.k8s.io", "gatekeeper-validating-webhook-configuration", "--kubeconfig="+kubeconfigManaged)
 				return out
 			}, defaultTimeoutSeconds*2, 1).Should(ContainSubstring("AGE\ngatekeeper-validating-webhook-configuration"))
-			By("Patching if validating webhook gatekeeper-validating-webhook-configuration exists")
-			out, _ := utils.KubectlWithOutput("patch", "validatingwebhookconfigurations.admissionregistration.k8s.io", "gatekeeper-validating-webhook-configuration",
-				"--type=json", "-p=[{\"op\": \"replace\", \"path\": \"/webhooks/1/failurePolicy\", \"value\": \"Ignore\"}]", "--kubeconfig="+kubeconfigManaged)
-			Expect(out).To(ContainSubstring("validatingwebhookconfiguration.admissionregistration.k8s.io/gatekeeper-validating-webhook-configuration patched"))
+			By("Checking if validating webhook gatekeeper-validating-webhook-configuration contains MatchExpressions")
+			Eventually(func() interface{} {
+				webhook, _ := clientManaged.AdmissionregistrationV1().ValidatingWebhookConfigurations().Get(context.TODO(), "gatekeeper-validating-webhook-configuration", metav1.GetOptions{})
+				return len(webhook.Webhooks)
+			}, defaultTimeoutSeconds, 1).Should(Equal(2))
+			webhook, err := clientManaged.AdmissionregistrationV1().ValidatingWebhookConfigurations().Get(context.TODO(), "gatekeeper-validating-webhook-configuration", metav1.GetOptions{})
+			Expect(err).To(BeNil())
+			Expect(len(webhook.Webhooks[0].NamespaceSelector.MatchExpressions)).To(Equal(1))
+			Expect(len(webhook.Webhooks[1].NamespaceSelector.MatchExpressions)).To(Equal(1))
+			Expect(webhook.Webhooks[0].NamespaceSelector.MatchExpressions[0]).NotTo(BeNil())
+			Expect(webhook.Webhooks[1].NamespaceSelector.MatchExpressions[0]).NotTo(BeNil())
 		})
 		It("Gatekeeper audit pod should be running", func() {
 			By("Checking if pod gatekeeper-audit has been created")
@@ -132,7 +138,6 @@ var _ = Describe("RHACM4K-3055", func() {
 				return string(podList.Items[0].Status.Phase)
 			}, defaultTimeoutSeconds*4, 1).Should(Equal("Running"))
 		})
-
 		It("Gatekeeper controller manager pods should be running", func() {
 			By("Checking if pod gatekeeper-controller-manager has been created")
 			Eventually(func() interface{} {
@@ -208,7 +213,7 @@ var _ = Describe("RHACM4K-3055", func() {
 		It("Creating an invalid ns should generate a violation message", func() {
 			By("Creating invalid namespace on managed")
 			Eventually(func() interface{} {
-				out, _ := utils.KubectlWithOutput("create", "ns", "e2etestfail", "--kubeconfig="+kubeconfigManaged)
+				out, _ := utils.KubectlWithOutput("apply", "-f", "../resources/gatekeeper/ns-create-invalid.yaml", "--kubeconfig="+kubeconfigManaged)
 				return out
 			}, defaultTimeoutSeconds*6, 1).Should(And(
 				ContainSubstring("validation.gatekeeper.sh"),
@@ -278,17 +283,11 @@ var _ = Describe("RHACM4K-3055", func() {
 				return out
 			}, defaultTimeoutSeconds*2, 1).Should(ContainSubstring("CREATED AT\nassignmetadata.mutations.gatekeeper.sh"))
 		})
-		// set to ignore to ensure it won't fail other tests running in parallel
-		It("Patching webhook check-ignore-label.gatekeeper.sh failurePolicy to ignore", func() {
-			By("Checking if validating webhook gatekeeper-validating-webhook-configuration exists")
+		It("Checking if mutating webhook gatekeeper-mutating-webhook-configuration exists", func() {
 			Eventually(func() interface{} {
-				out, _ := utils.KubectlWithOutput("get", "validatingwebhookconfigurations.admissionregistration.k8s.io", "gatekeeper-validating-webhook-configuration", "--kubeconfig="+kubeconfigManaged)
+				out, _ := utils.KubectlWithOutput("get", "mutatingwebhookconfigurations.admissionregistration.k8s.io", "gatekeeper-mutating-webhook-configuration", "--kubeconfig="+kubeconfigManaged)
 				return out
-			}, defaultTimeoutSeconds*2, 1).Should(ContainSubstring("AGE\ngatekeeper-validating-webhook-configuration"))
-			By("Patching if validating webhook gatekeeper-validating-webhook-configuration exists")
-			out, _ := utils.KubectlWithOutput("patch", "validatingwebhookconfigurations.admissionregistration.k8s.io", "gatekeeper-validating-webhook-configuration",
-				"--type=json", "-p=[{\"op\": \"replace\", \"path\": \"/webhooks/1/failurePolicy\", \"value\": \"Ignore\"}]", "--kubeconfig="+kubeconfigManaged)
-			Expect(out).To(ContainSubstring("validatingwebhookconfiguration.admissionregistration.k8s.io/gatekeeper-validating-webhook-configuration patched"))
+			}, defaultTimeoutSeconds*2, 1).Should(ContainSubstring("AGE\ngatekeeper-mutating-webhook-configuration"))
 		})
 		It("Checking if gatekeeper controller manager has mutation flag on", func() {
 			Eventually(func() interface{} {
@@ -372,18 +371,6 @@ var _ = Describe("RHACM4K-3055", func() {
 				out, _ := utils.KubectlWithOutput("get", "crd", "assignmetadata.mutations.gatekeeper.sh", "--kubeconfig="+kubeconfigManaged)
 				return out
 			}, defaultTimeoutSeconds*4, 1).Should(ContainSubstring("not found"))
-		})
-		// set to ignore to ensure it won't fail other tests running in parallel
-		It("Patching webhook check-ignore-label.gatekeeper.sh failurePolicy to ignore", func() {
-			By("Checking if validating webhook gatekeeper-validating-webhook-configuration exists")
-			Eventually(func() interface{} {
-				out, _ := utils.KubectlWithOutput("get", "validatingwebhookconfigurations.admissionregistration.k8s.io", "gatekeeper-validating-webhook-configuration", "--kubeconfig="+kubeconfigManaged)
-				return out
-			}, defaultTimeoutSeconds*2, 1).Should(ContainSubstring("AGE\ngatekeeper-validating-webhook-configuration"))
-			By("Patching if validating webhook gatekeeper-validating-webhook-configuration exists")
-			out, _ := utils.KubectlWithOutput("patch", "validatingwebhookconfigurations.admissionregistration.k8s.io", "gatekeeper-validating-webhook-configuration",
-				"--type=json", "-p=[{\"op\": \"replace\", \"path\": \"/webhooks/1/failurePolicy\", \"value\": \"Ignore\"}]", "--kubeconfig="+kubeconfigManaged)
-			Expect(out).To(ContainSubstring("validatingwebhookconfiguration.admissionregistration.k8s.io/gatekeeper-validating-webhook-configuration patched"))
 		})
 		It("Checking if gatekeeper controller manager has mutation flag off", func() {
 			Eventually(func() interface{} {
