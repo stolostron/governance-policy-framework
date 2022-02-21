@@ -9,7 +9,6 @@ FROM registry.access.redhat.com/ubi8/ubi-minimal:latest
 RUN microdnf update -y \
         && microdnf install tar \
         && microdnf install gzip \
-        && microdnf install golang \
         && microdnf install git \
         && microdnf install which \
         && microdnf install make \
@@ -20,6 +19,7 @@ RUN microdnf update -y \
 ADD https://github.com/stedolan/jq/releases/download/jq-1.6/jq-linux64 /usr/local/bin/jq
 RUN chmod +x /usr/local/bin/jq
 
+# copy go files from builder image
 COPY --from=builder /usr/local/go /usr/local/go
 COPY --from=builder /go /go
 

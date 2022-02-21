@@ -25,9 +25,12 @@ scp "${OPT[@]}" build/run-e2e-tests.sh "${HOST}:${WORK_DIR}/build/"
 scp -r "${OPT[@]}" deploy/ "${HOST}:${WORK_DIR}/"
 scp -r "${OPT[@]}" test/ "${HOST}:${WORK_DIR}/"
 
+# Copy the Go folder from our container
+scp -r "${OPT[@]}" /usr/local/go/ "${HOST}:/tmp/"
+
 # Run the KinD script on the KinD instance
 echo "* Running E2E script on Kind cluster..."
-KIND_COMMAND="cd ${WORK_DIR} && deployOnHub=${deployOnHub} CGO_ENABLED=0 ./build/run-e2e-tests.sh"
+KIND_COMMAND="cd ${WORK_DIR} && GOROOT=/tmp/go PATH=\$GOROOT/bin:\$PATH deployOnHub=${deployOnHub} CGO_ENABLED=0 ./build/run-e2e-tests.sh"
 ssh "${OPT[@]}" "${HOST}" "${KIND_COMMAND}" > >(tee "${ARTIFACT_DIR}/test-e2e.log") 2>&1 || ERROR_CODE=$?
 
 # Copy any debug logs
