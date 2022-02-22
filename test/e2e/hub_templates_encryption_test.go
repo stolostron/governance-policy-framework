@@ -11,7 +11,7 @@ import (
 	"fmt"
 	"strings"
 
-	. "github.com/onsi/ginkgo"
+	. "github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
 	"github.com/stolostron/governance-policy-framework/test/common"
 	"github.com/stolostron/governance-policy-propagator/test/utils"

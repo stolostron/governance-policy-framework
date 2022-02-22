@@ -33,7 +33,21 @@ cp ${MANAGED_KUBE} $DIR/../kubeconfig_managed
 
 echo "===== E2E Test ====="
 echo "* Launching grc policy framework test"
-ginkgo -v --noColor --slowSpecThreshold=10 test/policy-collection test/integration -- -cluster_namespace=$MANAGED_CLUSTER_NAME || ERROR_CODE=$?
+for TEST_SUITE in integration policy-collection; do
+  # Run test suite with reporting
+  CGO_ENABLED=0 ginkgo -v --slow-spec-threshold=10s --junit-report=${TEST_SUITE}.xml --output-dir=test-output test/${TEST_SUITE} -- -cluster_namespace=$MANAGED_CLUSTER_NAME || EXIT_CODE=$?
+
+  # Remove "[It] " from report to prevent corrupting bracketed metadata
+  if [ -f test-output/${TEST_SUITE}.xml ]; then
+    sed -i 's/\[It\] *//g' test-output/${TEST_SUITE}.xml
+  fi
+
+  # Collect exit code if it's an error
+  if [[ "${EXIT_CODE}" != "0" ]]; then
+    ERROR_CODE=${EXIT_CODE}
+  fi
+done
+
 
 if [[ -n "${ERROR_CODE}" ]]; then
     echo "* Detected test failure. Collecting debug logs..."
@@ -48,5 +62,5 @@ if [[ -n "${ARTIFACT_DIR}" ]]; then
   cp -r $DIR/../test-output/* ${ARTIFACT_DIR}
 fi
 
-# Since we obfuscated the error code on the test run, we'll manually exit here with the collected code
+# Since we captured the error code on the test run, we'll manually exit here with the collected code
 exit ${ERROR_CODE}

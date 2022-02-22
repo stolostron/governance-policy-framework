@@ -26,6 +26,10 @@ KIND_MANAGED_NAMESPACE ?= open-cluster-management-agent-addon
 MANAGED_CLUSTER_NAME ?= managed
 HUB_CLUSTER_NAME ?= hub
 
+# Fetch Ginkgo/Gomega versions from go.mod
+GINKGO_VERSION := $(shell awk '/github.com\/onsi\/ginkgo\/v2/ {print $$2}' go.mod)
+GOMEGA_VERSION := $(shell awk '/github.com\/onsi\/gomega/ {print $$2}' go.mod)
+
 # Debugging configuration
 KIND_COMPONENTS := config-policy-controller cert-policy-controller iam-policy-controller governance-policy-spec-sync governance-policy-status-sync governance-policy-template-sync
 KIND_COMPONENT_SELECTOR := name
@@ -222,14 +226,14 @@ install-resources:
 	kubectl apply -f test/resources/managed-cluster.yaml --kubeconfig=$(PWD)/kubeconfig_$(HUB_CLUSTER_NAME)
 
 e2e-dependencies:
-	go get github.com/onsi/ginkgo/ginkgo@v1.16.5
-	go get github.com/onsi/gomega/...@v1.16.0
+	go get github.com/onsi/ginkgo/v2/ginkgo@$(GINKGO_VERSION)
+	go get github.com/onsi/gomega/...@$(GOMEGA_VERSION)
 
 e2e-test:
 	@if [ -z "$(TEST_FILE)" ]; then\
-		$(GOPATH)/bin/ginkgo -v $(TEST_ARGS) --slowSpecThreshold=10 test/e2e;\
+		$(GOPATH)/bin/ginkgo -v $(TEST_ARGS) --slow-spec-threshold=10s test/e2e;\
 	else\
-		$(GOPATH)/bin/ginkgo -v $(TEST_ARGS) --slowSpecThreshold=10 --regexScansFilePath=true --focus=$(TEST_FILE) test/e2e;\
+		$(GOPATH)/bin/ginkgo -v $(TEST_ARGS) --slow-spec-threshold=10s --focus-file=$(TEST_FILE) test/e2e;\
 	fi
 
 e2e-debug: e2e-debug-hub e2e-debug-managed
@@ -289,16 +293,16 @@ e2e-debug-dump:
 
 integration-test:
 	@if [ -z "$(TEST_FILE)" ]; then\
-		$(GOPATH)/bin/ginkgo -v $(TEST_ARGS) --slowSpecThreshold=10 test/integration;\
+		$(GOPATH)/bin/ginkgo -v $(TEST_ARGS) --slow-spec-threshold=10s test/integration;\
 	else\
-		$(GOPATH)/bin/ginkgo -v $(TEST_ARGS) --slowSpecThreshold=10 --regexScansFilePath=true --focus=$(TEST_FILE) test/integration;\
+		$(GOPATH)/bin/ginkgo -v $(TEST_ARGS) --slow-spec-threshold=10s --focus-file=$(TEST_FILE) test/integration;\
 	fi
 
 policy-collection-test:
 	@if [ -z "$(TEST_FILE)" ]; then\
-		$(GOPATH)/bin/ginkgo -v $(TEST_ARGS) --slowSpecThreshold=10 test/policy-collection;\
+		$(GOPATH)/bin/ginkgo -v $(TEST_ARGS) --slow-spec-threshold=10s test/policy-collection;\
 	else\
-		$(GOPATH)/bin/ginkgo -v $(TEST_ARGS) --slowSpecThreshold=10 --regexScansFilePath=true --focus=$(TEST_FILE) test/policy-collection;\
+		$(GOPATH)/bin/ginkgo -v $(TEST_ARGS) --slow-spec-threshold=10s --focus-file=$(TEST_FILE) test/policy-collection;\
 	fi
 
 travis-slack-reporter:
