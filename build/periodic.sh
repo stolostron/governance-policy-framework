@@ -60,7 +60,7 @@ checkProwJob() {
 		STATUS=$(echo "$JSON" | jq '.Result')
 		if [ "$STATUS" = \"FAILURE\" ]; then
 			echo "****"
-			echo "ERROR!!!  Prow job failure: $repo $release."
+			echo "ERROR: Prow job failure: $repo $release."
 			LINK=https://prow.ci.openshift.org$(echo "$JSON" | jq '.SpyglassLink' | sed 's/"//g')
 			echo "   Link: $LINK"
 			echo "***"
@@ -92,22 +92,35 @@ for repo in $REPOS; do
 		imagetag=$(getPipelineValue "$repo" "$release" "image-tag")
 		pipelinesha=$(getPipelineValue "$repo" "$release" "git-sha256")
 
-		if [ "$gitsha" != "$pipelinesha" ]; then
+		if [ -z "$pipelinesha" ]; then
 			echo "****"
-			echo "ERROR!!!  SHA mismatch in pipeline and $repo $RELEASE repositories."
+			echo "WARN: Pipeline SHA not found for $repo $release repository. Continuing."
+			echo "***"
+		elif [ "$gitsha" != "$pipelinesha" ]; then
+			echo "****"
+			echo "ERROR: SHA mismatch in pipeline and $repo $release repositories."
         		echo "   pipeline: $pipelinesha"
         		echo "   $repo: $gitsha"
 			echo "***"
-        		rc=1
+    	rc=1
 		fi
 
-		# make sure the docker image is available
-		FOUND=$(curl -s "https://quay.io/api/v1/repository/${COMPONENT_ORG}/${repo}/tag/?onlyActiveTags=true&specificTag=${imagetag}" | jq '.tags | length')
-		if [ "${FOUND}" != "1" ]; then
-			echo "****"
-			echo "ERROR!!!  Tag not found for image in quay: $repo:${imagetag}"
-			echo "***"
-			rc=1
+		# make sure the quay image is available (only if we found it in pipeline)
+		if [ -n "$imagetag" ]; then
+			QUAY_RESPONSE=$(curl -s "https://quay.io/api/v1/repository/${COMPONENT_ORG}/${repo}/tag/?onlyActiveTags=true&specificTag=${imagetag}")
+			QUAY_STATUS=$(echo "${QUAY_RESPONSE}" | jq -r '.error_message')
+			FOUND=$(echo "${QUAY_RESPONSE}" | jq '.tags | length')
+			if [ "${QUAY_STATUS}" != "null" ]; then
+				echo "****"
+				echo "ERROR: Received error message '${QUAY_STATUS}' querying image in quay: $repo:${imagetag}"
+				echo "***"
+				rc=1
+			elif [ "${FOUND}" != "1" ]; then
+				echo "****"
+				echo "ERROR: Tag not found for image in quay: $repo:${imagetag}"
+				echo "***"
+				rc=1
+			fi
 		fi
 
 		# check the prow job history
