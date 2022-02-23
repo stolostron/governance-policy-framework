@@ -12,12 +12,16 @@ else
 fi
 
 if ! which kubectl > /dev/null; then
-    echo "* Installing kubectl..."
-    curl -LO https://storage.googleapis.com/kubernetes-release/release/$(curl -s https://storage.googleapis.com/kubernetes-release/release/stable.txt)/bin/linux/amd64/kubectl && chmod +x kubectl && sudo mv kubectl /usr/local/bin/
+    KUBECTL_VERSION=${KUBECTL_VERSION:-"$(curl -s https://storage.googleapis.com/kubernetes-release/release/stable.txt)"}
+    echo "* Installing kubectl ${KUBECTL_VERSION}..."
+    curl -LO https://storage.googleapis.com/kubernetes-release/release/${KUBECTL_VERSION}/bin/linux/amd64/kubectl
+    chmod +x kubectl
+    sudo mv kubectl /usr/local/bin/
 fi
 if ! which kind > /dev/null; then
-    echo "* Installing kind..."
-    curl -Lo ./kind https://github.com/kubernetes-sigs/kind/releases/download/latest/kind-$(uname)-amd64
+    KIND_VERSION=${KIND_VERSION:-"$(curl -s https://api.github.com/repos/kubernetes-sigs/kind/releases/latest | jq -r '.tag_name')"}
+    echo "* Installing kind ${KIND_VERSION}..."
+    curl -Lo ./kind https://github.com/kubernetes-sigs/kind/releases/download/${KIND_VERSION}/kind-$(uname)-amd64
     chmod +x ./kind
     sudo mv ./kind /usr/local/bin/kind
 fi
