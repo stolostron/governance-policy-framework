@@ -3,9 +3,14 @@
 
 set -e
 
+if [[ ${FAIL_FAST} == "true" ]]; then
+  echo "Running in fail fast mode"
+  GINKGO_FAIL_FAST="--fail-fast" 
+fi
+
 for TEST_SUITE in integration policy-collection; do
   # Run test suite with reporting
-  CGO_ENABLED=0 ginkgo -v --slow-spec-threshold=10s --junit-report=${TEST_SUITE}.xml --output-dir=test-output test/${TEST_SUITE} -- -cluster_namespace=$MANAGED_CLUSTER_NAME || EXIT_CODE=$?
+  CGO_ENABLED=0 ginkgo -v --slow-spec-threshold=10s ${GINKGO_FAIL_FAST} --junit-report=${TEST_SUITE}.xml --output-dir=test-output test/${TEST_SUITE} -- -cluster_namespace=$MANAGED_CLUSTER_NAME || EXIT_CODE=$?
 
   # Remove "[It] " from report to prevent corrupting bracketed metadata
   if [ -f test-output/${TEST_SUITE}.xml ]; then

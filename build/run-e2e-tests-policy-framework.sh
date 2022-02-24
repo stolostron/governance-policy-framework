@@ -21,4 +21,5 @@ docker run --volume $(pwd)/results:/go/src/github.com/stolostron/governance-poli
     --volume $HUB_KUBECONFIG:/go/src/github.com/stolostron/governance-policy-framework/kubeconfig_hub \
     --volume $MANAGED_KUBECONFIG:/go/src/github.com/stolostron/governance-policy-framework/kubeconfig_managed \
     --env MANAGED_CLUSTER_NAME=$MANAGED_CLUSTER_NAME \
+    --env FAIL_FAST=true \ 
     $TEST_IMAGE_URI
