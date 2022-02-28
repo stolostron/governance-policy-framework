@@ -166,8 +166,8 @@ var _ = Describe("Test Hub Template Encryption", func() {
 			// Verify that the value is encrypted
 			Expect(strings.Contains(state, "$ocm_encrypted:")).To(BeTrue())
 			// Verify that the plaintext or the base64 of the plaintext is not included
-			Expect(strings.Contains(state, "NC")).ToNot(BeTrue())
-			Expect(strings.Contains(state, "TkM=")).ToNot(BeTrue())
+			Expect(strings.Contains(state, "North Carolina")).ToNot(BeTrue())
+			Expect(strings.Contains(state, "Tm9ydGggQ2Fyb2xpbmE=")).ToNot(BeTrue())
 
 			configMapTemplate, ok := objectTemplates[1].(map[string]interface{})
 			Expect(ok).To(BeTrue())
@@ -189,7 +189,7 @@ var _ = Describe("Test Hub Template Encryption", func() {
 			)
 			Expect(err).To(BeNil())
 			Expect(string(secret.Data["city"])).To(Equal("Raleigh"))
-			Expect(string(secret.Data["state"])).To(Equal("NC"))
+			Expect(string(secret.Data["state"])).To(Equal("North Carolina"))
 
 			By("Verifying the copied ConfigMap")
 			configMap, err := clientManaged.CoreV1().ConfigMaps("default").Get(
