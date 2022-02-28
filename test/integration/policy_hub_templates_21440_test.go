@@ -94,7 +94,6 @@ var _ = Describe(
 					configMap, err := clientManaged.CoreV1().ConfigMaps("default").Get(
 						ctx, configMapCopyName, metav1.GetOptions{},
 					)
-
 					if err != nil {
 						return ""
 					}

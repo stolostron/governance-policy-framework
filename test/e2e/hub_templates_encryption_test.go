@@ -13,11 +13,12 @@ import (
 
 	. "github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
-	"github.com/stolostron/governance-policy-framework/test/common"
 	"github.com/stolostron/governance-policy-propagator/test/utils"
 	"k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
+
+	"github.com/stolostron/governance-policy-framework/test/common"
 )
 
 var _ = Describe("Test Hub Template Encryption", func() {
@@ -214,7 +215,11 @@ var _ = Describe("Test Hub Template Encryption", func() {
 
 			// Trigger a key rotation
 			encryptionSecret.Annotations[lastRotatedAnnotation] = ""
-			_, err = clientHub.CoreV1().Secrets(clusterNamespace).Update(ctx, encryptionSecret, metav1.UpdateOptions{})
+			_, err = clientHub.CoreV1().Secrets(clusterNamespace).Update(
+				ctx,
+				encryptionSecret,
+				metav1.UpdateOptions{},
+			)
 			Expect(err).To(BeNil())
 
 			// Wait until the "last-rotated" annotation is set to indicate the key has been rotated

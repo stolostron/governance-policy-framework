@@ -17,11 +17,13 @@ echo "* Copying over test files..."
 # We have to use a subdirectory since Go refuses to use a 'go.mod' file in '/tmp'
 WORK_DIR=/tmp/governance-policy-framework
 ssh "${OPT[@]}" "${HOST}" "mkdir -p ${WORK_DIR}/build/"
+ssh "${OPT[@]}" "${HOST}" "mkdir -p ${WORK_DIR}/build/common/"
 scp "${OPT[@]}" go.mod "${HOST}:${WORK_DIR}/"
 scp "${OPT[@]}" go.sum "${HOST}:${WORK_DIR}/"
 scp "${OPT[@]}" Makefile "${HOST}:${WORK_DIR}/"
 scp "${OPT[@]}" build/wait_for.sh "${HOST}:${WORK_DIR}/build/"
 scp "${OPT[@]}" build/run-e2e-tests.sh "${HOST}:${WORK_DIR}/build/"
+scp "${OPT[@]}" build/common/Makefile.common.mk "${HOST}:${WORK_DIR}/build/common/"
 scp -r "${OPT[@]}" deploy/ "${HOST}:${WORK_DIR}/"
 scp -r "${OPT[@]}" test/ "${HOST}:${WORK_DIR}/"
 

@@ -9,6 +9,7 @@ import (
 
 	. "github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
+	"github.com/stolostron/governance-policy-propagator/test/utils"
 	corev1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -17,7 +18,6 @@ import (
 	"k8s.io/klog"
 
 	"github.com/stolostron/governance-policy-framework/test/common"
-	"github.com/stolostron/governance-policy-propagator/test/utils"
 )
 
 const (
@@ -75,7 +75,11 @@ var _ = BeforeSuite(func() {
 
 	By("Create Namespace if needed")
 	namespaces := clientHub.CoreV1().Namespaces()
-	if _, err := namespaces.Get(context.TODO(), userNamespace, metav1.GetOptions{}); err != nil && errors.IsNotFound(err) {
+	if _, err := namespaces.Get(
+		context.TODO(),
+		userNamespace,
+		metav1.GetOptions{},
+	); err != nil && errors.IsNotFound(err) {
 		Expect(namespaces.Create(context.TODO(), &corev1.Namespace{
 			ObjectMeta: metav1.ObjectMeta{
 				Name: userNamespace,
@@ -88,8 +92,17 @@ var _ = BeforeSuite(func() {
 var _ = AfterSuite(func() {
 	By("Delete Namespace if needed")
 	_, err := common.OcHub("delete", "namespace", userNamespace)
-	Expect(err).Should(BeNil())
-	common.OcHub("delete", "pod", "default", "pod-that-does-not-exist")
+	if err != nil {
+		Expect(strings.Contains(
+			strings.ToLower(err.Error()), strings.ToLower("not found")),
+		).Should(BeTrue())
+	}
+	_, err = common.OcHub("delete", "pod", "default", "pod-that-does-not-exist")
+	if err != nil {
+		Expect(strings.Contains(
+			strings.ToLower(err.Error()), strings.ToLower("not found")),
+		).Should(BeTrue())
+	}
 })
 
 func canCreateOpenshiftNamespaces() bool {
@@ -103,18 +116,27 @@ func canCreateOpenshiftNamespaces() bool {
 
 	// A server-side dry run will check the admission webhooks, but it needs to use the right
 	// serviceaccount because the kubeconfig might have superuser privileges to get around them.
-	out, _ := utils.KubectlWithOutput("create", "ns", "openshift-grc-test", "--kubeconfig="+kubeconfigManaged,
-		"--dry-run=server", "--as=system:serviceaccount:open-cluster-management-agent-addon:config-policy-controller-sa")
+	out, _ := utils.KubectlWithOutput(
+		"create",
+		"ns",
+		"openshift-grc-test",
+		"--kubeconfig="+kubeconfigManaged,
+		"--dry-run=server",
+		"--as=system:serviceaccount:open-cluster-management-agent-addon:config-policy-controller-sa",
+	)
 	if strings.Contains(out, "namespace/openshift-grc-test created") {
 		canCreateOpenshiftNamespacesResult = true
 	}
+
 	if strings.Contains(out, "namespaces \"openshift-grc-test\" already exists") {
 		// Weird situation, but probably means it could make the namespace
 		canCreateOpenshiftNamespacesResult = true
 	}
+
 	if strings.Contains(out, "admission webhook \"mutation.gatekeeper.sh\" does not support dry run") {
 		// Gatekeeper is installed, so assume the namespace could be created
 		canCreateOpenshiftNamespacesResult = true
 	}
+
 	return canCreateOpenshiftNamespacesResult
 }

@@ -95,6 +95,7 @@ var _ = Describe("GRC: [P1][Sev1][policy-grc] Test the Policy Generator in an Ap
 				kubeconfigSubAdmin, err = common.GetKubeConfig(
 					hubServerURL, ocpUser.Username, ocpUser.Password,
 				)
+
 				return err
 			},
 			fiveMinutes,
@@ -123,6 +124,7 @@ var _ = Describe("GRC: [P1][Sev1][policy-grc] Test the Policy Generator in an Ap
 				policyset, err = policySetRsrc.Namespace(namespace).Get(
 					context.TODO(), "e2e-policyset", metav1.GetOptions{},
 				)
+
 				return err
 			},
 			defaultTimeoutSeconds*2,
@@ -147,6 +149,7 @@ var _ = Describe("GRC: [P1][Sev1][policy-grc] Test the Policy Generator in an Ap
 				policy, err = policyRsrc.Namespace(namespace).Get(
 					context.TODO(), "e2e-grc-policy-app", metav1.GetOptions{},
 				)
+
 				return err
 			},
 			defaultTimeoutSeconds*2,
@@ -177,6 +180,7 @@ var _ = Describe("GRC: [P1][Sev1][policy-grc] Test the Policy Generator in an Ap
 					"grc-e2e-policy-generator.e2e-grc-policy-app",
 					metav1.GetOptions{},
 				)
+
 				return err
 			},
 			defaultTimeoutSeconds,
@@ -191,6 +195,7 @@ var _ = Describe("GRC: [P1][Sev1][policy-grc] Test the Policy Generator in an Ap
 				policy, err = configPolicyRsrc.Namespace("local-cluster").Get(
 					context.TODO(), "e2e-grc-policy-app", metav1.GetOptions{},
 				)
+
 				return err
 			},
 			defaultTimeoutSeconds,

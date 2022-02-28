@@ -20,6 +20,7 @@ import (
 	"k8s.io/client-go/rest"
 	"k8s.io/client-go/tools/clientcmd"
 	"k8s.io/klog"
+	logf "sigs.k8s.io/controller-runtime/pkg/log"
 )
 
 var (
@@ -28,11 +29,22 @@ var (
 	UserNamespace         string
 	ClusterNamespace      string
 	DefaultTimeoutSeconds int
+	log                   = logf.Log.WithName("common")
 )
 
 func init() {
-	flag.StringVar(&KubeconfigHub, "kubeconfig_hub", "../../kubeconfig_hub", "Location of the kubeconfig to use; defaults to KUBECONFIG if not set")
-	flag.StringVar(&KubeconfigManaged, "kubeconfig_managed", "../../kubeconfig_managed", "Location of the kubeconfig to use; defaults to KUBECONFIG if not set")
+	flag.StringVar(
+		&KubeconfigHub,
+		"kubeconfig_hub",
+		"../../kubeconfig_hub",
+		"Location of the kubeconfig to use; defaults to KUBECONFIG if not set",
+	)
+	flag.StringVar(
+		&KubeconfigManaged,
+		"kubeconfig_managed",
+		"../../kubeconfig_managed",
+		"Location of the kubeconfig to use; defaults to KUBECONFIG if not set",
+	)
 	flag.StringVar(&UserNamespace, "user_namespace", "policy-test", "ns on hub to create root policy")
 	flag.StringVar(&ClusterNamespace, "cluster_namespace", "local-cluster", "cluster ns name")
 	flag.IntVar(&DefaultTimeoutSeconds, "timeout_seconds", 30, "Timeout seconds for assertion")
@@ -40,6 +52,7 @@ func init() {
 
 func NewKubeClient(url, kubeconfig, context string) kubernetes.Interface {
 	klog.V(5).Infof("Create kubeclient for url %s using kubeconfig path %s\n", url, kubeconfig)
+
 	config, err := LoadConfig(url, kubeconfig, context)
 	if err != nil {
 		panic(err)
@@ -55,6 +68,7 @@ func NewKubeClient(url, kubeconfig, context string) kubernetes.Interface {
 
 func NewKubeClientDynamic(url, kubeconfig, context string) dynamic.Interface {
 	klog.V(5).Infof("Create kubeclient dynamic for url %s using kubeconfig path %s\n", url, kubeconfig)
+
 	config, err := LoadConfig(url, kubeconfig, context)
 	if err != nil {
 		panic(err)
@@ -72,12 +86,14 @@ func LoadConfig(url, kubeconfig, context string) (*rest.Config, error) {
 	if kubeconfig == "" {
 		kubeconfig = os.Getenv("KUBECONFIG")
 	}
+
 	klog.V(5).Infof("Kubeconfig path %s\n", kubeconfig)
 	// If we have an explicit indication of where the kubernetes config lives, read that.
 	if kubeconfig != "" {
 		if context == "" {
 			return clientcmd.BuildConfigFromFlags(url, kubeconfig)
 		}
+
 		return clientcmd.NewNonInteractiveDeferredLoadingClientConfig(
 			&clientcmd.ClientConfigLoadingRules{ExplicitPath: kubeconfig},
 			&clientcmd.ConfigOverrides{
@@ -90,7 +106,11 @@ func LoadConfig(url, kubeconfig, context string) (*rest.Config, error) {
 	}
 	// If no in-cluster config, try the default location in the user's home directory.
 	if usr, err := user.Current(); err == nil {
-		klog.V(5).Infof("clientcmd.BuildConfigFromFlags for url %s using %s\n", url, filepath.Join(usr.HomeDir, ".kube", "config"))
+		klog.V(5).Infof(
+			"clientcmd.BuildConfigFromFlags for url %s using %s\n",
+			url,
+			filepath.Join(usr.HomeDir, ".kube", "config"))
+
 		if c, err := clientcmd.BuildConfigFromFlags("", filepath.Join(usr.HomeDir, ".kube", "config")); err == nil {
 			return c, nil
 		}
@@ -101,12 +121,24 @@ func LoadConfig(url, kubeconfig, context string) (*rest.Config, error) {
 
 // GetComplianceState returns a function that requires no arguments that retrieves the
 // compliance state of the input policy.
-func GetComplianceState(clientHubDynamic dynamic.Interface, namespace, policyName, clusterNamespace string) func() interface{} {
+func GetComplianceState(
+	clientHubDynamic dynamic.Interface,
+	namespace, policyName,
+	clusterNamespace string,
+) func() interface{} {
 	return func() interface{} {
-		rootPlc := utils.GetWithTimeout(clientHubDynamic, GvrPolicy, policyName, namespace, true, DefaultTimeoutSeconds)
+		rootPlc := utils.GetWithTimeout(
+			clientHubDynamic,
+			GvrPolicy,
+			policyName,
+			namespace,
+			true,
+			DefaultTimeoutSeconds,
+		)
 		var policy policiesv1.Policy
 		err := runtime.DefaultUnstructuredConverter.FromUnstructured(rootPlc.UnstructuredContent(), &policy)
 		gomega.Expect(err).To(gomega.BeNil())
+
 		for _, statusPerCluster := range policy.Status.Status {
 			if statusPerCluster.ClusterNamespace == clusterNamespace {
 				return statusPerCluster.ComplianceState
@@ -121,31 +153,40 @@ func OcHub(args ...string) (string, error) {
 	args = append([]string{"--kubeconfig=" + KubeconfigHub}, args...)
 	// Determine whether output should be logged
 	printOutput := true
+
 	for _, a := range args {
 		if a == "whoami" || strings.HasPrefix(a, "secret") {
 			printOutput = false
+
 			break
 		}
 	}
+
 	output, err := exec.Command("oc", args...).Output()
 	if len(args) > 0 && printOutput {
-		fmt.Println(string(output))
+		log.Info(string(output))
 	}
+
+	//nolint:errorlint
 	if exitError, ok := err.(*exec.ExitError); ok {
 		if exitError.Stderr == nil {
 			return string(output), nil
 		}
+
 		return string(output), fmt.Errorf(string(exitError.Stderr))
 	}
+
 	return string(output), err
 }
 
 func OcManaged(args ...string) (string, error) {
 	args = append([]string{"--kubeconfig=" + KubeconfigManaged}, args...)
+
 	output, err := exec.Command("oc", args...).CombinedOutput()
 	if len(args) > 0 && args[0] != "whoami" {
-		fmt.Println(string(output))
+		log.Info(string(output))
 	}
+
 	return string(output), err
 }
 
@@ -168,7 +209,9 @@ func PatchPlacementRule(namespace, name, targetCluster, kubeconfigHub string) er
 		namespace,
 		"placementrule.apps.open-cluster-management.io",
 		name,
-		"--type=json", "-p=[{\"op\": \"replace\", \"path\": \"/spec/clusterSelector/matchExpressions\", \"value\":[{\"key\": \"name\", \"operator\": \"In\", \"values\": ["+targetCluster+"]}]}]",
+		"--type=json",
+		"-p=[{\"op\": \"replace\", \"path\": \"/spec/clusterSelector/matchExpressions\", "+
+			"\"value\":[{\"key\": \"name\", \"operator\": \"In\", \"values\": ["+targetCluster+"]}]}]",
 		"--kubeconfig="+kubeconfigHub,
 	)
 

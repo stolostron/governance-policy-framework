@@ -16,7 +16,6 @@ import (
 )
 
 var _ = Describe("GRC: [P1][Sev1][policy-grc] Test policy set", Label("BVT"), func() {
-
 	const (
 		testPolicyName             string = "test-policy"
 		testPolicySetName          string = "test-policyset"
@@ -45,6 +44,7 @@ var _ = Describe("GRC: [P1][Sev1][policy-grc] Test policy set", Label("BVT"), fu
 					rootPolicy, err = rootPolicyRsrc.Namespace(userNamespace).Get(
 						context.TODO(), testPolicyName, metav1.GetOptions{},
 					)
+
 					return err
 				},
 				defaultTimeoutSeconds*2,
@@ -57,8 +57,14 @@ var _ = Describe("GRC: [P1][Sev1][policy-grc] Test policy set", Label("BVT"), fu
 			Expect(len(templates)).Should(Equal(1))
 
 			By("Patching placement rule " + testPolicySetName + "-plr")
-			output, err = utils.KubectlWithOutput("patch", "-n", userNamespace, "placementrule.apps.open-cluster-management.io/"+testPolicySetName+"-plr",
-				"--type=json", "-p=[{\"op\": \"replace\", \"path\": \"/spec/clusterSelector/matchExpressions\", \"value\":[{\"key\": \"name\", \"operator\": \"In\", \"values\": ["+clusterNamespace+"]}]}]",
+			output, err = utils.KubectlWithOutput(
+				"patch",
+				"-n",
+				userNamespace,
+				"placementrule.apps.open-cluster-management.io/"+testPolicySetName+"-plr",
+				"--type=json",
+				"-p=[{\"op\": \"replace\", \"path\": \"/spec/clusterSelector/matchExpressions\", "+
+					"\"value\":[{\"key\": \"name\", \"operator\": \"In\", \"values\": ["+clusterNamespace+"]}]}]",
 				"--kubeconfig="+kubeconfigHub)
 			By("Patching placement rule result is " + output)
 			Expect(err).To(BeNil())
@@ -71,6 +77,7 @@ var _ = Describe("GRC: [P1][Sev1][policy-grc] Test policy set", Label("BVT"), fu
 					_, err = policyRsrc.Namespace(clusterNamespace).Get(
 						context.TODO(), userNamespace+"."+testPolicyName, metav1.GetOptions{},
 					)
+
 					return err
 				},
 				defaultTimeoutSeconds*2,
@@ -86,6 +93,7 @@ var _ = Describe("GRC: [P1][Sev1][policy-grc] Test policy set", Label("BVT"), fu
 					context.TODO(), testPolicySetName, metav1.GetOptions{},
 				)
 				Expect(err).To(BeNil())
+
 				return rootPlcSet.Object["status"]
 			},
 				defaultTimeoutSeconds*2,
@@ -111,6 +119,7 @@ var _ = Describe("GRC: [P1][Sev1][policy-grc] Test policy set", Label("BVT"), fu
 					context.TODO(), testPolicySetName, metav1.GetOptions{},
 				)
 				Expect(err).To(BeNil())
+
 				return rootPlcSet.Object["status"]
 			},
 				defaultTimeoutSeconds*2,
@@ -136,13 +145,18 @@ var _ = Describe("GRC: [P1][Sev1][policy-grc] Test policy set", Label("BVT"), fu
 					rootPlc, err = rootPlcRsrc.Namespace(userNamespace).Get(
 						context.TODO(), testPolicyName, metav1.GetOptions{},
 					)
+
 					return err
 				},
 				defaultTimeoutSeconds*2,
 				1,
 			).Should(BeNil())
 			rootPlc.Object["spec"].(map[string]interface{})["remediationAction"] = "enforce"
-			_, err := clientHubDynamic.Resource(testcommon.GvrPolicy).Namespace(userNamespace).Update(context.TODO(), rootPlc, metav1.UpdateOptions{})
+			_, err := clientHubDynamic.Resource(testcommon.GvrPolicy).Namespace(userNamespace).Update(
+				context.TODO(),
+				rootPlc,
+				metav1.UpdateOptions{},
+			)
 			Expect(err).To(BeNil())
 
 			By("Checking the status of policy set")
@@ -154,6 +168,7 @@ var _ = Describe("GRC: [P1][Sev1][policy-grc] Test policy set", Label("BVT"), fu
 					context.TODO(), testPolicySetName, metav1.GetOptions{},
 				)
 				Expect(err).To(BeNil())
+
 				return rootPlcSet.Object["status"]
 			},
 				defaultTimeoutSeconds*2,
@@ -177,6 +192,7 @@ var _ = Describe("GRC: [P1][Sev1][policy-grc] Test policy set", Label("BVT"), fu
 					_, err = plcRsrc.Namespace(userNamespace).Get(
 						context.TODO(), testPolicyName, metav1.GetOptions{},
 					)
+
 					return err
 				},
 				defaultTimeoutSeconds*2,
@@ -192,6 +208,7 @@ var _ = Describe("GRC: [P1][Sev1][policy-grc] Test policy set", Label("BVT"), fu
 					context.TODO(), testPolicySetName, metav1.GetOptions{},
 				)
 				Expect(err).To(BeNil())
+
 				return rootPlcSet.Object["status"]
 			},
 				defaultTimeoutSeconds*2,

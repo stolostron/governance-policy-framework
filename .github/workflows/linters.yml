@@ -1,0 +1,61 @@
+name: Linting
+
+on:
+  push:
+    branches:
+      - main
+      - release-2.[3-9]
+  pull_request:
+    branches:
+      - main
+      - release-2.[3-9]
+
+defaults:
+  run:
+    shell: bash
+    working-directory: governance-policy-framework
+
+jobs:
+  run-lint:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        go:
+          - '1.17'
+    name: Linting
+    steps:
+    - name: Checkout Governance Policy Framework repo
+      uses: actions/checkout@v2
+      with:
+        path: governance-policy-framework
+        fetch-depth: 0 # Fetch all history for all tags and branches
+
+    - name: Set up Go - ${{ matrix.go }}
+      uses: actions/setup-go@v2
+      id: go
+      with:
+        go-version: ${{ matrix.go }}
+
+    - name: Verify modules
+      run: |
+        go mod verify
+
+    - name: Verify format and lint
+      run: |
+        make fmt
+        git diff --exit-code
+        make lint
+
+    - name: SonarCloud Analysis
+      if: |
+        github.event_name == 'push' && 
+        github.repository_owner == 'stolostron'  &&
+        matrix.kind == 'latest'
+      uses: sonarsource/sonarcloud-github-action@master
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
+      with:
+        projectBaseDir: governance-policy-framework
+        args: >
+          --debug

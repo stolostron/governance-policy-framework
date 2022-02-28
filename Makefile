@@ -46,6 +46,10 @@ TEST_ARGS ?=
 
 USE_VENDORIZED_BUILD_HARNESS ?=
 
+.PHONY: fmt lint fmt-dependencies lint-dependencies
+
+include build/common/Makefile.common.mk
+
 ifndef USE_VENDORIZED_BUILD_HARNESS
 	ifeq ($(TRAVIS_BUILD),1)
 		ifndef GITHUB_TOKEN
@@ -76,6 +80,19 @@ fmt: fmt-dependencies
 	find . -not \( -path "./.go" -prune \) -name "*.go" | xargs gofmt -s -w
 	find . -not \( -path "./.go" -prune \) -name "*.go" | xargs gofumpt -l -w
 	find . -not \( -path "./.go" -prune \) -name "*.go" | xargs gci -w -local "$(shell cat go.mod | head -1 | cut -d " " -f 2)"
+
+############################################################
+# lint section
+############################################################
+
+lint-dependencies:
+	@if [ ! -f $(GOBIN)/golangci-lint ] || [ "$(DEPENDENCY_OVERRIDE)" = "true" ]; then \
+		curl -sSfL https://raw.githubusercontent.com/golangci/golangci-lint/v1.41.1/install.sh | sh -s -- -b $(GOBIN) v1.41.1; \
+	else \
+		echo "Folder '$(GOBIN)/golangci-lint' already exists--skipping dependency install (export DEPENDENCY_OVERRIDE=true to override this and run install anyway)"; \
+	fi
+
+lint: lint-dependencies lint-all
 
 ############################################################
 # e2e test section
