@@ -1,0 +1,45 @@
+name: Linting
+
+on:
+  push:
+    branches:
+      - main
+  pull_request:
+    branches:
+      - main
+
+defaults:
+  run:
+    shell: bash
+    working-directory: governance-policy-framework
+
+jobs:
+  run-lint:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        go:
+          - '1.17'
+    name: Linting
+    steps:
+    - name: Checkout Governance Policy Framework repo
+      uses: actions/checkout@v2
+      with:
+        path: governance-policy-framework
+        fetch-depth: 0 # Fetch all history for all tags and branches
+
+    - name: Set up Go - ${{ matrix.go }}
+      uses: actions/setup-go@v2
+      id: go
+      with:
+        go-version: ${{ matrix.go }}
+
+    - name: Verify modules
+      run: |
+        go mod verify
+
+    - name: Verify format and lint
+      run: |
+        make fmt
+        git diff --exit-code
+        make lint

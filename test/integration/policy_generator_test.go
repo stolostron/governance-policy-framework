@@ -28,9 +28,11 @@ func generateInsecurePassword() (string, error) {
 	// A password ranging from 15-30 bytes
 	pwSize := rand.Intn(15) + 15
 	bytes := make([]byte, pwSize)
+
 	if _, err := rand.Read(bytes); err != nil {
 		return "", err
 	}
+
 	return hex.EncodeToString(bytes), nil
 }
 
@@ -51,6 +53,7 @@ func cleanup(namespace string, secret string, user common.OCPUser) {
 			_, err := clientHub.CoreV1().Namespaces().Get(
 				context.TODO(), namespace, metav1.GetOptions{},
 			)
+
 			return k8serrors.IsNotFound(err)
 		},
 		defaultTimeoutSeconds,
@@ -134,6 +137,7 @@ var _ = Describe("GRC: [P1][Sev1][policy-grc] Test the Policy Generator in an Ap
 				kubeconfigSubAdmin, err = common.GetKubeConfig(
 					hubServerURL, ocpUser.Username, ocpUser.Password,
 				)
+
 				return err
 			},
 			fiveMinutes,
@@ -162,6 +166,7 @@ var _ = Describe("GRC: [P1][Sev1][policy-grc] Test the Policy Generator in an Ap
 				policyset, err = policySetRsrc.Namespace(namespace).Get(
 					context.TODO(), "e2e-policyset", metav1.GetOptions{},
 				)
+
 				return err
 			},
 			defaultTimeoutSeconds*2,
@@ -186,6 +191,7 @@ var _ = Describe("GRC: [P1][Sev1][policy-grc] Test the Policy Generator in an Ap
 				policy, err = policyRsrc.Namespace(namespace).Get(
 					context.TODO(), "e2e-grc-policy-app", metav1.GetOptions{},
 				)
+
 				return err
 			},
 			defaultTimeoutSeconds*2,
@@ -216,6 +222,7 @@ var _ = Describe("GRC: [P1][Sev1][policy-grc] Test the Policy Generator in an Ap
 					"grc-e2e-policy-generator.e2e-grc-policy-app",
 					metav1.GetOptions{},
 				)
+
 				return err
 			},
 			defaultTimeoutSeconds,
@@ -230,6 +237,7 @@ var _ = Describe("GRC: [P1][Sev1][policy-grc] Test the Policy Generator in an Ap
 				policy, err = configPolicyRsrc.Namespace("local-cluster").Get(
 					context.TODO(), "e2e-grc-policy-app", metav1.GetOptions{},
 				)
+
 				return err
 			},
 			defaultTimeoutSeconds,

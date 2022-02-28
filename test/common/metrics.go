@@ -3,6 +3,7 @@
 package common
 
 import (
+	"context"
 	"crypto/tls"
 	"io/ioutil"
 	"net/http"
@@ -15,7 +16,7 @@ import (
 // GetWithToken makes a GET request to the given target, and puts the
 // token in an Authorization header if non-empty. The HTTP client has
 // a sane timeout, and will skip verifying the target certificate.
-func GetWithToken(url, authToken string) (body, status string, err error) {
+func GetWithToken(ctx context.Context, url, authToken string) (body, status string, err error) {
 	client := &http.Client{
 		Transport: &http.Transport{
 			TLSClientConfig: &tls.Config{
@@ -24,19 +25,23 @@ func GetWithToken(url, authToken string) (body, status string, err error) {
 		},
 		Timeout: 5 * time.Second,
 	}
-	req, err := http.NewRequest("GET", url, nil)
+
+	req, err := http.NewRequestWithContext(ctx, "GET", url, nil)
 	if err != nil {
 		return "", "", err
 	}
+
 	if authToken != "" {
 		req.Header.Add("Authorization", "Bearer "+authToken)
 	}
+
 	resp, err := client.Do(req)
 	if err != nil {
 		return "", "", err
 	}
 	defer resp.Body.Close()
 	bodyBytes, err := ioutil.ReadAll(resp.Body)
+
 	return string(bodyBytes), resp.Status, err
 }
 
@@ -47,5 +52,6 @@ func MatchMetricValue(name, label, value string) types.GomegaMatcher {
 	regex += "^" + name + "{"    // full name of metric at start of line
 	regex += ".*" + label + ".*" // label somewhere inside the {...}
 	regex += "} " + value + "$"  // value at the end of line
+
 	return gomega.MatchRegexp(regex)
 }

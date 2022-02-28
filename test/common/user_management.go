@@ -47,6 +47,7 @@ func GetKubeConfig(server, username, password string) (string, error) {
 	if err != nil {
 		return "", fmt.Errorf("failed to create the temporary kubeconfig")
 	}
+
 	kubeconfigPath := f.Name()
 	// Close the file immediately so that the `oc login` command can use the file
 	err = f.Close()
@@ -95,6 +96,7 @@ func CreateOCPUser(
 	_, err = client.CoreV1().Secrets(ocpConfigNs).Create(
 		context.TODO(), &secret, metav1.CreateOptions{},
 	)
+
 	if err != nil {
 		return fmt.Errorf("failed to create the secret %s/%s: %w", ocpConfigNs, secretName, err)
 	}
@@ -121,6 +123,7 @@ func CreateOCPUser(
 // taken.
 func addHtPasswd(dynamicClient dynamic.Interface, secretName string) error {
 	const oAuthName = "cluster"
+
 	clusterOAuth, err := getClusterOAuthConfig(dynamicClient)
 	if err != nil {
 		return err
@@ -140,6 +143,7 @@ func addHtPasswd(dynamicClient dynamic.Interface, secretName string) error {
 				Value: []interface{}{},
 			},
 		}
+
 		emptyArrayPatch, err := json.Marshal(emptyArrayPatchObj)
 		if err != nil {
 			return fmt.Errorf("failed to marshal the empty array patch to JSON: %w", err)
@@ -192,6 +196,7 @@ func addHtPasswd(dynamicClient dynamic.Interface, secretName string) error {
 			},
 		},
 	}
+
 	identityPatch, err := json.Marshal(identityPatchObj)
 	if err != nil {
 		return fmt.Errorf("failed to marshal the identity provider patch to JSON: %w", err)
@@ -214,6 +219,7 @@ func addHtPasswd(dynamicClient dynamic.Interface, secretName string) error {
 func getClusterOAuthConfig(dynamicClient dynamic.Interface) (*unstructured.Unstructured, error) {
 	oauthRsrc := dynamicClient.Resource(GvrOAuth)
 	const oAuthName = "cluster"
+
 	clusterOAuth, err := oauthRsrc.Get(context.TODO(), oAuthName, metav1.GetOptions{})
 	if err != nil {
 		return nil, fmt.Errorf(`failed to get the "%s" OAuth object: %w`, oAuthName, err)
@@ -241,6 +247,7 @@ func addClusterRoleBindings(client kubernetes.Interface, user OCPUser) error {
 		}
 
 		alreadySet := false
+
 		for _, subject := range bindingObj.Subjects {
 			if subject.APIGroup != "rbac.authorization.k8s.io" || subject.Kind != "User" {
 				continue
@@ -248,6 +255,7 @@ func addClusterRoleBindings(client kubernetes.Interface, user OCPUser) error {
 
 			if subject.Name == user.Username {
 				alreadySet = true
+
 				break
 			}
 		}
@@ -405,6 +413,7 @@ func CleanupOCPUser(
 // deletes the User and Identity objects created by OpenShift.
 func deleteHtPasswd(dynamicClient dynamic.Interface, authName string, user OCPUser) error {
 	const oAuthName = "cluster"
+
 	clusterOAuth, err := getClusterOAuthConfig(dynamicClient)
 	if err != nil {
 		return err
@@ -427,6 +436,7 @@ func deleteHtPasswd(dynamicClient dynamic.Interface, authName string, user OCPUs
 	}
 
 	idpIndex := -1
+
 	for i, idp := range idps {
 		idp, ok := idp.(map[string]interface{})
 		if !ok {
@@ -441,6 +451,7 @@ func deleteHtPasswd(dynamicClient dynamic.Interface, authName string, user OCPUs
 			// An identity provider of the same name already exists, so assume it it is the one
 			// we are looking for.
 			idpIndex = i
+
 			break
 		}
 	}
@@ -456,12 +467,14 @@ func deleteHtPasswd(dynamicClient dynamic.Interface, authName string, user OCPUs
 			Path: fmt.Sprintf("/spec/identityProviders/%d", idpIndex),
 		},
 	}
+
 	identityPatch, err := json.Marshal(identityPatchObj)
 	if err != nil {
 		return fmt.Errorf("failed to marshal the identity provider removal patch to JSON: %w", err)
 	}
 
 	oauthRsrc := dynamicClient.Resource(GvrOAuth)
+
 	_, err = oauthRsrc.Patch(context.TODO(), oAuthName, types.JSONPatchType, identityPatch, metav1.PatchOptions{})
 	if err != nil {
 		return fmt.Errorf(
@@ -483,6 +496,7 @@ func deleteHtPasswd(dynamicClient dynamic.Interface, authName string, user OCPUs
 	}
 
 	identityName := fmt.Sprintf("%s-user:%s", user.Username, user.Username)
+
 	err = dynamicClient.Resource(GvrIdentity).Delete(
 		context.TODO(), identityName, metav1.DeleteOptions{},
 	)
@@ -509,6 +523,7 @@ func removeClusterRoleBindings(client kubernetes.Interface, user OCPUser) error 
 		}
 
 		subjectIndex := -1
+
 		for i, subject := range bindingObj.Subjects {
 			if subject.APIGroup != "rbac.authorization.k8s.io" || subject.Kind != "User" {
 				continue
@@ -516,6 +531,7 @@ func removeClusterRoleBindings(client kubernetes.Interface, user OCPUser) error 
 
 			if subject.Name == user.Username {
 				subjectIndex = i
+
 				break
 			}
 		}
@@ -535,6 +551,7 @@ func removeClusterRoleBindings(client kubernetes.Interface, user OCPUser) error 
 				},
 			},
 		}
+
 		patch, err := json.Marshal(patchObj)
 		if err != nil {
 			return fmt.Errorf(

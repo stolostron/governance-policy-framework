@@ -28,12 +28,13 @@ func UpdateClusterName(
 	yamlPlc *unstructured.Unstructured,
 	clusterNamespace string,
 ) *unstructured.Unstructured {
-	status := yamlPlc.Object["status"].(map[string]interface{})
-	results := status["results"].([]interface{})
-	clusters := results[0].(map[string]interface{})["clusters"].([]interface{})
-	cluster := clusters[0].(map[string]interface{})
+	status, _ := yamlPlc.Object["status"].(map[string]interface{})
+	results, _ := status["results"].([]interface{})
+	clusters, _ := results[0].(map[string]interface{})["clusters"].([]interface{})
+	cluster, _ := clusters[0].(map[string]interface{})
 	cluster["clusterName"] = clusterNamespace
 	cluster["clusterNamespace"] = clusterNamespace
+
 	return yamlPlc
 }
 
@@ -49,14 +50,23 @@ var _ = Describe("Test policy set", func() {
 			Expect(err).To(BeNil())
 
 			rootPolicy := utils.GetWithTimeout(
-				clientHubDynamic, testcommon.GvrPolicy, testPolicyName, userNamespace, true, defaultTimeoutSeconds,
+				clientHubDynamic,
+				testcommon.GvrPolicy,
+				testPolicyName,
+				userNamespace,
+				true,
+				defaultTimeoutSeconds,
 			)
 			Expect(rootPolicy).NotTo(BeNil())
 
 			By("Patching " + testPolicySetName + "-plr with decision of cluster managed")
 			plr := utils.GetWithTimeout(
-				clientHubDynamic, testcommon.GvrPlacementRule, testPolicySetName+"-plr", userNamespace,
-				true, defaultTimeoutSeconds,
+				clientHubDynamic,
+				testcommon.GvrPlacementRule,
+				testPolicySetName+"-plr",
+				userNamespace,
+				true,
+				defaultTimeoutSeconds,
 			)
 			plr.Object["status"] = utils.GeneratePlrStatus(clusterNamespace)
 			_, err = clientHubDynamic.Resource(testcommon.GvrPlacementRule).Namespace(userNamespace).UpdateStatus(
@@ -66,13 +76,22 @@ var _ = Describe("Test policy set", func() {
 
 			By("Checking " + testPolicyName + " on managed cluster in ns " + clusterNamespace)
 			managedplc := utils.GetWithTimeout(
-				clientHubDynamic, testcommon.GvrPolicy, userNamespace+"."+testPolicyName, clusterNamespace, true,
+				clientHubDynamic,
+				testcommon.GvrPolicy,
+				userNamespace+"."+testPolicyName,
+				clusterNamespace,
+				true,
 				defaultTimeoutSeconds,
 			)
 			Expect(managedplc).NotTo(BeNil())
 
 			plcSet := utils.GetWithTimeout(
-				clientHubDynamic, testcommon.GvrPolicySet, testPolicySetName, userNamespace, true, defaultTimeoutSeconds,
+				clientHubDynamic,
+				testcommon.GvrPolicySet,
+				testPolicySetName,
+				userNamespace,
+				true,
+				defaultTimeoutSeconds,
 			)
 			Expect(plcSet).NotTo(BeNil())
 
@@ -84,7 +103,12 @@ var _ = Describe("Test policy set", func() {
 
 			Eventually(func() interface{} {
 				rootPlcSet := utils.GetWithTimeout(
-					clientHubDynamic, testcommon.GvrPolicySet, testPolicySetName, userNamespace, true, defaultTimeoutSeconds,
+					clientHubDynamic,
+					testcommon.GvrPolicySet,
+					testPolicySetName,
+					userNamespace,
+					true,
+					defaultTimeoutSeconds,
 				)
 
 				return rootPlcSet.Object["status"]
@@ -101,7 +125,12 @@ var _ = Describe("Test policy set", func() {
 			Expect(err).To(BeNil())
 
 			plcSet := utils.GetWithTimeout(
-				clientHubDynamic, testcommon.GvrPolicySet, testPolicySetName, userNamespace, true, defaultTimeoutSeconds,
+				clientHubDynamic,
+				testcommon.GvrPolicySet,
+				testPolicySetName,
+				userNamespace,
+				true,
+				defaultTimeoutSeconds,
 			)
 			Expect(plcSet).NotTo(BeNil())
 
@@ -112,7 +141,12 @@ var _ = Describe("Test policy set", func() {
 
 			Eventually(func() interface{} {
 				rootPlcSet := utils.GetWithTimeout(
-					clientHubDynamic, testcommon.GvrPolicySet, testPolicySetName, userNamespace, true, defaultTimeoutSeconds,
+					clientHubDynamic,
+					testcommon.GvrPolicySet,
+					testPolicySetName,
+					userNamespace,
+					true,
+					defaultTimeoutSeconds,
 				)
 
 				return rootPlcSet.Object["status"]
@@ -122,10 +156,19 @@ var _ = Describe("Test policy set", func() {
 		It("Should update to compliant if all its child policy violations have been remediated", func() {
 			By("Enforcing the policy to make it compliant")
 			rootPlc := utils.GetWithTimeout(
-				clientHubDynamic, testcommon.GvrPolicy, testPolicyName, userNamespace, true, defaultTimeoutSeconds,
+				clientHubDynamic,
+				testcommon.GvrPolicy,
+				testPolicyName,
+				userNamespace,
+				true,
+				defaultTimeoutSeconds,
 			)
 			rootPlc.Object["spec"].(map[string]interface{})["remediationAction"] = "enforce"
-			_, err := clientHubDynamic.Resource(testcommon.GvrPolicy).Namespace(userNamespace).Update(context.TODO(), rootPlc, metav1.UpdateOptions{})
+			_, err := clientHubDynamic.Resource(testcommon.GvrPolicy).Namespace(userNamespace).Update(
+				context.TODO(),
+				rootPlc,
+				metav1.UpdateOptions{},
+			)
 			Expect(err).To(BeNil())
 
 			By("Checking the status of policy set")
@@ -135,7 +178,12 @@ var _ = Describe("Test policy set", func() {
 
 			Eventually(func() interface{} {
 				rootPlcSet := utils.GetWithTimeout(
-					clientHubDynamic, testcommon.GvrPolicySet, testPolicySetName, userNamespace, true, defaultTimeoutSeconds*3,
+					clientHubDynamic,
+					testcommon.GvrPolicySet,
+					testPolicySetName,
+					userNamespace,
+					true,
+					defaultTimeoutSeconds*3,
 				)
 
 				return rootPlcSet.Object["status"]
@@ -161,7 +209,12 @@ var _ = Describe("Test policy set", func() {
 
 			Eventually(func() interface{} {
 				rootPlcSet := utils.GetWithTimeout(
-					clientHubDynamic, testcommon.GvrPolicySet, testPolicySetName, userNamespace, true, defaultTimeoutSeconds,
+					clientHubDynamic,
+					testcommon.GvrPolicySet,
+					testPolicySetName,
+					userNamespace,
+					true,
+					defaultTimeoutSeconds,
 				)
 
 				return rootPlcSet.Object["status"]

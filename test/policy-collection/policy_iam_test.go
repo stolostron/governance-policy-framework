@@ -15,8 +15,9 @@ import (
 )
 
 const (
-	iamPolicyName             = "policy-limitclusteradmin"
-	iamPolicyURL              = "https://raw.githubusercontent.com/stolostron/policy-collection/main/stable/AC-Access-Control/" + iamPolicyName + ".yaml"
+	iamPolicyName = "policy-limitclusteradmin"
+	iamPolicyURL  = "https://raw.githubusercontent.com/stolostron/policy-collection/main/stable/AC-Access-Control/" +
+		iamPolicyName + ".yaml"
 	iamPolicyManagedNamespace = "iam-policy-test"
 )
 
@@ -25,32 +26,61 @@ var _ = Describe("GRC: [P1][Sev1][policy-grc] Test the stable IAM policy", func(
 	var getIAMComplianceState func() interface{}
 	BeforeEach(func() {
 		// Assign this here to avoid using nil pointers as arguments
-		getIAMComplianceState = common.GetComplianceState(clientHubDynamic, userNamespace, iamPolicyName, clusterNamespace)
+		getIAMComplianceState = common.GetComplianceState(
+			clientHubDynamic,
+			userNamespace,
+			iamPolicyName,
+			clusterNamespace,
+		)
 	})
 
 	It("stable/"+iamPolicyName+" should be created on the hub", func() {
 		By("Creating the policy on the hub")
-		utils.KubectlWithOutput("apply", "-f", iamPolicyURL, "-n", userNamespace, "--kubeconfig="+kubeconfigHub)
+		_, err := utils.KubectlWithOutput(
+			"apply",
+			"-f",
+			iamPolicyURL,
+			"-n",
+			userNamespace,
+			"--kubeconfig="+kubeconfigHub,
+		)
+		Expect(err).Should(BeNil())
 
 		By("Patching the placement rule")
-		utils.KubectlWithOutput(
+		_, err = utils.KubectlWithOutput(
 			"patch",
 			"-n",
 			userNamespace,
 			"placementrule.apps.open-cluster-management.io/placement-"+iamPolicyName,
 			"--type=json",
+			//nolint:lll
 			`-p=[{"op": "replace", "path": "/spec/clusterSelector/matchExpressions", "value":[{"key": "name", "operator": "In", "values": [`+clusterNamespace+`]}]}]`,
 			"--kubeconfig="+kubeconfigHub,
 		)
+		Expect(err).Should(BeNil())
 
 		By("Checking " + iamPolicyName + " on the hub cluster in the ns " + userNamespace)
-		rootPlc := utils.GetWithTimeout(clientHubDynamic, common.GvrPolicy, iamPolicyName, userNamespace, true, defaultTimeoutSeconds)
+		rootPlc := utils.GetWithTimeout(
+			clientHubDynamic,
+			common.GvrPolicy,
+			iamPolicyName,
+			userNamespace,
+			true,
+			defaultTimeoutSeconds,
+		)
 		Expect(rootPlc).NotTo(BeNil())
 	})
 
 	It("stable/"+iamPolicyName+" should be created on the managed cluster", func() {
 		By("Checking " + iamPolicyName + " on the managed cluster in the ns " + clusterNamespace)
-		managedplc := utils.GetWithTimeout(clientManagedDynamic, common.GvrPolicy, userNamespace+"."+iamPolicyName, clusterNamespace, true, defaultTimeoutSeconds*2)
+		managedplc := utils.GetWithTimeout(
+			clientManagedDynamic,
+			common.GvrPolicy,
+			userNamespace+"."+iamPolicyName,
+			clusterNamespace,
+			true,
+			defaultTimeoutSeconds*2,
+		)
 		Expect(managedplc).NotTo(BeNil())
 	})
 
@@ -79,10 +109,26 @@ var _ = Describe("GRC: [P1][Sev1][policy-grc] Test the stable IAM policy", func(
 		Expect(namespaces.Get(context.TODO(), iamPolicyManagedNamespace, metav1.GetOptions{})).NotTo(BeNil())
 
 		By("Creating an OpenShift group (RHBZ#1981127)")
-		utils.KubectlWithOutput("apply", "-f", "../resources/iam_policy/group.yaml", "-n", iamPolicyManagedNamespace, "--kubeconfig="+kubeconfigManaged)
+		_, err = utils.KubectlWithOutput(
+			"apply",
+			"-f",
+			"../resources/iam_policy/group.yaml",
+			"-n",
+			iamPolicyManagedNamespace,
+			"--kubeconfig="+kubeconfigManaged,
+		)
+		Expect(err).Should(BeNil())
 
 		By("Creating a cluster role binding")
-		utils.KubectlWithOutput("apply", "-f", "../resources/iam_policy/clusterrolebinding.yaml", "-n", iamPolicyManagedNamespace, "--kubeconfig="+kubeconfigManaged)
+		_, err = utils.KubectlWithOutput(
+			"apply",
+			"-f",
+			"../resources/iam_policy/clusterrolebinding.yaml",
+			"-n",
+			iamPolicyManagedNamespace,
+			"--kubeconfig="+kubeconfigManaged,
+		)
+		Expect(err).Should(BeNil())
 	})
 
 	It("stable/"+iamPolicyName+" should be noncompliant", func() {
@@ -92,7 +138,15 @@ var _ = Describe("GRC: [P1][Sev1][policy-grc] Test the stable IAM policy", func(
 
 	It("Make stable/"+iamPolicyName+" be compliant", func() {
 		By("Deleting the OpenShift group")
-		utils.KubectlWithOutput("delete", "-f", "../resources/iam_policy/group.yaml", "-n", iamPolicyManagedNamespace, "--kubeconfig="+kubeconfigManaged)
+		_, err := utils.KubectlWithOutput(
+			"delete",
+			"-f",
+			"../resources/iam_policy/group.yaml",
+			"-n",
+			iamPolicyManagedNamespace,
+			"--kubeconfig="+kubeconfigManaged,
+		)
+		Expect(err).Should(BeNil())
 	})
 
 	It("stable/"+iamPolicyName+" should be compliant", func() {
@@ -103,15 +157,34 @@ var _ = Describe("GRC: [P1][Sev1][policy-grc] Test the stable IAM policy", func(
 	})
 
 	It("Clean up stable/"+iamPolicyName, func() {
-		err := clientManaged.CoreV1().Namespaces().Delete(context.TODO(), iamPolicyManagedNamespace, metav1.DeleteOptions{})
+		err := clientManaged.CoreV1().Namespaces().Delete(
+			context.TODO(),
+			iamPolicyManagedNamespace,
+			metav1.DeleteOptions{},
+		)
 		Expect(err).Should(BeNil())
-		utils.KubectlWithOutput("delete", "-f", iamPolicyURL, "-n", userNamespace, "--kubeconfig="+kubeconfigHub)
+
+		_, err = utils.KubectlWithOutput(
+			"delete",
+			"-f",
+			iamPolicyURL,
+			"-n",
+			userNamespace,
+			"--kubeconfig="+kubeconfigHub,
+		)
+		Expect(err).Should(BeNil())
 
 		Eventually(
 			func() interface{} {
 				managedPlc := utils.GetWithTimeout(
-					clientManagedDynamic, common.GvrPolicy, userNamespace+"."+iamPolicyName, clusterNamespace, false, defaultTimeoutSeconds,
+					clientManagedDynamic,
+					common.GvrPolicy,
+					userNamespace+"."+iamPolicyName,
+					clusterNamespace,
+					false,
+					defaultTimeoutSeconds,
 				)
+
 				return managedPlc
 			},
 			defaultTimeoutSeconds,
