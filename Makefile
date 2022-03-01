@@ -231,9 +231,9 @@ e2e-dependencies:
 
 e2e-test:
 	@if [ -z "$(TEST_FILE)" ]; then\
-		$(GOPATH)/bin/ginkgo -v $(TEST_ARGS) --slow-spec-threshold=10s test/e2e;\
+		$(GOPATH)/bin/ginkgo -v $(TEST_ARGS) --fail-fast test/e2e;\
 	else\
-		$(GOPATH)/bin/ginkgo -v $(TEST_ARGS) --slow-spec-threshold=10s --focus-file=$(TEST_FILE) test/e2e;\
+		$(GOPATH)/bin/ginkgo -v $(TEST_ARGS) --fail-fast --focus-file=$(TEST_FILE) test/e2e;\
 	fi
 
 e2e-debug: e2e-debug-hub e2e-debug-managed
@@ -293,16 +293,16 @@ e2e-debug-dump:
 
 integration-test:
 	@if [ -z "$(TEST_FILE)" ]; then\
-		$(GOPATH)/bin/ginkgo -v $(TEST_ARGS) --slow-spec-threshold=10s test/integration;\
+		$(GOPATH)/bin/ginkgo -v $(TEST_ARGS) --fail-fast test/integration;\
 	else\
-		$(GOPATH)/bin/ginkgo -v $(TEST_ARGS) --slow-spec-threshold=10s --focus-file=$(TEST_FILE) test/integration;\
+		$(GOPATH)/bin/ginkgo -v $(TEST_ARGS) --fail-fast --focus-file=$(TEST_FILE) test/integration;\
 	fi
 
 policy-collection-test:
 	@if [ -z "$(TEST_FILE)" ]; then\
-		$(GOPATH)/bin/ginkgo -v $(TEST_ARGS) --slow-spec-threshold=10s test/policy-collection;\
+		$(GOPATH)/bin/ginkgo -v $(TEST_ARGS) --fail-fast test/policy-collection;\
 	else\
-		$(GOPATH)/bin/ginkgo -v $(TEST_ARGS) --slow-spec-threshold=10s --focus-file=$(TEST_FILE) test/policy-collection;\
+		$(GOPATH)/bin/ginkgo -v $(TEST_ARGS) --fail-fast --focus-file=$(TEST_FILE) test/policy-collection;\
 	fi
 
 travis-slack-reporter:
