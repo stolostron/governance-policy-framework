@@ -27,7 +27,7 @@ echo "* Install cert manager"
 $DIR/install-cert-manager.sh
 
 echo "* Set up cluster for test"
-$DIR/cluster-patch.sh
+$DIR/patch-cluster-prow.sh
 cp ${HUB_KUBE} $DIR/../kubeconfig_hub
 cp ${MANAGED_KUBE} $DIR/../kubeconfig_managed
 
@@ -35,7 +35,7 @@ echo "===== E2E Test ====="
 echo "* Launching grc policy framework test"
 for TEST_SUITE in integration policy-collection; do
   # Run test suite with reporting
-  CGO_ENABLED=0 ginkgo -v --slow-spec-threshold=10s --junit-report=${TEST_SUITE}.xml --output-dir=test-output test/${TEST_SUITE} -- -cluster_namespace=$MANAGED_CLUSTER_NAME || EXIT_CODE=$?
+  CGO_ENABLED=0 ginkgo -v --no-color --slow-spec-threshold=10s --junit-report=${TEST_SUITE}.xml --output-dir=test-output test/${TEST_SUITE} -- -cluster_namespace=$MANAGED_CLUSTER_NAME || EXIT_CODE=$?
 
   # Remove "[It] " from report to prevent corrupting bracketed metadata
   if [ -f test-output/${TEST_SUITE}.xml ]; then
