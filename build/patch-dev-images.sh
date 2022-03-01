@@ -4,22 +4,80 @@
 
 set -e
 
-DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" >/dev/null 2>&1 && pwd )"
+acm_installed_namespace=`oc get subscriptions.operators.coreos.com --all-namespaces | grep advanced-cluster-management | awk '{print $1}'`
+VERSION_TAG=${VERSION_TAG:-"latest"}
+DOCKER_URI="quay.io/stolostron"
 
-oc annotate MultiClusterHub multiclusterhub -n open-cluster-management mch-pause=true --overwrite
+echo "* Patching hub cluster to ${VERSION_TAG}"
+oc annotate MultiClusterHub multiclusterhub -n ${acm_installed_namespace} mch-pause=true --overwrite
 
-grcui=`oc get deploy -l component=ocm-grcui -n open-cluster-management -o=jsonpath='{.items[*].metadata.name}'`
-grcuiapi=`oc get deploy -l component=ocm-grcuiapi -n open-cluster-management -o=jsonpath='{.items[*].metadata.name}'`
-policypropagator=`oc get deploy -l component=ocm-policy-propagator -n open-cluster-management -o=jsonpath='{.items[*].metadata.name}'`
-oc patch deployment $grcui -n open-cluster-management -p "{\"spec\":{\"template\":{\"spec\":{\"containers\":[{\"name\":\"grc-ui\",\"image\":\"quay.io/stolostron/grc-ui:latest\",\"imagePullPolicy\":\"Always\"}]}}}}"
-oc patch deployment $grcuiapi -n open-cluster-management -p "{\"spec\":{\"template\":{\"spec\":{\"containers\":[{\"name\":\"grc-ui-api\",\"image\":\"quay.io/stolostron/grc-ui-api:latest\",\"imagePullPolicy\":\"Always\"}]}}}}"
-oc patch deployment $policypropagator -n open-cluster-management -p "{\"spec\":{\"template\":{\"spec\":{\"containers\":[{\"name\":\"governance-policy-propagator\",\"image\":\"quay.io/stolostron/governance-policy-propagator:latest\",\"imagePullPolicy\":\"Always\"}]}}}}"
+# Patch the UI on the hub
+COMPONENT="grc-ui"
+LABEL="component=ocm-grcui"
+DEPLOYMENT=$(oc get deployment -l ${LABEL} -n ${acm_installed_namespace} -o=jsonpath='{.items[*].metadata.name}')
+oc patch deployment ${DEPLOYMENT} -n ${acm_installed_namespace} -p "{\"spec\":{\"template\":{\"spec\":{\"containers\":[{\"name\":\"${COMPONENT}\",\"imagePullPolicy\":\"Always\",\"image\":\"${DOCKER_URI}/${COMPONENT}:${VERSION_TAG}\"}]}}}}"
 
-managedclusters=`oc get managedcluster -o=jsonpath='{.items[*].metadata.name}'`
-for managedcluster in $managedclusters
-do
-    oc annotate klusterletaddonconfig -n $managedcluster $managedcluster klusterletaddonconfig-pause=true --overwrite=true
-    oc patch manifestwork -n $managedcluster $managedcluster-klusterlet-addon-iampolicyctrl --type='json' -p=`cat $DIR/patches/iampolicyctrl` || true
-    oc patch manifestwork -n $managedcluster $managedcluster-klusterlet-addon-certpolicyctrl --type='json' -p=`cat $DIR/patches/certpolicyctrl` || true
-    oc patch manifestwork -n $managedcluster $managedcluster-klusterlet-addon-policyctrl --type='json' -p=`cat $DIR/patches/policyctrl` || true
+# Patch the API on the hub
+COMPONENT="grc-ui-api"
+LABEL="component=ocm-grcuiapi"
+DEPLOYMENT=$(oc get deployment -l ${LABEL} -n ${acm_installed_namespace} -o=jsonpath='{.items[*].metadata.name}')
+oc patch deployment ${DEPLOYMENT} -n ${acm_installed_namespace} -p "{\"spec\":{\"template\":{\"spec\":{\"containers\":[{\"name\":\"${COMPONENT}\",\"imagePullPolicy\":\"Always\",\"image\":\"${DOCKER_URI}/${COMPONENT}:${VERSION_TAG}\"}]}}}}"
+
+# Patch the propagator on the hub
+COMPONENT="governance-policy-propagator"
+LABEL="component=ocm-policy-propagator"
+DEPLOYMENT=$(oc get deployment -l ${LABEL} -n ${acm_installed_namespace} -o=jsonpath='{.items[*].metadata.name}')
+oc patch deployment ${DEPLOYMENT} -n ${acm_installed_namespace} -p "{\"spec\":{\"template\":{\"spec\":{\"containers\":[{\"name\":\"${COMPONENT}\",\"imagePullPolicy\":\"Always\",\"image\":\"${DOCKER_URI}/${COMPONENT}:${VERSION_TAG}\"}]}}}}"
+
+# Patch the addon-controller on the hub
+COMPONENT="governance-policy-addon-controller"
+LABEL="component=ocm-policy-addon-ctrl"
+DEPLOYMENT=$(oc get deployment -l ${LABEL} -n ${acm_installed_namespace} -o=jsonpath='{.items[*].metadata.name}')
+oc patch deployment ${DEPLOYMENT} -n ${acm_installed_namespace} -p "{\"spec\":{\"template\":{\"spec\":{\"containers\":[{\"name\":\"manager\",\"imagePullPolicy\":\"Always\",\"image\":\"${DOCKER_URI}/${COMPONENT}:${VERSION_TAG}\"}]}}}}"
+
+# Patch the addon-controller envs
+CONTAINERS=(cert-policy-controller config-policy-controller iam-policy-controller governance-policy-spec-sync governance-policy-status-sync governance-policy-template-sync)
+for CONTAINER in ${CONTAINERS[@]}; do
+  IMAGE_NAME=$(echo $CONTAINER | tr 'a-z' 'A-Z' | tr '-' '_')_IMAGE
+  echo $IMAGE_NAME
+  oc set env deployment/${DEPLOYMENT} -n ${acm_installed_namespace} ${IMAGE_NAME}=${DOCKER_URI}/${CONTAINER}:${VERSION_TAG}
 done
+
+# Patch managed cluster components
+echo "* Patching managed clusters to ${VERSION_TAG}"
+MANAGED_CLUSTERS=$(oc get managedcluster -o=jsonpath='{.items[*].metadata.name}')
+
+ADDON_COMPONENTS=(cert-policy-controller config-policy-controller iam-policy-controller governance-policy-framework)
+for MANAGED_CLUSTER in ${MANAGED_CLUSTERS}; do      
+    FOUND="false"
+    while [[ "${FOUND}" == "false" ]]; do
+      echo "* Wait for manifestwork on ${MANAGED_CLUSTER}:"
+      FOUND="true"
+      for COMPONENT in ${ADDON_COMPONENTS[@]}; do
+        if (! oc get manifestwork -n ${MANAGED_CLUSTER} addon-${COMPONENT}-deploy); then
+          FOUND="false"
+        fi
+      done
+      sleep 5
+    done
+    # Patch imagePullPolicy
+    for COMPONENT in ${ADDON_COMPONENTS[@]}; do
+      echo "* Patch imagePullPolicy for ${COMPONENT}"
+      oc annotate ManagedClusterAddOn ${COMPONENT} -n ${MANAGED_CLUSTER} --overwrite addon.open-cluster-management.io/values={\"global\":{\"imagePullPolicy\":\"Always\"}}  
+    done
+done
+
+
+
+echo "* Deleting pods and waiting for restart"
+oc delete pod -l app=grc -A
+oc delete pod -l app=governance-policy-framework -A
+oc delete pod -l app=config-policy-controller -A
+oc delete pod -l app=iam-policy-controller -A
+oc delete pod -l app=cert-policy-controller -A
+
+./build/wait_for.sh pod -l app=grc -A
+./build/wait_for.sh pod -l app=governance-policy-framework -A
+./build/wait_for.sh pod -l app=config-policy-controller -A
+./build/wait_for.sh pod -l app=iam-policy-controller -A
+./build/wait_for.sh pod -l app=cert-policy-controller -A
