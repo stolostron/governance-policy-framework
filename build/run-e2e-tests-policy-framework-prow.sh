@@ -35,7 +35,7 @@ echo "===== E2E Test ====="
 echo "* Launching grc policy framework test"
 for TEST_SUITE in integration policy-collection; do
   # Run test suite with reporting
-  CGO_ENABLED=0 ginkgo -v --no-color --slow-spec-threshold=10s --junit-report=${TEST_SUITE}.xml --output-dir=test-output test/${TEST_SUITE} -- -cluster_namespace=$MANAGED_CLUSTER_NAME || EXIT_CODE=$?
+  CGO_ENABLED=0 ginkgo -v --no-color --fail-fast --junit-report=${TEST_SUITE}.xml --output-dir=test-output test/${TEST_SUITE} -- -cluster_namespace=$MANAGED_CLUSTER_NAME || EXIT_CODE=$?
 
   # Remove "[It] " from report to prevent corrupting bracketed metadata
   if [ -f test-output/${TEST_SUITE}.xml ]; then
