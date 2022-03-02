@@ -55,42 +55,6 @@ var _ = Describe("", func() {
 	const GKAssignMetadataPolicyName = "policy-gatekeeper-annotation-owner"
 
 	Describe("RHACM4K-1692 GRC: [P1][Sev1][policy-grc] Test installing gatekeeper operator", func() {
-		It("Clean up before all", func() {
-			By("checking if openshift-gatekeeper-operator ns exists")
-			_, err := clientManaged.CoreV1().Namespaces().Get(context.TODO(), "openshift-gatekeeper-operator", metav1.GetOptions{})
-			if err == nil || !errors.IsNotFound(err) {
-				utils.KubectlWithOutput("delete", "-f", GKAssignMetadataPolicyYaml, "-n", userNamespace, "--kubeconfig="+kubeconfigHub)
-				Eventually(func() interface{} {
-					managedPlc := utils.GetWithTimeout(clientManagedDynamic, common.GvrPolicy, userNamespace+"."+GKAssignMetadataPolicyName, clusterNamespace, false, defaultTimeoutSeconds)
-					return managedPlc
-				}, defaultTimeoutSeconds, 1).Should(BeNil())
-				utils.KubectlWithOutput("delete", "-f", GKAssignPolicyYaml, "-n", userNamespace, "--kubeconfig="+kubeconfigHub)
-				Eventually(func() interface{} {
-					managedPlc := utils.GetWithTimeout(clientManagedDynamic, common.GvrPolicy, userNamespace+"."+GKAssignPolicyName, clusterNamespace, false, defaultTimeoutSeconds)
-					return managedPlc
-				}, defaultTimeoutSeconds, 1).Should(BeNil())
-				utils.KubectlWithOutput("delete", "-f", "../resources/gatekeeper/pod-mutation.yaml", "-n", "e2etestsuccess", "--kubeconfig="+kubeconfigManaged)
-				utils.KubectlWithOutput("delete", "-f", GKPolicyYaml, "-n", userNamespace, "--kubeconfig="+kubeconfigHub)
-				Eventually(func() interface{} {
-					managedPlc := utils.GetWithTimeout(clientManagedDynamic, common.GvrPolicy, userNamespace+"."+GKPolicyName, clusterNamespace, false, defaultTimeoutSeconds)
-					return managedPlc
-				}, defaultTimeoutSeconds, 1).Should(BeNil())
-				utils.KubectlWithOutput("delete", "ns", "e2etestsuccess", "--kubeconfig="+kubeconfigManaged)
-				utils.KubectlWithOutput("delete", "ns", "e2etestfail", "--kubeconfig="+kubeconfigManaged)
-				By("namespace openshift-gatekeeper-operator exists, cleaning up...")
-				utils.KubectlWithOutput("delete", "-f", gatekeeperPolicyURL, "-n", userNamespace, "--kubeconfig="+kubeconfigHub)
-				Eventually(func() interface{} {
-					managedPlc := utils.GetWithTimeout(clientManagedDynamic, common.GvrPolicy, userNamespace+"."+gatekeeperPolicyName, clusterNamespace, false, defaultTimeoutSeconds)
-					return managedPlc
-				}, defaultTimeoutSeconds, 1).Should(BeNil())
-				utils.KubectlWithOutput("delete", "-n", "openshift-gatekeeper-operator", "Gatekeeper", "gatekeeper", "--kubeconfig="+kubeconfigManaged)
-				utils.KubectlWithOutput("delete", "-n", "openshift-gatekeeper-operator", "subscriptions.operators.coreos.com", "gatekeeper-operator-sub", "--kubeconfig="+kubeconfigManaged)
-				utils.KubectlWithOutput("delete", "-n", "openshift-gatekeeper-operator", "OperatorGroup", "gatekeeper-operator", "--kubeconfig="+kubeconfigManaged)
-				utils.KubectlWithOutput("delete", "crd", "gatekeepers.operator.gatekeeper.sh", "--kubeconfig="+kubeconfigManaged)
-				out, _ := utils.KubectlWithOutput("delete", "ns", "openshift-gatekeeper-operator", "--kubeconfig="+kubeconfigManaged)
-				Expect(out).To(ContainSubstring("namespace \"openshift-gatekeeper-operator\" deleted"))
-			}
-		})
 		It("community/policy-gatekeeper-operator should be created on hub", func() {
 			By("Creating policy on hub")
 			utils.KubectlWithOutput("apply", "-f", gatekeeperPolicyURL, "-n", userNamespace, "--kubeconfig="+kubeconfigHub)
