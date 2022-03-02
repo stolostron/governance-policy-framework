@@ -231,9 +231,9 @@ e2e-dependencies:
 
 e2e-test:
 	@if [ -z "$(TEST_FILE)" ]; then\
-		$(GOPATH)/bin/ginkgo -v $(TEST_ARGS) --fail-fast test/e2e;\
+		$(GOPATH)/bin/ginkgo -v --no-color $(TEST_ARGS) --fail-fast test/e2e;\
 	else\
-		$(GOPATH)/bin/ginkgo -v $(TEST_ARGS) --fail-fast --focus-file=$(TEST_FILE) test/e2e;\
+		$(GOPATH)/bin/ginkgo -v --no-color $(TEST_ARGS) --fail-fast --focus-file=$(TEST_FILE) test/e2e;\
 	fi
 
 e2e-debug: e2e-debug-hub e2e-debug-managed
