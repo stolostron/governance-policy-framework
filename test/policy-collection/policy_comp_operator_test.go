@@ -52,7 +52,7 @@ func canCreateOpenshiftNamespaces() bool {
 	// A server-side dry run will check the admission webhooks, but it needs to use the right
 	// serviceaccount because the kubeconfig might have superuser privileges to get around them.
 	out, _ := utils.KubectlWithOutput("create", "ns", "openshift-grc-test", "--kubeconfig="+kubeconfigManaged,
-		"--dry-run=server", "--as=system:serviceaccount:open-cluster-management-agent-addon:klusterlet-addon-policyctrl")
+		"--dry-run=server", "--as=system:serviceaccount:open-cluster-management-agent-addon:config-policy-controller-sa")
 	if strings.Contains(out, "namespace/openshift-grc-test created") {
 		canCreateOpenshiftNamespacesResult = true
 	}
