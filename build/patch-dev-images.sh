@@ -39,7 +39,6 @@ oc patch deployment ${DEPLOYMENT} -n ${acm_installed_namespace} -p "{\"spec\":{\
 CONTAINERS=(cert-policy-controller config-policy-controller iam-policy-controller governance-policy-spec-sync governance-policy-status-sync governance-policy-template-sync)
 for CONTAINER in ${CONTAINERS[@]}; do
   IMAGE_NAME=$(echo $CONTAINER | tr 'a-z' 'A-Z' | tr '-' '_')_IMAGE
-  echo $IMAGE_NAME
   oc set env deployment/${DEPLOYMENT} -n ${acm_installed_namespace} ${IMAGE_NAME}=${DOCKER_URI}/${CONTAINER}:${VERSION_TAG}
 done
 
