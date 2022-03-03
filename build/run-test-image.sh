@@ -12,9 +12,11 @@ for TEST_SUITE in integration policy-collection; do
   # Run test suite with reporting
   CGO_ENABLED=0 ginkgo -v ${GINKGO_FAIL_FAST} --junit-report=${TEST_SUITE}.xml --output-dir=test-output test/${TEST_SUITE} -- -cluster_namespace=$MANAGED_CLUSTER_NAME || EXIT_CODE=$?
 
-  # Remove "[It] " from report to prevent corrupting bracketed metadata
+  # Remove Gingko phases from report to prevent corrupting bracketed metadata
   if [ -f test-output/${TEST_SUITE}.xml ]; then
     sed -i 's/\[It\] *//g' test-output/${TEST_SUITE}.xml
+    sed -i 's/\[BeforeSuite\]/GRC: [P1][Sev1][policy-grc] BeforeSuite/g' test-output/${TEST_SUITE}.xml
+    sed -i 's/\[AfterSuite\]/GRC: [P1][Sev1][policy-grc] AfterSuite/g' test-output/${TEST_SUITE}.xml
   fi
 
   # Collect exit code if it's an error
