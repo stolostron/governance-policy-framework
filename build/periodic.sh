@@ -7,18 +7,22 @@ CHECK_RELEASES="2.3 2.4 2.5"
 
 # Clone the repositories needed for this script to work
 cloneRepos() {
-	if [ ! -d "pipeline" ]; then
-		git clone https://${GITHUB_USER}:${GITHUB_TOKEN}@github.com/$COMPONENT_ORG/policy-grc-squad.git
+	if [ ! -d "policy-grc-squad" ]; then
+		echo "Cloning policy-grc-squad ..."
+		git clone --quiet https://${GITHUB_USER}:${GITHUB_TOKEN}@github.com/$COMPONENT_ORG/policy-grc-squad.git
 	fi
-	# Only clone pipeline if it doesn't already exist.
 	if [ ! -d "pipeline" ]; then
-		git clone https://${GITHUB_USER}:${GITHUB_TOKEN}@github.com/$COMPONENT_ORG/pipeline.git
+		echo "Cloning pipeline ..."
+		git clone --quiet https://${GITHUB_USER}:${GITHUB_TOKEN}@github.com/$COMPONENT_ORG/pipeline.git
 	fi
-	REPOS=$(cat policy-grc-squad/main-branch-sync/repo.txt | grep policy | grep -v framework)
-	for repo in $REPOS; do
-		printf '%s\n' "Updating $repo ...."
-		git clone https://github.com/$repo.git $repo
-	done
+	if [ ! -d "${COMPONENT_ORG}" ]; then
+		# Collect repos from https://github.com/stolostron/policy-grc-squad/blob/master/main-branch-sync/repo.txt
+		REPOS=$(cat policy-grc-squad/main-branch-sync/repo.txt)
+		for repo in $REPOS; do
+			echo "Cloning $repo ...."
+			git clone --quiet https://github.com/$repo.git $repo
+		done
+	fi
 }
 
 # return the most recent git sha for a repository's release branch
@@ -26,7 +30,7 @@ getGitSha() {
 	component=$1
 	release=release-$2
 	cd $COMPONENT_ORG/$component
-	co=`git checkout $release`
+	co=`git checkout --quiet $release`
 	GITSHA=`git log -n 1 --no-decorate --pretty=oneline | awk '{print $1}'`
 	echo "$GITSHA"
 	cd $BASEDIR
@@ -38,7 +42,7 @@ getPipelineValue() {
 	key="$3"
 
 	cd pipeline
-	co=$(git checkout "$release")
+	co=$(git checkout --quiet "$release")
 	value=`jq '.[] |select(.["image-name"] == "'$component'") | .["'$key'"]' manifest.json | sed 's/"//g'`
 	echo "$value"
 	cd $BASEDIR
