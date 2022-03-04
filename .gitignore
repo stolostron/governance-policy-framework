@@ -12,3 +12,6 @@ test/policy-collection/debug.test
 .go
 bin/
 vendor/
+
+# Log files from build/periodic.sh
+errors.log

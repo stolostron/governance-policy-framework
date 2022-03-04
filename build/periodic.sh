@@ -7,18 +7,22 @@ CHECK_RELEASES="2.3 2.4 2.5"
 
 # Clone the repositories needed for this script to work
 cloneRepos() {
-	if [ ! -d "pipeline" ]; then
-		git clone https://${GITHUB_USER}:${GITHUB_TOKEN}@github.com/$COMPONENT_ORG/policy-grc-squad.git
+	if [ ! -d "policy-grc-squad" ]; then
+		echo "Cloning policy-grc-squad ..."
+		git clone --quiet https://${GITHUB_USER}:${GITHUB_TOKEN}@github.com/$COMPONENT_ORG/policy-grc-squad.git
 	fi
-	# Only clone pipeline if it doesn't already exist.
 	if [ ! -d "pipeline" ]; then
-		git clone https://${GITHUB_USER}:${GITHUB_TOKEN}@github.com/$COMPONENT_ORG/pipeline.git
+		echo "Cloning pipeline ..."
+		git clone --quiet https://${GITHUB_USER}:${GITHUB_TOKEN}@github.com/$COMPONENT_ORG/pipeline.git
 	fi
-	REPOS=$(cat policy-grc-squad/main-branch-sync/repo.txt | grep policy | grep -v framework)
-	for repo in $REPOS; do
-		printf '%s\n' "Updating $repo ...."
-		git clone https://github.com/$repo.git $repo
-	done
+	if [ ! -d "${COMPONENT_ORG}" ]; then
+		# Collect repos from https://github.com/stolostron/policy-grc-squad/blob/master/main-branch-sync/repo.txt
+		REPOS=$(cat policy-grc-squad/main-branch-sync/repo.txt)
+		for repo in $REPOS; do
+			echo "Cloning $repo ...."
+			git clone --quiet https://github.com/$repo.git $repo
+		done
+	fi
 }
 
 # return the most recent git sha for a repository's release branch
@@ -26,7 +30,7 @@ getGitSha() {
 	component=$1
 	release=release-$2
 	cd $COMPONENT_ORG/$component
-	co=`git checkout $release`
+	co=`git checkout --quiet $release`
 	GITSHA=`git log -n 1 --no-decorate --pretty=oneline | awk '{print $1}'`
 	echo "$GITSHA"
 	cd $BASEDIR
@@ -38,7 +42,7 @@ getPipelineValue() {
 	key="$3"
 
 	cd pipeline
-	co=$(git checkout "$release")
+	co=$(git checkout --quiet "$release")
 	value=`jq '.[] |select(.["image-name"] == "'$component'") | .["'$key'"]' manifest.json | sed 's/"//g'`
 	echo "$value"
 	cd $BASEDIR
@@ -50,19 +54,28 @@ checkProwJob() {
 
 	rcode=0
 	# This is a hack to get data from the openshift ci prow
-	# sample curl: curl -H "content-type: application/xml" https://prow.ci.openshift.org/job-history/gs/origin-ci-test/logs/branch-ci-open-cluster-management-iam-policy-controller-release-2.5-publish
-        # which contains this:   var allBuilds = [{"SpyglassLink":"/view/gs/origin-ci-test/logs/branch-ci-open-cluster-management-iam-policy-controller-release-2.5-publish/1468625788839399424","ID":"1468625788839399424","Started":"2021-12-08T16:57:31Z","Duration":103000000000,"Result":"FAILURE","Refs":{"org":"open-cluster-management","repo":"iam-policy-controller","repo_link":"https://github.com/open-cluster-management/iam-policy-controller","base_ref":"release-2.5","base_sha":"567b3597e8324a4c56ec8f1d717ae15d9671e4a8","base_link":"https://github.com/open-cluster-management/iam-policy-controller/compare/d544db4214b4...567b3597e832"}}];
-	echo "Checking prow jobs for a failure with component $component."
+	# sample curl: 
+	# 	curl -H "content-type: application/xml" https://prow.ci.openshift.org/job-history/gs/origin-ci-test/logs/branch-ci-open-cluster-management-iam-policy-controller-release-2.5-publish
+				# which contains this:
+				# var allBuilds = [
+				# 	{"SpyglassLink":"/view/gs/origin-ci-test/logs/branch-ci-open-cluster-management-iam-policy-controller-release-2.5-publish/1468625788839399424",
+				# 	 "ID":"1468625788839399424","Started":"2021-12-08T16:57:31Z","Duration":103000000000,"Result":"FAILURE",
+				# 	 "Refs":
+				# 		{"org":"open-cluster-management","repo":"iam-policy-controller",
+				# 		 "repo_link":"https://github.com/open-cluster-management/iam-policy-controller",
+				# 		 "base_ref":"release-2.5","base_sha":"567b3597e8324a4c56ec8f1d717ae15d9671e4a8",
+				# 		 "base_link":"https://github.com/open-cluster-management/iam-policy-controller/compare/d544db4214b4...567b3597e832"
+				# 		}}];
 	jobs="publish images latest-image-mirror"
 	for job in $jobs; do
 		OUTPUT=$(curl -s https://prow.ci.openshift.org/job-history/gs/origin-ci-test/logs/branch-ci-${COMPONENT_ORG}-${component}-release-${release}-${job})
 		JSON=$(echo "$OUTPUT" | grep "var allBuilds" | sed 's/  var allBuilds =//' | sed 's/;$//' | jq '.[0]')
 		STATUS=$(echo "$JSON" | jq '.Result')
 		if [ "$STATUS" = \"FAILURE\" ]; then
-			echo "****"
-			echo "ERROR: Prow job failure: $repo $release."
 			LINK=https://prow.ci.openshift.org$(echo "$JSON" | jq '.SpyglassLink' | sed 's/"//g')
-			echo "   Link: $LINK"
+			echo "****"
+			echo "ERROR: Prow job failure: $repo $release" | tee -a ${ERROR_FILE}
+			echo "   Link: $LINK" | tee -a ${ERROR_FILE}
 			echo "***"
 			rcode=1
 		fi
@@ -80,57 +93,90 @@ cleanup() {
 BASEDIR=$(pwd)
 rc=0
 
+ARTIFACT_DIR=${ARTIFACT_DIR:-${BASEDIR}}
+ERROR_FILE="${ARTIFACT_DIR}/errors.log"
+
+# Clean up error file if it exists
+if [ -f ${ERROR_FILE} ]; then
+	rm ${ERROR_FILE}
+fi
+
 # Limit repositories to our repositories that create images which means they have prow jobs
 
 cloneRepos
 REPOS=`ls "$COMPONENT_ORG"`
 for repo in $REPOS; do
+	# Special handling if repo name differs from image name or repo has more than one image
+	case $repo in
+		governance-policy-framework)
+			IMAGES="grc-policy-framework-tests";;
+		grc-ui)
+			IMAGES="$repo $repo-tests";;
+		*)
+			IMAGES=$repo;;
+	esac
 	for release in $CHECK_RELEASES; do
-
-		# for each release check the SHA, and image
-		gitsha=$(getGitSha "$repo" "$release")
-		imagetag=$(getPipelineValue "$repo" "$release" "image-tag")
-		pipelinesha=$(getPipelineValue "$repo" "$release" "git-sha256")
-
-		if [ -z "$pipelinesha" ]; then
-			echo "****"
-			echo "WARN: Pipeline SHA not found for $repo $release repository. Continuing."
-			echo "***"
-		elif [ "$gitsha" != "$pipelinesha" ]; then
-			echo "****"
-			echo "ERROR: SHA mismatch in pipeline and $repo $release repositories."
-        		echo "   pipeline: $pipelinesha"
-        		echo "   $repo: $gitsha"
-			echo "***"
-    	rc=1
-		fi
-
-		# make sure the quay image is available (only if we found it in pipeline)
-		if [ -n "$imagetag" ]; then
-			QUAY_RESPONSE=$(curl -s "https://quay.io/api/v1/repository/${COMPONENT_ORG}/${repo}/tag/?onlyActiveTags=true&specificTag=${imagetag}")
-			QUAY_STATUS=$(echo "${QUAY_RESPONSE}" | jq -r '.error_message')
-			FOUND=$(echo "${QUAY_RESPONSE}" | jq '.tags | length')
-			if [ "${QUAY_STATUS}" != "null" ]; then
-				echo "****"
-				echo "ERROR: Received error message '${QUAY_STATUS}' querying image in quay: $repo:${imagetag}"
-				echo "***"
-				rc=1
-			elif [ "${FOUND}" != "1" ]; then
-				echo "****"
-				echo "ERROR: Tag not found for image in quay: $repo:${imagetag}"
-				echo "***"
-				rc=1
-			fi
-		fi
-
+		echo "Checking for failures with component $repo $release ..."
 		# check the prow job history
 		checkProwJob "$repo" "$release"
 		if [ $? -eq 1 ]; then
 			rc=1
 		fi
+
+		# for each release and each image name, check the Git SHA
+		gitsha=$(getGitSha "$repo" "$release")
+		for imageName in ${IMAGES}; do
+			pipelinesha=$(getPipelineValue "$imageName" "$release" "git-sha256")
+
+			if [ -z "$pipelinesha" ]; then
+				echo "WARN: Pipeline SHA not found for $repo $release repository for $imageName. Continuing."
+			elif [ "$gitsha" != "$pipelinesha" ]; then
+				echo "****"
+				echo "ERROR: SHA mismatch in pipeline and $repo $release repositories." | tee -a ${ERROR_FILE}
+							echo "   imageName: $imageName" | tee -a ${ERROR_FILE}
+							echo "   pipeline: $pipelinesha" | tee -a ${ERROR_FILE}
+							echo "   $repo: $gitsha" | tee -a ${ERROR_FILE}
+				echo "***"
+				rc=1
+			fi
+		done
+
+		# for each release and each image name, check the tag in Quay
+		for imageName in ${IMAGES}; do
+			imagetag=$(getPipelineValue "$imageName" "$release" "image-tag")
+			# make sure the quay image is available (only if we found it in pipeline)
+			if [ -n "$imagetag" ]; then
+				QUAY_RESPONSE=$(curl -s "https://quay.io/api/v1/repository/${COMPONENT_ORG}/${imageName}/tag/?onlyActiveTags=true&specificTag=${imagetag}")
+				QUAY_STATUS=$(echo "${QUAY_RESPONSE}" | jq -r '.error_message')
+				FOUND=$(echo "${QUAY_RESPONSE}" | jq '.tags | length')
+				if [ "${QUAY_STATUS}" != "null" ]; then
+					echo "****"
+					echo "ERROR: Error '${QUAY_STATUS}' querying $repo $release image in quay: $imageName:${imagetag}" | tee -a ${ERROR_FILE}
+					echo "***"
+					rc=1
+				elif [ "${FOUND}" != "1" ]; then
+					echo "****"
+					echo "ERROR: Tag not found for image in quay: $repo:${imagetag}" | tee -a ${ERROR_FILE}
+					echo "***"
+					rc=1
+				fi
+			fi
+		done
 	done
 done
 
 cleanup
+
+echo ""
+echo "****"
+echo "PROW STATUS REPORT:"
+echo "***"
+if [ -f ${ERROR_FILE} ]; then
+	# Print the error log to stdout with duplicate lines removed
+	awk '!a[$0]++' ${ERROR_FILE}
+else
+	echo "All checks PASSED!"
+fi
+echo "***"
 
 exit $rc
