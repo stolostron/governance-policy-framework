@@ -63,10 +63,10 @@ checkProwJob() {
 		JSON=$(echo "$OUTPUT" | grep "var allBuilds" | sed 's/  var allBuilds =//' | sed 's/;$//' | jq '.[0]')
 		STATUS=$(echo "$JSON" | jq '.Result')
 		if [ "$STATUS" = \"FAILURE\" ]; then
-			echo "****"
-			echo "ERROR: Prow job failure: $repo $release."
 			LINK=https://prow.ci.openshift.org$(echo "$JSON" | jq '.SpyglassLink' | sed 's/"//g')
-			echo "   Link: $LINK"
+			echo "****"
+			echo "ERROR: Prow job failure: $repo $release" | tee -a ${ERROR_FILE}
+			echo "   Link: $LINK" | tee -a ${ERROR_FILE}
 			echo "***"
 			rcode=1
 		fi
@@ -83,6 +83,14 @@ cleanup() {
 
 BASEDIR=$(pwd)
 rc=0
+
+ARTIFACT_DIR=${ARTIFACT_DIR:-${BASEDIR}}
+ERROR_FILE="${ARTIFACT_DIR}/errors.log"
+
+# Clean up error file if it exists
+if [ -f ${ERROR_FILE} ]; then
+	rm ${ERROR_FILE}
+fi
 
 # Limit repositories to our repositories that create images which means they have prow jobs
 
@@ -102,12 +110,11 @@ for repo in $REPOS; do
 			echo "***"
 		elif [ "$gitsha" != "$pipelinesha" ]; then
 			echo "****"
-			echo "ERROR: SHA mismatch in pipeline and $repo $release repositories."
-        		echo "   pipeline: $pipelinesha"
-        		echo "   $repo: $gitsha"
-			echo "***"
-    	rc=1
-		fi
+				echo "ERROR: SHA mismatch in pipeline and $repo $release repositories." | tee -a ${ERROR_FILE}
+							echo "   imageName: $imageName" | tee -a ${ERROR_FILE}
+							echo "   pipeline: $pipelinesha" | tee -a ${ERROR_FILE}
+							echo "   $repo: $gitsha" | tee -a ${ERROR_FILE}
+				echo "***"
 
 		# make sure the quay image is available (only if we found it in pipeline)
 		if [ -n "$imagetag" ]; then
@@ -116,16 +123,10 @@ for repo in $REPOS; do
 			FOUND=$(echo "${QUAY_RESPONSE}" | jq '.tags | length')
 			if [ "${QUAY_STATUS}" != "null" ]; then
 				echo "****"
-				echo "ERROR: Received error message '${QUAY_STATUS}' querying image in quay: $repo:${imagetag}"
-				echo "***"
-				rc=1
-			elif [ "${FOUND}" != "1" ]; then
-				echo "****"
-				echo "ERROR: Tag not found for image in quay: $repo:${imagetag}"
-				echo "***"
-				rc=1
-			fi
-		fi
+					echo "ERROR: Error '${QUAY_STATUS}' querying $repo $release image in quay: $imageName:${imagetag}" | tee -a ${ERROR_FILE}
+					echo "***"
+					echo "ERROR: Tag not found for image in quay: $repo:${imagetag}" | tee -a ${ERROR_FILE}
+					echo "***"
 
 		# check the prow job history
 		checkProwJob "$repo" "$release"
@@ -136,5 +137,17 @@ for repo in $REPOS; do
 done
 
 cleanup
+
+echo ""
+echo "****"
+echo "PROW STATUS REPORT:"
+echo "****"
+if [ -f ${ERROR_FILE} ]; then
+	# Print the error log to stdout with duplicate lines removed
+	awk '!a[$0]++' ${ERROR_FILE}
+else
+	echo "All checks PASSED!"
+fi
+echo "****"
 
 exit $rc
