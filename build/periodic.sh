@@ -97,42 +97,62 @@ fi
 cloneRepos
 REPOS=`ls "$COMPONENT_ORG"`
 for repo in $REPOS; do
+	# Special handling if repo name differs from image name or repo has more than one image
+	case $repo in
+		governance-policy-framework)
+			IMAGES="grc-policy-framework-tests";;
+		grc-ui)
+			IMAGES="$repo $repo-tests";;
+		*)
+			IMAGES=$repo;;
+	esac
 	for release in $CHECK_RELEASES; do
-
-		# for each release check the SHA, and image
-		gitsha=$(getGitSha "$repo" "$release")
-		imagetag=$(getPipelineValue "$repo" "$release" "image-tag")
-		pipelinesha=$(getPipelineValue "$repo" "$release" "git-sha256")
-
-		if [ -z "$pipelinesha" ]; then
-			echo "****"
-			echo "WARN: Pipeline SHA not found for $repo $release repository. Continuing."
-			echo "***"
-		elif [ "$gitsha" != "$pipelinesha" ]; then
-			echo "****"
-				echo "ERROR: SHA mismatch in pipeline and $repo $release repositories." | tee -a ${ERROR_FILE}
-							echo "   imageName: $imageName" | tee -a ${ERROR_FILE}
-							echo "   pipeline: $pipelinesha" | tee -a ${ERROR_FILE}
-							echo "   $repo: $gitsha" | tee -a ${ERROR_FILE}
-				echo "***"
-
-		# make sure the quay image is available (only if we found it in pipeline)
-		if [ -n "$imagetag" ]; then
-			QUAY_RESPONSE=$(curl -s "https://quay.io/api/v1/repository/${COMPONENT_ORG}/${repo}/tag/?onlyActiveTags=true&specificTag=${imagetag}")
-			QUAY_STATUS=$(echo "${QUAY_RESPONSE}" | jq -r '.error_message')
-			FOUND=$(echo "${QUAY_RESPONSE}" | jq '.tags | length')
-			if [ "${QUAY_STATUS}" != "null" ]; then
-				echo "****"
-					echo "ERROR: Error '${QUAY_STATUS}' querying $repo $release image in quay: $imageName:${imagetag}" | tee -a ${ERROR_FILE}
-					echo "***"
-					echo "ERROR: Tag not found for image in quay: $repo:${imagetag}" | tee -a ${ERROR_FILE}
-					echo "***"
-
+		echo "Checking for failures with component $component $release ..."
 		# check the prow job history
 		checkProwJob "$repo" "$release"
 		if [ $? -eq 1 ]; then
 			rc=1
 		fi
+
+		# for each release and each image name, check the Git SHA
+		gitsha=$(getGitSha "$repo" "$release")
+		for imageName in ${IMAGES}; do
+			pipelinesha=$(getPipelineValue "$imageName" "$release" "git-sha256")
+
+			if [ -z "$pipelinesha" ]; then
+				echo "WARN: Pipeline SHA not found for $repo $release repository for $imageName. Continuing."
+			elif [ "$gitsha" != "$pipelinesha" ]; then
+				echo "****"
+				echo "ERROR: SHA mismatch in pipeline and $repo $release repositories." | tee -a ${ERROR_FILE}
+							echo "   imageName: $imageName" | tee -a ${ERROR_FILE}
+							echo "   pipeline: $pipelinesha" | tee -a ${ERROR_FILE}
+							echo "   $repo: $gitsha" | tee -a ${ERROR_FILE}
+				echo "***"
+				rc=1
+			fi
+		done
+
+		# for each release and each image name, check the tag in Quay
+		for imageName in ${IMAGES}; do
+			imagetag=$(getPipelineValue "$imageName" "$release" "image-tag")
+			# make sure the quay image is available (only if we found it in pipeline)
+			if [ -n "$imagetag" ]; then
+				QUAY_RESPONSE=$(curl -s "https://quay.io/api/v1/repository/${COMPONENT_ORG}/${imageName}/tag/?onlyActiveTags=true&specificTag=${imagetag}")
+				QUAY_STATUS=$(echo "${QUAY_RESPONSE}" | jq -r '.error_message')
+				FOUND=$(echo "${QUAY_RESPONSE}" | jq '.tags | length')
+				if [ "${QUAY_STATUS}" != "null" ]; then
+					echo "****"
+					echo "ERROR: Error '${QUAY_STATUS}' querying $repo $release image in quay: $imageName:${imagetag}" | tee -a ${ERROR_FILE}
+					echo "***"
+					rc=1
+				elif [ "${FOUND}" != "1" ]; then
+					echo "****"
+					echo "ERROR: Tag not found for image in quay: $repo:${imagetag}" | tee -a ${ERROR_FILE}
+					echo "***"
+					rc=1
+				fi
+			fi
+		done
 	done
 done
 
