@@ -54,9 +54,18 @@ checkProwJob() {
 
 	rcode=0
 	# This is a hack to get data from the openshift ci prow
-	# sample curl: curl -H "content-type: application/xml" https://prow.ci.openshift.org/job-history/gs/origin-ci-test/logs/branch-ci-open-cluster-management-iam-policy-controller-release-2.5-publish
-        # which contains this:   var allBuilds = [{"SpyglassLink":"/view/gs/origin-ci-test/logs/branch-ci-open-cluster-management-iam-policy-controller-release-2.5-publish/1468625788839399424","ID":"1468625788839399424","Started":"2021-12-08T16:57:31Z","Duration":103000000000,"Result":"FAILURE","Refs":{"org":"open-cluster-management","repo":"iam-policy-controller","repo_link":"https://github.com/open-cluster-management/iam-policy-controller","base_ref":"release-2.5","base_sha":"567b3597e8324a4c56ec8f1d717ae15d9671e4a8","base_link":"https://github.com/open-cluster-management/iam-policy-controller/compare/d544db4214b4...567b3597e832"}}];
-	echo "Checking prow jobs for a failure with component $component."
+	# sample curl: 
+	# 	curl -H "content-type: application/xml" https://prow.ci.openshift.org/job-history/gs/origin-ci-test/logs/branch-ci-open-cluster-management-iam-policy-controller-release-2.5-publish
+				# which contains this:
+				# var allBuilds = [
+				# 	{"SpyglassLink":"/view/gs/origin-ci-test/logs/branch-ci-open-cluster-management-iam-policy-controller-release-2.5-publish/1468625788839399424",
+				# 	 "ID":"1468625788839399424","Started":"2021-12-08T16:57:31Z","Duration":103000000000,"Result":"FAILURE",
+				# 	 "Refs":
+				# 		{"org":"open-cluster-management","repo":"iam-policy-controller",
+				# 		 "repo_link":"https://github.com/open-cluster-management/iam-policy-controller",
+				# 		 "base_ref":"release-2.5","base_sha":"567b3597e8324a4c56ec8f1d717ae15d9671e4a8",
+				# 		 "base_link":"https://github.com/open-cluster-management/iam-policy-controller/compare/d544db4214b4...567b3597e832"
+				# 		}}];
 	jobs="publish images latest-image-mirror"
 	for job in $jobs; do
 		OUTPUT=$(curl -s https://prow.ci.openshift.org/job-history/gs/origin-ci-test/logs/branch-ci-${COMPONENT_ORG}-${component}-release-${release}-${job})
@@ -107,7 +116,7 @@ for repo in $REPOS; do
 			IMAGES=$repo;;
 	esac
 	for release in $CHECK_RELEASES; do
-		echo "Checking for failures with component $component $release ..."
+		echo "Checking for failures with component $repo $release ..."
 		# check the prow job history
 		checkProwJob "$repo" "$release"
 		if [ $? -eq 1 ]; then
@@ -161,13 +170,13 @@ cleanup
 echo ""
 echo "****"
 echo "PROW STATUS REPORT:"
-echo "****"
+echo "***"
 if [ -f ${ERROR_FILE} ]; then
 	# Print the error log to stdout with duplicate lines removed
 	awk '!a[$0]++' ${ERROR_FILE}
 else
 	echo "All checks PASSED!"
 fi
-echo "****"
+echo "***"
 
 exit $rc
