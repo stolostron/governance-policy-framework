@@ -30,6 +30,9 @@ HUB_CLUSTER_NAME ?= hub
 GINKGO_VERSION := $(shell awk '/github.com\/onsi\/ginkgo\/v2/ {print $$2}' go.mod)
 GOMEGA_VERSION := $(shell awk '/github.com\/onsi\/gomega/ {print $$2}' go.mod)
 
+# Fetch OLM version
+OLM_VERSION ?= $(shell curl -s https://api.github.com/repos/operator-framework/operator-lifecycle-manager/releases/latest | jq -r '.tag_name')
+
 # Debugging configuration
 KIND_COMPONENTS := config-policy-controller cert-policy-controller iam-policy-controller governance-policy-spec-sync governance-policy-status-sync governance-policy-template-sync
 KIND_COMPONENT_SELECTOR := name
@@ -84,7 +87,7 @@ kind-bootstrap-cluster: kind-create-cluster install-crds install-resources kind-
 kind-bootstrap-cluster-dev: kind-create-cluster install-crds install-resources
 
 .PHONY: kind-deploy-policy-controllers
-kind-deploy-policy-controllers: kind-deploy-cert-policy-controller kind-deploy-olm kind-deploy-config-policy-controller kind-deploy-iam-policy-controller
+kind-deploy-policy-controllers: kind-deploy-cert-policy-controller kind-deploy-config-policy-controller kind-deploy-iam-policy-controller kind-deploy-olm
 
 kind-policy-framework-hub-setup:
 	kubectl config use-context kind-$(HUB_CLUSTER_NAME)
@@ -179,9 +182,10 @@ kind-deploy-iam-policy-controller:
 
 kind-deploy-olm:
 	@echo installing OLM on managed
-	kubectl apply -f https://github.com/operator-framework/operator-lifecycle-manager/releases/download/v0.17.0/crds.yaml --kubeconfig=$(PWD)/kubeconfig_$(MANAGED_CLUSTER_NAME)
-	sleep 5
-	kubectl apply -f https://github.com/operator-framework/operator-lifecycle-manager/releases/download/v0.17.0/olm.yaml --kubeconfig=$(PWD)/kubeconfig_$(MANAGED_CLUSTER_NAME)
+	export KUBECONFIG=$(PWD)/kubeconfig_$(MANAGED_CLUSTER_NAME)
+	curl -L https://github.com/operator-framework/operator-lifecycle-manager/releases/download/$(OLM_VERSION)/install.sh -o install.sh
+	chmod +x install.sh
+	./install.sh $(OLM_VERSION)
 
 kind-create-cluster:
 	@echo "creating cluster hub"
