@@ -31,7 +31,8 @@ type k8sJSONPatch struct {
 
 // OCPUser represents an OpenShift user to be created on a cluster.
 type OCPUser struct {
-	ClusterRoles        []string
+	// If a namespace is not provided, a cluster role binding is created instead of a role binding.
+	ClusterRoles        []types.NamespacedName
 	ClusterRoleBindings []string
 	Password            string
 	Username            string
@@ -307,15 +308,20 @@ func addClusterRoleBindings(client kubernetes.Interface, user OCPUser) error {
 	return nil
 }
 
-// addClusterRoles will create cluster role bindings named in the format of `<username>-<role>`,
-// for the user with the desired role. If the cluster role binding already exists by the name, no
-// action will be taken.
+// addClusterRoles will create role bindings/cluster role bindings named in the format of `<username>-<role>`,
+// for the user with the desired cluster role. If no namespace is provided, cluster role bindings will be
+// created instead of a role binding. If the binding already exists by the name, no action will be taken.
 func addClusterRoles(client kubernetes.Interface, user OCPUser) error {
 	for _, role := range user.ClusterRoles {
-		bindingName := user.Username + "-" + role
-		_, err := client.RbacV1().ClusterRoleBindings().Get(
-			context.TODO(), bindingName, metav1.GetOptions{},
-		)
+		bindingName := user.Username + "-" + role.Name
+		var err error
+
+		if role.Namespace == "" {
+			_, err = client.RbacV1().ClusterRoleBindings().Get(context.TODO(), bindingName, metav1.GetOptions{})
+		} else {
+			_, err = client.RbacV1().RoleBindings(role.Namespace).Get(context.TODO(), bindingName, metav1.GetOptions{})
+		}
+
 		if err == nil {
 			// Assume this is correct and skip creating the binding
 			continue
@@ -325,31 +331,41 @@ func addClusterRoles(client kubernetes.Interface, user OCPUser) error {
 			return fmt.Errorf("failed to get the cluster role binding of %s: %w", bindingName, err)
 		}
 
-		binding := rbacv1.ClusterRoleBinding{
-			ObjectMeta: metav1.ObjectMeta{
-				Name: user.Username + "-" + role,
-			},
-			RoleRef: rbacv1.RoleRef{
+		roleRef := rbacv1.RoleRef{
+			APIGroup: "rbac.authorization.k8s.io",
+			Kind:     "ClusterRole",
+			Name:     role.Name,
+		}
+		subjectObjs := []rbacv1.Subject{
+			{
 				APIGroup: "rbac.authorization.k8s.io",
-				Kind:     "ClusterRole",
-				Name:     role,
-			},
-			Subjects: []rbacv1.Subject{
-				{
-					APIGroup: "rbac.authorization.k8s.io",
-					Kind:     "User",
-					Name:     user.Username,
-				},
+				Kind:     "User",
+				Name:     user.Username,
 			},
 		}
-		_, err = client.RbacV1().ClusterRoleBindings().Create(
-			context.TODO(), &binding, metav1.CreateOptions{},
-		)
+
+		if role.Namespace == "" {
+			binding := rbacv1.ClusterRoleBinding{
+				ObjectMeta: metav1.ObjectMeta{Name: bindingName},
+				RoleRef:    roleRef,
+				Subjects:   subjectObjs,
+			}
+			_, err = client.RbacV1().ClusterRoleBindings().Create(
+				context.TODO(), &binding, metav1.CreateOptions{},
+			)
+		} else {
+			binding := rbacv1.RoleBinding{
+				ObjectMeta: metav1.ObjectMeta{Name: bindingName},
+				RoleRef:    roleRef,
+				Subjects:   subjectObjs,
+			}
+			_, err = client.RbacV1().RoleBindings(role.Namespace).Create(
+				context.TODO(), &binding, metav1.CreateOptions{},
+			)
+		}
 
 		if err != nil {
-			return fmt.Errorf(
-				"failed to create the cluster role binding of %s: %w", bindingName, err,
-			)
+			return fmt.Errorf("failed to create the binding of %s: %w", bindingName, err)
 		}
 	}
 
@@ -545,14 +561,19 @@ func removeClusterRoleBindings(client kubernetes.Interface, user OCPUser) error 
 // created in addClusterRoles.
 func removeClusterRoles(client kubernetes.Interface, user OCPUser) error {
 	for _, role := range user.ClusterRoles {
-		bindingName := user.Username + "-" + role
-		err := client.RbacV1().ClusterRoleBindings().Delete(
-			context.TODO(), bindingName, metav1.DeleteOptions{},
-		)
-		if err != nil && !k8serrors.IsNotFound(err) {
-			return fmt.Errorf(
-				"failed to delete the cluster role binding of %s: %w", bindingName, err,
+		bindingName := user.Username + "-" + role.Name
+		var err error
+
+		if role.Namespace == "" {
+			err = client.RbacV1().ClusterRoleBindings().Delete(context.TODO(), bindingName, metav1.DeleteOptions{})
+		} else {
+			err = client.RbacV1().RoleBindings(role.Namespace).Delete(
+				context.TODO(), bindingName, metav1.DeleteOptions{},
 			)
+		}
+
+		if err != nil && !k8serrors.IsNotFound(err) {
+			return fmt.Errorf("failed to delete the binding of %s: %w", bindingName, err)
 		}
 	}
 

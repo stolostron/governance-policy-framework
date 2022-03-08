@@ -16,6 +16,7 @@ import (
 	k8serrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
+	"k8s.io/apimachinery/pkg/types"
 
 	"github.com/stolostron/governance-policy-framework/test/common"
 )
@@ -62,10 +63,15 @@ var _ = Describe("GRC: [P1][Sev1][policy-grc] Test the Policy Generator in an Ap
 	const secret = "grc-e2e-subscription-admin-user"
 	const subAdminBinding = "open-cluster-management:subscription-admin"
 	ocpUser := common.OCPUser{
-		ClusterRoles: []string{"open-cluster-management:admin:local-cluster"},
+		ClusterRoles: []types.NamespacedName{
+			{Name: "open-cluster-management:admin:local-cluster"},
+			{
+				Name:      "admin",
+				Namespace: namespace,
+			},
+		},
 		// To be considered a subscription-admin you must be part of this cluster role binding.
-		// Having the proper role in another cluster role binding does not work. See:
-		// https://github.com/stolostron/multicloud-operators-subscription/blob/release-2.4/pkg/utils/gitrepo.go#L930-L962
+		// Having the proper role in another cluster role binding does not work.
 		ClusterRoleBindings: []string{subAdminBinding},
 		Password:            "",
 		Username:            "grc-e2e-subscription-admin",
