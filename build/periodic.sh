@@ -3,7 +3,10 @@
 # Validate the pipeline is up to date and that no failed prow jobs exist
 
 COMPONENT_ORG=stolostron
+DEFAULT_BRANCH=${DEFAULT_BRANCH:-"main"}
 CHECK_RELEASES="2.3 2.4 2.5"
+# This list can include all postsubmit jobs for all repos--if a job doesn't exist it's filtered to empty and skipped
+CHECK_JOBS=${CHECK_JOBS:-"publish images latest-image-mirror latest-test-image-mirror"}
 
 # Clone the repositories needed for this script to work
 cloneRepos() {
@@ -43,19 +46,24 @@ getPipelineValue() {
 
 	cd pipeline
 	co=$(git checkout --quiet "$release")
-	value=`jq '.[] |select(.["image-name"] == "'$component'") | .["'$key'"]' manifest.json | sed 's/"//g'`
+	value=`jq -r '.[] |select(.["image-name"] == "'$component'") | .["'$key'"]' manifest.json`
 	echo "$value"
 	cd $BASEDIR
 }
 
 checkProwJob() {
 	component="$1"
-	release="$2"
+
+	if [ "$release" = "$DEFAULT_BRANCH" ]; then
+		BRANCH="$2"
+	else
+		BRANCH="release-$2"
+	fi
 
 	rcode=0
 	# This is a hack to get data from the openshift ci prow
 	# sample curl: 
-	# 	curl -H "content-type: application/xml" https://prow.ci.openshift.org/job-history/gs/origin-ci-test/logs/branch-ci-open-cluster-management-iam-policy-controller-release-2.5-publish
+	# 	curl -s https://prow.ci.openshift.org/job-history/gs/origin-ci-test/logs/branch-ci-open-cluster-management-iam-policy-controller-release-2.5-publish
 				# which contains this:
 				# var allBuilds = [
 				# 	{"SpyglassLink":"/view/gs/origin-ci-test/logs/branch-ci-open-cluster-management-iam-policy-controller-release-2.5-publish/1468625788839399424",
@@ -66,13 +74,12 @@ checkProwJob() {
 				# 		 "base_ref":"release-2.5","base_sha":"567b3597e8324a4c56ec8f1d717ae15d9671e4a8",
 				# 		 "base_link":"https://github.com/open-cluster-management/iam-policy-controller/compare/d544db4214b4...567b3597e832"
 				# 		}}];
-	jobs="publish images latest-image-mirror"
-	for job in $jobs; do
-		OUTPUT=$(curl -s https://prow.ci.openshift.org/job-history/gs/origin-ci-test/logs/branch-ci-${COMPONENT_ORG}-${component}-release-${release}-${job})
+	for job in $CHECK_JOBS; do
+		OUTPUT=$(curl -s https://prow.ci.openshift.org/job-history/gs/origin-ci-test/logs/branch-ci-${COMPONENT_ORG}-${component}-${BRANCH}-${job})
 		JSON=$(echo "$OUTPUT" | grep "var allBuilds" | sed 's/  var allBuilds =//' | sed 's/;$//' | jq '.[0]')
-		STATUS=$(echo "$JSON" | jq '.Result')
-		if [ "$STATUS" = \"FAILURE\" ]; then
-			LINK=https://prow.ci.openshift.org$(echo "$JSON" | jq '.SpyglassLink' | sed 's/"//g')
+		STATUS=$(echo "$JSON" | jq -r '.Result')
+		if [ "$STATUS" = "FAILURE" ] || [ "$STATUS" = "ABORTED" ]; then
+			LINK=https://prow.ci.openshift.org$(echo "$JSON" | jq -r '.SpyglassLink')
 			echo "****"
 			echo "ERROR: Prow job failure: $repo $release" | tee -a ${ERROR_FILE}
 			echo "   Link: $LINK" | tee -a ${ERROR_FILE}
@@ -115,7 +122,7 @@ for repo in $REPOS; do
 		*)
 			IMAGES=$repo;;
 	esac
-	for release in $CHECK_RELEASES; do
+	for release in $DEFAULT_BRANCH $CHECK_RELEASES; do
 		echo "Checking for failures with component $repo $release ..."
 		# check the prow job history
 		checkProwJob "$repo" "$release"
@@ -123,6 +130,10 @@ for repo in $REPOS; do
 			rc=1
 		fi
 
+		# Don't check the SHA for the default branch since it's not a release
+		if [ "$release" = "$DEFAULT_BRANCH" ]; then
+			continue
+		fi
 		# for each release and each image name, check the Git SHA
 		gitsha=$(getGitSha "$repo" "$release")
 		for imageName in ${IMAGES}; do
@@ -144,22 +155,24 @@ for repo in $REPOS; do
 		# for each release and each image name, check the tag in Quay
 		for imageName in ${IMAGES}; do
 			imagetag=$(getPipelineValue "$imageName" "$release" "image-tag")
-			# make sure the quay image is available (only if we found it in pipeline)
-			if [ -n "$imagetag" ]; then
-				QUAY_RESPONSE=$(curl -s "https://quay.io/api/v1/repository/${COMPONENT_ORG}/${imageName}/tag/?onlyActiveTags=true&specificTag=${imagetag}")
-				QUAY_STATUS=$(echo "${QUAY_RESPONSE}" | jq -r '.error_message')
-				FOUND=$(echo "${QUAY_RESPONSE}" | jq '.tags | length')
-				if [ "${QUAY_STATUS}" != "null" ]; then
-					echo "****"
-					echo "ERROR: Error '${QUAY_STATUS}' querying $repo $release image in quay: $imageName:${imagetag}" | tee -a ${ERROR_FILE}
-					echo "***"
-					rc=1
-				elif [ "${FOUND}" != "1" ]; then
-					echo "****"
-					echo "ERROR: Tag not found for image in quay: $repo:${imagetag}" | tee -a ${ERROR_FILE}
-					echo "***"
-					rc=1
-				fi
+			# If the tag wasn't found in pipeline, skip checking for it in Quay
+			if [ -z "$imagetag" ]; then
+				continue
+			fi
+			# make sure the quay image is available
+			QUAY_RESPONSE=$(curl -s "https://quay.io/api/v1/repository/${COMPONENT_ORG}/${imageName}/tag/?onlyActiveTags=true&specificTag=${imagetag}")
+			QUAY_STATUS=$(echo "${QUAY_RESPONSE}" | jq -r '.error_message')
+			FOUND=$(echo "${QUAY_RESPONSE}" | jq '.tags | length')
+			if [ "${QUAY_STATUS}" != "null" ]; then
+				echo "****"
+				echo "ERROR: Error '${QUAY_STATUS}' querying $repo $release image in quay: $imageName:${imagetag}" | tee -a ${ERROR_FILE}
+				echo "***"
+				rc=1
+			elif [ "${FOUND}" != "1" ]; then
+				echo "****"
+				echo "ERROR: Tag not found for image in quay: $repo:${imagetag}" | tee -a ${ERROR_FILE}
+				echo "***"
+				rc=1
 			fi
 		done
 	done
