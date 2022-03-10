@@ -33,7 +33,7 @@ cp ${MANAGED_KUBE} $DIR/../kubeconfig_managed
 
 echo "===== E2E Test ====="
 echo "* Launching grc policy framework test"
-for TEST_SUITE in integration policy-collection; do
+for TEST_SUITE in policy-collection integration; do
   # Run test suite with reporting
   CGO_ENABLED=0 ginkgo -v --no-color --fail-fast --junit-report=${TEST_SUITE}.xml --output-dir=test-output test/${TEST_SUITE} -- -cluster_namespace=$MANAGED_CLUSTER_NAME || EXIT_CODE=$?
 
