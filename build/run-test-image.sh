@@ -8,7 +8,7 @@ if [[ ${FAIL_FAST} == "true" ]]; then
   GINKGO_FAIL_FAST="--fail-fast" 
 fi
 
-for TEST_SUITE in integration policy-collection; do
+for TEST_SUITE in policy-collection integration; do
   # Run test suite with reporting
   CGO_ENABLED=0 ginkgo -v ${GINKGO_FAIL_FAST} --junit-report=${TEST_SUITE}.xml --output-dir=test-output test/${TEST_SUITE} -- -cluster_namespace=$MANAGED_CLUSTER_NAME || EXIT_CODE=$?
 
