@@ -196,7 +196,12 @@ get_job_state() {
 wait_for_resource() {
     wait_for_resource_type=$1
     wait_for_resource_descriptor="$2"
+    START_TIME=$(date -u +%s)
     while [ -n "$(get_${wait_for_resource_type}_state "$wait_for_resource_descriptor")" ] ; do
+        if [ $(($START_TIME+$TIMEOUT)) -le $(date -u +%s) ]; then
+            echo "Timed out for $wait_for_resource_type $wait_for_resource_descriptor${print_OC_ARGS}..."
+            exit 1
+        fi
         print_OC_ARGS="$OC_ARGS"
         [ "$print_OC_ARGS" != "" ] && print_OC_ARGS=" $print_OC_ARGS"
         oc get $wait_for_resource_type $wait_for_resource_descriptor${print_OC_ARGS}
