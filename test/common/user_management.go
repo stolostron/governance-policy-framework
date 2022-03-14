@@ -7,6 +7,7 @@ import (
 	"fmt"
 	"io/ioutil"
 	"os/exec"
+	"time"
 
 	"golang.org/x/crypto/bcrypt"
 	corev1 "k8s.io/api/core/v1"
@@ -54,7 +55,11 @@ func GetKubeConfig(server, username, password string) (string, error) {
 		return "", fmt.Errorf("failed to close the temporary kubeconfig")
 	}
 
-	output, err := exec.Command(
+	ctx, cancel := context.WithTimeout(context.Background(), time.Second*20)
+	defer cancel()
+
+	output, err := exec.CommandContext(
+		ctx,
 		"oc",
 		"--kubeconfig="+kubeconfigPath,
 		"login",
