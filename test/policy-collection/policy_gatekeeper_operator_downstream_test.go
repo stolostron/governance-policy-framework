@@ -178,17 +178,19 @@ var _ = Describe("RHACM4K-3055", func() {
 		It("stable/policy-gatekeeper-sample should be created on hub", func() {
 			By("Creating policy on hub")
 			utils.KubectlWithOutput("apply", "-f", GKPolicyYaml, "-n", userNamespace, "--kubeconfig="+kubeconfigHub)
+			By("Policy should be created on hub")
+			utils.GetWithTimeout(clientHubDynamic, common.GvrPolicy, GKPolicyName, userNamespace, true, defaultTimeoutSeconds)
+			By("Patching to remove dryrun")
+			utils.KubectlWithOutput(
+				"patch", "-n", userNamespace, common.GvrPolicy.Resource+"."+common.GvrPolicy.Group, GKPolicyName,
+				"--type=json", "-p=[{\"op\":\"replace\", \"path\": "+
+					"\"/spec/policy-templates/0/objectDefinition/spec/object-templates/1/objectDefinition/spec/enforcementAction\", \"value\":\"deny\"}]",
+				"--kubeconfig="+kubeconfigHub,
+			)
 			By("Patching placement rule")
 			utils.KubectlWithOutput("patch", "-n", userNamespace, "placementrule.apps.open-cluster-management.io/placement-"+GKPolicyName,
 				"--type=json", "-p=[{\"op\": \"replace\", \"path\": \"/spec/clusterSelector/matchExpressions\", \"value\":[{\"key\": \"name\", \"operator\": \"In\", \"values\": ["+clusterNamespace+"]}]}]",
 				"--kubeconfig="+kubeconfigHub)
-			By("Patching to remove dryrun")
-			utils.KubectlWithOutput(
-				"patch", "-n", userNamespace, common.GvrPolicy.Resource+"."+common.GvrPolicy.Group, GKPolicyName,
-				"--type=json", "-p=[{\"op\":\"remove\", \"path\": "+
-					"\"/spec/policy-templates/0/objectDefinition/spec/object-templates/1/objectDefinition/spec/enforcementAction\"}]",
-				"--kubeconfig="+kubeconfigHub,
-			)
 			By("Checking policy-gatekeeper namespace on hub cluster in ns " + userNamespace)
 			rootPlc := utils.GetWithTimeout(clientHubDynamic, common.GvrPolicy, GKPolicyName, userNamespace, true, defaultTimeoutSeconds)
 			Expect(rootPlc).NotTo(BeNil())
