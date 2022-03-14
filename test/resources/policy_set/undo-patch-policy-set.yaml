@@ -5,7 +5,3 @@ metadata:
 spec:
   policies:
   - test-policy
-status:
-  placement:
-  - placementBinding: test-policyset-pb
-    placementRule: test-policyset-plr

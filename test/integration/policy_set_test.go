@@ -16,26 +16,13 @@ import (
 )
 
 const (
-	testPolicyName          string = "test-policy"
-	testPolicySetName       string = "test-policyset"
-	testPolicySetYaml       string = "../resources/policy_set/test-policyset.yaml"
-	testPolicySetPatchYaml  string = "../resources/policy_set/patch-policy-set.yaml"
-	testedDisablePolicyYaml string = "../resources/policy_set/disable-policy.yaml"
+	testPolicyName             string = "test-policy"
+	testPolicySetName          string = "test-policyset"
+	testPolicySetYaml          string = "../resources/policy_set/test-policyset.yaml"
+	testPolicySetPatchYaml     string = "../resources/policy_set/patch-policy-set.yaml"
+	testUndoPolicySetPatchYaml string = "../resources/policy_set/undo-patch-policy-set.yaml"
+	testedDisablePolicyYaml    string = "../resources/policy_set/disable-policy.yaml"
 )
-
-// update clusterName in checking YAML based clusterNamespace in testing env
-func UpdateClusterName(
-	yamlPlc *unstructured.Unstructured,
-	clusterNamespace string,
-) *unstructured.Unstructured {
-	status := yamlPlc.Object["status"].(map[string]interface{})
-	results := status["results"].([]interface{})
-	clusters := results[0].(map[string]interface{})["clusters"].([]interface{})
-	cluster := clusters[0].(map[string]interface{})
-	cluster["clusterName"] = clusterNamespace
-	cluster["clusterNamespace"] = clusterNamespace
-	return yamlPlc
-}
 
 var _ = Describe("GRC: [P1][Sev1][policy-grc] Test policy set", func() {
 	Describe("Create policy, policyset, and placement in ns:"+userNamespace, func() {
@@ -91,9 +78,6 @@ var _ = Describe("GRC: [P1][Sev1][policy-grc] Test policy set", func() {
 
 			By("Checking the status of policy set")
 			yamlPlc := utils.ParseYaml("../resources/policy_set/statuscheck-1.yaml")
-			// set checking yaml clusterName and clusterNamespace by env variable
-			By("Updating the checking YAML clusterName to " + clusterNamespace)
-			yamlPlc = UpdateClusterName(yamlPlc, clusterNamespace)
 
 			policySetRsrc := clientHubDynamic.Resource(testcommon.GvrPolicySet)
 			Eventually(func() interface{} {
@@ -119,8 +103,6 @@ var _ = Describe("GRC: [P1][Sev1][policy-grc] Test policy set", func() {
 
 			By("Checking the status of policy set")
 			yamlPlc := utils.ParseYaml("../resources/policy_set/statuscheck-2.yaml")
-			By("Updating the checking YAML clusterName to " + clusterNamespace)
-			yamlPlc = UpdateClusterName(yamlPlc, clusterNamespace)
 
 			policySetRsrc := clientHubDynamic.Resource(testcommon.GvrPolicySet)
 			Eventually(func() interface{} {
@@ -133,6 +115,14 @@ var _ = Describe("GRC: [P1][Sev1][policy-grc] Test policy set", func() {
 				defaultTimeoutSeconds*2,
 				1,
 			).Should(utils.SemanticEqual(yamlPlc.Object["status"]))
+
+			By("Undoing patch with " + testPolicySetPatchYaml)
+			output, err = utils.KubectlWithOutput("apply",
+				"-f", testUndoPolicySetPatchYaml,
+				"-n", userNamespace,
+				"--kubeconfig=../../kubeconfig_hub")
+			By("Creating " + testUndoPolicySetPatchYaml + " result is " + output)
+			Expect(err).To(BeNil())
 		})
 
 		It("Should update to compliant if all its child policy violations have been remediated", func() {
@@ -156,8 +146,6 @@ var _ = Describe("GRC: [P1][Sev1][policy-grc] Test policy set", func() {
 
 			By("Checking the status of policy set")
 			yamlPlc := utils.ParseYaml("../resources/policy_set/statuscheck-3.yaml")
-			By("Updating the checking YAML clusterName to " + clusterNamespace)
-			yamlPlc = UpdateClusterName(yamlPlc, clusterNamespace)
 
 			policySetRsrc := clientHubDynamic.Resource(testcommon.GvrPolicySet)
 			Eventually(func() interface{} {
