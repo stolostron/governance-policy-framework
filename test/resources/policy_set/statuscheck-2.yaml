@@ -5,17 +5,8 @@ metadata:
 spec:
   policies:
   - test-policy
+  - policyset-does-not-exist
 status:
-  compliant: NonCompliant
   placement:
   - placementBinding: test-policyset-pb
     placementRule: test-policyset-plr
-  results:
-  - clusters:
-    - clusterName: unkown
-      clusterNamespace: unkown
-      compliant: NonCompliant
-    compliant: NonCompliant
-    policy: test-policy
-  - message: policyset-does-not-exist not found
-    policy: policyset-does-not-exist

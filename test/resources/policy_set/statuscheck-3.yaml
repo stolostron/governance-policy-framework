@@ -10,12 +10,3 @@ status:
   placement:
   - placementBinding: test-policyset-pb
     placementRule: test-policyset-plr
-  results:
-  - clusters:
-    - clusterName: unkown
-      clusterNamespace: unkown
-      compliant: Compliant
-    compliant: Compliant
-    policy: test-policy
-  - message: policyset-does-not-exist not found
-    policy: policyset-does-not-exist
