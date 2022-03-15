@@ -11,18 +11,6 @@ DOCKER_URI="quay.io/stolostron"
 echo "* Patching hub cluster to ${VERSION_TAG}"
 oc annotate MultiClusterHub multiclusterhub -n ${acm_installed_namespace} mch-pause=true --overwrite
 
-# Patch the UI on the hub
-COMPONENT="grc-ui"
-LABEL="component=ocm-grcui"
-DEPLOYMENT=$(oc get deployment -l ${LABEL} -n ${acm_installed_namespace} -o=jsonpath='{.items[*].metadata.name}')
-oc patch deployment ${DEPLOYMENT} -n ${acm_installed_namespace} -p "{\"spec\":{\"template\":{\"spec\":{\"containers\":[{\"name\":\"${COMPONENT}\",\"imagePullPolicy\":\"Always\",\"image\":\"${DOCKER_URI}/${COMPONENT}:${VERSION_TAG}\"}]}}}}"
-
-# Patch the API on the hub
-COMPONENT="grc-ui-api"
-LABEL="component=ocm-grcuiapi"
-DEPLOYMENT=$(oc get deployment -l ${LABEL} -n ${acm_installed_namespace} -o=jsonpath='{.items[*].metadata.name}')
-oc patch deployment ${DEPLOYMENT} -n ${acm_installed_namespace} -p "{\"spec\":{\"template\":{\"spec\":{\"containers\":[{\"name\":\"${COMPONENT}\",\"imagePullPolicy\":\"Always\",\"image\":\"${DOCKER_URI}/${COMPONENT}:${VERSION_TAG}\"}]}}}}"
-
 # Patch the propagator on the hub
 COMPONENT="governance-policy-propagator"
 LABEL="component=ocm-policy-propagator"
