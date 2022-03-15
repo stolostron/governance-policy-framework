@@ -4,8 +4,10 @@ package common
 
 import (
 	"context"
+	"encoding/hex"
 	"fmt"
 	"io/ioutil"
+	"math/rand"
 	"os/exec"
 
 	"golang.org/x/crypto/bcrypt"
@@ -36,6 +38,19 @@ type OCPUser struct {
 	ClusterRoleBindings []string
 	Password            string
 	Username            string
+}
+
+// GenerateInsecurePassword is a random password generator from 15-30 bytes. It is insecure
+// since the characters are limited to just hex values (i.e. 1-9,a-f) from the random bytes. An
+// error is returned if the random bytes cannot be read.
+func GenerateInsecurePassword() (string, error) {
+	// A password ranging from 15-30 bytes
+	pwSize := rand.Intn(15) + 15
+	bytes := make([]byte, pwSize)
+	if _, err := rand.Read(bytes); err != nil {
+		return "", err
+	}
+	return hex.EncodeToString(bytes), nil
 }
 
 // GetKubeConfig will generate a kubeconfig file based on an OpenShift user. The path of the
