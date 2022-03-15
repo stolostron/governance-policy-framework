@@ -309,17 +309,6 @@ policy-collection-test:
 		$(GOPATH)/bin/ginkgo -v $(TEST_ARGS) --fail-fast --focus-file=$(TEST_FILE) test/policy-collection;\
 	fi
 
-travis-slack-reporter:
-	docker run --volume $(PWD)/results:/opt/app-root/src/grc-ui/test-output/e2e \
-		--volume $(PWD)/results-cypress:/opt/app-root/src/grc-ui/test-output/cypress \
-		--env SLACK_TOKEN=$(SLACK_TOKEN) \
-		--env TRAVIS_REPO_SLUG=$(TRAVIS_REPO_SLUG) \
-		--env TRAVIS_PULL_REQUEST=$(TRAVIS_PULL_REQUEST) \
-		--env TRAVIS_BRANCH=$(TRAVIS_BRANCH) \
-		--env TRAVIS_BUILD_WEB_URL=$(TRAVIS_BUILD_WEB_URL) \
-		quay.io/stolostron/grc-ui-tests:latest node ./tests/utils/slack-reporter.js
-
-
 # go-get-tool will 'go get' any package $2 and install it to $1.
 define go-get-tool
 @[ -f $(1) ] || { \
