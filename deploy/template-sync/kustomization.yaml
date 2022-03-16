@@ -1,4 +1,0 @@
-resources:
-  - https://raw.githubusercontent.com/stolostron/governance-policy-template-sync/main/deploy/operator.yaml
-patchesStrategicMerge:
-  - debug-logs.yaml
