@@ -133,7 +133,7 @@ deploy-policy-framework-managed: kind-policy-framework-managed-setup deploy-poli
 
 deploy-community-policy-framework-managed: deploy-policy-framework-managed-crd-operator
 
-kind-deploy-policy-framework: kustomize
+kind-deploy-policy-framework:
 	@echo installing policy-propagator on hub
 	kubectl create ns $(KIND_HUB_NAMESPACE) --kubeconfig=$(PWD)/kubeconfig_$(HUB_CLUSTER_NAME)
 	kubectl apply -f https://raw.githubusercontent.com/stolostron/governance-policy-propagator/main/deploy/operator.yaml -n $(KIND_HUB_NAMESPACE) --kubeconfig=$(PWD)/kubeconfig_$(HUB_CLUSTER_NAME)
@@ -155,7 +155,7 @@ kind-deploy-policy-framework: kustomize
 		kubectl apply -f https://raw.githubusercontent.com/stolostron/governance-policy-status-sync/main/deploy/operator.yaml -n $(KIND_MANAGED_NAMESPACE) --kubeconfig=$(PWD)/kubeconfig_$(MANAGED_CLUSTER_NAME);\
 	fi
 	@echo installing policy-template-sync on managed
-	kustomize build deploy/template-sync | kubectl apply -n $(KIND_MANAGED_NAMESPACE) --kubeconfig=$(PWD)/kubeconfig_$(MANAGED_CLUSTER_NAME) -f -
+	kubectl apply -f https://raw.githubusercontent.com/stolostron/governance-policy-template-sync/main/deploy/operator.yaml -n $(KIND_MANAGED_NAMESPACE) --kubeconfig=$(PWD)/kubeconfig_$(MANAGED_CLUSTER_NAME)
 
 kind-deploy-config-policy-controller:
 	@echo installing config-policy-controller on managed
