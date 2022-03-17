@@ -1,9 +1,10 @@
 // Copyright Contributors to the Open Cluster Management project
 
-package integration
+package e2e
 
 import (
 	"context"
+	"fmt"
 	"os"
 	"strings"
 
@@ -27,9 +28,6 @@ func cleanup(namespace string, secret string, user common.OCPUser) {
 		Expect(err).Should(BeNil())
 	}
 
-	err = common.CleanupOCPUser(clientHub, clientHubDynamic, secret, user)
-	Expect(err).Should(BeNil())
-
 	// Wait for the namespace to be fully deleted before proceeding.
 	Eventually(
 		func() bool {
@@ -41,11 +39,20 @@ func cleanup(namespace string, secret string, user common.OCPUser) {
 		defaultTimeoutSeconds,
 		1,
 	).Should(BeTrue())
+
+	err = common.CleanupOCPUser(clientHub, clientHubDynamic, secret, user)
+	Expect(err).Should(BeNil())
+
+	err = clientHub.CoreV1().Secrets("openshift-config").Delete(context.TODO(), secret, metav1.DeleteOptions{})
+	if !k8serrors.IsNotFound(err) {
+		Expect(err).Should(BeNil())
+	}
 }
 
-var _ = Describe("GRC: [P1][Sev1][policy-grc] Test the Policy Generator in an App subscription", func() {
-	const namespace = "grc-e2e-policy-generator"
+var _ = Describe("GRC: [P1][Sev1][policy-grc] Test the ACM Hardening generated PolicySet in an App subscription", func() {
+	const namespace = "policies"
 	const secret = "grc-e2e-subscription-admin-user"
+	const clustersetRoleName = "grc-e2e-clusterset-role"
 	const subAdminBinding = "open-cluster-management:subscription-admin"
 	ocpUser := common.OCPUser{
 		ClusterRoles: []types.NamespacedName{
@@ -54,6 +61,7 @@ var _ = Describe("GRC: [P1][Sev1][policy-grc] Test the Policy Generator in an Ap
 				Name:      "admin",
 				Namespace: namespace,
 			},
+			{Name: clustersetRoleName},
 		},
 		// To be considered a subscription-admin you must be part of this cluster role binding.
 		// Having the proper role in another cluster role binding does not work.
@@ -80,6 +88,28 @@ var _ = Describe("GRC: [P1][Sev1][policy-grc] Test the Policy Generator in an Ap
 		}
 		_, err := clientHub.RbacV1().ClusterRoleBindings().Create(
 			context.TODO(), &subAdminBindingObj, metav1.CreateOptions{},
+		)
+		if err != nil {
+			Expect(k8serrors.IsAlreadyExists(err)).Should(BeTrue())
+		}
+
+		By("Verifying that the managed cluster set binding ClusterRole exists")
+		clusterSetRule := rbacv1.ClusterRole{
+			ObjectMeta: metav1.ObjectMeta{
+				Name: clustersetRoleName,
+			},
+			Rules: []rbacv1.PolicyRule{
+				{
+					APIGroups:     []string{"cluster.open-cluster-management.io"},
+					Verbs:         []string{"create"},
+					Resources:     []string{"managedclustersets/bind"},
+					ResourceNames: []string{"default"},
+				},
+			},
+		}
+
+		_, err = clientHub.RbacV1().ClusterRoles().Create(
+			context.TODO(), &clusterSetRule, metav1.CreateOptions{},
 		)
 		if err != nil {
 			Expect(k8serrors.IsAlreadyExists(err)).Should(BeTrue())
@@ -131,7 +161,7 @@ var _ = Describe("GRC: [P1][Sev1][policy-grc] Test the Policy Generator in an Ap
 		_, err = common.OcHub(
 			"apply",
 			"-f",
-			"../resources/policy_generator/subscription.yaml",
+			"../resources/policy_generator/acm-hardening_subscription.yaml",
 			"-n",
 			namespace,
 			"--kubeconfig="+kubeconfigSubAdmin,
@@ -145,7 +175,7 @@ var _ = Describe("GRC: [P1][Sev1][policy-grc] Test the Policy Generator in an Ap
 			func() error {
 				var err error
 				policyset, err = policySetRsrc.Namespace(namespace).Get(
-					context.TODO(), "e2e-policyset", metav1.GetOptions{},
+					context.TODO(), "acm-hardening", metav1.GetOptions{},
 				)
 				return err
 			},
@@ -153,52 +183,49 @@ var _ = Describe("GRC: [P1][Sev1][policy-grc] Test the Policy Generator in an Ap
 			1,
 		).Should(BeNil())
 
-		// Perform some basic validation on the generated policySet. There isn't a need to do any more
-		// than this since the policy generator unit tests cover this scenario well. This test is
-		// meant to verify that the integration is successful.
+		// Perform some basic validation on the generated policySet.
 		policies, found, err := unstructured.NestedSlice(policyset.Object, "spec", "policies")
 		Expect(err).Should(BeNil())
 		Expect(found).Should(BeTrue())
-		Expect(len(policies)).Should(Equal(1))
-		Expect(policies[0]).Should(Equal("e2e-grc-policy-app"))
+		Expect(len(policies)).Should(Equal(4))
+		Expect(policies[0]).Should(Equal("policy-check-backups"))
+		Expect(policies[1]).Should(Equal("policy-check-policyreports"))
+		Expect(policies[2]).Should(Equal("policy-managedclusteraddon-available"))
+		Expect(policies[3]).Should(Equal("policy-subscriptions"))
 
-		By("Checking that the root policy was created")
+		By("Checking that the subscriptions root policy was created and becomes compliant")
 		policyRsrc := clientHubDynamic.Resource(common.GvrPolicy)
 		var policy *unstructured.Unstructured
 		Eventually(
 			func() error {
 				var err error
 				policy, err = policyRsrc.Namespace(namespace).Get(
-					context.TODO(), "e2e-grc-policy-app", metav1.GetOptions{},
+					context.TODO(), "policy-subscriptions", metav1.GetOptions{},
 				)
+				if err != nil {
+					compliant, found, myerr := unstructured.NestedString(policy.Object, "status", "compliant")
+					if myerr != nil {
+						return myerr
+					}
+					if !found {
+						return fmt.Errorf("failed to find the compliant field of the policy status")
+					} else if compliant != "Compliant" {
+						return fmt.Errorf("The policy is not compliant")
+					}
+				}
 				return err
 			},
 			defaultTimeoutSeconds*2,
 			1,
 		).Should(BeNil())
 
-		// Perform some basic validation on the generated policy. There isn't a need to do any more
-		// than this since the policy generator unit tests cover this scenario well. This test is
-		// meant to verify that the integration is successful.
-		templates, found, err := unstructured.NestedSlice(policy.Object, "spec", "policy-templates")
-		Expect(err).Should(BeNil())
-		Expect(found).Should(BeTrue())
-		Expect(len(templates)).Should(Equal(1))
-
-		objTemplates, found, err := unstructured.NestedSlice(
-			templates[0].(map[string]interface{}), "objectDefinition", "spec", "object-templates",
-		)
-		Expect(err).Should(BeNil())
-		Expect(found).Should(BeTrue())
-		Expect(len(objTemplates)).Should(Equal(3))
-
-		By("Checking that the policy was propagated to the local-cluster namespace")
+		By("Checking that the policy-managedclusteraddon-available policy was propagated to the local-cluster namespace")
 		Eventually(
 			func() error {
 				var err error
 				policy, err = policyRsrc.Namespace("local-cluster").Get(
 					context.TODO(),
-					"grc-e2e-policy-generator.e2e-grc-policy-app",
+					"policies.policy-managedclusteraddon-available",
 					metav1.GetOptions{},
 				)
 				return err
@@ -207,13 +234,13 @@ var _ = Describe("GRC: [P1][Sev1][policy-grc] Test the Policy Generator in an Ap
 			1,
 		).Should(BeNil())
 
-		By("Checking that the configuration policy was created in the local-cluster namespace")
+		By("Checking that the policy reports configuration policy was created in the local-cluster namespace")
 		configPolicyRsrc := clientHubDynamic.Resource(common.GvrConfigurationPolicy)
 		Eventually(
 			func() error {
 				var err error
 				policy, err = configPolicyRsrc.Namespace("local-cluster").Get(
-					context.TODO(), "e2e-grc-policy-app", metav1.GetOptions{},
+					context.TODO(), "policy-check-policyreports", metav1.GetOptions{},
 				)
 				return err
 			},
