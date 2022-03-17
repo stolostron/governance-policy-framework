@@ -148,3 +148,17 @@ func OcManaged(args ...string) (string, error) {
 	}
 	return string(output), err
 }
+
+func PatchPlacementRule(namespace, name, targetCluster, kubeconfigHub string) error {
+	_, err := utils.KubectlWithOutput(
+		"patch",
+		"-n",
+		namespace,
+		"placementrule.apps.open-cluster-management.io",
+		name,
+		"--type=json", "-p=[{\"op\": \"replace\", \"path\": \"/spec/clusterSelector/matchExpressions\", \"value\":[{\"key\": \"name\", \"operator\": \"In\", \"values\": ["+targetCluster+"]}]}]",
+		"--kubeconfig="+kubeconfigHub,
+	)
+
+	return err
+}

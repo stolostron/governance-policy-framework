@@ -66,9 +66,7 @@ var _ = Describe("", func() {
 				"--kubeconfig="+kubeconfigHub)
 
 			By("Patching placement rule")
-			utils.KubectlWithOutput("patch", "-n", userNamespace, "placementrule.apps.open-cluster-management.io/placement-"+gatekeeperPolicyName,
-				"--type=json", "-p=[{\"op\": \"replace\", \"path\": \"/spec/clusterSelector/matchExpressions\", \"value\":[{\"key\": \"name\", \"operator\": \"In\", \"values\": ["+clusterNamespace+"]}]}]",
-				"--kubeconfig="+kubeconfigHub)
+			common.PatchPlacementRule(userNamespace, "placement-"+gatekeeperPolicyName, clusterNamespace, kubeconfigHub)
 
 			By("Checking policy-gatekeeper-operator on hub cluster in ns " + userNamespace)
 			rootPlc := utils.GetWithTimeout(clientHubDynamic, common.GvrPolicy, gatekeeperPolicyName, userNamespace, true, defaultTimeoutSeconds)
@@ -201,9 +199,7 @@ var _ = Describe("", func() {
 				"--kubeconfig="+kubeconfigHub,
 			)
 			By("Patching placement rule")
-			utils.KubectlWithOutput("patch", "-n", userNamespace, "placementrule.apps.open-cluster-management.io/placement-"+GKPolicyName,
-				"--type=json", "-p=[{\"op\": \"replace\", \"path\": \"/spec/clusterSelector/matchExpressions\", \"value\":[{\"key\": \"name\", \"operator\": \"In\", \"values\": ["+clusterNamespace+"]}]}]",
-				"--kubeconfig="+kubeconfigHub)
+			common.PatchPlacementRule(userNamespace, "placement-"+GKPolicyName, clusterNamespace, kubeconfigHub)
 			By("Checking policy-gatekeeper namespace on hub cluster in ns " + userNamespace)
 			rootPlc := utils.GetWithTimeout(clientHubDynamic, common.GvrPolicy, GKPolicyName, userNamespace, true, defaultTimeoutSeconds)
 			Expect(rootPlc).NotTo(BeNil())
@@ -326,15 +322,11 @@ var _ = Describe("", func() {
 			By("Creating " + GKAssignPolicyName + " on hub")
 			utils.KubectlWithOutput("apply", "-f", GKAssignPolicyYaml, "-n", userNamespace, "--kubeconfig="+kubeconfigHub)
 			By("Patching placement rule")
-			utils.KubectlWithOutput("patch", "-n", userNamespace, "placementrule.apps.open-cluster-management.io/placement-"+GKAssignPolicyName,
-				"--type=json", "-p=[{\"op\": \"replace\", \"path\": \"/spec/clusterSelector/matchExpressions\", \"value\":[{\"key\": \"name\", \"operator\": \"In\", \"values\": ["+clusterNamespace+"]}]}]",
-				"--kubeconfig="+kubeconfigHub)
+			common.PatchPlacementRule(userNamespace, "placement-"+GKAssignPolicyName, clusterNamespace, kubeconfigHub)
 			By("Creating " + GKAssignMetadataPolicyName + " on hub")
 			utils.KubectlWithOutput("apply", "-f", GKAssignMetadataPolicyYaml, "-n", userNamespace, "--kubeconfig="+kubeconfigHub)
 			By("Patching placement rule")
-			utils.KubectlWithOutput("patch", "-n", userNamespace, "placementrule.apps.open-cluster-management.io/placement-"+GKAssignMetadataPolicyName,
-				"--type=json", "-p=[{\"op\": \"replace\", \"path\": \"/spec/clusterSelector/matchExpressions\", \"value\":[{\"key\": \"name\", \"operator\": \"In\", \"values\": ["+clusterNamespace+"]}]}]",
-				"--kubeconfig="+kubeconfigHub)
+			common.PatchPlacementRule(userNamespace, "placement-"+GKAssignMetadataPolicyName, clusterNamespace, kubeconfigHub)
 		})
 		It(GKAssignPolicyName+" should be compliant", func() {
 			By("Checking if the status of root policy is compliant")

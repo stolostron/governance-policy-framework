@@ -33,15 +33,7 @@ var _ = Describe("GRC: [P1][Sev1][policy-grc] Test the stable IAM policy", func(
 		utils.KubectlWithOutput("apply", "-f", iamPolicyURL, "-n", userNamespace, "--kubeconfig="+kubeconfigHub)
 
 		By("Patching the placement rule")
-		utils.KubectlWithOutput(
-			"patch",
-			"-n",
-			userNamespace,
-			"placementrule.apps.open-cluster-management.io/placement-"+iamPolicyName,
-			"--type=json",
-			`-p=[{"op": "replace", "path": "/spec/clusterSelector/matchExpressions", "value":[{"key": "name", "operator": "In", "values": [`+clusterNamespace+`]}]}]`,
-			"--kubeconfig="+kubeconfigHub,
-		)
+		common.PatchPlacementRule(userNamespace, "placement-"+iamPolicyName, clusterNamespace, kubeconfigHub)
 
 		By("Checking " + iamPolicyName + " on the hub cluster in the ns " + userNamespace)
 		rootPlc := utils.GetWithTimeout(clientHubDynamic, common.GvrPolicy, iamPolicyName, userNamespace, true, defaultTimeoutSeconds)
