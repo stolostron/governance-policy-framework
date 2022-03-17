@@ -153,9 +153,7 @@ var _ = Describe("RHACM4K-2222 GRC: [P1][Sev1][policy-grc] Test compliance opera
 			By("Creating policy on hub")
 			utils.KubectlWithOutput("apply", "-f", compPolicyURL, "-n", userNamespace, "--kubeconfig="+kubeconfigHub)
 			By("Patching placement rule")
-			utils.KubectlWithOutput("patch", "-n", userNamespace, "placementrule.apps.open-cluster-management.io/placement-"+compPolicyName,
-				"--type=json", "-p=[{\"op\": \"replace\", \"path\": \"/spec/clusterSelector/matchExpressions\", \"value\":[{\"key\": \"name\", \"operator\": \"In\", \"values\": ["+clusterNamespace+"]}]}]",
-				"--kubeconfig="+kubeconfigHub)
+			common.PatchPlacementRule(userNamespace, "placement-"+compPolicyName, clusterNamespace, kubeconfigHub)
 			By("Checking policy-comp-operator on hub cluster in ns " + userNamespace)
 			rootPlc := utils.GetWithTimeout(clientHubDynamic, common.GvrPolicy, compPolicyName, userNamespace, true, defaultTimeoutSeconds)
 			Expect(rootPlc).NotTo(BeNil())
@@ -258,9 +256,7 @@ var _ = Describe("RHACM4K-2222 GRC: [P1][Sev1][policy-grc] Test compliance opera
 			By("Creating policy on hub")
 			utils.KubectlWithOutput("apply", "-f", compE8ScanPolicyURL, "-n", userNamespace, "--kubeconfig="+kubeconfigHub)
 			By("Patching placement rule")
-			utils.KubectlWithOutput("patch", "-n", userNamespace, "placementrule.apps.open-cluster-management.io/placement-"+compE8ScanPolicyName,
-				"--type=json", "-p=[{\"op\": \"replace\", \"path\": \"/spec/clusterSelector/matchExpressions\", \"value\":[{\"key\": \"name\", \"operator\": \"In\", \"values\": ["+clusterNamespace+"]}]}]",
-				"--kubeconfig="+kubeconfigHub)
+			common.PatchPlacementRule(userNamespace, "placement-"+compE8ScanPolicyName, clusterNamespace, kubeconfigHub)
 			By("Checking policy-e8-scan on hub cluster in ns " + userNamespace)
 			rootPlc := utils.GetWithTimeout(clientHubDynamic, common.GvrPolicy, compE8ScanPolicyName, userNamespace, true, defaultTimeoutSeconds)
 			Expect(rootPlc).NotTo(BeNil())
