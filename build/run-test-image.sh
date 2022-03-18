@@ -4,26 +4,31 @@
 set -e
 
 if [[ ${FAIL_FAST} == "true" ]]; then
-  echo "Running in fail fast mode"
+  echo "* Running in fail fast mode"
   GINKGO_FAIL_FAST="--fail-fast" 
 fi
 
-for TEST_SUITE in policy-collection integration; do
-  # Run test suite with reporting
-  CGO_ENABLED=0 ginkgo -v ${GINKGO_FAIL_FAST} --junit-report=${TEST_SUITE}.xml --output-dir=test-output test/${TEST_SUITE} -- -cluster_namespace=$MANAGED_CLUSTER_NAME || EXIT_CODE=$?
+if [[ -z ${GINKGO_LABEL_FILTER} ]]; then 
+  echo "* No GINKGO_LABEL_FILTER set"
+else
+  GINKGO_LABEL_FILTER="--label-filter=${GINKGO_LABEL_FILTER}"
+  echo "* Using GINKGO_LABEL_FILTER=${GINKGO_LABEL_FILTER}"
+fi
 
-  # Remove Gingko phases from report to prevent corrupting bracketed metadata
-  if [ -f test-output/${TEST_SUITE}.xml ]; then
-    sed -i 's/\[It\] *//g' test-output/${TEST_SUITE}.xml
-    sed -i 's/\[BeforeSuite\]/GRC: [P1][Sev1][policy-grc] BeforeSuite/g' test-output/${TEST_SUITE}.xml
-    sed -i 's/\[AfterSuite\]/GRC: [P1][Sev1][policy-grc] AfterSuite/g' test-output/${TEST_SUITE}.xml
-  fi
+# Run test suite with reporting
+CGO_ENABLED=0 ginkgo -v ${GINKGO_FAIL_FAST} ${GINKGO_LABEL_FILTER} --junit-report=integration.xml --output-dir=test-output test/integration -- -cluster_namespace=$MANAGED_CLUSTER_NAME || EXIT_CODE=$?
 
-  # Collect exit code if it's an error
-  if [[ "${EXIT_CODE}" != "0" ]]; then
-    ERROR_CODE=${EXIT_CODE}
-  fi
-done
+# Remove Gingko phases from report to prevent corrupting bracketed metadata
+if [ -f test-output/integration.xml ]; then
+  sed -i 's/\[It\] *//g' test-output/integration.xml
+  sed -i 's/\[BeforeSuite\]/GRC: [P1][Sev1][policy-grc] BeforeSuite/g' test-output/integration.xml
+  sed -i 's/\[AfterSuite\]/GRC: [P1][Sev1][policy-grc] AfterSuite/g' test-output/integration.xml
+fi
+
+# Collect exit code if it's an error
+if [[ "${EXIT_CODE}" != "0" ]]; then
+  ERROR_CODE=${EXIT_CODE}
+fi
 
 if [[ -n "${ERROR_CODE}" ]]; then
     echo "* Detected test failure. Collecting debug logs..."

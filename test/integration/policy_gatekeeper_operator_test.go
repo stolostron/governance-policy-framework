@@ -1,7 +1,7 @@
 // Copyright (c) 2020 Red Hat, Inc.
 // Copyright Contributors to the Open Cluster Management project
 
-package e2e
+package integration
 
 import (
 	"context"
@@ -12,17 +12,32 @@ import (
 	. "github.com/onsi/gomega"
 	policiesv1 "github.com/stolostron/governance-policy-propagator/api/v1"
 	"github.com/stolostron/governance-policy-propagator/test/utils"
+	"k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
 	"github.com/stolostron/governance-policy-framework/test/common"
 )
 
-var _ = Describe("RHACM4K-3055", func() {
-	var getComplianceState func(policyName string) func() interface{}
+func isOCP44() bool {
+	clusterVersion, err := clientManagedDynamic.Resource(common.GvrClusterVersion).Get(context.TODO(), "version", metav1.GetOptions{})
+	if err != nil && errors.IsNotFound(err) {
+		// no version CR, not ocp
+		fmt.Println("This is not an OCP cluster")
+		return false
+	}
+	version := clusterVersion.Object["status"].(map[string]interface{})["desired"].(map[string]interface{})["version"].(string)
+	fmt.Println("OCP Version " + version)
+	return strings.HasPrefix(version, "4.4")
+}
 
+var _ = Describe("", Label("policy-collection", "community"), func() {
+	var getComplianceState func(policyName string) func() interface{}
 	BeforeEach(func() {
 		if isOCP44() {
 			Skip("Skipping as this is ocp 4.4")
+		}
+		if !canCreateOpenshiftNamespaces() {
+			Skip("Skipping as upstream gatekeeper operator requires the ability to create the openshift-gatekeeper-system namespace")
 		}
 
 		// Assign this here to avoid using nil pointers as arguments
@@ -30,7 +45,7 @@ var _ = Describe("RHACM4K-3055", func() {
 			return common.GetComplianceState(clientHubDynamic, userNamespace, policyName, clusterNamespace)
 		}
 	})
-	const gatekeeperPolicyURL = "https://raw.githubusercontent.com/stolostron/policy-collection/main/stable/CM-Configuration-Management/policy-gatekeeper-operator-downstream.yaml"
+	const gatekeeperPolicyURL = "https://raw.githubusercontent.com/stolostron/policy-collection/main/community/CM-Configuration-Management/policy-gatekeeper-operator.yaml"
 	const gatekeeperPolicyName = "policy-gatekeeper-operator"
 	const GKPolicyYaml = "https://raw.githubusercontent.com/stolostron/policy-collection/main/community/CM-Configuration-Management/policy-gatekeeper-sample.yaml"
 	const GKPolicyName = "policy-gatekeeper"
@@ -39,31 +54,34 @@ var _ = Describe("RHACM4K-3055", func() {
 	const GKAssignMetadataPolicyYaml = "https://raw.githubusercontent.com/stolostron/policy-collection/main/community/CM-Configuration-Management/policy-gatekeeper-annotation-owner.yaml"
 	const GKAssignMetadataPolicyName = "policy-gatekeeper-annotation-owner"
 
-	Describe("GRC: [P1][Sev1][policy-grc] Test installing gatekeeper operator", func() {
-		It("stable/policy-gatekeeper-operator should be created on hub", func() {
+	Describe("RHACM4K-1692 GRC: [P1][Sev1][policy-grc] Test installing gatekeeper operator", func() {
+		It("community/policy-gatekeeper-operator should be created on hub", func() {
 			By("Creating policy on hub")
 			utils.KubectlWithOutput("apply", "-f", gatekeeperPolicyURL, "-n", userNamespace, "--kubeconfig="+kubeconfigHub)
+
 			By("Patching Policy Gatekeeper CR template with namespaceSelector to kubernetes.io/metadata.name=" + userNamespace)
 			utils.KubectlWithOutput("patch", "-n", userNamespace, "policy", gatekeeperPolicyName,
-				"--type=json", "-p=[{\"op\": \"add\", \"path\": \"/spec/policy-templates/2/objectDefinition/spec/object-templates/0/objectDefinition/spec/webhook/namespaceSelector\","+
+				"--type=json", "-p=[{\"op\": \"add\", \"path\": \"/spec/policy-templates/4/objectDefinition/spec/object-templates/0/objectDefinition/spec/webhook/namespaceSelector\","+
 					" \"value\":{\"matchExpressions\":[{\"key\": \"grc\",\"operator\":\"In\",\"values\":[\"true\"]}]}}]",
 				"--kubeconfig="+kubeconfigHub)
+
 			By("Patching placement rule")
 			common.PatchPlacementRule(userNamespace, "placement-"+gatekeeperPolicyName, clusterNamespace, kubeconfigHub)
+
 			By("Checking policy-gatekeeper-operator on hub cluster in ns " + userNamespace)
 			rootPlc := utils.GetWithTimeout(clientHubDynamic, common.GvrPolicy, gatekeeperPolicyName, userNamespace, true, defaultTimeoutSeconds)
 			Expect(rootPlc).NotTo(BeNil())
 		})
-		It("stable/policy-gatekeeper-operator should be created on managed cluster", func() {
+		It("community/policy-gatekeeper-operator should be created on managed cluster", func() {
 			By("Checking policy-gatekeeper-operator on managed cluster in ns " + clusterNamespace)
 			managedplc := utils.GetWithTimeout(clientManagedDynamic, common.GvrPolicy, userNamespace+"."+gatekeeperPolicyName, clusterNamespace, true, defaultTimeoutSeconds)
 			Expect(managedplc).NotTo(BeNil())
 		})
-		It("stable/policy-gatekeeper-operator should be noncompliant", func() {
+		It("community/policy-gatekeeper-operator should be noncompliant", func() {
 			By("Checking if the status of root policy is noncompliant")
 			Eventually(getComplianceState(gatekeeperPolicyName), defaultTimeoutSeconds*2, 1).Should(Equal(policiesv1.NonCompliant))
 		})
-		It("Enforcing stable/policy-gatekeeper-operator", func() {
+		It("Enforcing community/policy-gatekeeper-operator", func() {
 			Eventually(func() interface{} {
 				By("Patching remediationAction = enforce on root policy")
 				rootPlc := utils.GetWithTimeout(clientHubDynamic, common.GvrPolicy, gatekeeperPolicyName, userNamespace, true, defaultTimeoutSeconds)
@@ -80,21 +98,15 @@ var _ = Describe("RHACM4K-3055", func() {
 			}, defaultTimeoutSeconds, 1).Should(Equal("enforce"))
 		})
 		It("Gatekeeper operator pod should be running", func() {
-			By("Checking if pod gatekeeper-operator has been created")
-			var i int = 0
+			By("Checking if pod gatekeeper-operator-controller-manager has been created")
 			Eventually(func() interface{} {
-				if i == 60*2 || i == 60*4 {
-					fmt.Println("gatekeeper operator pod still not created, deleting subscription and let it recreate", i)
-					utils.KubectlWithOutput("delete", "-n", "openshift-operators", "subscriptions.operators.coreos.com", "gatekeeper-operator-product", "--kubeconfig="+kubeconfigManaged)
-				}
-				i++
-				podList, err := clientManaged.CoreV1().Pods("openshift-operators").List(context.TODO(), metav1.ListOptions{LabelSelector: "control-plane in (controller-manager, gatekeeper-operator-controller-manager)"})
+				podList, err := clientManaged.CoreV1().Pods("openshift-gatekeeper-operator").List(context.TODO(), metav1.ListOptions{LabelSelector: "control-plane in (controller-manager, gatekeeper-operator-controller-manager)"})
 				Expect(err).To(BeNil())
 				return len(podList.Items)
-			}, defaultTimeoutSeconds*12, 1).Should(Equal(1))
-			By("Checking if pod gatekeeper-operator is running")
+			}, defaultTimeoutSeconds*8, 1).ShouldNot(Equal(0))
+			By("Checking if pod gatekeeper-operator-controller-manager is running")
 			Eventually(func() interface{} {
-				podList, err := clientManaged.CoreV1().Pods("openshift-operators").List(context.TODO(), metav1.ListOptions{LabelSelector: "control-plane in (controller-manager, gatekeeper-operator-controller-manager)"})
+				podList, err := clientManaged.CoreV1().Pods("openshift-gatekeeper-operator").List(context.TODO(), metav1.ListOptions{LabelSelector: "control-plane in (controller-manager, gatekeeper-operator-controller-manager)"})
 				Expect(err).To(BeNil())
 				for _, item := range podList.Items {
 					if strings.HasPrefix(item.ObjectMeta.Name, "gatekeeper-operator-controller") {
@@ -136,6 +148,7 @@ var _ = Describe("RHACM4K-3055", func() {
 				return string(podList.Items[0].Status.Phase)
 			}, defaultTimeoutSeconds*4, 1).Should(Equal("Running"))
 		})
+
 		It("Gatekeeper controller manager pods should be running", func() {
 			By("Checking if pod gatekeeper-controller-manager has been created")
 			Eventually(func() interface{} {
@@ -150,11 +163,11 @@ var _ = Describe("RHACM4K-3055", func() {
 				return string(podList.Items[0].Status.Phase) + "/" + string(podList.Items[1].Status.Phase)
 			}, defaultTimeoutSeconds*4, 1).Should(Equal("Running/Running"))
 		})
-		It("stable/policy-gatekeeper-operator should be compliant", func() {
+		It("community/policy-gatekeeper-operator should be compliant", func() {
 			By("Checking if the status of root policy is compliant")
 			Eventually(getComplianceState(gatekeeperPolicyName), defaultTimeoutSeconds*6, 1).Should(Equal(policiesv1.Compliant))
 		})
-		It("Informing stable/policy-gatekeeper-operator", func() {
+		It("Informing community/policy-gatekeeper-operator", func() {
 			Eventually(func() interface{} {
 				By("Patching remediationAction = inform on root policy")
 				rootPlc := utils.GetWithTimeout(clientHubDynamic, common.GvrPolicy, gatekeeperPolicyName, userNamespace, true, defaultTimeoutSeconds)
@@ -172,8 +185,8 @@ var _ = Describe("RHACM4K-3055", func() {
 		})
 	})
 
-	Describe("GRC: [P1][Sev1][policy-grc] Test stable/policy-gatekeeper-sample", func() {
-		It("stable/policy-gatekeeper-sample should be created on hub", func() {
+	Describe("RHACM4K-1274/RHACM4K-1282 GRC: [P1][Sev1][policy-grc] Test community/policy-gatekeeper-sample", func() {
+		It("community/policy-gatekeeper-sample should be created on hub", func() {
 			By("Creating policy on hub")
 			utils.KubectlWithOutput("apply", "-f", GKPolicyYaml, "-n", userNamespace, "--kubeconfig="+kubeconfigHub)
 			By("Policy should be created on hub")
@@ -191,7 +204,7 @@ var _ = Describe("RHACM4K-3055", func() {
 			rootPlc := utils.GetWithTimeout(clientHubDynamic, common.GvrPolicy, GKPolicyName, userNamespace, true, defaultTimeoutSeconds)
 			Expect(rootPlc).NotTo(BeNil())
 		})
-		It("stable/policy-gatekeeper-sample should be compliant", func() {
+		It("community/policy-gatekeeper-sample should be compliant", func() {
 			By("Checking if the status of root policy is compliant")
 			Eventually(getComplianceState(GKPolicyName), defaultTimeoutSeconds*6, 1).Should(Equal(policiesv1.Compliant))
 			By("Checking if status for policy template policy-gatekeeper-audit is compliant")
@@ -233,7 +246,7 @@ var _ = Describe("RHACM4K-3055", func() {
 				ContainSubstring("NonCompliant; violation - events found:"),
 				ContainSubstring("e2etestfail.")))
 		})
-		It("stable/policy-gatekeeper-sample should be noncompliant", func() {
+		It("community/policy-gatekeeper-sample should be noncompliant", func() {
 			By("Checking if the status of root policy is noncompliant")
 			Eventually(getComplianceState(GKPolicyName), defaultTimeoutSeconds*4, 1).Should(Equal(policiesv1.NonCompliant))
 		})
@@ -244,11 +257,11 @@ var _ = Describe("RHACM4K-3055", func() {
 			Eventually(func() interface{} {
 				By("Patching mutatingWebhook = Enabled on root policy")
 				rootPlc := utils.GetWithTimeout(clientHubDynamic, common.GvrPolicy, gatekeeperPolicyName, userNamespace, true, defaultTimeoutSeconds)
-				rootPlc.Object["spec"].(map[string]interface{})["policy-templates"].([]interface{})[2].(map[string]interface{})["objectDefinition"].(map[string]interface{})["spec"].(map[string]interface{})["object-templates"].([]interface{})[0].(map[string]interface{})["objectDefinition"].(map[string]interface{})["spec"].(map[string]interface{})["mutatingWebhook"] = "Enabled"
+				rootPlc.Object["spec"].(map[string]interface{})["policy-templates"].([]interface{})[4].(map[string]interface{})["objectDefinition"].(map[string]interface{})["spec"].(map[string]interface{})["object-templates"].([]interface{})[0].(map[string]interface{})["objectDefinition"].(map[string]interface{})["spec"].(map[string]interface{})["mutatingWebhook"] = "Enabled"
 				clientHubDynamic.Resource(common.GvrPolicy).Namespace(userNamespace).Update(context.TODO(), rootPlc, metav1.UpdateOptions{})
 				By("Checking if mutatingWebhook is Enabled for root policy")
 				rootPlc = utils.GetWithTimeout(clientHubDynamic, common.GvrPolicy, gatekeeperPolicyName, userNamespace, true, defaultTimeoutSeconds)
-				return rootPlc.Object["spec"].(map[string]interface{})["policy-templates"].([]interface{})[2].(map[string]interface{})["objectDefinition"].(map[string]interface{})["spec"].(map[string]interface{})["object-templates"].([]interface{})[0].(map[string]interface{})["objectDefinition"].(map[string]interface{})["spec"].(map[string]interface{})["mutatingWebhook"]
+				return rootPlc.Object["spec"].(map[string]interface{})["policy-templates"].([]interface{})[4].(map[string]interface{})["objectDefinition"].(map[string]interface{})["spec"].(map[string]interface{})["object-templates"].([]interface{})[0].(map[string]interface{})["objectDefinition"].(map[string]interface{})["spec"].(map[string]interface{})["mutatingWebhook"]
 			}, defaultTimeoutSeconds, 1).Should(Equal("Enabled"))
 		})
 		It("Enforcing policy-gatekeeper-operator to enable mutation feature", func() {
@@ -279,7 +292,7 @@ var _ = Describe("RHACM4K-3055", func() {
 			Eventually(func() interface{} {
 				out, _ := utils.KubectlWithOutput("get", "crd", "assignmetadata.mutations.gatekeeper.sh", "--kubeconfig="+kubeconfigManaged)
 				return out
-			}, defaultTimeoutSeconds*2, 1).Should(ContainSubstring("CREATED AT\nassignmetadata.mutations.gatekeeper.sh"))
+			}, defaultTimeoutSeconds*4, 1).Should(ContainSubstring("CREATED AT\nassignmetadata.mutations.gatekeeper.sh"))
 		})
 		It("Checking if mutating webhook gatekeeper-mutating-webhook-configuration exists", func() {
 			Eventually(func() interface{} {
@@ -349,22 +362,22 @@ var _ = Describe("RHACM4K-3055", func() {
 			Eventually(func() interface{} {
 				By("Patching mutatingWebhook = Disabled on root policy")
 				rootPlc := utils.GetWithTimeout(clientHubDynamic, common.GvrPolicy, gatekeeperPolicyName, userNamespace, true, defaultTimeoutSeconds)
-				rootPlc.Object["spec"].(map[string]interface{})["policy-templates"].([]interface{})[2].(map[string]interface{})["objectDefinition"].(map[string]interface{})["spec"].(map[string]interface{})["object-templates"].([]interface{})[0].(map[string]interface{})["objectDefinition"].(map[string]interface{})["spec"].(map[string]interface{})["mutatingWebhook"] = "Disabled"
+				rootPlc.Object["spec"].(map[string]interface{})["policy-templates"].([]interface{})[4].(map[string]interface{})["objectDefinition"].(map[string]interface{})["spec"].(map[string]interface{})["object-templates"].([]interface{})[0].(map[string]interface{})["objectDefinition"].(map[string]interface{})["spec"].(map[string]interface{})["mutatingWebhook"] = "Disabled"
 				clientHubDynamic.Resource(common.GvrPolicy).Namespace(userNamespace).Update(context.TODO(), rootPlc, metav1.UpdateOptions{})
 				By("Checking if mutatingWebhook is Disabled for root policy")
 				rootPlc = utils.GetWithTimeout(clientHubDynamic, common.GvrPolicy, gatekeeperPolicyName, userNamespace, true, defaultTimeoutSeconds)
-				return rootPlc.Object["spec"].(map[string]interface{})["policy-templates"].([]interface{})[2].(map[string]interface{})["objectDefinition"].(map[string]interface{})["spec"].(map[string]interface{})["object-templates"].([]interface{})[0].(map[string]interface{})["objectDefinition"].(map[string]interface{})["spec"].(map[string]interface{})["mutatingWebhook"]
+				return rootPlc.Object["spec"].(map[string]interface{})["policy-templates"].([]interface{})[4].(map[string]interface{})["objectDefinition"].(map[string]interface{})["spec"].(map[string]interface{})["object-templates"].([]interface{})[0].(map[string]interface{})["objectDefinition"].(map[string]interface{})["spec"].(map[string]interface{})["mutatingWebhook"]
 			}, defaultTimeoutSeconds, 1).Should(Equal("Disabled"))
 		})
 		It("Checking if Assign/AssingnMetadata CRDs have been removed", func() {
 			Eventually(func() interface{} {
 				out, _ := utils.KubectlWithOutput("get", "crd", "assign.mutations.gatekeeper.sh", "--kubeconfig="+kubeconfigManaged)
 				return out
-			}, defaultTimeoutSeconds*4, 1).Should(ContainSubstring("not found"))
+			}, defaultTimeoutSeconds*8, 1).Should(ContainSubstring("not found"))
 			Eventually(func() interface{} {
 				out, _ := utils.KubectlWithOutput("get", "crd", "assignmetadata.mutations.gatekeeper.sh", "--kubeconfig="+kubeconfigManaged)
 				return out
-			}, defaultTimeoutSeconds*4, 1).Should(ContainSubstring("not found"))
+			}, defaultTimeoutSeconds*2, 1).Should(ContainSubstring("not found"))
 		})
 		It("Checking if gatekeeper controller manager has mutation flag off", func() {
 			Eventually(func() interface{} {
@@ -372,7 +385,7 @@ var _ = Describe("RHACM4K-3055", func() {
 				return fmt.Sprintf("%d/%d", len(podList.Items[0].Spec.Containers[0].Args), len(podList.Items[1].Spec.Containers[0].Args))
 			}, defaultTimeoutSeconds*15, 1).Should(Equal("6/6"))
 		})
-		It("Informing stable/policy-gatekeeper-operator", func() {
+		It("Informing community/policy-gatekeeper-operator", func() {
 			Eventually(func() interface{} {
 				By("Patching remediationAction = inform on root policy")
 				rootPlc := utils.GetWithTimeout(clientHubDynamic, common.GvrPolicy, gatekeeperPolicyName, userNamespace, true, defaultTimeoutSeconds)
@@ -404,7 +417,7 @@ var _ = Describe("RHACM4K-3055", func() {
 			}, defaultTimeoutSeconds, 1).Should(BeNil())
 			utils.KubectlWithOutput("delete", "-f", "../resources/gatekeeper/pod-mutation.yaml", "-n", "e2etestsuccess", "--kubeconfig="+kubeconfigManaged)
 		})
-		It("Clean up stable/policy-gatekeeper-sample", func() {
+		It("Clean up community/policy-gatekeeper-sample", func() {
 			utils.KubectlWithOutput("delete", "-f", GKPolicyYaml, "-n", userNamespace, "--kubeconfig="+kubeconfigHub)
 			Eventually(func() interface{} {
 				managedPlc := utils.GetWithTimeout(clientManagedDynamic, common.GvrPolicy, userNamespace+"."+GKPolicyName, clusterNamespace, false, defaultTimeoutSeconds)
@@ -413,7 +426,7 @@ var _ = Describe("RHACM4K-3055", func() {
 			utils.KubectlWithOutput("delete", "ns", "e2etestsuccess", "--kubeconfig="+kubeconfigManaged)
 			utils.KubectlWithOutput("delete", "ns", "e2etestfail", "--kubeconfig="+kubeconfigManaged)
 		})
-		It("Clean up stable/policy-gatekeeper-operator", func() {
+		It("Clean up community/policy-gatekeeper-operator", func() {
 			utils.KubectlWithOutput("delete", "-f", gatekeeperPolicyURL, "-n", userNamespace, "--kubeconfig="+kubeconfigHub)
 			Eventually(func() interface{} {
 				managedPlc := utils.GetWithTimeout(clientManagedDynamic, common.GvrPolicy, userNamespace+"."+gatekeeperPolicyName, clusterNamespace, false, defaultTimeoutSeconds)
@@ -425,12 +438,12 @@ var _ = Describe("RHACM4K-3055", func() {
 				out, _ := utils.KubectlWithOutput("get", "pods", "-n", "openshift-gatekeeper-system", "--kubeconfig="+kubeconfigManaged)
 				return out
 			}, defaultTimeoutSeconds*4, 1).Should(ContainSubstring("No resources found")) // k8s will respond with this even if the ns was deleted.
-			utils.KubectlWithOutput("delete", "-n", "openshift-operators", "subscriptions.operators.coreos.com", "gatekeeper-operator-product", "--kubeconfig="+kubeconfigManaged)
-			csvName, _ := utils.KubectlWithOutput("get", "-n", "openshift-operators", "csv", "-o", "jsonpath=\"{.items[?(@.spec.displayName==\"Gatekeeper Operator\")].metadata.name}\"", "--kubeconfig="+kubeconfigManaged)
-			csvName = strings.Trim(csvName, "\"")
-			utils.KubectlWithOutput("delete", "-n", "openshift-operators", "csv", csvName, "--kubeconfig="+kubeconfigManaged)
+			utils.KubectlWithOutput("delete", "-n", "openshift-gatekeeper-operator", "subscriptions.operators.coreos.com", "gatekeeper-operator-sub", "--kubeconfig="+kubeconfigManaged)
+			utils.KubectlWithOutput("delete", "-n", "openshift-gatekeeper-operator", "OperatorGroup", "gatekeeper-operator", "--kubeconfig="+kubeconfigManaged)
 			utils.KubectlWithOutput("delete", "crd", "gatekeepers.operator.gatekeeper.sh", "--kubeconfig="+kubeconfigManaged)
-			out, _ := utils.KubectlWithOutput("delete", "ns", "openshift-gatekeeper-system", "--kubeconfig="+kubeconfigManaged)
+			out, _ := utils.KubectlWithOutput("delete", "ns", "openshift-gatekeeper-operator", "--kubeconfig="+kubeconfigManaged)
+			Expect(out).To(ContainSubstring("namespace \"openshift-gatekeeper-operator\" deleted"))
+			out, _ = utils.KubectlWithOutput("delete", "ns", "openshift-gatekeeper-system", "--kubeconfig="+kubeconfigManaged)
 			Expect(out).To(Or(
 				ContainSubstring("namespace \"openshift-gatekeeper-system\" deleted"),
 				ContainSubstring("namespaces \"openshift-gatekeeper-system\" not found")))

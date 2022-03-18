@@ -33,7 +33,7 @@ var (
 
 func TestIntegration(t *testing.T) {
 	RegisterFailHandler(Fail)
-	RunSpecs(t, "Policy Framework repo integration Suite")
+	RunSpecs(t, "GRC framework integration test suite")
 }
 
 func init() {

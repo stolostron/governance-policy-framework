@@ -1,7 +1,7 @@
 // Copyright (c) 2020 Red Hat, Inc.
 // Copyright Contributors to the Open Cluster Management project
 
-package e2e
+package integration
 
 import (
 	"context"
@@ -67,7 +67,7 @@ func canCreateOpenshiftNamespaces() bool {
 	return canCreateOpenshiftNamespacesResult
 }
 
-var _ = Describe("RHACM4K-2222 GRC: [P1][Sev1][policy-grc] Test compliance operator and scan", func() {
+var _ = Describe("RHACM4K-2222 GRC: [P1][Sev1][policy-grc] Test compliance operator and scan", Label("policy-collection", "stable", "BVT"), func() {
 	const compPolicyURL = "https://raw.githubusercontent.com/stolostron/policy-collection/main/stable/CA-Security-Assessment-and-Authorization/policy-compliance-operator-install.yaml"
 	const compPolicyName = "policy-comp-operator"
 	const compE8ScanPolicyURL = "https://raw.githubusercontent.com/stolostron/policy-collection/main/stable/CM-Configuration-Management/policy-compliance-operator-e8-scan.yaml"

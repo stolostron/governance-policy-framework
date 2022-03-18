@@ -1,7 +1,7 @@
 // Copyright (c) 2022 Red Hat, Inc.
 // Copyright Contributors to the Open Cluster Management project
 
-package e2e
+package integration
 
 import (
 	"context"
@@ -19,7 +19,7 @@ import (
 const policyNamespaceURL = "https://raw.githubusercontent.com/stolostron/policy-collection/main/stable/CM-Configuration-Management/policy-namespace.yaml"
 const policyNamespaceName = "policy-namespace"
 
-var _ = Describe("GRC: [P1][Sev1][policy-grc] Test the policy-namespace policy", func() {
+var _ = Describe("GRC: [P1][Sev1][policy-grc] Test the policy-namespace policy", Label("policy-collection", "stable"), func() {
 	It("stable/"+policyNamespaceName+" should be created on the Hub", func() {
 		By("Creating policy on hub")
 		_, err := utils.KubectlWithOutput(
