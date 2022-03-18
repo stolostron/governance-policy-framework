@@ -87,7 +87,7 @@ var _ = Describe("GRC: [P1][Sev1][policy-grc] Test the policy-namespace policy",
 		By("Checking the prod namespace")
 		Eventually(
 			func() error {
-				_, err := clientHub.CoreV1().Namespaces().Get(context.TODO(), "prod", metav1.GetOptions{})
+				_, err := clientManaged.CoreV1().Namespaces().Get(context.TODO(), "prod", metav1.GetOptions{})
 
 				return err
 			},
@@ -102,7 +102,7 @@ var _ = Describe("GRC: [P1][Sev1][policy-grc] Test the policy-namespace policy",
 		)
 		Expect(err).To(BeNil())
 
-		err = clientHub.CoreV1().Namespaces().Delete(context.TODO(), "prod", metav1.DeleteOptions{})
+		err = clientManaged.CoreV1().Namespaces().Delete(context.TODO(), "prod", metav1.DeleteOptions{})
 		Expect(err).To(BeNil())
 	})
 })
