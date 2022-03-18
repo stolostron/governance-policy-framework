@@ -19,30 +19,6 @@ import (
 	"github.com/stolostron/governance-policy-framework/test/common"
 )
 
-// cleanup will remove any test data/configuration on the OpenShift cluster that was added/updated
-// as part of the policy generator test. Any errors will be propagated as gomega failed assertions.
-func cleanup(namespace string, secret string, user common.OCPUser) {
-	err := clientHub.CoreV1().Namespaces().Delete(context.TODO(), namespace, metav1.DeleteOptions{})
-	if !k8serrors.IsNotFound(err) {
-		Expect(err).Should(BeNil())
-	}
-
-	err = common.CleanupOCPUser(clientHub, clientHubDynamic, secret, user)
-	Expect(err).Should(BeNil())
-
-	// Wait for the namespace to be fully deleted before proceeding.
-	Eventually(
-		func() bool {
-			_, err := clientHub.CoreV1().Namespaces().Get(
-				context.TODO(), namespace, metav1.GetOptions{},
-			)
-			return k8serrors.IsNotFound(err)
-		},
-		defaultTimeoutSeconds,
-		1,
-	).Should(BeTrue())
-}
-
 var _ = Describe("GRC: [P1][Sev1][policy-grc] Test the Policy Generator in an App subscription", func() {
 	const namespace = "grc-e2e-policy-generator"
 	const secret = "grc-e2e-subscription-admin-user"
