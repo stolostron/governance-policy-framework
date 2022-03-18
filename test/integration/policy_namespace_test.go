@@ -41,7 +41,7 @@ var _ = Describe("GRC: [P1][Sev1][policy-grc] Test the policy-namespace policy",
 	})
 
 	It("stable/"+policyNamespaceName+" should be created on managed cluster", func() {
-		By("Checking policy-gatekeeper-operator on managed cluster in ns " + clusterNamespace)
+		By("Checking the policy on managed cluster in ns " + clusterNamespace)
 		managedPolicy := utils.GetWithTimeout(
 			clientManagedDynamic,
 			common.GvrPolicy,
