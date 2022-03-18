@@ -22,5 +22,5 @@ docker run --volume $(pwd)/results:/go/src/github.com/stolostron/governance-poli
     --volume $MANAGED_KUBECONFIG:/go/src/github.com/stolostron/governance-policy-framework/kubeconfig_managed \
     --env MANAGED_CLUSTER_NAME=$MANAGED_CLUSTER_NAME \
     --env FAIL_FAST=true \
-    --env GINKGO_LABEL_FILTER=${GINKGO_LABEL_FILTER}
+    --env GINKGO_LABEL_FILTER=${GINKGO_LABEL_FILTER} \
     $TEST_IMAGE_URI
