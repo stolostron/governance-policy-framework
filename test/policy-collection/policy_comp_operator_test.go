@@ -141,7 +141,7 @@ var _ = Describe("RHACM4K-2222 GRC: [P1][Sev1][policy-grc] Test compliance opera
 				podList, err := clientManaged.CoreV1().Pods("openshift-compliance").List(context.TODO(), metav1.ListOptions{LabelSelector: "name=compliance-operator"})
 				Expect(err).To(BeNil())
 				return string(podList.Items[0].Status.Phase)
-			}, defaultTimeoutSeconds*4, 1).Should(Equal("Running"))
+			}, defaultTimeoutSeconds*6, 1).Should(Equal("Running"))
 		})
 		It("Profile bundle pods should be running", func() {
 			By("Checking if pod ocp4-pp has been created")
