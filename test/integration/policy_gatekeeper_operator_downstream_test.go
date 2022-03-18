@@ -17,7 +17,7 @@ import (
 	"github.com/stolostron/governance-policy-framework/test/common"
 )
 
-var _ = Describe("RHACM4K-3055", func() {
+var _ = Describe("RHACM4K-3055", Label("policy-collection", "stable", "BVT"), func() {
 	var getComplianceState func(policyName string) func() interface{}
 
 	BeforeEach(func() {

@@ -19,7 +19,7 @@ import (
 	"github.com/stolostron/governance-policy-framework/test/common"
 )
 
-var _ = Describe("GRC: [P1][Sev1][policy-grc] Test the Policy Generator in an App subscription", func() {
+var _ = Describe("GRC: [P1][Sev1][policy-grc] Test the Policy Generator in an App subscription", Label("BVT"), func() {
 	const namespace = "grc-e2e-policy-generator"
 	const secret = "grc-e2e-subscription-admin-user"
 	const subAdminBinding = "open-cluster-management:subscription-admin"

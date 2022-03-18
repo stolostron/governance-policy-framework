@@ -30,7 +30,7 @@ func isOCP44() bool {
 	return strings.HasPrefix(version, "4.4")
 }
 
-var _ = Describe("", func() {
+var _ = Describe("", Label("policy-collection", "community"), func() {
 	var getComplianceState func(policyName string) func() interface{}
 	BeforeEach(func() {
 		if isOCP44() {

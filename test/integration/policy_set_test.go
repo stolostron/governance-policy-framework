@@ -24,7 +24,7 @@ const (
 	testedDisablePolicyYaml    string = "../resources/policy_set/disable-policy.yaml"
 )
 
-var _ = Describe("GRC: [P1][Sev1][policy-grc] Test policy set", func() {
+var _ = Describe("GRC: [P1][Sev1][policy-grc] Test policy set", Label("BVT"), func() {
 	Describe("Create policy, policyset, and placement in ns:"+userNamespace, func() {
 		It("Should create and process policy and policyset", func() {
 			By("Creating " + testPolicySetYaml)

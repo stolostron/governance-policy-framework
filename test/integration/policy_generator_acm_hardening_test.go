@@ -49,7 +49,7 @@ func cleanup(namespace string, secret string, user common.OCPUser) {
 	}
 }
 
-var _ = Describe("GRC: [P1][Sev1][policy-grc] Test the ACM Hardening generated PolicySet in an App subscription", func() {
+var _ = Describe("GRC: [P1][Sev1][policy-grc] Test the ACM Hardening generated PolicySet in an App subscription", Label("policy-collection", "stable"), func() {
 	const namespace = "policies"
 	const secret = "grc-e2e-subscription-admin-user"
 	const clustersetRoleName = "grc-e2e-clusterset-role"

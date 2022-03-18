@@ -31,7 +31,7 @@ var insightsMetricsURL string
 
 var insightsToken string
 
-var _ = Describe("GRC: [P1][Sev1][policy-grc] Test policyreport_info metric", func() {
+var _ = Describe("GRC: [P1][Sev1][policy-grc] Test policyreport_info metric", Label("BVT"), func() {
 	It("Sets up the metrics service endpoint for tests", func() {
 		By("Setting the insights client to poll every minute")
 		insightsClient, err := common.OcHub("get", "deployments", "-n", ocmNS, "-l", insightsClientSelector, "-o", "name")

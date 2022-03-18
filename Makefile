@@ -304,9 +304,9 @@ integration-test:
 
 policy-collection-test:
 	@if [ -z "$(TEST_FILE)" ]; then\
-		$(GOPATH)/bin/ginkgo -v $(TEST_ARGS) --fail-fast test/policy-collection;\
+		$(GOPATH)/bin/ginkgo -v $(TEST_ARGS) --fail-fast --label-filter="policy-collection" test/integration;\
 	else\
-		$(GOPATH)/bin/ginkgo -v $(TEST_ARGS) --fail-fast --focus-file=$(TEST_FILE) test/policy-collection;\
+		$(GOPATH)/bin/ginkgo -v $(TEST_ARGS) --fail-fast --focus-file=$(TEST_FILE) test/integration;\
 	fi
 
 # go-get-tool will 'go get' any package $2 and install it to $1.
