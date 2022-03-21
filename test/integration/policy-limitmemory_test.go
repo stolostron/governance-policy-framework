@@ -10,15 +10,19 @@ import (
 	. "github.com/onsi/gomega"
 	policiesv1 "github.com/stolostron/governance-policy-propagator/api/v1"
 	"github.com/stolostron/governance-policy-propagator/test/utils"
+	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	k8stypes "k8s.io/apimachinery/pkg/types"
 
 	"github.com/stolostron/governance-policy-framework/test/common"
 )
 
-const policyLimitMemoryURL = "https://raw.githubusercontent.com/stolostron/policy-collection/main/stable/SC-System-and-Communications-Protection/policy-limitmemory.yaml"
-const policyLimitMemoryName = "policy-limitmemory"
-const limitRangeName = "mem-limit-range"
+const (
+	policyLimitMemoryURL    = "https://raw.githubusercontent.com/stolostron/policy-collection/main/stable/SC-System-and-Communications-Protection/policy-limitmemory.yaml"
+	policyLimitMemoryName   = "policy-limitmemory"
+	policyLimitMemoryNSName = "policy-limitmemory"
+	limitRangeName          = "mem-limit-range"
+)
 
 var limitMemoryLabel = Label("policy-collection", "stable", "SVT")
 
@@ -30,12 +34,17 @@ var _ = Describe("GRC: [P1][Sev1][policy-grc] Test the "+policyLimitMemoryName+"
 		)
 		Expect(err).To(BeNil())
 
-		By("Patching the namespaceSelector to use the " + userNamespace + " namespace")
+		By("Creating the " + policyLimitMemoryNSName + " namespace on the managed cluster")
+		namespace := &corev1.Namespace{ObjectMeta: metav1.ObjectMeta{Name: policyLimitMemoryNSName}}
+		_, err = clientManaged.CoreV1().Namespaces().Create(context.TODO(), namespace, metav1.CreateOptions{})
+		Expect(err).To(BeNil())
+
+		By("Patching the namespaceSelector to use the " + policyLimitMemoryNSName + " namespace")
 		_, err = clientHubDynamic.Resource(common.GvrPolicy).Namespace(userNamespace).Patch(
 			context.TODO(),
 			policyLimitMemoryName,
 			k8stypes.JSONPatchType,
-			[]byte(`[{"op": "replace", "path": "/spec/policy-templates/0/objectDefinition/spec/namespaceSelector/include", "value": ["`+userNamespace+`"]}]`),
+			[]byte(`[{"op": "replace", "path": "/spec/policy-templates/0/objectDefinition/spec/namespaceSelector/include", "value": ["`+policyLimitMemoryNSName+`"]}]`),
 			metav1.PatchOptions{},
 		)
 		Expect(err).To(BeNil())
@@ -97,10 +106,10 @@ var _ = Describe("GRC: [P1][Sev1][policy-grc] Test the "+policyLimitMemoryName+"
 	})
 
 	It("The LimitRange should exist", func() {
-		By("Checking the LimitRange in the " + userNamespace + " namespace")
+		By("Checking the LimitRange in the " + policyLimitMemoryNSName + " namespace")
 		Eventually(
 			func() error {
-				_, err := clientManaged.CoreV1().LimitRanges(userNamespace).Get(
+				_, err := clientManaged.CoreV1().LimitRanges(policyLimitMemoryNSName).Get(
 					context.TODO(), limitRangeName, metav1.GetOptions{},
 				)
 
@@ -117,8 +126,8 @@ var _ = Describe("GRC: [P1][Sev1][policy-grc] Test the "+policyLimitMemoryName+"
 		)
 		Expect(err).To(BeNil())
 
-		err = clientManaged.CoreV1().LimitRanges(userNamespace).Delete(
-			context.TODO(), limitRangeName, metav1.DeleteOptions{},
+		err = clientManaged.CoreV1().Namespaces().Delete(
+			context.TODO(), policyLimitMemoryNSName, metav1.DeleteOptions{},
 		)
 		Expect(err).To(BeNil())
 	})
