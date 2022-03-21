@@ -29,6 +29,7 @@ cloneRepos() {
 }
 
 # return the most recent git sha for a repository's release branch
+# Inputs: getGitSha "component" "version"
 getGitSha() {
 	component=$1
 	release=release-$2
@@ -39,6 +40,8 @@ getGitSha() {
 	cd $BASEDIR
 }
 
+# Fetch a value from the Pipeline manifest
+# Inputs: getPipelineValue "component" "version" "manifest-json-key"
 getPipelineValue() {
 	component="$1"
 	release="${2}-integration"
@@ -51,6 +54,8 @@ getPipelineValue() {
 	cd $BASEDIR
 }
 
+# Check for Prow job failures
+# Inputs: checkProwJob "component" "version" "published-branches"
 checkProwJob() {
 	component="$1"
 
