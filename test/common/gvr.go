@@ -18,6 +18,7 @@ var (
 	GvrPlacementRule         = schema.GroupVersionResource{Group: "apps.open-cluster-management.io", Version: "v1", Resource: "placementrules"}
 	GvrK8sRequiredLabels     = schema.GroupVersionResource{Group: "constraints.gatekeeper.sh", Version: "v1beta1", Resource: "k8srequiredlabels"}
 	GvrClusterVersion        = schema.GroupVersionResource{Group: "config.openshift.io", Version: "v1", Resource: "clusterversions"}
+	GvrAPIServer             = schema.GroupVersionResource{Group: "config.openshift.io", Version: "v1", Resource: "apiservers"}
 	GvrComplianceScan        = schema.GroupVersionResource{Group: "compliance.openshift.io", Version: "v1alpha1", Resource: "compliancescans"}
 	GvrComplianceSuite       = schema.GroupVersionResource{Group: "compliance.openshift.io", Version: "v1alpha1", Resource: "compliancesuites"}
 	GvrComplianceCheckResult = schema.GroupVersionResource{Group: "compliance.openshift.io", Version: "v1alpha1", Resource: "compliancecheckresults"}
