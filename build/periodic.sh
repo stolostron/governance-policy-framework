@@ -6,7 +6,7 @@ COMPONENT_ORG=stolostron
 DEFAULT_BRANCH=${DEFAULT_BRANCH:-"main"}
 CHECK_RELEASES="2.3 2.4 2.5"
 # This list can include all postsubmit jobs for all repos--if a job doesn't exist it's filtered to empty and skipped
-CHECK_JOBS=${CHECK_JOBS:-"publish images latest-image-mirror latest-test-image-mirror"}
+CHECK_JOBS=${CHECK_JOBS:-"publish publish-test images latest-image-mirror latest-test-image-mirror"}
 
 # Clone the repositories needed for this script to work
 cloneRepos() {
@@ -29,6 +29,7 @@ cloneRepos() {
 }
 
 # return the most recent git sha for a repository's release branch
+# Inputs: getGitSha "component" "version"
 getGitSha() {
 	component=$1
 	release=release-$2
@@ -39,6 +40,8 @@ getGitSha() {
 	cd $BASEDIR
 }
 
+# Fetch a value from the Pipeline manifest
+# Inputs: getPipelineValue "component" "version" "manifest-json-key"
 getPipelineValue() {
 	component="$1"
 	release="${2}-integration"
@@ -51,8 +54,11 @@ getPipelineValue() {
 	cd $BASEDIR
 }
 
+# Check for Prow job failures
+# Inputs: checkProwJob "component" "version" "published-branches"
 checkProwJob() {
 	component="$1"
+	check_publish="$3"
 
 	if [ "$release" = "$DEFAULT_BRANCH" ]; then
 		BRANCH="$2"
@@ -75,6 +81,11 @@ checkProwJob() {
 				# 		 "base_link":"https://github.com/open-cluster-management/iam-policy-controller/compare/d544db4214b4...567b3597e832"
 				# 		}}];
 	for job in $CHECK_JOBS; do
+		# Skip checking the publish job(s) if there are no images in case it was removed mid-release and the most recent job failed
+		if [ "$BRANCH" != "$DEFAULT_BRANCH" ] && [[ "$check_publish" != *":$release:"* ]] && [[ "$job" == "publish"* ]]; then
+			echo "WARN: Not checking job $job for $BRANCH"
+			continue
+		fi
 		OUTPUT=$(curl -s https://prow.ci.openshift.org/job-history/gs/origin-ci-test/logs/branch-ci-${COMPONENT_ORG}-${component}-${BRANCH}-${job})
 		JSON=$(echo "$OUTPUT" | grep "var allBuilds" | sed 's/  var allBuilds =//' | sed 's/;$//' | jq '.[0]')
 		STATUS=$(echo "$JSON" | jq -r '.Result')
@@ -122,59 +133,61 @@ for repo in $REPOS; do
 		*)
 			IMAGES=$repo;;
 	esac
+	HAS_IMAGE=""
 	for release in $DEFAULT_BRANCH $CHECK_RELEASES; do
 		echo "Checking for failures with component $repo $release ..."
+
+		# Don't check the SHA for the default branch since it's not a release
+		if [ "$release" != "$DEFAULT_BRANCH" ]; then
+			# for each release and each image name, check the Git SHA
+			gitsha=$(getGitSha "$repo" "$release")
+			for imageName in ${IMAGES}; do
+				pipelinesha=$(getPipelineValue "$imageName" "$release" "git-sha256")
+
+				if [ -z "$pipelinesha" ]; then
+					echo "WARN: Pipeline SHA not found for $repo $release repository for $imageName. Continuing."
+				elif [ "$gitsha" != "$pipelinesha" ]; then
+					echo "****"
+					echo "ERROR: SHA mismatch in pipeline and $repo $release repositories." | tee -a ${ERROR_FILE}
+								echo "   imageName: $imageName" | tee -a ${ERROR_FILE}
+								echo "   pipeline: $pipelinesha" | tee -a ${ERROR_FILE}
+								echo "   $repo: $gitsha" | tee -a ${ERROR_FILE}
+					echo "***"
+					rc=1
+				fi
+			done
+
+			# for each release and each image name, check the tag in Quay
+			for imageName in ${IMAGES}; do
+				imagetag=$(getPipelineValue "$imageName" "$release" "image-tag")
+				# If the tag wasn't found in pipeline, skip checking for it in Quay
+				if [ -z "$imagetag" ]; then
+					continue
+				fi
+				# make sure the quay image is available
+				QUAY_RESPONSE=$(curl -s "https://quay.io/api/v1/repository/${COMPONENT_ORG}/${imageName}/tag/?onlyActiveTags=true&specificTag=${imagetag}")
+				QUAY_STATUS=$(echo "${QUAY_RESPONSE}" | jq -r '.error_message')
+				FOUND=$(echo "${QUAY_RESPONSE}" | jq '.tags | length')
+				if [ "${QUAY_STATUS}" != "null" ]; then
+					echo "****"
+					echo "ERROR: Error '${QUAY_STATUS}' querying $repo $release image in quay: $imageName:${imagetag}" | tee -a ${ERROR_FILE}
+					echo "***"
+					rc=1
+				elif [ "${FOUND}" != "1" ]; then
+					echo "****"
+					echo "ERROR: Tag not found for image in quay: $repo:${imagetag}" | tee -a ${ERROR_FILE}
+					echo "***"
+					rc=1
+				fi
+				HAS_IMAGE="$HAS_IMAGE:$release:"
+			done
+		fi
+
 		# check the prow job history
-		checkProwJob "$repo" "$release"
+		checkProwJob "$repo" "$release" "$HAS_IMAGE"
 		if [ $? -eq 1 ]; then
 			rc=1
 		fi
-
-		# Don't check the SHA for the default branch since it's not a release
-		if [ "$release" = "$DEFAULT_BRANCH" ]; then
-			continue
-		fi
-		# for each release and each image name, check the Git SHA
-		gitsha=$(getGitSha "$repo" "$release")
-		for imageName in ${IMAGES}; do
-			pipelinesha=$(getPipelineValue "$imageName" "$release" "git-sha256")
-
-			if [ -z "$pipelinesha" ]; then
-				echo "WARN: Pipeline SHA not found for $repo $release repository for $imageName. Continuing."
-			elif [ "$gitsha" != "$pipelinesha" ]; then
-				echo "****"
-				echo "ERROR: SHA mismatch in pipeline and $repo $release repositories." | tee -a ${ERROR_FILE}
-							echo "   imageName: $imageName" | tee -a ${ERROR_FILE}
-							echo "   pipeline: $pipelinesha" | tee -a ${ERROR_FILE}
-							echo "   $repo: $gitsha" | tee -a ${ERROR_FILE}
-				echo "***"
-				rc=1
-			fi
-		done
-
-		# for each release and each image name, check the tag in Quay
-		for imageName in ${IMAGES}; do
-			imagetag=$(getPipelineValue "$imageName" "$release" "image-tag")
-			# If the tag wasn't found in pipeline, skip checking for it in Quay
-			if [ -z "$imagetag" ]; then
-				continue
-			fi
-			# make sure the quay image is available
-			QUAY_RESPONSE=$(curl -s "https://quay.io/api/v1/repository/${COMPONENT_ORG}/${imageName}/tag/?onlyActiveTags=true&specificTag=${imagetag}")
-			QUAY_STATUS=$(echo "${QUAY_RESPONSE}" | jq -r '.error_message')
-			FOUND=$(echo "${QUAY_RESPONSE}" | jq '.tags | length')
-			if [ "${QUAY_STATUS}" != "null" ]; then
-				echo "****"
-				echo "ERROR: Error '${QUAY_STATUS}' querying $repo $release image in quay: $imageName:${imagetag}" | tee -a ${ERROR_FILE}
-				echo "***"
-				rc=1
-			elif [ "${FOUND}" != "1" ]; then
-				echo "****"
-				echo "ERROR: Tag not found for image in quay: $repo:${imagetag}" | tee -a ${ERROR_FILE}
-				echo "***"
-				rc=1
-			fi
-		done
 	done
 done
 
