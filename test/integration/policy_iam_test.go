@@ -16,7 +16,7 @@ import (
 
 const (
 	iamPolicyName             = "policy-limitclusteradmin"
-	iamPolicyURL              = "https://raw.githubusercontent.com/stolostron/policy-collection/main/stable/AC-Access-Control/" + iamPolicyName + ".yaml"
+	iamPolicyURL              = policyCollectACURL + iamPolicyName + ".yaml"
 	iamPolicyManagedNamespace = "iam-policy-test"
 )
 

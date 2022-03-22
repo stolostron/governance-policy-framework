@@ -34,39 +34,6 @@ func isOCP46andAbove() bool {
 	// should be ocp 4.6 and above
 	return true
 }
-
-var (
-	canCreateOpenshiftNamespacesInitialized bool
-	canCreateOpenshiftNamespacesResult      bool
-)
-
-func canCreateOpenshiftNamespaces() bool {
-	// Only check once - this makes it faster and prevents the answer changing mid-suite.
-	if canCreateOpenshiftNamespacesInitialized {
-		return canCreateOpenshiftNamespacesResult
-	}
-
-	canCreateOpenshiftNamespacesInitialized = true
-	canCreateOpenshiftNamespacesResult = false
-
-	// A server-side dry run will check the admission webhooks, but it needs to use the right
-	// serviceaccount because the kubeconfig might have superuser privileges to get around them.
-	out, _ := utils.KubectlWithOutput("create", "ns", "openshift-grc-test", "--kubeconfig="+kubeconfigManaged,
-		"--dry-run=server", "--as=system:serviceaccount:open-cluster-management-agent-addon:config-policy-controller-sa")
-	if strings.Contains(out, "namespace/openshift-grc-test created") {
-		canCreateOpenshiftNamespacesResult = true
-	}
-	if strings.Contains(out, "namespaces \"openshift-grc-test\" already exists") {
-		// Weird situation, but probably means it could make the namespace
-		canCreateOpenshiftNamespacesResult = true
-	}
-	if strings.Contains(out, "admission webhook \"mutation.gatekeeper.sh\" does not support dry run") {
-		// Gatekeeper is installed, so assume the namespace could be created
-		canCreateOpenshiftNamespacesResult = true
-	}
-	return canCreateOpenshiftNamespacesResult
-}
-
 func complianceScanTest(scanPolicyName string, scanPolicyUrl string, scanName string) {
 	It("stable/"+scanPolicyName+" should be created on hub", func() {
 		By("Creating policy on hub")
@@ -175,9 +142,13 @@ func complianceScanTest(scanPolicyName string, scanPolicyUrl string, scanName st
 }
 
 var _ = Describe("RHACM4K-2222 GRC: [P1][Sev1][policy-grc] Test compliance operator and scan", Label("policy-collection", "stable", "BVT"), func() {
-	const policyCollectStableURL = "https://raw.githubusercontent.com/stolostron/policy-collection/main/stable"
-	const compPolicyURL = policyCollectStableURL + "/CA-Security-Assessment-and-Authorization/policy-compliance-operator-install.yaml"
+	const compPolicyURL = policyCollectCAURL + "policy-compliance-operator-install.yaml"
 	const compPolicyName = "policy-comp-operator"
+	const compE8ScanPolicyURL = policyCollectCMURL + "policy-compliance-operator-e8-scan.yaml"
+	const compE8ScanPolicyName = "policy-e8-scan"
+	const compCISScanPolicyURL = policyCollectCMURL + "policy-compliance-operator-cis-scan.yaml"
+	const compCISScanPolicyName = "policy-cis-scan"
+
 	var getComplianceState func() interface{}
 
 	BeforeEach(func() {
@@ -191,26 +162,26 @@ var _ = Describe("RHACM4K-2222 GRC: [P1][Sev1][policy-grc] Test compliance opera
 		// Assign this here to avoid using nil pointers as arguments
 		getComplianceState = common.GetComplianceState(clientHubDynamic, userNamespace, compPolicyName, clusterNamespace)
 	})
-	Describe("Test stable/policy-comp-operator", func() {
-		It("stable/policy-comp-operator should be created on hub", func() {
+	Describe("Test stable/"+compPolicyName, func() {
+		It("stable/"+compPolicyName+" should be created on hub", func() {
 			By("Creating policy on hub")
 			utils.KubectlWithOutput("apply", "-f", compPolicyURL, "-n", userNamespace, "--kubeconfig="+kubeconfigHub)
 			By("Patching placement rule")
 			common.PatchPlacementRule(userNamespace, "placement-"+compPolicyName, clusterNamespace, kubeconfigHub)
-			By("Checking policy-comp-operator on hub cluster in ns " + userNamespace)
+			By("Checking " + compPolicyName + " on hub cluster in ns " + userNamespace)
 			rootPlc := utils.GetWithTimeout(clientHubDynamic, common.GvrPolicy, compPolicyName, userNamespace, true, defaultTimeoutSeconds)
 			Expect(rootPlc).NotTo(BeNil())
 		})
-		It("stable/policy-comp-operator should be created on managed cluster", func() {
-			By("Checking policy-comp-operator on managed cluster in ns " + clusterNamespace)
+		It("stable/"+compPolicyName+" should be created on managed cluster", func() {
+			By("Checking " + compPolicyName + " on managed cluster in ns " + clusterNamespace)
 			managedplc := utils.GetWithTimeout(clientManagedDynamic, common.GvrPolicy, userNamespace+"."+compPolicyName, clusterNamespace, true, defaultTimeoutSeconds*2)
 			Expect(managedplc).NotTo(BeNil())
 		})
-		It("stable/policy-comp-operator should be noncompliant", func() {
+		It("stable/"+compPolicyName+" should be noncompliant", func() {
 			By("Checking if the status of root policy is noncompliant")
 			Eventually(getComplianceState, defaultTimeoutSeconds*2, 1).Should(Equal(policiesv1.NonCompliant))
 		})
-		It("Enforcing stable/policy-comp-operator", func() {
+		It("Enforcing stable/"+compPolicyName, func() {
 			Eventually(func() interface{} {
 				By("Patching remediationAction = enforce on root policy")
 				rootPlc := utils.GetWithTimeout(clientHubDynamic, common.GvrPolicy, compPolicyName, userNamespace, true, defaultTimeoutSeconds)
@@ -273,11 +244,11 @@ var _ = Describe("RHACM4K-2222 GRC: [P1][Sev1][policy-grc] Test compliance opera
 				return string(podList.Items[0].Status.Phase)
 			}, defaultTimeoutSeconds*8, 1).Should(Equal("Running"))
 		})
-		It("stable/policy-comp-operator should be compliant", func() {
+		It("stable/"+compPolicyName+" should be compliant", func() {
 			By("Checking if the status of root policy is compliant")
 			Eventually(getComplianceState, defaultTimeoutSeconds*4, 1).Should(Equal(policiesv1.Compliant))
 		})
-		It("Informing stable/policy-comp-operator", func() {
+		It("Informing stable/"+compPolicyName, func() {
 			Eventually(func() interface{} {
 				By("Patching remediationAction = inform on root policy")
 				rootPlc := utils.GetWithTimeout(clientHubDynamic, common.GvrPolicy, compPolicyName, userNamespace, true, defaultTimeoutSeconds)
@@ -294,14 +265,10 @@ var _ = Describe("RHACM4K-2222 GRC: [P1][Sev1][policy-grc] Test compliance opera
 			}, defaultTimeoutSeconds, 1).Should(Equal("inform"))
 		})
 	})
-	Describe("Test stable/policy-e8-scan", func() {
-		const compE8ScanPolicyURL = policyCollectStableURL + "/CM-Configuration-Management/policy-compliance-operator-e8-scan.yaml"
-		const compE8ScanPolicyName = "policy-e8-scan"
+	Describe("Test stable/"+compE8ScanPolicyName, func() {
 		complianceScanTest(compE8ScanPolicyName, compE8ScanPolicyURL, "e8")
 	})
-	Describe("Test stable/policy-cis-scan", func() {
-		const compCISScanPolicyURL = policyCollectStableURL + "/CM-Configuration-Management/policy-compliance-operator-cis-scan.yaml"
-		const compCISScanPolicyName = "policy-cis-scan"
+	Describe("Test stable/"+compCISScanPolicyName, func() {
 		complianceScanTest(compCISScanPolicyName, compCISScanPolicyURL, "cis")
 	})
 	Describe("Clean up after all", func() {
@@ -313,8 +280,9 @@ var _ = Describe("RHACM4K-2222 GRC: [P1][Sev1][policy-grc] Test compliance opera
 			utils.KubectlWithOutput("delete", "-n", "openshift-compliance", "OperatorGroup", "compliance-operator", "--kubeconfig="+kubeconfigManaged)
 			out, _ := utils.KubectlWithOutput("delete", "ns", "openshift-compliance", "--kubeconfig="+kubeconfigManaged)
 			Expect(out).To(ContainSubstring("namespace \"openshift-compliance\" deleted"))
-			utils.KubectlWithOutput("delete", "events", "-n", clusterNamespace, "--field-selector=involvedObject.name="+userNamespace+".policy-comp-operator", "--kubeconfig="+kubeconfigManaged)
-			utils.KubectlWithOutput("delete", "events", "-n", clusterNamespace, "--field-selector=involvedObject.name="+userNamespace+".policy-e8-scan", "--kubeconfig="+kubeconfigManaged)
+			utils.KubectlWithOutput("delete", "events", "-n", clusterNamespace, "--field-selector=involvedObject.name="+userNamespace+"."+compPolicyName, "--kubeconfig="+kubeconfigManaged)
+			utils.KubectlWithOutput("delete", "events", "-n", clusterNamespace, "--field-selector=involvedObject.name="+userNamespace+"."+compCISScanPolicyName, "--kubeconfig="+kubeconfigManaged)
+			utils.KubectlWithOutput("delete", "events", "-n", clusterNamespace, "--field-selector=involvedObject.name="+userNamespace+"."+compE8ScanPolicyName, "--kubeconfig="+kubeconfigManaged)
 		})
 	})
 })

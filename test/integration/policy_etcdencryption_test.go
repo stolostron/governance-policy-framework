@@ -18,8 +18,8 @@ import (
 )
 
 const (
-	policyEtcdEncryptionURL  = "https://raw.githubusercontent.com/stolostron/policy-collection/main/stable/SC-System-and-Communications-Protection/policy-etcdencryption.yaml"
 	policyEtcdEncryptionName = "policy-etcdencryption"
+	policyEtcdEncryptionURL  = policyCollectSCURL + policyEtcdEncryptionName + ".yaml"
 	apiSeverName             = "cluster"
 	configPolicyName         = "enable-etcd-encryption"
 )

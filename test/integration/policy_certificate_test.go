@@ -26,8 +26,8 @@ import (
 )
 
 const (
-	policyCertificateURL    = "https://raw.githubusercontent.com/stolostron/policy-collection/main/stable/SC-System-and-Communications-Protection/policy-certificate.yaml"
 	policyCertificateName   = "policy-certificate"
+	policyCertificateURL    = policyCollectSCURL + policyCertificateName + ".yaml"
 	expiredCertSecretName   = "expired-cert"
 	policyCertificateNSName = "policy-certificate"
 )
