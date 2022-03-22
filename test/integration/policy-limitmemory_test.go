@@ -24,7 +24,7 @@ const (
 	limitRangeName          = "mem-limit-range"
 )
 
-var limitMemoryLabel = Label("policy-collection", "stable", "SVT")
+var limitMemoryLabel = Label("policy-collection", "stable")
 
 var _ = Describe("GRC: [P1][Sev1][policy-grc] Test the "+policyLimitMemoryName+" policy", limitMemoryLabel, func() {
 	It("stable/"+policyLimitMemoryName+" should be created on the Hub", func() {
