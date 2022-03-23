@@ -16,10 +16,13 @@ import (
 	"github.com/stolostron/governance-policy-framework/test/common"
 )
 
-const policyNamespaceName = "policy-namespace"
-const policyNamespaceURL = policyCollectCMURL + policyNamespaceName + ".yaml"
-
 var _ = Describe("GRC: [P1][Sev1][policy-grc] Test the policy-namespace policy", Label("policy-collection", "stable"), func() {
+
+	const (
+		policyNamespaceName = "policy-namespace"
+		policyNamespaceURL  = policyCollectCMURL + policyNamespaceName + ".yaml"
+	)
+
 	It("stable/"+policyNamespaceName+" should be created on the Hub", func() {
 		By("Creating policy on hub")
 		_, err := utils.KubectlWithOutput(

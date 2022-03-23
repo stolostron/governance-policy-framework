@@ -14,14 +14,15 @@ import (
 	"github.com/stolostron/governance-policy-framework/test/common"
 )
 
-const (
-	iamPolicyName             = "policy-limitclusteradmin"
-	iamPolicyURL              = policyCollectACURL + iamPolicyName + ".yaml"
-	iamPolicyManagedNamespace = "iam-policy-test"
-)
-
 // Note that these tests must be run on OpenShift since the tests create an OpenShift group
-var _ = Describe("GRC: [P1][Sev1][policy-grc] Test the stable IAM policy", Label("policy-collection", "stable", "BVT"), func() {
+var _ = Describe("GRC: [P1][Sev1][policy-grc] Test the policy-limitclusteradmin policy", Label("policy-collection", "stable", "BVT"), func() {
+
+	const (
+		iamPolicyName             = "policy-limitclusteradmin"
+		iamPolicyURL              = policyCollectACURL + iamPolicyName + ".yaml"
+		iamPolicyManagedNamespace = "iam-policy-test"
+	)
+
 	var getIAMComplianceState func() interface{}
 	BeforeEach(func() {
 		// Assign this here to avoid using nil pointers as arguments

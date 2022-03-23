@@ -17,21 +17,26 @@ import (
 	"github.com/stolostron/governance-policy-framework/test/common"
 )
 
-const (
-	insightsClientSelector       = "component=insights-client"
-	insightsMetricsSelector      = "component=insights-metrics"
-	insightsMetricName           = "policyreport_info"
-	noncompliantPolicyYamlReport = "../resources/policy_report_metric/noncompliant.yaml"
-	noncompliantPolicyNameReport = "policyreport-metric-noncompliant"
-	compliantPolicyYamlReport    = "../resources/policy_report_metric/compliant.yaml"
-	compliantPolicyNameReport    = "policyreport-metric-noncompliant"
-)
-
-var insightsMetricsURL string
-
-var insightsToken string
-
 var _ = Describe("GRC: [P1][Sev1][policy-grc] Test policyreport_info metric", Label("BVT"), func() {
+
+	const (
+		ocmNS                        = "open-cluster-management"
+		saName                       = "grc-framework-sa"
+		roleBindingName              = "grc-framework-role-binding"
+		insightsClientSelector       = "component=insights-client"
+		insightsMetricsSelector      = "component=insights-metrics"
+		insightsMetricName           = "policyreport_info"
+		noncompliantPolicyYamlReport = "../resources/policy_report_metric/noncompliant.yaml"
+		noncompliantPolicyNameReport = "policyreport-metric-noncompliant"
+		compliantPolicyYamlReport    = "../resources/policy_report_metric/compliant.yaml"
+		compliantPolicyNameReport    = "policyreport-metric-noncompliant"
+	)
+
+	var (
+		insightsMetricsURL string
+		insightsToken      string
+	)
+
 	It("Sets up the metrics service endpoint for tests", func() {
 		By("Setting the insights client to poll every minute")
 		insightsClient, err := common.OcHub("get", "deployments", "-n", ocmNS, "-l", insightsClientSelector, "-o", "name")
