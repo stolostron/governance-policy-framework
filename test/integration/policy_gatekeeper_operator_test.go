@@ -45,13 +45,13 @@ var _ = Describe("", Label("policy-collection", "community"), func() {
 			return common.GetComplianceState(clientHubDynamic, userNamespace, policyName, clusterNamespace)
 		}
 	})
-	const gatekeeperPolicyURL = "https://raw.githubusercontent.com/stolostron/policy-collection/main/community/CM-Configuration-Management/policy-gatekeeper-operator.yaml"
+	const gatekeeperPolicyURL = policyCollectCommunityURL + "CM-Configuration-Management/policy-gatekeeper-operator.yaml"
 	const gatekeeperPolicyName = "policy-gatekeeper-operator"
-	const GKPolicyYaml = "https://raw.githubusercontent.com/stolostron/policy-collection/main/community/CM-Configuration-Management/policy-gatekeeper-sample.yaml"
+	const GKPolicyYaml = policyCollectCommunityURL + "CM-Configuration-Management/policy-gatekeeper-sample.yaml"
 	const GKPolicyName = "policy-gatekeeper"
-	const GKAssignPolicyYaml = "https://raw.githubusercontent.com/stolostron/policy-collection/main/community/CM-Configuration-Management/policy-gatekeeper-image-pull-policy.yaml"
+	const GKAssignPolicyYaml = policyCollectCommunityURL + "CM-Configuration-Management/policy-gatekeeper-image-pull-policy.yaml"
 	const GKAssignPolicyName = "policy-gatekeeper-image-pull-policy"
-	const GKAssignMetadataPolicyYaml = "https://raw.githubusercontent.com/stolostron/policy-collection/main/community/CM-Configuration-Management/policy-gatekeeper-annotation-owner.yaml"
+	const GKAssignMetadataPolicyYaml = policyCollectCommunityURL + "CM-Configuration-Management/policy-gatekeeper-annotation-owner.yaml"
 	const GKAssignMetadataPolicyName = "policy-gatekeeper-annotation-owner"
 
 	Describe("RHACM4K-1692 GRC: [P1][Sev1][policy-grc] Test installing gatekeeper operator", func() {

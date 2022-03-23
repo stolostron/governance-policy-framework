@@ -16,8 +16,8 @@ import (
 	"github.com/stolostron/governance-policy-framework/test/common"
 )
 
-const policyNamespaceURL = "https://raw.githubusercontent.com/stolostron/policy-collection/main/stable/CM-Configuration-Management/policy-namespace.yaml"
 const policyNamespaceName = "policy-namespace"
+const policyNamespaceURL = policyCollectCMURL + policyNamespaceName + ".yaml"
 
 var _ = Describe("GRC: [P1][Sev1][policy-grc] Test the policy-namespace policy", Label("policy-collection", "stable"), func() {
 	It("stable/"+policyNamespaceName+" should be created on the Hub", func() {

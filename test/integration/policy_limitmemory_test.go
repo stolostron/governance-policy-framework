@@ -18,8 +18,8 @@ import (
 )
 
 const (
-	policyLimitMemoryURL    = "https://raw.githubusercontent.com/stolostron/policy-collection/main/stable/SC-System-and-Communications-Protection/policy-limitmemory.yaml"
 	policyLimitMemoryName   = "policy-limitmemory"
+	policyLimitMemoryURL    = policyCollectSCURL + policyLimitMemoryName + ".yaml"
 	policyLimitMemoryNSName = "policy-limitmemory"
 	limitRangeName          = "mem-limit-range"
 )
