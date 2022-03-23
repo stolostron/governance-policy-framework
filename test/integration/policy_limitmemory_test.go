@@ -35,7 +35,7 @@ var _ = Describe("GRC: [P1][Sev1][policy-grc] Test the "+policyLimitMemoryName+"
 		Expect(err).To(BeNil())
 
 		By("Creating the " + policyLimitMemoryNSName + " namespace on the managed cluster")
-		namespace := &corev1.Namespace{ObjectMeta: metav1.ObjectMeta{Name: policyLimitMemoryNSName}}
+		namespace := &corev1.Namespace{ObjectMeta: metav1.ObjectMeta{Name: policyLimitMemoryNSName, Labels: map[string]string{"e2e": "true"}}}
 		_, err = clientManaged.CoreV1().Namespaces().Create(context.TODO(), namespace, metav1.CreateOptions{})
 		Expect(err).To(BeNil())
 
