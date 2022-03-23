@@ -228,6 +228,8 @@ install-resources:
 	@echo creating cluster namespace on hub 
 	kubectl create ns managed --kubeconfig=$(PWD)/kubeconfig_$(HUB_CLUSTER_NAME)
 	kubectl apply -f test/resources/managed-cluster.yaml --kubeconfig=$(PWD)/kubeconfig_$(HUB_CLUSTER_NAME)
+	@echo creating cluster namespace on managed 
+	kubectl create ns managed --kubeconfig=$(PWD)/kubeconfig_$(MANAGED_CLUSTER_NAME) || true
 
 e2e-dependencies:
 	go get github.com/onsi/ginkgo/v2/ginkgo@$(GINKGO_VERSION)
