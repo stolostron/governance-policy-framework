@@ -17,16 +17,15 @@ import (
 	"github.com/stolostron/governance-policy-framework/test/common"
 )
 
-const (
-	policyEtcdEncryptionName = "policy-etcdencryption"
-	policyEtcdEncryptionURL  = policyCollectSCURL + policyEtcdEncryptionName + ".yaml"
-	apiSeverName             = "cluster"
-	configPolicyName         = "enable-etcd-encryption"
-)
+var _ = Describe("GRC: [P1][Sev1][policy-grc] Test the policy-etcdencryption policy", Label("policy-collection", "stable"), func() {
 
-var etcdEncLabels = Label("policy-collection", "stable")
+	const (
+		policyEtcdEncryptionName = "policy-etcdencryption"
+		policyEtcdEncryptionURL  = policyCollectSCURL + policyEtcdEncryptionName + ".yaml"
+		apiSeverName             = "cluster"
+		configPolicyName         = "enable-etcd-encryption"
+	)
 
-var _ = Describe("GRC: [P1][Sev1][policy-grc] Test the "+policyEtcdEncryptionName+" policy", etcdEncLabels, func() {
 	It("stable/"+policyEtcdEncryptionName+" should be created on the Hub", func() {
 		By("Creating the policy on the Hub")
 		_, err := utils.KubectlWithOutput(

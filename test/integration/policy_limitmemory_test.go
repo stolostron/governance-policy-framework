@@ -17,16 +17,15 @@ import (
 	"github.com/stolostron/governance-policy-framework/test/common"
 )
 
-const (
-	policyLimitMemoryName   = "policy-limitmemory"
-	policyLimitMemoryURL    = policyCollectSCURL + policyLimitMemoryName + ".yaml"
-	policyLimitMemoryNSName = "policy-limitmemory"
-	limitRangeName          = "mem-limit-range"
-)
+var _ = Describe("GRC: [P1][Sev1][policy-grc] Test the policy-limitmemory policy", Label("policy-collection", "stable"), func() {
 
-var limitMemoryLabel = Label("policy-collection", "stable")
+	const (
+		policyLimitMemoryName   = "policy-limitmemory"
+		policyLimitMemoryURL    = policyCollectSCURL + policyLimitMemoryName + ".yaml"
+		policyLimitMemoryNSName = "policy-limitmemory"
+		limitRangeName          = "mem-limit-range"
+	)
 
-var _ = Describe("GRC: [P1][Sev1][policy-grc] Test the "+policyLimitMemoryName+" policy", limitMemoryLabel, func() {
 	It("stable/"+policyLimitMemoryName+" should be created on the Hub", func() {
 		By("Creating the policy on the Hub")
 		_, err := utils.KubectlWithOutput(

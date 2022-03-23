@@ -25,16 +25,15 @@ import (
 	"github.com/stolostron/governance-policy-framework/test/common"
 )
 
-const (
-	policyCertificateName   = "policy-certificate"
-	policyCertificateURL    = policyCollectSCURL + policyCertificateName + ".yaml"
-	expiredCertSecretName   = "expired-cert"
-	policyCertificateNSName = "policy-certificate"
-)
+var _ = Describe("GRC: [P1][Sev1][policy-grc] Test the policy-certificate policy", Label("policy-collection", "stable", "BVT"), func() {
 
-var policyCertLabel = Label("policy-collection", "stable", "BVT")
+	const (
+		policyCertificateName   = "policy-certificate"
+		policyCertificateURL    = policyCollectSCURL + policyCertificateName + ".yaml"
+		expiredCertSecretName   = "expired-cert"
+		policyCertificateNSName = "policy-certificate"
+	)
 
-var _ = Describe("GRC: [P1][Sev1][policy-grc] Test the "+policyCertificateName+" policy", policyCertLabel, func() {
 	It("stable/"+policyCertificateName+" should be created on the Hub", func() {
 		By("Creating the policy on the Hub")
 		_, err := utils.KubectlWithOutput(

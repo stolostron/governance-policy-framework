@@ -15,16 +15,17 @@ import (
 	testcommon "github.com/stolostron/governance-policy-framework/test/common"
 )
 
-const (
-	testPolicyName             string = "test-policy"
-	testPolicySetName          string = "test-policyset"
-	testPolicySetYaml          string = "../resources/policy_set/test-policyset.yaml"
-	testPolicySetPatchYaml     string = "../resources/policy_set/patch-policy-set.yaml"
-	testUndoPolicySetPatchYaml string = "../resources/policy_set/undo-patch-policy-set.yaml"
-	testedDisablePolicyYaml    string = "../resources/policy_set/disable-policy.yaml"
-)
-
 var _ = Describe("GRC: [P1][Sev1][policy-grc] Test policy set", Label("BVT"), func() {
+
+	const (
+		testPolicyName             string = "test-policy"
+		testPolicySetName          string = "test-policyset"
+		testPolicySetYaml          string = "../resources/policy_set/test-policyset.yaml"
+		testPolicySetPatchYaml     string = "../resources/policy_set/patch-policy-set.yaml"
+		testUndoPolicySetPatchYaml string = "../resources/policy_set/undo-patch-policy-set.yaml"
+		testedDisablePolicyYaml    string = "../resources/policy_set/disable-policy.yaml"
+	)
+
 	Describe("Create policy, policyset, and placement in ns:"+userNamespace, func() {
 		It("Should create and process policy and policyset", func() {
 			By("Creating " + testPolicySetYaml)
