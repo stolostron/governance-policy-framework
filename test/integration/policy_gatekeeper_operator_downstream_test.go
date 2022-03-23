@@ -290,6 +290,10 @@ var _ = Describe("RHACM4K-3055", Label("policy-collection", "stable", "BVT"), fu
 		It("Checking if gatekeeper controller manager has mutation flag on", func() {
 			Eventually(func() interface{} {
 				podList, _ := clientManaged.CoreV1().Pods("openshift-gatekeeper-system").List(context.TODO(), metav1.ListOptions{LabelSelector: "control-plane=controller-manager"})
+				// ensure there are two pods before checking the args
+				if len(podList.Items) != 2 {
+					return "0;0"
+				}
 				return fmt.Sprintf("%d;%d", len(podList.Items[0].Spec.Containers[0].Args), len(podList.Items[1].Spec.Containers[0].Args))
 			}, defaultTimeoutSeconds*15, 1).Should(Equal("7;7"))
 			Eventually(func() interface{} {
