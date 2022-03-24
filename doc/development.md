@@ -66,15 +66,8 @@ export TEST_FILE=<filename_test.go>
 make e2e-test
 ```
 
-### Integration
+### Integration (including Policy Collection)
 
 ```shell
 make integration-test
-```
-
-
-### Policy Collection
-
-```shell
-make policy-collection-test
 ```
