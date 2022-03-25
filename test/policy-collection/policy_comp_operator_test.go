@@ -299,7 +299,7 @@ var _ = Describe("RHACM4K-2222 GRC: [P1][Sev1][policy-grc] Test compliance opera
 			Eventually(func() interface{} {
 				e8 := utils.GetWithTimeout(clientManagedDynamic, common.GvrComplianceSuite, "e8", "openshift-compliance", true, defaultTimeoutSeconds)
 				return e8.Object["status"].(map[string]interface{})["phase"]
-			}, defaultTimeoutSeconds*4, 1).Should(Equal("RUNNING"))
+			}, defaultTimeoutSeconds*8, 1).Should(Equal("RUNNING"))
 		})
 		It("Informing stable/policy-e8-scan", func() {
 			Eventually(func() interface{} {
@@ -330,14 +330,14 @@ var _ = Describe("RHACM4K-2222 GRC: [P1][Sev1][policy-grc] Test compliance opera
 			Eventually(func() interface{} {
 				e8 := utils.GetWithTimeout(clientManagedDynamic, common.GvrComplianceSuite, "e8", "openshift-compliance", true, defaultTimeoutSeconds)
 				return e8.Object["status"].(map[string]interface{})["phase"]
-			}, defaultTimeoutSeconds*10, 1).Should(Equal("AGGREGATING"))
+			}, defaultTimeoutSeconds*14, 1).Should(Equal("AGGREGATING"))
 		})
 		It("ComplianceSuite e8 scan results should be DONE", func() {
 			By("Checking if ComplianceSuite e8 scan status.phase is DONE")
 			Eventually(func() interface{} {
 				e8 := utils.GetWithTimeout(clientManagedDynamic, common.GvrComplianceSuite, "e8", "openshift-compliance", true, defaultTimeoutSeconds)
 				return e8.Object["status"].(map[string]interface{})["phase"]
-			}, defaultTimeoutSeconds*10, 1).Should(Equal("DONE"))
+			}, defaultTimeoutSeconds*14, 1).Should(Equal("DONE"))
 		})
 	})
 	Describe("Clean up after all", func() {
