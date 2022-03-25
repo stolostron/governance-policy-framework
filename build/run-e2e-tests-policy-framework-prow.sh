@@ -43,6 +43,9 @@ echo "* Launching grc policy framework test"
 # Run test suite with reporting
 CGO_ENABLED=0 ginkgo -v --no-color --fail-fast ${GINKGO_LABEL_FILTER} --junit-report=integration.xml --output-dir=test-output test/integration -- -cluster_namespace=$MANAGED_CLUSTER_NAME || EXIT_CODE=$?
 
+# Run etcd test case at the end
+CGO_ENABLED=0 ginkgo -v ${GINKGO_FAIL_FAST} --focus-file=policy_etcdencryption_test.go --junit-report=etcd-encryption.xml --output-dir=test-output test/integration -- -cluster_namespace=$MANAGED_CLUSTER_NAME || EXIT_CODE=$?
+
 # Remove Ginkgo phases from report to prevent corrupting bracketed metadata
 if [ -f test-output/integration.xml ]; then
   sed -i 's/\[It\] *//g' test-output/integration.xml
