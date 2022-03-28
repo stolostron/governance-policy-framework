@@ -8,27 +8,33 @@ if [[ ${FAIL_FAST} == "true" ]]; then
   GINKGO_FAIL_FAST="--fail-fast" 
 fi
 
+echo "===== E2E Test ====="
+echo "* Launching grc policy framework test"
 if [[ -z ${GINKGO_LABEL_FILTER} ]]; then 
   echo "* No GINKGO_LABEL_FILTER set"
+  LABEL_FILTERS=("!etcd" "etcd")
 else
-  GINKGO_LABEL_FILTER="--label-filter=${GINKGO_LABEL_FILTER}"
   echo "* Using GINKGO_LABEL_FILTER=${GINKGO_LABEL_FILTER}"
+  LABEL_FILTERS=${GINKGO_LABEL_FILTER}
 fi
 
-# Run test suite with reporting
-CGO_ENABLED=0 ginkgo -v ${GINKGO_FAIL_FAST} ${GINKGO_LABEL_FILTER} --junit-report=integration.xml --output-dir=test-output test/integration -- -cluster_namespace=$MANAGED_CLUSTER_NAME || EXIT_CODE=$?
+for LABEL_FILTER in ${LABEL_FILTERS[@]}; do
+  CGO_ENABLED=0 ginkgo -v --no-color --fail-fast --label-filter="$LABEL_FILTER" --junit-report=integration-$LABEL_FILTER.xml --output-dir=test-output test/integration -- -cluster_namespace=$MANAGED_CLUSTER_NAME || EXIT_CODE=$?
 
-# Remove Gingko phases from report to prevent corrupting bracketed metadata
-if [ -f test-output/integration.xml ]; then
-  sed -i 's/\[It\] *//g' test-output/integration.xml
-  sed -i 's/\[BeforeSuite\]/GRC: [P1][Sev1][policy-grc] BeforeSuite/g' test-output/integration.xml
-  sed -i 's/\[AfterSuite\]/GRC: [P1][Sev1][policy-grc] AfterSuite/g' test-output/integration.xml
-fi
+  # Collect exit code if it's an error
+  if [[ "${EXIT_CODE}" != "0" ]]; then
+    ERROR_CODE=${EXIT_CODE}
+  fi
+done
 
-# Collect exit code if it's an error
-if [[ "${EXIT_CODE}" != "0" ]]; then
-  ERROR_CODE=${EXIT_CODE}
-fi
+# Remove Ginkgo phases from report to prevent corrupting bracketed metadata
+REPORTS=`find test-output/*.xml`
+for report in $REPORTS; do  
+  echo "* Updating report $report"
+  sed -i 's/\[It\] *//g' $report
+  sed -i 's/\[BeforeSuite\]/GRC: [P1][Sev1][policy-grc] BeforeSuite/g' $report
+  sed -i 's/\[AfterSuite\]/GRC: [P1][Sev1][policy-grc] AfterSuite/g' $report
+done
 
 if [[ -n "${ERROR_CODE}" ]]; then
     echo "* Detected test failure. Collecting debug logs..."
