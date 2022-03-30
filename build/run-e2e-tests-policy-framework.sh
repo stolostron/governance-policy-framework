@@ -3,7 +3,7 @@
 
 
 set -e
-TEST_IMAGE_URI=$1
+TEST_IMAGE_URI=quay.io/stolostron/grc-policy-framework-tests:latest
 
 sudo ./build/download-clis.sh
 
