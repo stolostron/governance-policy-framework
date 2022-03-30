@@ -22,6 +22,7 @@ env:
 stages:
   - prepare
   - test-e2e
+  - test-etcd-encryption
   - ff
 
 before_script:
@@ -72,6 +73,22 @@ jobs:
       if: type != pull_request AND type != push
       env:
         - COMPONENT_E2E_TEST_COMMAND=${TRAVIS_BUILD_DIR}/build/run-e2e-tests-policy-framework.sh
+        - GINKGO_LABEL_FILTER=!etcd
+      script: 
+        - |
+          make
+          export COMPONENT_NAME="grc-policy-framework-tests"
+          make component/pull
+          make component/test/e2e
+      after_failure:
+        - export DEBUG_DIR="results/debug"
+        - make e2e-debug-dump
+    - stage: test-etcd-encryption
+      name: "Test etcd-encryption policy"
+      if: type != pull_request AND type != push
+      env:
+        - COMPONENT_E2E_TEST_COMMAND=${TRAVIS_BUILD_DIR}/build/run-e2e-tests-policy-framework.sh
+        - GINKGO_LABEL_FILTER=etcd
       script: 
         - |
           make

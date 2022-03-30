@@ -17,7 +17,7 @@ import (
 	"github.com/stolostron/governance-policy-framework/test/common"
 )
 
-var _ = Describe("GRC: [P1][Sev1][policy-grc] Test the policy-etcdencryption policy", Label("policy-collection", "stable"), func() {
+var _ = Describe("GRC: [P1][Sev1][policy-grc] Test the policy-etcdencryption policy", Label("policy-collection", "stable", "etcd"), func() {
 
 	const (
 		policyEtcdEncryptionName = "policy-etcdencryption"
