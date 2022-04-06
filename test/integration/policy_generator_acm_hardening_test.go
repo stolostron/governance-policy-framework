@@ -105,6 +105,11 @@ var _ = Describe("GRC: [P1][Sev1][policy-grc] Test the ACM Hardening generated P
 					Resources:     []string{"managedclustersets/bind"},
 					ResourceNames: []string{"default"},
 				},
+				{
+					APIGroups: []string{"cluster.open-cluster-management.io"},
+					Verbs:     []string{"get", "list", "watch"},
+					Resources: []string{"placementdecisions"},
+				},
 			},
 		}
 
