@@ -24,8 +24,14 @@ var _ = Describe("GRC: [P1][Sev1][policy-grc] Test the policy-imagemanifestvuln 
 	const operatorNS = "openshift-operators"
 
 	It("stable/"+policyIMVName+" should be created on the Hub", func() {
-		By("Creating the policy on the Hub")
+		By("Creating deployment that has an image with vulnerabilities")
 		_, err := utils.KubectlWithOutput(
+			"apply", "-f", "../resources/image-vulnerabilities/vulnerable-pod.yaml", "--kubeconfig="+kubeconfigHub,
+		)
+		Expect(err).To(BeNil())
+
+		By("Creating the policy on the Hub")
+		_, err = utils.KubectlWithOutput(
 			"apply", "-f", policyIMVURL, "-n", userNamespace, "--kubeconfig="+kubeconfigHub,
 		)
 		Expect(err).To(BeNil())
@@ -208,6 +214,11 @@ var _ = Describe("GRC: [P1][Sev1][policy-grc] Test the policy-imagemanifestvuln 
 
 		_, err = utils.KubectlWithOutput(
 			"delete", "crd", "imagemanifestvulns.secscan.quay.redhat.com", "--kubeconfig="+kubeconfigManaged,
+		)
+		Expect(err).To(BeNil())
+
+		_, err = utils.KubectlWithOutput(
+			"delete", "deployment", "-n", "default", "nginx-deployment", "--kubeconfig="+kubeconfigHub,
 		)
 		Expect(err).To(BeNil())
 	})
