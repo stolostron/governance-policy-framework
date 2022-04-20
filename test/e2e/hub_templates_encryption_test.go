@@ -21,7 +21,7 @@ import (
 	"github.com/stolostron/governance-policy-framework/test/common"
 )
 
-var _ = Describe("Test Hub Template Encryption", func() {
+var _ = Describe("Test Hub Template Encryption", Ordered, func() {
 	Describe("Test that a secret can be securely copied to managed clusters", func() {
 		ctx := context.TODO()
 		const policyName = "test-hub-encryption"
@@ -261,7 +261,7 @@ var _ = Describe("Test Hub Template Encryption", func() {
 			).Should(Equal(expectedTriggerUpdate))
 		})
 
-		It("Cleans up", func() {
+		AfterAll(func() {
 			err := clientHubDynamic.Resource(common.GvrPolicy).Namespace(userNamespace).Delete(
 				ctx, policyName, metav1.DeleteOptions{},
 			)

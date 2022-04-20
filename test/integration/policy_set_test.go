@@ -15,7 +15,7 @@ import (
 	testcommon "github.com/stolostron/governance-policy-framework/test/common"
 )
 
-var _ = Describe("GRC: [P1][Sev1][policy-grc] Test policy set", Label("BVT"), func() {
+var _ = Describe("GRC: [P1][Sev1][policy-grc] Test policy set", Ordered, Label("BVT"), func() {
 	const (
 		testPolicyName             string = "test-policy"
 		testPolicySetName          string = "test-policyset"
@@ -198,7 +198,7 @@ var _ = Describe("GRC: [P1][Sev1][policy-grc] Test policy set", Label("BVT"), fu
 			).Should(utils.SemanticEqual(yamlPlc.Object["status"]))
 		})
 
-		It("should clean up", func() {
+		AfterAll(func() {
 			output, err := utils.KubectlWithOutput("delete",
 				"-f", testPolicySetYaml,
 				"-n", userNamespace,

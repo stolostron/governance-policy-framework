@@ -19,7 +19,7 @@ import (
 	"github.com/stolostron/governance-policy-framework/test/common"
 )
 
-var _ = Describe("GRC: [P1][Sev1][policy-grc] Test the Policy Generator in an App subscription", Label("BVT"), func() {
+var _ = Describe("GRC: [P1][Sev1][policy-grc] Test the Policy Generator in an App subscription", Ordered, Label("BVT"), func() {
 	const namespace = "grc-e2e-policy-generator"
 	const secret = "grc-e2e-subscription-admin-user"
 	const subAdminBinding = "open-cluster-management:subscription-admin"
@@ -198,7 +198,7 @@ var _ = Describe("GRC: [P1][Sev1][policy-grc] Test the Policy Generator in an Ap
 		).Should(BeNil())
 	})
 
-	It("Cleans up", func() {
+	AfterAll(func() {
 		By("Cleaning up the changes made to the cluster in the test")
 		cleanup(namespace, secret, ocpUser)
 	})

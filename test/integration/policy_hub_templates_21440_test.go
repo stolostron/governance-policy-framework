@@ -34,6 +34,7 @@ func cleanupConfig(ctx context.Context, configMapName string, configMapCopyName 
 // See https://github.com/stolostron/backlog/issues/21440
 var _ = Describe(
 	"GRC: [P1][Sev2][policy-grc] Test that the text/template backport is included (21440)",
+	Ordered,
 	Label("policy-collection", "stable"),
 	func() {
 		const (
@@ -121,7 +122,7 @@ var _ = Describe(
 			).Should(Equal("redhat.com"))
 		})
 
-		It("Cleans up", func() {
+		AfterAll(func() {
 			_, err := utils.KubectlWithOutput(
 				"delete", "-f", policyYAML, "-n", "default", "--kubeconfig="+kubeconfigHub,
 			)
