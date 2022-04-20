@@ -15,7 +15,7 @@ import (
 )
 
 // Note that these tests must be run on OpenShift since the tests create an OpenShift group
-var _ = Describe("GRC: [P1][Sev1][policy-grc] Test the policy-limitclusteradmin policy", Label("policy-collection", "stable", "BVT"), func() {
+var _ = Describe("GRC: [P1][Sev1][policy-grc] Test the policy-limitclusteradmin policy", Ordered, Label("policy-collection", "stable", "BVT"), func() {
 	const (
 		iamPolicyName             = "policy-limitclusteradmin"
 		iamPolicyURL              = policyCollectACURL + iamPolicyName + ".yaml"
@@ -94,7 +94,7 @@ var _ = Describe("GRC: [P1][Sev1][policy-grc] Test the policy-limitclusteradmin 
 		Eventually(getIAMComplianceState, defaultTimeoutSeconds*10, 1).Should(Equal(policiesv1.Compliant))
 	})
 
-	It("Clean up stable/"+iamPolicyName, func() {
+	AfterAll(func() {
 		err := clientManaged.CoreV1().Namespaces().Delete(context.TODO(), iamPolicyManagedNamespace, metav1.DeleteOptions{})
 		Expect(err).Should(BeNil())
 		utils.KubectlWithOutput("delete", "-f", iamPolicyURL, "-n", userNamespace, "--kubeconfig="+kubeconfigHub)

@@ -61,7 +61,7 @@ func cleanup(namespace string, secret string, user common.OCPUser) {
 	}
 }
 
-var _ = Describe("GRC: [P1][Sev1][policy-grc] Test the ACM Hardening generated PolicySet in an App subscription", Label("policy-collection", "stable"), func() {
+var _ = Describe("GRC: [P1][Sev1][policy-grc] Test the ACM Hardening generated PolicySet in an App subscription", Ordered, Label("policy-collection", "stable"), func() {
 	const namespace = "policies"
 	const secret = "grc-e2e-subscription-admin-user"
 	const clustersetRoleName = "grc-e2e-clusterset-role"
@@ -266,7 +266,7 @@ var _ = Describe("GRC: [P1][Sev1][policy-grc] Test the ACM Hardening generated P
 		).Should(BeNil())
 	})
 
-	It("Cleans up", func() {
+	AfterAll(func() {
 		By("Cleaning up the changes made to the cluster in the test")
 		cleanup(namespace, secret, ocpUser)
 	})

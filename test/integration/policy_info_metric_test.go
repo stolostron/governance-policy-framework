@@ -17,7 +17,7 @@ import (
 	"github.com/stolostron/governance-policy-framework/test/common"
 )
 
-var _ = Describe("GRC: [P1][Sev1][policy-grc] Test policy_governance_info metric", Label("BVT"), func() {
+var _ = Describe("GRC: [P1][Sev1][policy-grc] Test policy_governance_info metric", Ordered, Label("BVT"), func() {
 	const (
 		propagatorMetricsSelector = "component=ocm-policy-propagator"
 		ocmNS                     = "open-cluster-management"
@@ -161,7 +161,7 @@ var _ = Describe("GRC: [P1][Sev1][policy-grc] Test policy_governance_info metric
 			return resp
 		}, defaultTimeoutSeconds, 1).Should(common.MatchMetricValue(metricName, policyLabel, "1"))
 	})
-	It("Cleans up", func() {
+	AfterAll(func() {
 		common.OcHub("delete", "-f", compliantPolicyYaml, "-n", userNamespace)
 		common.OcHub("delete", "-f", noncompliantPolicyYaml, "-n", userNamespace)
 		common.OcHub("delete", "route", "-n", ocmNS, "-l", propagatorMetricsSelector)
