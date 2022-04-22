@@ -48,6 +48,7 @@ function managed() {
     oc delete clusterrolebinding -l e2e=true --ignore-not-found
     oc delete subscriptions.operators.coreos.com container-security-operator -n openshift-operators --ignore-not-found
     oc delete csv -n openshift-operators `oc get -n openshift-operators csv -o jsonpath='{.items[?(@.spec.displayName=="Quay Container Security")].metadata.name}'` --ignore-not-found || true  # csv might not exist
+    oc delete csv -n openshift-operators `oc get -n openshift-operators csv -o jsonpath='{.items[?(@.spec.displayName=="Red Hat Quay Container Security Operator")].metadata.name}'` --ignore-not-found || true  # csv might not exist
     oc delete crd imagemanifestvulns.secscan.quay.redhat.com --ignore-not-found
     oc delete operatorgroup awx-resource-operator-operatorgroup -n default --ignore-not-found
     oc delete subscriptions.operators.coreos.com awx-resource-operator -n default --ignore-not-found
