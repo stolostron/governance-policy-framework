@@ -203,7 +203,7 @@ var _ = Describe("GRC: [P1][Sev1][policy-grc] Test the policy-imagemanifestvuln 
 			"get", "clusterserviceversions",
 			"-n", operatorNS,
 			"-o",
-			"jsonpath={.items[?(@.spec.displayName==\"Quay Container Security\")].metadata.name}",
+			"jsonpath={.items[?(@.spec.displayName==\"Red Hat Quay Container Security Operator\")].metadata.name}",
 			"--kubeconfig="+kubeconfigManaged,
 		)
 		Expect(err).To(BeNil())
