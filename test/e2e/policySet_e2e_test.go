@@ -118,7 +118,7 @@ var _ = Describe("Test policy set", func() {
 			Expect(err).To(BeNil())
 
 			By("Checking the status of policy set")
-			yamlPlc := utils.ParseYaml("../resources/policy_set/statuscheck-3.yaml")
+			yamlPlc := utils.ParseYaml("../resources/policy_set/statuscheck-5.yaml")
 
 			Eventually(func() interface{} {
 				rootPlcSet := utils.GetWithTimeout(
@@ -144,7 +144,7 @@ var _ = Describe("Test policy set", func() {
 			Expect(plc).NotTo(BeNil())
 
 			By("Checking the status of policy set")
-			yamlPlc := utils.ParseYaml("../resources/policy_set/statuscheck-4.yaml")
+			yamlPlc := utils.ParseYaml("../resources/policy_set/statuscheck-6.yaml")
 
 			Eventually(func() interface{} {
 				rootPlcSet := utils.GetWithTimeout(
