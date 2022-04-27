@@ -1,118 +1,102 @@
 language: go
-
 go:
-  - "1.17.x"
-
+- 1.17.x
 services:
-  - docker
-
+- docker
 branches:
   only:
-    - main
-
+  - main
 env:
   global:
-    - OS=linux
-    - COMPONENT_VERSION="latest"
-    - COMPONENT_TAG_EXTENSION=""
-    # Component Specific
-    - COMPONENT_INIT_COMMAND=${TRAVIS_BUILD_DIR}/build/install-dependencies.sh
-    - COMPONENT_E2E_TEST_COMMAND=${TRAVIS_BUILD_DIR}/build/run-e2e-tests.sh
-
+  - OS=linux
+  - COMPONENT_VERSION="latest"
+  - COMPONENT_TAG_EXTENSION=""
+  - COMPONENT_INIT_COMMAND=${TRAVIS_BUILD_DIR}/build/install-dependencies.sh
+  - COMPONENT_E2E_TEST_COMMAND=${TRAVIS_BUILD_DIR}/build/run-e2e-tests.sh
 stages:
-  - prepare
-  - test-e2e
-  - test-etcd-encryption
-  - ff
-
+- prepare
+- test-e2e
+- test-etcd-encryption
+- ff
 before_script:
-  - make init
-
+- make init
 jobs:
   include:
-    - stage: prepare
-      name: "Patch cluster to latest"
-      if: type != pull_request AND type != push
-      env:
-        - COMPONENT_E2E_TEST_COMMAND=${TRAVIS_BUILD_DIR}/build/patch-cluster.sh
-      script: 
-        - |
-          make
-          make component/test/e2e
-    - stage: prepare
-      name: "Clean up cluster"
-      if: type != pull_request AND type != push
-      env:
-        - COMPONENT_E2E_TEST_COMMAND=${TRAVIS_BUILD_DIR}/build/clean-up-cluster.sh
-      script: 
-        - |
-          make
-          make component/test/e2e
-    - stage: test-e2e
-      name: "Governance framework e2e tests"
-      if: type != pull_request AND type != push
-      script:
-        - |
-          make
-          make component/test/e2e
-      after_failure:
-        - make e2e-debug-dump
-    - stage: test-e2e
-      name: "Governance framework e2e tests with deployOnHub=true"
-      if: type != pull_request AND type != push
-      env:
-        - deployOnHub=true
-      script:
-        - |
-          make
-          make component/test/e2e
-      after_failure:
-        - make e2e-debug-dump
-    - stage: test-e2e
-      name: "Test grc-framework"
-      if: type != pull_request AND type != push
-      env:
-        - COMPONENT_E2E_TEST_COMMAND=${TRAVIS_BUILD_DIR}/build/run-e2e-tests-policy-framework.sh
-        - GINKGO_LABEL_FILTER=!etcd
-      script: 
-        - |
-          make
-          export COMPONENT_NAME="grc-policy-framework-tests"
-          make component/pull
-          make component/test/e2e
-      after_failure:
-        - export DEBUG_DIR="results/debug"
-        - make e2e-debug-dump
-    - stage: test-etcd-encryption
-      name: "Test etcd-encryption policy"
-      if: type != pull_request AND type != push
-      env:
-        - COMPONENT_E2E_TEST_COMMAND=${TRAVIS_BUILD_DIR}/build/run-e2e-tests-policy-framework.sh
-        - GINKGO_LABEL_FILTER=etcd
-      script: 
-        - |
-          make
-          export COMPONENT_NAME="grc-policy-framework-tests"
-          make component/pull
-          make component/test/e2e
-      after_failure:
-        - export DEBUG_DIR="results/debug"
-        - make e2e-debug-dump
-    - stage: ff
-      name: "Fast forwarding GRC repos"
-      if: type != pull_request AND type != push
-      script: ./build/ff.sh
-
+  - stage: prepare
+    name: Patch cluster to latest
+    if: type != pull_request AND type != push
+    env:
+    - COMPONENT_E2E_TEST_COMMAND=${TRAVIS_BUILD_DIR}/build/patch-cluster.sh
+    script:
+    - |
+      make
+      make component/test/e2e
+  - stage: prepare
+    name: Clean up cluster
+    if: type != pull_request AND type != push
+    env:
+    - COMPONENT_E2E_TEST_COMMAND=${TRAVIS_BUILD_DIR}/build/clean-up-cluster.sh
+    script:
+    - |
+      make
+      make component/test/e2e
+  - stage: test-e2e
+    name: Governance framework e2e tests
+    if: type != pull_request AND type != push
+    script:
+    - |
+      make
+      make component/test/e2e
+    after_failure:
+    - make e2e-debug-dump
+  - stage: test-e2e
+    name: Governance framework e2e tests with deployOnHub=true
+    if: type != pull_request AND type != push
+    env:
+    - deployOnHub=true
+    script:
+    - |
+      make
+      make component/test/e2e
+    after_failure:
+    - make e2e-debug-dump
+  - stage: test-e2e
+    name: Test grc-framework
+    if: type != pull_request AND type != push
+    env:
+    - COMPONENT_E2E_TEST_COMMAND=${TRAVIS_BUILD_DIR}/build/run-e2e-tests-policy-framework.sh
+    - GINKGO_LABEL_FILTER=!etcd
+    script:
+    - |
+      make
+      export COMPONENT_NAME="grc-policy-framework-tests"
+      make component/pull
+      make component/test/e2e
+    after_failure:
+    - export DEBUG_DIR="results/debug"
+    - make e2e-debug-dump
+  - stage: test-etcd-encryption
+    name: Test etcd-encryption policy
+    if: type != pull_request AND type != push
+    env:
+    - COMPONENT_E2E_TEST_COMMAND=${TRAVIS_BUILD_DIR}/build/run-e2e-tests-policy-framework.sh
+    - GINKGO_LABEL_FILTER=etcd
+    script:
+    - |
+      make
+      export COMPONENT_NAME="grc-policy-framework-tests"
+      make component/pull
+      make component/test/e2e
+    after_failure:
+    - export DEBUG_DIR="results/debug"
+    - make e2e-debug-dump
+  - stage: ff
+    name: Fast forwarding GRC repos
+    if: type != pull_request AND type != push
+    script: "./build/ff.sh"
 notifications:
   slack:
-    on_pull_requests: false
-    rooms:
-      secure: qaj5g0eO0XtIXz9vhwIkeH8RTtOFVMjZabgDAEk/YqUtBRrOTVADp4haRigNYBwhnew/h5gA4i+8j/rBZGbNn0W4ziPJT5WDAbqlyg6v7A/xguJozKL4LIuW29NaJaNisW1OtDCrXxJ0Pb5HjaIhoQMxl5UWKP7BJv0Xy9lq4tqfO+CJDuyerP0M6pFgnK8qYpbQ5NDh4Ou7HMLxYrJdfXf7T7YYi3pE7EctYIz05DTEYqYsh8rfOuvunmL3uBYuMROOnygJmKfApBn59rgQWtvLcoQUl6l5p1C9bR5F9yn5gFPAqKWbRPBNwStxHf+gCdCoac+iOQfwGnODlO+x+KItWYIuPSlMHdl+BrFLJ/GqraIAvArGQqkZ6zIHcIlmIHNUak+h6LZUdWSuvgQI666dZwZOBDEFqn9yWGOgO2nFYCoB8VDwHXA2zaEe1ZuWGrX+pVe0WgM7C4EYK21i6HlN9N20/gqIjyGW5CQZJWFrl55OF5uR4ZfPvclr1GwsxiQfVfGyUAU5TGgQvY+QcU8sxhL8g7OZxEbFdV06+HzUAKyVIv0N4rwlCQdr46DDR6y8nOIOYfBD3a0w5poMab6m7qLd+w1E041gFDnEqnxSE8qlFPxREwPOsPhL4EuqtKUP7NTVrXY4/6jtM1D+Dz3MMEtIEq1Kj/YE/XTxlLQ=
-    template:
-      - GRC integration e2e test %{result} in %{duration}
-      - "Build details: %{build_url}"
-    on_success: always
-    on_failure: always
+    secure: GodH91YT1vbJB1b+zxnLcFIIbUipBd3ddfarqNWmGXtjHuxhi3gyENRN+2Ae6/FwrpXHFD3iMqZTLnkurIoMrGv9Oro3ZTN1qvhAULmdjMJzpbnfS7PalgyvTxkD9HhxwFs42MIGZOigqO/bqfu6DP0E2drvFcBka8O20hv67TrpPDrl5GID5JnWjp3JrQgFXbF8wO4CHloeu3/GQo2r/wbJZhewo6ezCyFvnkn8B3cCciXJHZTcWPrLght/cXTSuO062b9ljN5ZSqeJtwdrKEdeeqBjyARtzpQMHI+1p/RpKrGiLIiZCknRc/X8QKQgYOLBhm3Y8ibtVm1BPnewoGS+QLZudIZXAAwNgJsadtKI6ppRwWE5g19Rmu8m/WvXfQFH6ibXqbGBHiKxoUtEjNEPtqcegZ5HLEQJ2q4kKv78nC4xc4+6wQuXWKHQpZGyua7XmudIG6Wwgp4gmgpQnNpkI0/LfuNJrCUY0/on72DTRZI9hQHpwr1b2xXwKRh7BssQh4giHDjh3aZewp55yLNMHSLxHpS3CrkxS8HhIb8ANGVj3Am9vRb9P8MkqnGHb3Qhq/EDDw/siqmcvyVxyQALZmSuI9ytEQ1ZBDejb2BaFp/3NnaUR0IlZCYmaCciuZvvZrrYxhpXGSBbtXBXwGT+2DjGHVWte6zyzpptRfA=
   webhooks:
     urls:
-      - secure: "jiUa9BJ6QbUdkXhFIf3JxxUOP3vOeUqQhjPKI6t8B6OvMI/8JBUXyi0WyEcw9wqObeQ73opRzZOElY2T3sD0DO7JrOEn4+iM9LhkbZkxNwi0X3j2ASa+LSQakXqMlul+gYjaw3nvPrAV0CEyJ6KSFnI2GtxDaHiPHstL993hn4a5NfkXiwxc6bzli/grKcnb8neEGcXdjsPHzatCXD6Hrpac1+g/mGrfXVm5jwKIbtno38Rnumfn0tiHnufdSYj0G4mfRPfJFSo7m8JqM6YpzIyKWDMPfZURBpfEdECqxjgFx3HzTnwZ4Sc3Symy4Vdtc11l/JjcKqxG2M3U3e3DayzseniNFDmhPGst2plvc+Q9UsCKJrXUB0FjPl2RD8wg+0gZL2WNFRdvNkSlSJ6OBB2/846OcODZ1kWCC6NOnxFzKQJ9mDcbUuqtLvndB282SLA4c+QWh3XgEeGI2qIgPipwDfHF0BcOtPalZck8REp7khcskEhu6KpjK5YhMxbzRBUEYLdNmBAl0SdDppOUcZRFYy/2fPkAeuQzVbZgIfIqBFOflHVHn0q1pp7Hgy0DL1kMZ4ohUH3RgLdjrrKLnFTGeaQIhUjyrqvNM35UpMyoLFOM5MsQ2hsVThqiaV9ucThRBDFr1YDoR8i/z3T6Lv4lsafIm9NlRbcSO/PUD0k="
+    - secure: jiUa9BJ6QbUdkXhFIf3JxxUOP3vOeUqQhjPKI6t8B6OvMI/8JBUXyi0WyEcw9wqObeQ73opRzZOElY2T3sD0DO7JrOEn4+iM9LhkbZkxNwi0X3j2ASa+LSQakXqMlul+gYjaw3nvPrAV0CEyJ6KSFnI2GtxDaHiPHstL993hn4a5NfkXiwxc6bzli/grKcnb8neEGcXdjsPHzatCXD6Hrpac1+g/mGrfXVm5jwKIbtno38Rnumfn0tiHnufdSYj0G4mfRPfJFSo7m8JqM6YpzIyKWDMPfZURBpfEdECqxjgFx3HzTnwZ4Sc3Symy4Vdtc11l/JjcKqxG2M3U3e3DayzseniNFDmhPGst2plvc+Q9UsCKJrXUB0FjPl2RD8wg+0gZL2WNFRdvNkSlSJ6OBB2/846OcODZ1kWCC6NOnxFzKQJ9mDcbUuqtLvndB282SLA4c+QWh3XgEeGI2qIgPipwDfHF0BcOtPalZck8REp7khcskEhu6KpjK5YhMxbzRBUEYLdNmBAl0SdDppOUcZRFYy/2fPkAeuQzVbZgIfIqBFOflHVHn0q1pp7Hgy0DL1kMZ4ohUH3RgLdjrrKLnFTGeaQIhUjyrqvNM35UpMyoLFOM5MsQ2hsVThqiaV9ucThRBDFr1YDoR8i/z3T6Lv4lsafIm9NlRbcSO/PUD0k=
