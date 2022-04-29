@@ -53,7 +53,11 @@ func cleanup(namespace string, secret string, user common.OCPUser) {
 	if err != nil {
 		GinkgoWriter.Printf("DEBUG: hubkubeconfig read error: %s\n", common.KubeconfigHub)
 	} else {
-		GinkgoWriter.Printf("DEBUG: hubkubeconfig contents: %s\n", string(contents)[:1024])
+		length := len(contents)
+		if length > 1024 {
+			length = 1024
+		}
+		GinkgoWriter.Printf("DEBUG: hubkubeconfig contents: %s\n", string(contents)[:length])
 	}
 }
 
