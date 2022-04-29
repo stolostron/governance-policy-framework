@@ -8,6 +8,7 @@ import (
 	"fmt"
 	"io/ioutil"
 	"math/rand"
+	"os"
 	"os/exec"
 	"time"
 
@@ -86,6 +87,7 @@ func GetKubeConfig(server, username, password string) (string, error) {
 		"--insecure-skip-tls-verify=true",
 	).CombinedOutput()
 	if err != nil {
+		os.Remove(f.Name())
 		return "", fmt.Errorf("failed to login: %s", output)
 	}
 
