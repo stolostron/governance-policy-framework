@@ -898,9 +898,10 @@ github.com/spf13/viper v1.7.0/go.mod h1:8WkrPz2fc9jxqZNCJI/76HCieCp4Q8HaLFoCha5q
 github.com/spf13/viper v1.8.1/go.mod h1:o0Pch8wJ9BVSWGQMbra6iw0oQ5oktSIBaujf1rJH9Ns=
 github.com/src-d/gcfg v1.4.0/go.mod h1:p/UMsR43ujA89BJY9duynAwIpvqEujIH/jFlfL7jWoI=
 github.com/stoewer/go-strcase v1.2.0/go.mod h1:IBiWB2sKIp3wVVQ3Y035++gc+knqhUQag1KpM8ahLw8=
+github.com/stolostron/go-log-utils v0.1.0/go.mod h1:2Uc5mbuLvSFpoXFFEKRTEFOlR7nqGVMu9mbU+FIttTI=
 github.com/stolostron/go-template-utils/v2 v2.2.2/go.mod h1:z4d9KZkkW5jAHns3bafVTmab+eq/jVsoFRYWbH37Qu4=
-github.com/stolostron/governance-policy-propagator v0.0.0-20220217025800-1a04477f8f38 h1:a3mDbBUE0eVXdzv0IIsz6/48F7Ru6LxwPduryJU7UXQ=
-github.com/stolostron/governance-policy-propagator v0.0.0-20220217025800-1a04477f8f38/go.mod h1:8lcjUP24z9gIZ1nCydZyOxIqz6CpVDtVt5KPAlsi+tY=
+github.com/stolostron/governance-policy-propagator v0.0.0-20220427184903-387712d230ee h1:LgW1jklD9sFTs2APhyUMeFf/2TMI+SC+uJfCSZ/mtDs=
+github.com/stolostron/governance-policy-propagator v0.0.0-20220427184903-387712d230ee/go.mod h1:yMzjFPXvRoNHSY3ggD9d8ffukUVDGCHhMxAvj3q5EEE=
 github.com/streadway/amqp v0.0.0-20190404075320-75d898a42a94/go.mod h1:AZpEONHx3DKn8O/DFsRAY58/XVQiIPMTMB1SddzLXVw=
 github.com/streadway/amqp v0.0.0-20190827072141-edfb9018d271/go.mod h1:AZpEONHx3DKn8O/DFsRAY58/XVQiIPMTMB1SddzLXVw=
 github.com/streadway/handy v0.0.0-20190108123426-d5acb3125c2a/go.mod h1:qNTQ5P5JnDBl6z3cMAg/SywNDC5ABu5ApDIw6lUbRmI=
@@ -1709,8 +1710,8 @@ open-cluster-management.io/addon-framework v0.0.0-20210624140015-b26f9964526c/go
 open-cluster-management.io/api v0.0.0-20210607023841-cd164385e2bb/go.mod h1:9qiA5h/8kvPQnJEOlAPHVjRO9a1jCmDhGzvgMBvXEaE=
 open-cluster-management.io/api v0.0.0-20210629235044-d779373b7f7d/go.mod h1:9qiA5h/8kvPQnJEOlAPHVjRO9a1jCmDhGzvgMBvXEaE=
 open-cluster-management.io/api v0.5.1-0.20211109002058-9676c7a1e606/go.mod h1:9qiA5h/8kvPQnJEOlAPHVjRO9a1jCmDhGzvgMBvXEaE=
-open-cluster-management.io/api v0.6.0 h1:PzR1G/d9YmwL742lgJgFgsEJs6i8Zg05pdIhK/iLZV4=
-open-cluster-management.io/api v0.6.0/go.mod h1:0IUTh8J+p4pv1THh1r9oO0luX9Z1FLDEAmvzW09qC0o=
+open-cluster-management.io/api v0.6.1-0.20220208144021-3297cac74dc5 h1:0Zn4+5qfXTHCjoa7pg8+fI/Gebr4bQDHWR+d1XPa47c=
+open-cluster-management.io/api v0.6.1-0.20220208144021-3297cac74dc5/go.mod h1:0IUTh8J+p4pv1THh1r9oO0luX9Z1FLDEAmvzW09qC0o=
 open-cluster-management.io/multicloud-operators-channel v0.5.1-0.20211122200432-da1610291798/go.mod h1:ELKJ1LHadEYbYHEeWrZXC8zAHrzXzzKJRtp/7D1WlmU=
 open-cluster-management.io/multicloud-operators-subscription v0.6.0 h1:0WKplR0cLBXy+qkqt/Scd3eTcEOno0OvzAXzAhe9nLQ=
 open-cluster-management.io/multicloud-operators-subscription v0.6.0/go.mod h1:riyPTC500zbKxVw3KT91yKNlpPxTdWDnUpOQ9xcLmXc=
