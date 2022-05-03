@@ -10,15 +10,14 @@ import (
 
 	. "github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
-	policiesv1 "github.com/stolostron/governance-policy-propagator/api/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
+	policiesv1 "open-cluster-management.io/governance-policy-propagator/api/v1"
 
 	"github.com/stolostron/governance-policy-framework/test/common"
 )
 
 var _ = Describe("GRC: [P1][Sev1][policy-grc] Test policyreport_info metric", Label("BVT"), func() {
-
 	const (
 		ocmNS                        = "open-cluster-management"
 		saName                       = "grc-framework-sa"

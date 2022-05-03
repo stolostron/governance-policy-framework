@@ -12,14 +12,14 @@ import (
 	"strings"
 
 	"github.com/onsi/gomega"
-	policiesv1 "github.com/stolostron/governance-policy-propagator/api/v1"
-	"github.com/stolostron/governance-policy-propagator/test/utils"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/client-go/dynamic"
 	"k8s.io/client-go/kubernetes"
 	"k8s.io/client-go/rest"
 	"k8s.io/client-go/tools/clientcmd"
 	"k8s.io/klog"
+	policiesv1 "open-cluster-management.io/governance-policy-propagator/api/v1"
+	"open-cluster-management.io/governance-policy-propagator/test/utils"
 )
 
 var (

@@ -15,9 +15,9 @@ import (
 	"k8s.io/client-go/dynamic"
 	"k8s.io/client-go/kubernetes"
 	"k8s.io/klog"
+	"open-cluster-management.io/governance-policy-propagator/test/utils"
 
 	"github.com/stolostron/governance-policy-framework/test/common"
-	"github.com/stolostron/governance-policy-propagator/test/utils"
 )
 
 const (

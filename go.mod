@@ -5,12 +5,12 @@ go 1.17
 require (
 	github.com/onsi/ginkgo/v2 v2.1.3
 	github.com/onsi/gomega v1.18.1
-	github.com/stolostron/governance-policy-propagator v0.0.0-20220217025800-1a04477f8f38
 	golang.org/x/crypto v0.0.0-20220214200702-86341886e292
 	k8s.io/api v0.23.3
 	k8s.io/apimachinery v0.23.3
 	k8s.io/client-go v12.0.0+incompatible
 	k8s.io/klog v1.0.0
+	open-cluster-management.io/governance-policy-propagator v0.0.0
 )
 
 require (
@@ -42,7 +42,7 @@ require (
 	k8s.io/klog/v2 v2.40.1 // indirect
 	k8s.io/kube-openapi v0.0.0-20220124234850-424119656bbf // indirect
 	k8s.io/utils v0.0.0-20220210201930-3a6ce19ff2f9 // indirect
-	open-cluster-management.io/api v0.6.0 // indirect
+	open-cluster-management.io/api v0.6.1-0.20220208144021-3297cac74dc5 // indirect
 	open-cluster-management.io/multicloud-operators-subscription v0.6.0 // indirect
 	sigs.k8s.io/controller-runtime v0.11.1 // indirect
 	sigs.k8s.io/json v0.0.0-20211208200746-9f7c6b3444d2 // indirect
@@ -50,4 +50,7 @@ require (
 	sigs.k8s.io/yaml v1.3.0 // indirect
 )
 
-replace k8s.io/client-go => k8s.io/client-go v0.23.3
+replace (
+	k8s.io/client-go => k8s.io/client-go v0.23.3
+	open-cluster-management.io/governance-policy-propagator => github.com/stolostron/governance-policy-propagator v0.0.0-20220427184903-387712d230ee
+)
