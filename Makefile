@@ -184,6 +184,8 @@ kind-deploy-olm:
 	@echo installing OLM on managed
 	export KUBECONFIG=$(PWD)/kubeconfig_$(MANAGED_CLUSTER_NAME)
 	curl -L https://github.com/operator-framework/operator-lifecycle-manager/releases/download/$(OLM_VERSION)/install.sh -o install.sh
+	# Workaround for https://github.com/operator-framework/operator-lifecycle-manager/issues/2767
+	sed -i 's_kubectl apply -f "$${url}/crds.yaml"_kubectl create -f "$${url}/crds.yaml"_' install.sh
 	chmod +x install.sh
 	./install.sh $(OLM_VERSION)
 
