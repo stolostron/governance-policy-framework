@@ -74,7 +74,7 @@ func GetKubeConfig(server, username, password string) (string, error) {
 	ctx, cancel := context.WithTimeout(context.Background(), time.Second*20)
 	defer cancel()
 
-	output, err := exec.CommandContext(
+	cmd := exec.CommandContext(
 		ctx,
 		"oc",
 		"--kubeconfig="+kubeconfigPath,
@@ -85,10 +85,14 @@ func GetKubeConfig(server, username, password string) (string, error) {
 		"-p",
 		password,
 		"--insecure-skip-tls-verify=true",
-	).CombinedOutput()
+	)
+	// In some environments, `--kubeconfig` doesn't seem to be enough.
+	cmd.Env = append(os.Environ(), "KUBECONFIG="+kubeconfigPath)
+
+	output, err := cmd.CombinedOutput()
 	if err != nil {
 		os.Remove(f.Name())
-		return "", fmt.Errorf("failed to login: %s", output)
+		return "", fmt.Errorf("failed to login: %s", string(output))
 	}
 
 	return kubeconfigPath, nil
