@@ -17,6 +17,20 @@ import (
 	"github.com/stolostron/governance-policy-framework/test/common"
 )
 
+// cleanup will remove any test data/configuration on the OpenShift cluster that was added/updated
+// as part of the test. Any errors will be propagated as gomega failed assertions.
+func cleanupConfig(ctx context.Context, configMapName string, configMapCopyName string) {
+	err := clientHub.CoreV1().ConfigMaps("default").Delete(ctx, configMapName, metav1.DeleteOptions{})
+	if !k8serrors.IsNotFound(err) {
+		Expect(err).To(BeNil())
+	}
+
+	err = clientManaged.CoreV1().ConfigMaps("default").Delete(ctx, configMapCopyName, metav1.DeleteOptions{})
+	if !k8serrors.IsNotFound(err) {
+		Expect(err).To(BeNil())
+	}
+}
+
 // See https://github.com/stolostron/backlog/issues/21440
 var _ = Describe(
 	"GRC: [P1][Sev2][policy-grc] Test that the text/template backport is included (21440)",
@@ -32,6 +46,8 @@ var _ = Describe(
 		ctx := context.TODO()
 
 		It("The ConfigMap "+configMapName+" should be created on the Hub", func() {
+			cleanupConfig(ctx, configMapName, configMapCopyName)
+
 			configMap := &corev1.ConfigMap{
 				ObjectMeta: metav1.ObjectMeta{
 					Name: configMapName,
@@ -113,14 +129,6 @@ var _ = Describe(
 				Expect(err).To(BeNil())
 			}
 
-			err = clientHub.CoreV1().ConfigMaps("default").Delete(ctx, configMapName, metav1.DeleteOptions{})
-			if !k8serrors.IsNotFound(err) {
-				Expect(err).To(BeNil())
-			}
-
-			err = clientManaged.CoreV1().ConfigMaps("default").Delete(ctx, configMapCopyName, metav1.DeleteOptions{})
-			if !k8serrors.IsNotFound(err) {
-				Expect(err).To(BeNil())
-			}
+			cleanupConfig(ctx, configMapName, configMapCopyName)
 		})
 	})
