@@ -3,8 +3,7 @@
 TRAVIS_BUILD ?= 1
 
 PWD := $(shell pwd)
-BASE_DIR := $(shell basename $(PWD))
-PROJECT_DIR := $(shell dirname $(abspath $(lastword $(MAKEFILE_LIST))))
+LOCAL_BIN ?= $(PWD)/bin
 deployOnHub ?= false
 RELEASE_BRANCH ?= main
 OCM_API_COMMIT ?= 3297cac74dc5e7fd2a82056cf3b93a5a88939d81
@@ -22,17 +21,13 @@ GOBIN_DEFAULT := $(GOPATH)/bin
 export GOBIN ?= $(GOBIN_DEFAULT)
 GOARCH = $(shell go env GOARCH)
 GOOS = $(shell go env GOOS)
-export PATH=$(shell echo $$PATH):$(PWD)/bin
+export PATH := $(LOCAL_BIN):$(GOBIN):$(PATH)
 
 # Handle KinD configuration
 KIND_HUB_NAMESPACE ?= open-cluster-management
 KIND_MANAGED_NAMESPACE ?= open-cluster-management-agent-addon
 MANAGED_CLUSTER_NAME ?= managed
 HUB_CLUSTER_NAME ?= hub
-
-# Fetch Ginkgo/Gomega versions from go.mod
-GINKGO_VERSION := $(shell awk '/github.com\/onsi\/ginkgo\/v2/ {print $$2}' go.mod)
-GOMEGA_VERSION := $(shell awk '/github.com\/onsi\/gomega/ {print $$2}' go.mod)
 
 # Fetch OLM version
 OLM_VERSION ?= $(shell curl -s https://api.github.com/repos/operator-framework/operator-lifecycle-manager/releases/latest | jq -r '.tag_name')
@@ -47,6 +42,13 @@ DEBUG_DIR ?= test-output/debug
 # Test configuration
 TEST_FILE ?=
 TEST_ARGS ?=
+
+# go-get-tool will 'go install' any package $1 and install it to LOCAL_BIN.
+define go-get-tool
+@set -e ;\
+echo "Checking installation of $(1)" ;\
+GOBIN=$(LOCAL_BIN) go install $(1)
+endef
 
 USE_VENDORIZED_BUILD_HARNESS ?=
 
@@ -70,8 +72,8 @@ default::
 ############################################################
 
 fmt-dependencies:
-	$(call go-get-tool,$(PWD)/bin/gci,github.com/daixiang0/gci@v0.2.9)
-	$(call go-get-tool,$(PWD)/bin/gofumpt,mvdan.cc/gofumpt@v0.2.0)
+	$(call go-get-tool,github.com/daixiang0/gci@v0.2.9)
+	$(call go-get-tool,mvdan.cc/gofumpt@v0.2.0)
 
 # All available format: format-go format-protos format-python
 # Default value will run all formats, override these make target with your requirements:
@@ -98,9 +100,9 @@ kind-policy-framework-hub-setup:
 	kind get kubeconfig --name $(HUB_CLUSTER_NAME) --internal > $(PWD)/kubeconfig_$(HUB_CLUSTER_NAME)_internal
 
 .PHONY: kustomize
-KUSTOMIZE = $(PWD)/bin/kustomize
+KUSTOMIZE = $(LOCAL_BIN)/kustomize
 kustomize: ## Download kustomize locally if necessary.
-	$(call go-get-tool,$(KUSTOMIZE),sigs.k8s.io/kustomize/kustomize/v3@v3.8.7)
+	$(call go-get-tool,sigs.k8s.io/kustomize/kustomize/v4@v4.5.4)
 
 deploy-policy-framework-hub-crd-operator:
 	kubectl create ns $(KIND_HUB_NAMESPACE) || true
@@ -242,14 +244,14 @@ install-resources:
 	kubectl create ns managed --kubeconfig=$(PWD)/kubeconfig_$(MANAGED_CLUSTER_NAME) || true
 
 e2e-dependencies:
-	go get github.com/onsi/ginkgo/v2/ginkgo@$(GINKGO_VERSION)
-	go get github.com/onsi/gomega/...@$(GOMEGA_VERSION)
+	$(call go-get-tool,github.com/onsi/ginkgo/v2/ginkgo@$(shell awk '/github.com\/onsi\/ginkgo\/v2/ {print $$2}' go.mod))
 
+GINKGO = $(LOCAL_BIN)/ginkgo
 e2e-test:
 	@if [ -z "$(TEST_FILE)" ]; then\
-		$(GOPATH)/bin/ginkgo -v --no-color $(TEST_ARGS) --fail-fast test/e2e;\
+		$(GINKGO) -v --no-color $(TEST_ARGS) --fail-fast test/e2e;\
 	else\
-		$(GOPATH)/bin/ginkgo -v --no-color $(TEST_ARGS) --fail-fast --focus-file=$(TEST_FILE) test/e2e;\
+		$(GINKGO) -v --no-color $(TEST_ARGS) --fail-fast --focus-file=$(TEST_FILE) test/e2e;\
 	fi
 
 e2e-debug: e2e-debug-hub e2e-debug-managed
@@ -309,20 +311,7 @@ e2e-debug-dump:
 
 integration-test:
 	@if [ -z "$(TEST_FILE)" ]; then\
-		$(GOPATH)/bin/ginkgo -v $(TEST_ARGS) --fail-fast test/integration;\
+		$(GINKGO) -v $(TEST_ARGS) --fail-fast test/integration;\
 	else\
-		$(GOPATH)/bin/ginkgo -v $(TEST_ARGS) --fail-fast --focus-file=$(TEST_FILE) test/integration;\
+		$(GINKGO) -v $(TEST_ARGS) --fail-fast --focus-file=$(TEST_FILE) test/integration;\
 	fi
-
-# go-get-tool will 'go get' any package $2 and install it to $1.
-define go-get-tool
-@[ -f $(1) ] || { \
-set -e ;\
-TMP_DIR=$$(mktemp -d) ;\
-cd $$TMP_DIR ;\
-go mod init tmp ;\
-echo "Downloading $(2)" ;\
-GOBIN=$(PROJECT_DIR)/bin go get $(2) ;\
-rm -rf $$TMP_DIR ;\
-}
-endef
