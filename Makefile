@@ -64,6 +64,19 @@ default::
 	@echo "Build Harness Bootstrapped"
 
 ############################################################
+# clean section
+############################################################
+
+.PHONY: clean
+clean::
+	-rm bin/*
+	-rm .build-harness-bootstrap
+	-rm kubeconfig_managed
+	-rm kubeconfig_hub
+	-rm -r test-output/
+	-rm -r vendor/
+
+############################################################
 # format section
 ############################################################
 
