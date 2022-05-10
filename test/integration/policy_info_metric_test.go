@@ -17,6 +17,13 @@ import (
 	"github.com/stolostron/governance-policy-framework/test/common"
 )
 
+// cleanupMetricResources will remove any test data on the OpenShift cluster that was added/updated
+// as part of the test.
+func cleanupMetricResources(roleBindingName string) {
+	common.OcHub("delete", "clusterrolebinding", roleBindingName)
+	common.OcHub("delete", "namespace", "policy-metric-test-compliant")
+}
+
 var _ = Describe("GRC: [P1][Sev1][policy-grc] Test policy_governance_info metric", Label("BVT"), func() {
 	const (
 		propagatorMetricsSelector = "component=ocm-policy-propagator"
@@ -35,6 +42,9 @@ var _ = Describe("GRC: [P1][Sev1][policy-grc] Test policy_governance_info metric
 		propagatorMetricsURL string
 	)
 
+	It("Begin clean up", func() {
+		cleanupMetricResources(roleBindingName)
+	})
 	It("Sets up the metrics service endpoint for tests", func() {
 		By("Ensuring the metrics service exists")
 		svcList, err := clientHub.CoreV1().Services(ocmNS).List(context.TODO(), metav1.ListOptions{LabelSelector: propagatorMetricsSelector})
@@ -165,8 +175,7 @@ var _ = Describe("GRC: [P1][Sev1][policy-grc] Test policy_governance_info metric
 		common.OcHub("delete", "-f", compliantPolicyYaml, "-n", userNamespace)
 		common.OcHub("delete", "-f", noncompliantPolicyYaml, "-n", userNamespace)
 		common.OcHub("delete", "route", "-n", ocmNS, "-l", propagatorMetricsSelector)
-		common.OcHub("delete", "clusterrolebinding", roleBindingName)
+		cleanupMetricResources(roleBindingName)
 		common.OcHub("delete", "serviceaccount", saName, "-n", userNamespace)
-		common.OcHub("delete", "namespace", "policy-metric-test-compliant")
 	})
 })
