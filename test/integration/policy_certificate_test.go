@@ -142,5 +142,6 @@ var _ = Describe("GRC: [P1][Sev1][policy-grc] Test the policy-certificate policy
 			context.TODO(), policyCertificateNSName, metav1.DeleteOptions{},
 		)
 		Expect(err).To(BeNil())
+		Expect("hello").To(Equal("world"))
 	})
 })
