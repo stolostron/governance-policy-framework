@@ -150,19 +150,7 @@ func OcManaged(args ...string) (string, error) {
 }
 
 func PatchPlacementRule(namespace, name, targetCluster, kubeconfigHub string) error {
-	// Debug the kubeconfig file which in some cases gets corrupted with the grc e2e user
-	contents, err := os.ReadFile(kubeconfigHub)
-	if err != nil {
-		fmt.Printf("DEBUG: hubkubeconfig read error: %s\n", kubeconfigHub)
-	} else {
-		length := len(contents)
-		if length > 1024 {
-			length = 1024
-		}
-		fmt.Printf("DEBUG: hubkubeconfig contents: %s\n", string(contents)[:length])
-	}
-
-	_, err = utils.KubectlWithOutput(
+	_, err := utils.KubectlWithOutput(
 		"patch",
 		"-n",
 		namespace,
