@@ -60,6 +60,7 @@ else
 -include vbh/.build-harness-vendorized
 endif
 
+.PHONY: default
 default::
 	@echo "Build Harness Bootstrapped"
 
@@ -80,6 +81,7 @@ clean::
 # format section
 ############################################################
 
+.PHONY: fmt-dependencies
 fmt-dependencies:
 	$(call go-get-tool,github.com/daixiang0/gci@v0.2.9)
 	$(call go-get-tool,mvdan.cc/gofumpt@v0.2.0)
@@ -87,6 +89,7 @@ fmt-dependencies:
 # All available format: format-go format-protos format-python
 # Default value will run all formats, override these make target with your requirements:
 #    eg: fmt: format-go format-protos
+.PHONY: fmt
 fmt: fmt-dependencies
 	find . -not \( -path "./.go" -prune \) -name "*.go" | xargs gofmt -s -w
 	find . -not \( -path "./.go" -prune \) -name "*.go" | xargs gofumpt -l -w
@@ -104,15 +107,18 @@ kind-bootstrap-cluster-dev: kind-create-cluster install-crds install-resources
 .PHONY: kind-deploy-policy-controllers
 kind-deploy-policy-controllers: kind-deploy-cert-policy-controller kind-deploy-config-policy-controller kind-deploy-iam-policy-controller kind-deploy-olm
 
+.PHONY: kind-policy-framework-hub-setup
 kind-policy-framework-hub-setup:
 	kubectl config use-context kind-$(HUB_CLUSTER_NAME)
 	kind get kubeconfig --name $(HUB_CLUSTER_NAME) --internal > $(PWD)/kubeconfig_$(HUB_CLUSTER_NAME)_internal
 
 .PHONY: kustomize
 KUSTOMIZE = $(LOCAL_BIN)/kustomize
+.PHONY: kustomize
 kustomize: ## Download kustomize locally if necessary.
 	$(call go-get-tool,sigs.k8s.io/kustomize/kustomize/v4@v4.5.4)
 
+.PHONY: deploy-policy-framework-hub-crd-operator
 deploy-policy-framework-hub-crd-operator:
 	kubectl create ns $(KIND_HUB_NAMESPACE) || true
 	@echo installing Policy CRDs on hub
@@ -122,15 +128,19 @@ deploy-policy-framework-hub-crd-operator:
 	@echo installing policy-propagator on hub
 	kubectl apply -f https://raw.githubusercontent.com/stolostron/governance-policy-propagator/main/deploy/operator.yaml -n $(KIND_HUB_NAMESPACE)
 
+.PHONY: deploy-policy-framework-hub
 deploy-policy-framework-hub: kind-policy-framework-hub-setup deploy-policy-framework-hub-crd-operator
 
+.PHONY: deploy-community-policy-framework-hub
 deploy-community-policy-framework-hub: deploy-policy-framework-hub-crd-operator
 
+.PHONY: kind-policy-framework-managed-setup
 kind-policy-framework-managed-setup:
 	kubectl config use-context kind-$(MANAGED_CLUSTER_NAME)
 	kubectl create ns $(KIND_MANAGED_NAMESPACE) || true
 	kubectl create secret -n $(KIND_MANAGED_NAMESPACE) generic hub-kubeconfig --from-file=kubeconfig=$(PWD)/kubeconfig_$(HUB_CLUSTER_NAME)_internal
 
+.PHONY: deploy-policy-framework-managed-crd-operator
 deploy-policy-framework-managed-crd-operator:
 	@echo installing Policy CRD on managed
 	kubectl apply -f https://raw.githubusercontent.com/stolostron/governance-policy-propagator/main/deploy/crds/policy.open-cluster-management.io_policies.yaml
@@ -144,10 +154,13 @@ deploy-policy-framework-managed-crd-operator:
 	kubectl apply -f https://raw.githubusercontent.com/stolostron/governance-policy-template-sync/main/deploy/operator.yaml -n $(KIND_MANAGED_NAMESPACE)
 	kubectl patch deployment governance-policy-template-sync -n $(KIND_MANAGED_NAMESPACE) -p "{\"spec\":{\"template\":{\"spec\":{\"containers\":[{\"name\":\"governance-policy-template-sync\",\"env\":[{\"name\":\"WATCH_NAMESPACE\",\"value\":\"$(MANAGED_CLUSTER_NAME)\"}]}]}}}}"
 
+.PHONY: deploy-policy-framework-managed
 deploy-policy-framework-managed: kind-policy-framework-managed-setup deploy-policy-framework-managed-crd-operator
 
+.PHONY: deploy-community-policy-framework-managed
 deploy-community-policy-framework-managed: deploy-policy-framework-managed-crd-operator
 
+.PHONY: kind-deploy-policy-framework
 kind-deploy-policy-framework:
 	@echo installing policy-propagator on hub
 	kubectl create ns $(KIND_HUB_NAMESPACE) --kubeconfig=$(PWD)/kubeconfig_$(HUB_CLUSTER_NAME)
@@ -172,11 +185,13 @@ kind-deploy-policy-framework:
 	@echo installing policy-template-sync on managed
 	kubectl apply -f https://raw.githubusercontent.com/stolostron/governance-policy-template-sync/main/deploy/operator.yaml -n $(KIND_MANAGED_NAMESPACE) --kubeconfig=$(PWD)/kubeconfig_$(MANAGED_CLUSTER_NAME)
 
+.PHONY: kind-deploy-config-policy-controller
 kind-deploy-config-policy-controller:
 	@echo installing config-policy-controller on managed
 	kubectl apply -f https://raw.githubusercontent.com/stolostron/config-policy-controller/main/deploy/operator.yaml -n $(KIND_MANAGED_NAMESPACE) --kubeconfig=$(PWD)/kubeconfig_$(MANAGED_CLUSTER_NAME)
 	kubectl apply -f https://raw.githubusercontent.com/stolostron/config-policy-controller/main/deploy/crds/policy.open-cluster-management.io_configurationpolicies.yaml -n $(KIND_MANAGED_NAMESPACE) --kubeconfig=$(PWD)/kubeconfig_$(MANAGED_CLUSTER_NAME)
 
+.PHONY: kind-deploy-cert-policy-controller
 kind-deploy-cert-policy-controller:
 	@echo installing cert-manager on managed
 	kubectl apply --validate=false -f https://github.com/jetstack/cert-manager/releases/download/v1.5.5/cert-manager.yaml --kubeconfig=$(PWD)/kubeconfig_$(MANAGED_CLUSTER_NAME)
@@ -187,6 +202,7 @@ kind-deploy-cert-policy-controller:
 		-n $(KIND_MANAGED_NAMESPACE) -p '{"spec": {"template": {"spec": {"containers": [{"name":"cert-policy-controller", "args": ["--enable-lease=true", "--hubconfig-secret-name=hub-kubeconfig"]}]}}}}' \
 		--kubeconfig=$(PWD)/kubeconfig_$(MANAGED_CLUSTER_NAME)
 
+.PHONY: kind-deploy-iam-policy-controller
 kind-deploy-iam-policy-controller:
 	@echo installing iam-policy-controller on managed
 	kubectl apply -f https://raw.githubusercontent.com/stolostron/iam-policy-controller/main/deploy/crds/policy.open-cluster-management.io_iampolicies.yaml --kubeconfig=$(PWD)/kubeconfig_$(MANAGED_CLUSTER_NAME)
@@ -195,6 +211,7 @@ kind-deploy-iam-policy-controller:
 		-n $(KIND_MANAGED_NAMESPACE) -p '{"spec": {"template": {"spec": {"containers": [{"name":"iam-policy-controller", "args": ["--enable-lease=true", "--hubconfig-secret-name=hub-kubeconfig"]}]}}}}' \
 		--kubeconfig=$(PWD)/kubeconfig_$(MANAGED_CLUSTER_NAME)
 
+.PHONY: kind-deploy-olm
 kind-deploy-olm:
 	@echo installing OLM on managed
 	export KUBECONFIG=$(PWD)/kubeconfig_$(MANAGED_CLUSTER_NAME)
@@ -204,6 +221,7 @@ kind-deploy-olm:
 	chmod +x install.sh
 	./install.sh $(OLM_VERSION)
 
+.PHONY: kind-create-cluster
 kind-create-cluster:
 	@echo "creating cluster hub"
 	kind create cluster --name $(HUB_CLUSTER_NAME)
@@ -219,6 +237,7 @@ kind-create-cluster:
 		kind get kubeconfig --name $(MANAGED_CLUSTER_NAME) > $(PWD)/kubeconfig_$(MANAGED_CLUSTER_NAME);\
 	fi
 
+.PHONY: kind-delete-cluster
 kind-delete-cluster:
 	kind delete cluster --name $(HUB_CLUSTER_NAME)
 	kind delete cluster --name $(MANAGED_CLUSTER_NAME)
@@ -226,6 +245,7 @@ kind-delete-cluster:
 	rm $(PWD)/kubeconfig_$(HUB_CLUSTER_NAME)_internal || true
 	rm $(PWD)/kubeconfig_$(MANAGED_CLUSTER_NAME) || true
 
+.PHONY: install-crds
 install-crds:
 	@echo installing crds on hub
 	kubectl apply -f https://raw.githubusercontent.com/stolostron/multicloud-operators-placementrule/main/deploy/crds/apps.open-cluster-management.io_placementrules_crd.yaml --kubeconfig=$(PWD)/kubeconfig_$(HUB_CLUSTER_NAME)
@@ -239,6 +259,7 @@ install-crds:
 	@echo installing crds on managed
 	kubectl apply -f https://raw.githubusercontent.com/stolostron/governance-policy-propagator/main/deploy/crds/policy.open-cluster-management.io_policies.yaml --kubeconfig=$(PWD)/kubeconfig_$(MANAGED_CLUSTER_NAME)
 
+.PHONY: install-resources
 install-resources:
 	@echo creating user namespace on hub
 	kubectl create ns policy-test --kubeconfig=$(PWD)/kubeconfig_$(HUB_CLUSTER_NAME)
@@ -248,10 +269,12 @@ install-resources:
 	@echo creating cluster namespace on managed 
 	kubectl create ns managed --kubeconfig=$(PWD)/kubeconfig_$(MANAGED_CLUSTER_NAME) || true
 
+.PHONY: e2e-dependencies
 e2e-dependencies:
 	$(call go-get-tool,github.com/onsi/ginkgo/v2/ginkgo@$(shell awk '/github.com\/onsi\/ginkgo\/v2/ {print $$2}' go.mod))
 
 GINKGO = $(LOCAL_BIN)/ginkgo
+.PHONY: e2e-test
 e2e-test:
 	@if [ -z "$(TEST_FILE)" ]; then\
 		$(GINKGO) -v --no-color $(TEST_ARGS) --fail-fast test/e2e;\
@@ -259,8 +282,10 @@ e2e-test:
 		$(GINKGO) -v --no-color $(TEST_ARGS) --fail-fast --focus-file=$(TEST_FILE) test/e2e;\
 	fi
 
+.PHONY: e2e-debug
 e2e-debug: e2e-debug-hub e2e-debug-managed
 
+.PHONY: e2e-debug-hub
 e2e-debug-hub:
 	mkdir -p $(DEBUG_DIR)
 	kubectl get namespaces --kubeconfig=$(PWD)/kubeconfig_$(HUB_CLUSTER_NAME) > $(DEBUG_DIR)/hub_get_namespaces.log
@@ -273,6 +298,7 @@ e2e-debug-hub:
 	  	kubectl logs $${PODNAME} -c governance-policy-propagator -n $(KIND_HUB_NAMESPACE) --kubeconfig=$(PWD)/kubeconfig_$(HUB_CLUSTER_NAME) > $(DEBUG_DIR)/hub_logs_$${PODNAME}.log; \
 	done
 
+.PHONY: e2e-debug-managed
 e2e-debug-managed:
 	mkdir -p $(DEBUG_DIR)
 	kubectl get namespaces --kubeconfig=$(PWD)/kubeconfig_$(MANAGED_CLUSTER_NAME) > $(DEBUG_DIR)/managed_get_namespaces.log
@@ -283,6 +309,7 @@ e2e-debug-managed:
 	kubectl get iampolicies.policy.open-cluster-management.io --all-namespaces --kubeconfig=$(PWD)/kubeconfig_$(MANAGED_CLUSTER_NAME) > $(DEBUG_DIR)/managed_get_iampolicies.log
 	kubectl describe pods -n $(KIND_MANAGED_NAMESPACE) --kubeconfig=$(PWD)/kubeconfig_$(MANAGED_CLUSTER_NAME) > $(DEBUG_DIR)/managed_describe_pods_$(KIND_MANAGED_NAMESPACE).log
 
+.PHONY: e2e-debug-kind
 e2e-debug-kind: e2e-debug
 	@for APP in $(KIND_COMPONENTS); do\
 		for CONTAINER in $$(kubectl get pod -l $(KIND_COMPONENT_SELECTOR)=$${APP} -n $(KIND_MANAGED_NAMESPACE) -o jsonpath={.items[*].spec.containers[*].name}  --kubeconfig=$(PWD)/kubeconfig_$(MANAGED_CLUSTER_NAME)); do\
@@ -291,6 +318,7 @@ e2e-debug-kind: e2e-debug
 		done;\
 	done
 
+.PHONY: e2e-debug-acm
 e2e-debug-acm: e2e-debug
 	@for APP in $(ACM_COMPONENTS); do\
 		echo "* Collecting logs for:"; \
@@ -305,6 +333,7 @@ e2e-debug-acm: e2e-debug
 		done;\
 	done
 
+.PHONY: e2e-debug-dump
 e2e-debug-dump:
 	@echo -e "* DEBUG LOG DUMP..."
 	@echo -e "\n=====\n"
@@ -314,6 +343,7 @@ e2e-debug-dump:
 			echo -e "\n=====\n";\
 	done
 
+.PHONY: integration-test
 integration-test:
 	@if [ -z "$(TEST_FILE)" ]; then\
 		$(GINKGO) -v $(TEST_ARGS) --fail-fast test/integration;\
