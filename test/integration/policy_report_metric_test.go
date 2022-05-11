@@ -213,7 +213,5 @@ var _ = Describe("GRC: [P1][Sev1][policy-grc] Test policyreport_info metric", Or
 		common.OcHub("delete", "clusterrolebinding", roleBindingName)
 		common.OcHub("delete", "serviceaccount", saName, "-n", userNamespace)
 		common.OcHub("delete", "namespace", "policy-metric-test-compliant")
-
-		Expect("hello").To(Equal("world"))
 	})
 })

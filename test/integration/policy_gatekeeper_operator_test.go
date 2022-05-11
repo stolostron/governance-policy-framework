@@ -33,6 +33,8 @@ func isOCP44() bool {
 var _ = Describe("", Ordered, Label("policy-collection", "community"), func() {
 	var getComplianceState func(policyName string) func() interface{}
 	BeforeAll(func() {
+		Expect("hello").To(Equal("world"))
+
 		if isOCP44() {
 			Skip("Skipping as this is ocp 4.4")
 		}

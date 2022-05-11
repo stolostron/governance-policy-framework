@@ -106,7 +106,5 @@ var _ = Describe("GRC: [P1][Sev1][policy-grc] Test the policy-namespace policy",
 
 		err = clientManaged.CoreV1().Namespaces().Delete(context.TODO(), "prod", metav1.DeleteOptions{})
 		Expect(err).To(BeNil())
-
-		Expect("hello").To(Equal("world"))
 	})
 })

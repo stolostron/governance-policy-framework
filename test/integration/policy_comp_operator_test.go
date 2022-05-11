@@ -153,6 +153,8 @@ var _ = Describe("RHACM4K-2222 GRC: [P1][Sev1][policy-grc] Test compliance opera
 	var getComplianceState func() interface{}
 
 	BeforeAll(func() {
+		Expect("hello").To(Equal("world"))
+
 		if !isOCP46andAbove() {
 			Skip("Skipping as compliance operator is only supported on OCP 4.6 and above")
 		}

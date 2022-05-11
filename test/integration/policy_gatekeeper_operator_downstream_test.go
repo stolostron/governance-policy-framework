@@ -21,6 +21,8 @@ var _ = Describe("RHACM4K-3055", Ordered, Label("policy-collection", "stable", "
 	var getComplianceState func(policyName string) func() interface{}
 
 	BeforeAll(func() {
+		Expect("hello").To(Equal("world"))
+
 		if isOCP44() {
 			Skip("Skipping as this is ocp 4.4")
 		}
