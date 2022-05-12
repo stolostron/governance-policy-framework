@@ -16,7 +16,7 @@ else
 fi
 
 # Run test suite with reporting
-CGO_ENABLED=0 ginkgo -v ${GINKGO_FAIL_FAST} ${GINKGO_LABEL_FILTER} --junit-report=integration.xml --output-dir=test-output test/integration -- -cluster_namespace=$MANAGED_CLUSTER_NAME || EXIT_CODE=$?
+CGO_ENABLED=0 ./bin/ginkgo -v ${GINKGO_FAIL_FAST} ${GINKGO_LABEL_FILTER} --junit-report=integration.xml --output-dir=test-output test/integration -- -cluster_namespace=$MANAGED_CLUSTER_NAME || EXIT_CODE=$?
 
 # Remove Gingko phases from report to prevent corrupting bracketed metadata
 if [ -f test-output/integration.xml ]; then
