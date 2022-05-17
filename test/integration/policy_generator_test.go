@@ -179,7 +179,7 @@ var _ = Describe("GRC: [P1][Sev1][policy-grc] Test the Policy Generator in an Ap
 				)
 				return err
 			},
-			defaultTimeoutSeconds,
+			defaultTimeoutSeconds*2,
 			1,
 		).Should(BeNil())
 
