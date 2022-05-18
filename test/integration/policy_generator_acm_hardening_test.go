@@ -47,18 +47,6 @@ func cleanup(namespace string, secret string, user common.OCPUser) {
 	if !k8serrors.IsNotFound(err) {
 		Expect(err).Should(BeNil())
 	}
-
-	// Debug the kubeconfig file which in some cases gets corrupted with the grc e2e user
-	contents, err := os.ReadFile(common.KubeconfigHub)
-	if err != nil {
-		GinkgoWriter.Printf("DEBUG: hubkubeconfig read error: %s\n", common.KubeconfigHub)
-	} else {
-		length := len(contents)
-		if length > 1024 {
-			length = 1024
-		}
-		GinkgoWriter.Printf("DEBUG: hubkubeconfig contents: %s\n", string(contents)[:length])
-	}
 }
 
 var _ = Describe("GRC: [P1][Sev1][policy-grc] Test the ACM Hardening generated PolicySet in an App subscription", Label("policy-collection", "stable"), func() {
