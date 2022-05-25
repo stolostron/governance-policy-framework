@@ -17,8 +17,7 @@ import (
 	"github.com/stolostron/governance-policy-framework/test/common"
 )
 
-var _ = Describe("GRC: [P1][Sev1][policy-grc] Test the policy-etcdencryption policy", Label("policy-collection", "stable", "etcd"), func() {
-
+var _ = Describe("GRC: [P1][Sev1][policy-grc] Test the policy-etcdencryption policy", Ordered, Label("policy-collection", "stable", "etcd"), func() {
 	const (
 		policyEtcdEncryptionName = "policy-etcdencryption"
 		policyEtcdEncryptionURL  = policyCollectSCURL + policyEtcdEncryptionName + ".yaml"
@@ -127,7 +126,7 @@ var _ = Describe("GRC: [P1][Sev1][policy-grc] Test the policy-etcdencryption pol
 		).Should(Equal("aescbc"))
 	})
 
-	It("Cleans up", func() {
+	AfterAll(func() {
 		_, err := utils.KubectlWithOutput(
 			"delete", "-f", policyEtcdEncryptionURL, "-n", userNamespace, "--kubeconfig="+kubeconfigHub,
 		)

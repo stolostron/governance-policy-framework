@@ -17,7 +17,7 @@ import (
 	"github.com/stolostron/governance-policy-framework/test/common"
 )
 
-var _ = Describe("GRC: [P1][Sev1][policy-grc] Test the policy-role policy", Label("policy-collection", "stable"), func() {
+var _ = Describe("GRC: [P1][Sev1][policy-grc] Test the policy-role policy", Ordered, Label("policy-collection", "stable"), func() {
 	const (
 		policyRoleName   = "policy-role"
 		policyRoleURL    = policyCollectACURL + policyRoleName + ".yaml"
@@ -117,7 +117,7 @@ var _ = Describe("GRC: [P1][Sev1][policy-grc] Test the policy-role policy", Labe
 		).Should(BeNil())
 	})
 
-	It("Cleans up", func() {
+	AfterAll(func() {
 		_, err := utils.KubectlWithOutput(
 			"delete", "-f", policyRoleURL, "-n", userNamespace, "--kubeconfig="+kubeconfigHub,
 		)

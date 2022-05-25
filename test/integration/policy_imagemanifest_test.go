@@ -17,7 +17,7 @@ import (
 	"github.com/stolostron/governance-policy-framework/test/common"
 )
 
-var _ = Describe("GRC: [P1][Sev1][policy-grc] Test the policy-imagemanifestvuln policy", Label("policy-collection", "stable"), func() {
+var _ = Describe("GRC: [P1][Sev1][policy-grc] Test the policy-imagemanifestvuln policy", Ordered, Label("policy-collection", "stable", "BVT"), func() {
 	const policyIMVURL = policyCollectSIURL + "policy-imagemanifestvuln.yaml"
 	const policyIMVName = "policy-imagemanifestvuln"
 	const subName = "container-security-operator"
@@ -187,7 +187,7 @@ var _ = Describe("GRC: [P1][Sev1][policy-grc] Test the policy-imagemanifestvuln 
 		).Should(Equal(policiesv1.NonCompliant))
 	})
 
-	It("Cleans up", func() {
+	AfterAll(func() {
 		_, err := utils.KubectlWithOutput(
 			"delete", "-f", policyIMVURL, "-n", userNamespace, "--kubeconfig="+kubeconfigHub,
 		)

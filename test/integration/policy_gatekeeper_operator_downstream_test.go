@@ -17,10 +17,10 @@ import (
 	"github.com/stolostron/governance-policy-framework/test/common"
 )
 
-var _ = Describe("RHACM4K-3055", Label("policy-collection", "stable", "BVT"), func() {
+var _ = Describe("RHACM4K-3055", Ordered, Label("policy-collection", "stable", "BVT"), func() {
 	var getComplianceState func(policyName string) func() interface{}
 
-	BeforeEach(func() {
+	BeforeAll(func() {
 		if isOCP44() {
 			Skip("Skipping as this is ocp 4.4")
 		}
@@ -397,54 +397,51 @@ var _ = Describe("RHACM4K-3055", Label("policy-collection", "stable", "BVT"), fu
 		})
 	})
 
-	Describe("GRC: [P1][Sev1][policy-grc] Clean up after all", func() {
-		It("Clean up mutation policies", func() {
-			utils.KubectlWithOutput("delete", "-f", GKAssignMetadataPolicyYaml, "-n", userNamespace, "--kubeconfig="+kubeconfigHub)
-			Eventually(func() interface{} {
-				managedPlc := utils.GetWithTimeout(clientManagedDynamic, common.GvrPolicy, userNamespace+"."+GKAssignMetadataPolicyName, clusterNamespace, false, defaultTimeoutSeconds)
-				return managedPlc
-			}, defaultTimeoutSeconds, 1).Should(BeNil())
-			utils.KubectlWithOutput("delete", "-f", GKAssignPolicyYaml, "-n", userNamespace, "--kubeconfig="+kubeconfigHub)
-			Eventually(func() interface{} {
-				managedPlc := utils.GetWithTimeout(clientManagedDynamic, common.GvrPolicy, userNamespace+"."+GKAssignPolicyName, clusterNamespace, false, defaultTimeoutSeconds)
-				return managedPlc
-			}, defaultTimeoutSeconds, 1).Should(BeNil())
-			utils.KubectlWithOutput("delete", "-f", "../resources/gatekeeper/pod-mutation.yaml", "-n", "e2etestsuccess", "--kubeconfig="+kubeconfigManaged)
-		})
-		It("Clean up stable/policy-gatekeeper-sample", func() {
-			utils.KubectlWithOutput("delete", "-f", GKPolicyYaml, "-n", userNamespace, "--kubeconfig="+kubeconfigHub)
-			Eventually(func() interface{} {
-				managedPlc := utils.GetWithTimeout(clientManagedDynamic, common.GvrPolicy, userNamespace+"."+GKPolicyName, clusterNamespace, false, defaultTimeoutSeconds)
-				return managedPlc
-			}, defaultTimeoutSeconds, 1).Should(BeNil())
-			utils.KubectlWithOutput("delete", "ns", "e2etestsuccess", "--kubeconfig="+kubeconfigManaged)
-			utils.KubectlWithOutput("delete", "ns", "e2etestfail", "--kubeconfig="+kubeconfigManaged)
-		})
-		It("Clean up stable/policy-gatekeeper-operator", func() {
-			utils.KubectlWithOutput("delete", "-f", gatekeeperPolicyURL, "-n", userNamespace, "--kubeconfig="+kubeconfigHub)
-			Eventually(func() interface{} {
-				managedPlc := utils.GetWithTimeout(clientManagedDynamic, common.GvrPolicy, userNamespace+"."+gatekeeperPolicyName, clusterNamespace, false, defaultTimeoutSeconds)
-				return managedPlc
-			}, defaultTimeoutSeconds, 1).Should(BeNil())
-			utils.Pause(20)
-			utils.KubectlWithOutput("delete", "Gatekeeper", "gatekeeper", "--kubeconfig="+kubeconfigManaged)
-			Eventually(func() interface{} {
-				out, _ := utils.KubectlWithOutput("get", "pods", "-n", "openshift-gatekeeper-system", "--kubeconfig="+kubeconfigManaged)
-				return out
-			}, defaultTimeoutSeconds*4, 1).Should(ContainSubstring("No resources found")) // k8s will respond with this even if the ns was deleted.
-			utils.KubectlWithOutput("delete", "-n", "openshift-operators", "subscriptions.operators.coreos.com", "gatekeeper-operator-product", "--kubeconfig="+kubeconfigManaged)
-			csvName, _ := utils.KubectlWithOutput("get", "-n", "openshift-operators", "csv", "-o", "jsonpath=\"{.items[?(@.spec.displayName==\"Gatekeeper Operator\")].metadata.name}\"", "--kubeconfig="+kubeconfigManaged)
-			csvName = strings.Trim(csvName, "\"")
-			utils.KubectlWithOutput("delete", "-n", "openshift-operators", "csv", csvName, "--kubeconfig="+kubeconfigManaged)
-			utils.KubectlWithOutput("delete", "crd", "gatekeepers.operator.gatekeeper.sh", "--kubeconfig="+kubeconfigManaged)
-			out, _ := utils.KubectlWithOutput("delete", "ns", "openshift-gatekeeper-system", "--kubeconfig="+kubeconfigManaged)
-			Expect(out).To(Or(
-				ContainSubstring("namespace \"openshift-gatekeeper-system\" deleted"),
-				ContainSubstring("namespaces \"openshift-gatekeeper-system\" not found")))
-			utils.KubectlWithOutput("delete", "events", "-n", clusterNamespace, "--field-selector=involvedObject.name="+userNamespace+".policy-gatekeeper-operator", "--kubeconfig="+kubeconfigManaged)
-			utils.KubectlWithOutput("delete", "events", "-n", clusterNamespace, "--field-selector=involvedObject.name="+userNamespace+".policy-gatekeeper", "--kubeconfig="+kubeconfigManaged)
-			utils.KubectlWithOutput("delete", "events", "-n", clusterNamespace, "--field-selector=involvedObject.name="+userNamespace+".policy-gatekeeper-image-pull-policy", "--kubeconfig="+kubeconfigManaged)
-			utils.KubectlWithOutput("delete", "events", "-n", clusterNamespace, "--field-selector=involvedObject.name="+userNamespace+".policy-gatekeeper-annotation-owner", "--kubeconfig="+kubeconfigManaged)
-		})
+	AfterAll(func() {
+		// Clean up mutation policies
+		utils.KubectlWithOutput("delete", "-f", GKAssignMetadataPolicyYaml, "-n", userNamespace, "--kubeconfig="+kubeconfigHub)
+		Eventually(func() interface{} {
+			managedPlc := utils.GetWithTimeout(clientManagedDynamic, common.GvrPolicy, userNamespace+"."+GKAssignMetadataPolicyName, clusterNamespace, false, defaultTimeoutSeconds)
+			return managedPlc
+		}, defaultTimeoutSeconds, 1).Should(BeNil())
+		utils.KubectlWithOutput("delete", "-f", GKAssignPolicyYaml, "-n", userNamespace, "--kubeconfig="+kubeconfigHub)
+		Eventually(func() interface{} {
+			managedPlc := utils.GetWithTimeout(clientManagedDynamic, common.GvrPolicy, userNamespace+"."+GKAssignPolicyName, clusterNamespace, false, defaultTimeoutSeconds)
+			return managedPlc
+		}, defaultTimeoutSeconds, 1).Should(BeNil())
+		utils.KubectlWithOutput("delete", "-f", "../resources/gatekeeper/pod-mutation.yaml", "-n", "e2etestsuccess", "--kubeconfig="+kubeconfigManaged)
+		// Clean up stable/policy-gatekeeper-sample
+		utils.KubectlWithOutput("delete", "-f", GKPolicyYaml, "-n", userNamespace, "--kubeconfig="+kubeconfigHub)
+		Eventually(func() interface{} {
+			managedPlc := utils.GetWithTimeout(clientManagedDynamic, common.GvrPolicy, userNamespace+"."+GKPolicyName, clusterNamespace, false, defaultTimeoutSeconds)
+			return managedPlc
+		}, defaultTimeoutSeconds, 1).Should(BeNil())
+		utils.KubectlWithOutput("delete", "ns", "e2etestsuccess", "--kubeconfig="+kubeconfigManaged)
+		utils.KubectlWithOutput("delete", "ns", "e2etestfail", "--kubeconfig="+kubeconfigManaged)
+		// Clean up stable/policy-gatekeeper-operator
+		utils.KubectlWithOutput("delete", "-f", gatekeeperPolicyURL, "-n", userNamespace, "--kubeconfig="+kubeconfigHub)
+		Eventually(func() interface{} {
+			managedPlc := utils.GetWithTimeout(clientManagedDynamic, common.GvrPolicy, userNamespace+"."+gatekeeperPolicyName, clusterNamespace, false, defaultTimeoutSeconds)
+			return managedPlc
+		}, defaultTimeoutSeconds, 1).Should(BeNil())
+		utils.Pause(20)
+		utils.KubectlWithOutput("delete", "Gatekeeper", "gatekeeper", "--kubeconfig="+kubeconfigManaged)
+		Eventually(func() interface{} {
+			out, _ := utils.KubectlWithOutput("get", "pods", "-n", "openshift-gatekeeper-system", "--kubeconfig="+kubeconfigManaged)
+			return out
+		}, defaultTimeoutSeconds*4, 1).Should(ContainSubstring("No resources found")) // k8s will respond with this even if the ns was deleted.
+		utils.KubectlWithOutput("delete", "-n", "openshift-operators", "subscriptions.operators.coreos.com", "gatekeeper-operator-product", "--kubeconfig="+kubeconfigManaged)
+		csvName, _ := utils.KubectlWithOutput("get", "-n", "openshift-operators", "csv", "-o", "jsonpath=\"{.items[?(@.spec.displayName==\"Gatekeeper Operator\")].metadata.name}\"", "--kubeconfig="+kubeconfigManaged)
+		csvName = strings.Trim(csvName, "\"")
+		utils.KubectlWithOutput("delete", "-n", "openshift-operators", "csv", csvName, "--kubeconfig="+kubeconfigManaged)
+		utils.KubectlWithOutput("delete", "crd", "gatekeepers.operator.gatekeeper.sh", "--kubeconfig="+kubeconfigManaged)
+		out, _ := utils.KubectlWithOutput("delete", "ns", "openshift-gatekeeper-system", "--kubeconfig="+kubeconfigManaged)
+		Expect(out).To(Or(
+			ContainSubstring("namespace \"openshift-gatekeeper-system\" deleted"),
+			ContainSubstring("namespaces \"openshift-gatekeeper-system\" not found")))
+		utils.KubectlWithOutput("delete", "events", "-n", clusterNamespace, "--field-selector=involvedObject.name="+userNamespace+".policy-gatekeeper-operator", "--kubeconfig="+kubeconfigManaged)
+		utils.KubectlWithOutput("delete", "events", "-n", clusterNamespace, "--field-selector=involvedObject.name="+userNamespace+".policy-gatekeeper", "--kubeconfig="+kubeconfigManaged)
+		utils.KubectlWithOutput("delete", "events", "-n", clusterNamespace, "--field-selector=involvedObject.name="+userNamespace+".policy-gatekeeper-image-pull-policy", "--kubeconfig="+kubeconfigManaged)
+		utils.KubectlWithOutput("delete", "events", "-n", clusterNamespace, "--field-selector=involvedObject.name="+userNamespace+".policy-gatekeeper-annotation-owner", "--kubeconfig="+kubeconfigManaged)
 	})
 })

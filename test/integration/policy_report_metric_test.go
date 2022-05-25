@@ -17,8 +17,7 @@ import (
 	"github.com/stolostron/governance-policy-framework/test/common"
 )
 
-var _ = Describe("GRC: [P1][Sev1][policy-grc] Test policyreport_info metric", Label("BVT"), func() {
-
+var _ = Describe("GRC: [P1][Sev1][policy-grc] Test policyreport_info metric", Ordered, Label("BVT"), func() {
 	const (
 		ocmNS                        = "open-cluster-management"
 		saName                       = "grc-framework-sa"
@@ -203,7 +202,7 @@ var _ = Describe("GRC: [P1][Sev1][policy-grc] Test policyreport_info metric", La
 			return resp
 		}, defaultTimeoutSeconds*8, 1).ShouldNot(common.MatchMetricValue(insightsMetricName, policyLabel, "1"))
 	})
-	It("Cleans up", func() {
+	AfterAll(func() {
 		// unset poll interval
 		insightsClient, err := common.OcHub("get", "deployments", "-n", ocmNS, "-l", insightsClientSelector, "-o", "name")
 		Expect(err).To(BeNil())

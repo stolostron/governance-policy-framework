@@ -16,8 +16,7 @@ import (
 	"github.com/stolostron/governance-policy-framework/test/common"
 )
 
-var _ = Describe("GRC: [P1][Sev1][policy-grc] Test the policy-scc policy", Label("policy-collection", "stable"), func() {
-
+var _ = Describe("GRC: [P1][Sev1][policy-grc] Test the policy-scc policy", Ordered, Label("policy-collection", "stable"), func() {
 	const (
 		rootPolicyName   = "policy-securitycontextconstraints"
 		rootPolicyURL    = policyCollectSCURL + "policy-scc.yaml"
@@ -109,7 +108,7 @@ var _ = Describe("GRC: [P1][Sev1][policy-grc] Test the policy-scc policy", Label
 		).Should(BeNil())
 	})
 
-	It("Cleans up", func() {
+	AfterAll(func() {
 		_, err := utils.KubectlWithOutput(
 			"delete", "-f", rootPolicyURL, "-n", userNamespace, "--kubeconfig="+kubeconfigHub,
 		)
