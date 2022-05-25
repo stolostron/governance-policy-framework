@@ -16,7 +16,7 @@ import (
 	"github.com/stolostron/governance-policy-framework/test/common"
 )
 
-var _ = Describe("GRC: [P1][Sev1][policy-grc] Test the policy-psp policy", Label("policy-collection", "stable"), func() {
+var _ = Describe("GRC: [P1][Sev1][policy-grc] Test the policy-psp policy", Ordered, Label("policy-collection", "stable"), func() {
 	const (
 		rootPolicyName   = "policy-podsecuritypolicy"
 		rootPolicyURL    = policyCollectSCURL + "policy-psp.yaml"
@@ -125,7 +125,7 @@ var _ = Describe("GRC: [P1][Sev1][policy-grc] Test the policy-psp policy", Label
 		).Should(BeNil())
 	})
 
-	It("Cleans up", func() {
+	AfterAll(func() {
 		By("Deleting the PodSecurityPolicy " + rootPolicyName + " on the hub cluster")
 		_, err := utils.KubectlWithOutput(
 			"delete",

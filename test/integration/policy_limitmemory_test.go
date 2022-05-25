@@ -17,8 +17,7 @@ import (
 	"github.com/stolostron/governance-policy-framework/test/common"
 )
 
-var _ = Describe("GRC: [P1][Sev1][policy-grc] Test the policy-limitmemory policy", Label("policy-collection", "stable"), func() {
-
+var _ = Describe("GRC: [P1][Sev1][policy-grc] Test the policy-limitmemory policy", Ordered, Label("policy-collection", "stable"), func() {
 	const (
 		policyLimitMemoryName   = "policy-limitmemory"
 		policyLimitMemoryURL    = policyCollectSCURL + policyLimitMemoryName + ".yaml"
@@ -119,7 +118,7 @@ var _ = Describe("GRC: [P1][Sev1][policy-grc] Test the policy-limitmemory policy
 		).Should(BeNil())
 	})
 
-	It("Cleans up", func() {
+	AfterAll(func() {
 		_, err := utils.KubectlWithOutput(
 			"delete", "-f", policyLimitMemoryURL, "-n", userNamespace, "--kubeconfig="+kubeconfigHub,
 		)

@@ -25,8 +25,7 @@ import (
 	"github.com/stolostron/governance-policy-framework/test/common"
 )
 
-var _ = Describe("GRC: [P1][Sev1][policy-grc] Test the policy-certificate policy", Label("policy-collection", "stable", "BVT"), func() {
-
+var _ = Describe("GRC: [P1][Sev1][policy-grc] Test the policy-certificate policy", Ordered, Label("policy-collection", "stable", "BVT"), func() {
 	const (
 		policyCertificateName   = "policy-certificate"
 		policyCertificateURL    = policyCollectSCURL + policyCertificateName + ".yaml"
@@ -133,7 +132,7 @@ var _ = Describe("GRC: [P1][Sev1][policy-grc] Test the policy-certificate policy
 		).Should(Equal(policiesv1.NonCompliant))
 	})
 
-	It("Cleans up", func() {
+	AfterAll(func() {
 		_, err := utils.KubectlWithOutput(
 			"delete", "-f", policyCertificateURL, "-n", userNamespace, "--kubeconfig="+kubeconfigHub,
 		)

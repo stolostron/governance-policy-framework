@@ -118,7 +118,7 @@ func complianceScanTest(scanPolicyName string, scanPolicyUrl string, scanName st
 			return compliancesuite.Object["status"].(map[string]interface{})["phase"]
 		}, defaultTimeoutSeconds*10, 1).Should(Equal("DONE"))
 	})
-	It("Clean up compliance scan "+scanName+"", func() {
+	AfterAll(func() {
 		By("Removing policy")
 		utils.KubectlWithOutput("delete", "-f", scanPolicyUrl, "-n", userNamespace, "--kubeconfig="+kubeconfigHub)
 		utils.GetWithTimeout(clientManagedDynamic, common.GvrPolicy, userNamespace+"."+scanPolicyName, clusterNamespace, false, defaultTimeoutSeconds)
@@ -141,7 +141,7 @@ func complianceScanTest(scanPolicyName string, scanPolicyUrl string, scanName st
 	})
 }
 
-var _ = Describe("RHACM4K-2222 GRC: [P1][Sev1][policy-grc] Test compliance operator and scan", Label("policy-collection", "stable"), func() {
+var _ = Describe("RHACM4K-2222 GRC: [P1][Sev1][policy-grc] Test compliance operator and scan", Ordered, Label("policy-collection", "stable", "BVT"), func() {
 	const compPolicyURL = policyCollectCAURL + "policy-compliance-operator-install.yaml"
 	const compPolicyName = "policy-comp-operator"
 	const compE8ScanPolicyURL = policyCollectCMURL + "policy-compliance-operator-e8-scan.yaml"
@@ -151,7 +151,7 @@ var _ = Describe("RHACM4K-2222 GRC: [P1][Sev1][policy-grc] Test compliance opera
 
 	var getComplianceState func() interface{}
 
-	BeforeEach(func() {
+	BeforeAll(func() {
 		if !isOCP46andAbove() {
 			Skip("Skipping as compliance operator is only supported on OCP 4.6 and above")
 		}
@@ -265,24 +265,23 @@ var _ = Describe("RHACM4K-2222 GRC: [P1][Sev1][policy-grc] Test compliance opera
 			}, defaultTimeoutSeconds, 1).Should(Equal("inform"))
 		})
 	})
-	Describe("Test stable/"+compE8ScanPolicyName, func() {
+	Describe("Test stable/"+compE8ScanPolicyName, Ordered, func() {
 		complianceScanTest(compE8ScanPolicyName, compE8ScanPolicyURL, "e8")
 	})
-	Describe("Test stable/"+compCISScanPolicyName, func() {
+	Describe("Test stable/"+compCISScanPolicyName, Ordered, func() {
 		complianceScanTest(compCISScanPolicyName, compCISScanPolicyURL, "cis")
 	})
-	Describe("Clean up after all", func() {
-		It("clean up compliance operator", func() {
-			utils.KubectlWithOutput("delete", "-f", compPolicyURL, "-n", userNamespace, "--kubeconfig="+kubeconfigHub)
-			utils.GetWithTimeout(clientManagedDynamic, common.GvrPolicy, userNamespace+"."+compPolicyName, clusterNamespace, false, defaultTimeoutSeconds)
-			utils.KubectlWithOutput("delete", "-n", "openshift-compliance", "ProfileBundle", "--all", "--kubeconfig="+kubeconfigManaged)
-			utils.KubectlWithOutput("delete", "-n", "openshift-compliance", "subscriptions.operators.coreos.com", "compliance-operator", "--kubeconfig="+kubeconfigManaged)
-			utils.KubectlWithOutput("delete", "-n", "openshift-compliance", "OperatorGroup", "compliance-operator", "--kubeconfig="+kubeconfigManaged)
-			out, _ := utils.KubectlWithOutput("delete", "ns", "openshift-compliance", "--kubeconfig="+kubeconfigManaged)
-			Expect(out).To(ContainSubstring("namespace \"openshift-compliance\" deleted"))
-			utils.KubectlWithOutput("delete", "events", "-n", clusterNamespace, "--field-selector=involvedObject.name="+userNamespace+"."+compPolicyName, "--kubeconfig="+kubeconfigManaged)
-			utils.KubectlWithOutput("delete", "events", "-n", clusterNamespace, "--field-selector=involvedObject.name="+userNamespace+"."+compCISScanPolicyName, "--kubeconfig="+kubeconfigManaged)
-			utils.KubectlWithOutput("delete", "events", "-n", clusterNamespace, "--field-selector=involvedObject.name="+userNamespace+"."+compE8ScanPolicyName, "--kubeconfig="+kubeconfigManaged)
-		})
+	AfterAll(func() {
+		// clean up compliance operator
+		utils.KubectlWithOutput("delete", "-f", compPolicyURL, "-n", userNamespace, "--kubeconfig="+kubeconfigHub)
+		utils.GetWithTimeout(clientManagedDynamic, common.GvrPolicy, userNamespace+"."+compPolicyName, clusterNamespace, false, defaultTimeoutSeconds)
+		utils.KubectlWithOutput("delete", "-n", "openshift-compliance", "ProfileBundle", "--all", "--kubeconfig="+kubeconfigManaged)
+		utils.KubectlWithOutput("delete", "-n", "openshift-compliance", "subscriptions.operators.coreos.com", "compliance-operator", "--kubeconfig="+kubeconfigManaged)
+		utils.KubectlWithOutput("delete", "-n", "openshift-compliance", "OperatorGroup", "compliance-operator", "--kubeconfig="+kubeconfigManaged)
+		out, _ := utils.KubectlWithOutput("delete", "ns", "openshift-compliance", "--kubeconfig="+kubeconfigManaged)
+		Expect(out).To(ContainSubstring("namespace \"openshift-compliance\" deleted"))
+		utils.KubectlWithOutput("delete", "events", "-n", clusterNamespace, "--field-selector=involvedObject.name="+userNamespace+"."+compPolicyName, "--kubeconfig="+kubeconfigManaged)
+		utils.KubectlWithOutput("delete", "events", "-n", clusterNamespace, "--field-selector=involvedObject.name="+userNamespace+"."+compCISScanPolicyName, "--kubeconfig="+kubeconfigManaged)
+		utils.KubectlWithOutput("delete", "events", "-n", clusterNamespace, "--field-selector=involvedObject.name="+userNamespace+"."+compE8ScanPolicyName, "--kubeconfig="+kubeconfigManaged)
 	})
 })
