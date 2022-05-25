@@ -7,6 +7,8 @@ LOCAL_BIN ?= $(PWD)/bin
 deployOnHub ?= false
 RELEASE_BRANCH ?= main
 OCM_API_COMMIT ?= 3297cac74dc5e7fd2a82056cf3b93a5a88939d81
+DOCKER_URI ?= quay.io/stolostron
+VERSION_TAG ?= latest
 
 # GITHUB_USER containing '@' char must be escaped with '%40'
 GITHUB_USER := $(shell echo $(GITHUB_USER) | sed 's/@/%40/g')
@@ -175,23 +177,29 @@ kind-deploy-policy-framework:
 	else\
 		echo installing policy-spec-sync on managed;\
 		kubectl apply -f https://raw.githubusercontent.com/stolostron/governance-policy-spec-sync/$(RELEASE_BRANCH)/deploy/operator.yaml -n $(KIND_MANAGED_NAMESPACE) --kubeconfig=$(PWD)/kubeconfig_$(MANAGED_CLUSTER_NAME);\
+		kubectl patch deployment governance-policy-spec-sync -n $(KIND_MANAGED_NAMESPACE) --kubeconfig=$(PWD)/kubeconfig_$(MANAGED_CLUSTER_NAME) \
+			-p "{\"spec\":{\"template\":{\"spec\":{\"containers\":[{\"name\":\"governance-policy-spec-sync\",\"image\":\"${DOCKER_URI}/governance-policy-spec-sync:${VERSION_TAG}\"}]}}}}";\
 	fi
+	@echo "installing policy-status-sync on managed"
+	kubectl apply -f https://raw.githubusercontent.com/stolostron/governance-policy-status-sync/$(RELEASE_BRANCH)/deploy/operator.yaml -n $(KIND_MANAGED_NAMESPACE) --kubeconfig=$(PWD)/kubeconfig_$(MANAGED_CLUSTER_NAME)
 	@if [ "$(deployOnHub)" = "true" ]; then\
-		echo installing policy-status-sync with ON_MULTICLUSTERHUB;\
-		kubectl apply -f https://raw.githubusercontent.com/stolostron/governance-policy-status-sync/$(RELEASE_BRANCH)/deploy/operator.yaml -n $(KIND_MANAGED_NAMESPACE) --kubeconfig=$(PWD)/kubeconfig_$(MANAGED_CLUSTER_NAME);\
+		echo patching policy-status-sync with ON_MULTICLUSTERHUB;\
 		kubectl set env deployment/governance-policy-status-sync ON_MULTICLUSTERHUB=true -n $(KIND_MANAGED_NAMESPACE) --kubeconfig=$(PWD)/kubeconfig_$(MANAGED_CLUSTER_NAME);\
-	else\
-		echo installing policy-status-sync on managed;\
-		kubectl apply -f https://raw.githubusercontent.com/stolostron/governance-policy-status-sync/$(RELEASE_BRANCH)/deploy/operator.yaml -n $(KIND_MANAGED_NAMESPACE) --kubeconfig=$(PWD)/kubeconfig_$(MANAGED_CLUSTER_NAME);\
 	fi
+	kubectl patch deployment governance-policy-status-sync -n $(KIND_MANAGED_NAMESPACE) --kubeconfig=$(PWD)/kubeconfig_$(MANAGED_CLUSTER_NAME) \
+		-p "{\"spec\":{\"template\":{\"spec\":{\"containers\":[{\"name\":\"governance-policy-status-sync\",\"image\":\"${DOCKER_URI}/governance-policy-status-sync:${VERSION_TAG}\"}]}}}}"
 	@echo installing policy-template-sync on managed
 	kubectl apply -f https://raw.githubusercontent.com/stolostron/governance-policy-template-sync/$(RELEASE_BRANCH)/deploy/operator.yaml -n $(KIND_MANAGED_NAMESPACE) --kubeconfig=$(PWD)/kubeconfig_$(MANAGED_CLUSTER_NAME)
+	kubectl patch deployment governance-policy-template-sync -n $(KIND_MANAGED_NAMESPACE) --kubeconfig=$(PWD)/kubeconfig_$(MANAGED_CLUSTER_NAME) \
+		-p "{\"spec\":{\"template\":{\"spec\":{\"containers\":[{\"name\":\"governance-policy-template-sync\",\"image\":\"${DOCKER_URI}/governance-policy-template-sync:${VERSION_TAG}\"}]}}}}"
 
 .PHONY: kind-deploy-config-policy-controller
 kind-deploy-config-policy-controller:
 	@echo installing config-policy-controller on managed
 	kubectl apply -f https://raw.githubusercontent.com/stolostron/config-policy-controller/$(RELEASE_BRANCH)/deploy/operator.yaml -n $(KIND_MANAGED_NAMESPACE) --kubeconfig=$(PWD)/kubeconfig_$(MANAGED_CLUSTER_NAME)
 	kubectl apply -f https://raw.githubusercontent.com/stolostron/config-policy-controller/$(RELEASE_BRANCH)/deploy/crds/policy.open-cluster-management.io_configurationpolicies.yaml -n $(KIND_MANAGED_NAMESPACE) --kubeconfig=$(PWD)/kubeconfig_$(MANAGED_CLUSTER_NAME)
+	kubectl patch deployment config-policy-controller -n $(KIND_MANAGED_NAMESPACE) --kubeconfig=$(PWD)/kubeconfig_$(MANAGED_CLUSTER_NAME) \
+		-p "{\"spec\":{\"template\":{\"spec\":{\"containers\":[{\"name\":\"config-policy-controller\",\"image\":\"${DOCKER_URI}/config-policy-controller:${VERSION_TAG}\"}]}}}}"
 
 .PHONY: kind-deploy-cert-policy-controller
 kind-deploy-cert-policy-controller:
@@ -200,6 +208,8 @@ kind-deploy-cert-policy-controller:
 	@echo installing cert-policy-controller on managed
 	kubectl apply -f https://raw.githubusercontent.com/stolostron/cert-policy-controller/$(RELEASE_BRANCH)/deploy/crds/policy.open-cluster-management.io_certificatepolicies.yaml --kubeconfig=$(PWD)/kubeconfig_$(MANAGED_CLUSTER_NAME)
 	kubectl apply -f https://raw.githubusercontent.com/stolostron/cert-policy-controller/$(RELEASE_BRANCH)/deploy/operator.yaml -n $(KIND_MANAGED_NAMESPACE) --kubeconfig=$(PWD)/kubeconfig_$(MANAGED_CLUSTER_NAME)
+	kubectl patch deployment cert-policy-controller -n $(KIND_MANAGED_NAMESPACE) --kubeconfig=$(PWD)/kubeconfig_$(MANAGED_CLUSTER_NAME) \
+		-p "{\"spec\":{\"template\":{\"spec\":{\"containers\":[{\"name\":\"cert-policy-controller\",\"image\":\"${DOCKER_URI}/cert-policy-controller:${VERSION_TAG}\"}]}}}}"
 	kubectl patch deployment cert-policy-controller \
 		-n $(KIND_MANAGED_NAMESPACE) -p '{"spec": {"template": {"spec": {"containers": [{"name":"cert-policy-controller", "args": ["--enable-lease=true"]}]}}}}' \
 		--kubeconfig=$(PWD)/kubeconfig_$(MANAGED_CLUSTER_NAME)
@@ -209,6 +219,8 @@ kind-deploy-iam-policy-controller:
 	@echo installing iam-policy-controller on managed
 	kubectl apply -f https://raw.githubusercontent.com/stolostron/iam-policy-controller/$(RELEASE_BRANCH)/deploy/crds/policy.open-cluster-management.io_iampolicies.yaml --kubeconfig=$(PWD)/kubeconfig_$(MANAGED_CLUSTER_NAME)
 	kubectl apply -f https://raw.githubusercontent.com/stolostron/iam-policy-controller/$(RELEASE_BRANCH)/deploy/operator.yaml -n $(KIND_MANAGED_NAMESPACE) --kubeconfig=$(PWD)/kubeconfig_$(MANAGED_CLUSTER_NAME)
+	kubectl patch deployment iam-policy-controller -n $(KIND_MANAGED_NAMESPACE) --kubeconfig=$(PWD)/kubeconfig_$(MANAGED_CLUSTER_NAME) \
+		-p "{\"spec\":{\"template\":{\"spec\":{\"containers\":[{\"name\":\"iam-policy-controller\",\"image\":\"${DOCKER_URI}/iam-policy-controller:${VERSION_TAG}\"}]}}}}"
 	kubectl patch deployment iam-policy-controller \
 		-n $(KIND_MANAGED_NAMESPACE) -p '{"spec": {"template": {"spec": {"containers": [{"name":"iam-policy-controller", "args": ["--enable-lease=true"]}]}}}}' \
 		--kubeconfig=$(PWD)/kubeconfig_$(MANAGED_CLUSTER_NAME)
