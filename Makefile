@@ -291,9 +291,9 @@ GINKGO = $(LOCAL_BIN)/ginkgo
 .PHONY: e2e-test
 e2e-test:
 	@if [ -z "$(TEST_FILE)" ]; then\
-		$(GINKGO) -v --no-color $(TEST_ARGS) --fail-fast test/e2e;\
+		$(GINKGO) -v --no-color $(TEST_ARGS) --fail-fast test/e2e -- -cluster_namespace=managed ;\
 	else\
-		$(GINKGO) -v --no-color $(TEST_ARGS) --fail-fast --focus-file=$(TEST_FILE) test/e2e;\
+		$(GINKGO) -v --no-color $(TEST_ARGS) --fail-fast --focus-file=$(TEST_FILE) test/e2e -- -cluster_namespace=managed;\
 	fi
 
 .PHONY: e2e-debug
