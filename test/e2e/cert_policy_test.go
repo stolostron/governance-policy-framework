@@ -5,9 +5,7 @@ package e2e
 
 import (
 	. "github.com/onsi/ginkgo/v2"
-	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	policiesv1 "open-cluster-management.io/governance-policy-propagator/api/v1"
-	"open-cluster-management.io/governance-policy-propagator/test/utils"
 
 	"github.com/stolostron/governance-policy-framework/test/common"
 )
@@ -18,11 +16,11 @@ import (
  * using the results of the first test.
  */
 var _ = Describe("Test cert policy", func() {
-	Describe("Test cert policy inform", func() {
+	Describe("Test cert policy inform", Ordered, func() {
 		const certPolicyName string = "cert-policy"
 		const certPolicyYaml string = "../resources/cert_policy/cert-policy.yaml"
 		It("should be created on managed cluster", func() {
-			common.DoCreatePolicyTest(clientHubDynamic, clientManagedDynamic, certPolicyYaml)
+			common.DoCreatePolicyTest(clientHubDynamic, clientManagedDynamic, certPolicyYaml, &common.GvrCertPolicy)
 		})
 		It("the policy should be compliant as there is no certificate", func() {
 			common.DoRootComplianceTest(clientHubDynamic, certPolicyName, policiesv1.Compliant)
@@ -124,14 +122,9 @@ var _ = Describe("Test cert policy", func() {
 
 			common.DoRootComplianceTest(clientHubDynamic, certPolicyName, policiesv1.Compliant)
 		})
-		It("should clean up", func() {
-			By("Deleting " + certPolicyYaml)
-			common.OcHub("delete", "-f", certPolicyYaml, "-n", userNamespace)
-			By("Checking if there is any policy left")
-			utils.ListWithTimeout(clientHubDynamic, common.GvrPolicy, metav1.ListOptions{}, 0, true, defaultTimeoutSeconds)
-			utils.ListWithTimeout(clientManagedDynamic, common.GvrPolicy, metav1.ListOptions{}, 0, true, defaultTimeoutSeconds)
-			By("Checking if there is any cert policy left")
-			utils.ListWithTimeout(clientManagedDynamic, common.GvrCertPolicy, metav1.ListOptions{}, 0, true, defaultTimeoutSeconds)
+		AfterAll(func() {
+			common.DoCleanupPolicy(clientHubDynamic, clientManagedDynamic, certPolicyYaml, &common.GvrCertPolicy)
+
 			By("Deleting ../resources/cert_policy/issuer.yaml in ns default")
 			common.OcManaged("delete", "-f", "../resources/cert_policy/issuer.yaml", "-n", "default")
 			By("Deleting ../resources/cert_policy/certificate.yaml in ns default")

@@ -55,18 +55,18 @@ func GetClusterLevelWithTimeout(
 
 const GKOPolicyYaml string = "../resources/gatekeeper/policy-gatekeeper-operator.yaml"
 
-var _ = Describe("Test gatekeeper", func() {
+var _ = Describe("Test gatekeeper", Ordered, func() {
 	Describe("Test gatekeeper operator", func() {
 		const GKOPolicyName string = "policy-gatekeeper-operator"
 		It("gatekeeper operator policy should be created on managed", func() {
-			common.DoCreatePolicyTest(clientHubDynamic, clientManagedDynamic, GKOPolicyYaml)
+			common.DoCreatePolicyTest(clientHubDynamic, clientManagedDynamic, GKOPolicyYaml, nil)
 		})
 		It("should create gatekeeper pods on managed cluster", func() {
 			By("Checking number of pods in gatekeeper-system ns")
 			utils.ListWithTimeoutByNamespace(clientManagedDynamic, common.GvrPod, metav1.ListOptions{}, "gatekeeper-system", 6, true, 240)
 		})
 	})
-	Describe("Test gatekeeper policy creation", func() {
+	Describe("Test gatekeeper policy creation", Ordered, func() {
 		const GKPolicyName string = "policy-gatekeeper"
 		const GKPolicyYaml string = "../resources/gatekeeper/policy-gatekeeper.yaml"
 		const cfgpolKRLName string = "policy-gatekeeper-k8srequiredlabels"
@@ -83,7 +83,7 @@ var _ = Describe("Test gatekeeper", func() {
 			Expect(ctCRD).NotTo(BeNil())
 		})
 		It("configurationPolicies should be created on managed", func() {
-			common.DoCreatePolicyTest(clientHubDynamic, clientManagedDynamic, GKPolicyYaml)
+			common.DoCreatePolicyTest(clientHubDynamic, clientManagedDynamic, GKPolicyYaml, nil)
 
 			By("Checking configpolicies on managed")
 			krl := utils.GetWithTimeout(clientManagedDynamic, common.GvrConfigurationPolicy, cfgpolKRLName, clusterNamespace, true, defaultTimeoutSeconds)
@@ -206,16 +206,10 @@ var _ = Describe("Test gatekeeper", func() {
 				return ro[0].(map[string]interface{})["object"].(map[string]interface{})["metadata"].(map[string]interface{})["name"]
 			}, defaultTimeoutSeconds, 1).Should(Equal("ns-must-have-gk"))
 		})
-		It("should clean up", func() {
-			By("Deleting gatekeeper operator policy on hub")
-			common.OcHub("delete", "-f", GKOPolicyYaml, "-n", userNamespace)
-			By("Deleting gatekeeper policy on hub")
-			common.OcHub("delete", "-f", GKPolicyYaml, "-n", userNamespace)
-			By("Checking if there is any policy left")
-			utils.ListWithTimeout(clientHubDynamic, common.GvrPolicy, metav1.ListOptions{}, 0, true, defaultTimeoutSeconds)
-			utils.ListWithTimeoutByNamespace(clientManagedDynamic, common.GvrPolicy, metav1.ListOptions{}, clusterNamespace, 0, true, defaultTimeoutSeconds)
-			By("Checking if there is any configuration policy left")
-			utils.ListWithTimeout(clientManagedDynamic, common.GvrConfigurationPolicy, metav1.ListOptions{}, 0, true, defaultTimeoutSeconds)
+		AfterAll(func() {
+			common.DoCleanupPolicy(clientHubDynamic, clientManagedDynamic, GKOPolicyYaml, nil)
+			common.DoCleanupPolicy(clientHubDynamic, clientManagedDynamic, GKPolicyYaml, nil)
+
 			By("Deleting gatekeeper ConstraintTemplate and K8sRequiredLabels")
 			common.OcManaged("delete", "K8sRequiredLabels", "--all")
 			common.OcManaged("delete", "crd", "k8srequiredlabels.constraints.gatekeeper.sh")

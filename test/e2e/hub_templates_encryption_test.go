@@ -48,10 +48,10 @@ var _ = Describe("Test Hub Template Encryption", Ordered, func() {
 			_, err = common.OcHub("apply", "-f", configMapYAML, "-n", userNamespace)
 			Expect(err).To(BeNil())
 
-			common.DoCreatePolicyTest(clientHubDynamic, clientManagedDynamic, policyYAML)
+			common.DoCreatePolicyTest(clientHubDynamic, clientManagedDynamic, policyYAML, &common.GvrConfigurationPolicy)
 		})
 
-		It("Should be compliant after enforcing it", func() {
+		It("Should be compliant after enforcing it", FlakeAttempts(3), func() {
 			By("Patching remediationAction=enforce on the root policy")
 			rootPlc := utils.GetWithTimeout(
 				clientHubDynamic, common.GvrPolicy, policyName, userNamespace, true, defaultTimeoutSeconds,
