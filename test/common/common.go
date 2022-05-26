@@ -16,6 +16,7 @@ import (
 	"github.com/onsi/gomega"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
+	"k8s.io/apimachinery/pkg/runtime/schema"
 	"k8s.io/client-go/dynamic"
 	"k8s.io/client-go/kubernetes"
 	"k8s.io/client-go/rest"
@@ -179,13 +180,15 @@ func PatchPlacementRule(namespace, name, targetCluster, kubeconfigHub string) er
 
 // DoCreatePolicyTest runs usual assertions around creating a policy. It will
 // create the given policy file to the hub cluster, on the user namespace. It
-// also patches the PlacementRule with a PlacementDecision if required. Finally,
-// it asserts that the policy was distributed to the managed cluster.
+// also patches the PlacementRule with a PlacementDecision if required. It
+// asserts that the policy was distributed to the managed cluster, and if a non-
+// nil templateGVR is supplied, it asserts that a policy template (for example
+// ConfigurationPolicy) of the same name was created on the managed cluster.
 //
 // It assumes that the given filename (stripped of an extension) matches the
 // name of the policy, and that the PlacementRule has the same name, with '-plr'
 // appended.
-func DoCreatePolicyTest(hub, managed dynamic.Interface, policyFile string) {
+func DoCreatePolicyTest(hub, managed dynamic.Interface, policyFile string, templateGVR *schema.GroupVersionResource) {
 	policyName := strings.TrimSuffix(filepath.Base(policyFile), filepath.Ext(policyFile))
 
 	ginkgo.By("Creating " + policyFile)
@@ -206,6 +209,34 @@ func DoCreatePolicyTest(hub, managed dynamic.Interface, policyFile string) {
 	ginkgo.By("Checking " + managedPolicyName + " on managed cluster in ns " + ClusterNamespace)
 	mplc := utils.GetWithTimeout(managed, GvrPolicy, managedPolicyName, ClusterNamespace, true, DefaultTimeoutSeconds)
 	gomega.Expect(mplc).NotTo(gomega.BeNil())
+	if templateGVR != nil {
+		ginkgo.By("Checking that the policy template " + policyName + " is present on the managed cluster")
+		tmplPlc := utils.GetWithTimeout(managed, *templateGVR, policyName, ClusterNamespace, true, DefaultTimeoutSeconds)
+		gomega.ExpectWithOffset(1, tmplPlc).NotTo(gomega.BeNil())
+	}
+}
+
+// DoCleanupPolicy deletes the resources specified in the file, and asserts that
+// the propagated policy was removed from the managed cluster. If given a non-
+// nil templateGVR, it will check that there is no longer a policy template
+// (for example ConfigurationPolicy) of the same name on the managed cluster.
+func DoCleanupPolicy(hub, managed dynamic.Interface, policyFile string, templateGVR *schema.GroupVersionResource) {
+	policyName := strings.TrimSuffix(filepath.Base(policyFile), filepath.Ext(policyFile))
+	ginkgo.By("Deleting " + policyFile)
+	OcHub("delete", "-f", policyFile, "-n", UserNamespace)
+	plc := utils.GetWithTimeout(hub, GvrPolicy, policyName, UserNamespace, false, DefaultTimeoutSeconds)
+	gomega.ExpectWithOffset(1, plc).To(gomega.BeNil())
+
+	managedPolicyName := UserNamespace + "." + policyName
+	ginkgo.By("Checking " + managedPolicyName + " was removed from managed cluster in ns " + ClusterNamespace)
+	mplc := utils.GetWithTimeout(managed, GvrPolicy, managedPolicyName, ClusterNamespace, false, DefaultTimeoutSeconds)
+	gomega.ExpectWithOffset(1, mplc).To(gomega.BeNil())
+
+	if templateGVR != nil {
+		ginkgo.By("Checking that the policy template " + policyName + " was removed from the managed cluster")
+		tmplPlc := utils.GetWithTimeout(managed, *templateGVR, policyName, ClusterNamespace, false, DefaultTimeoutSeconds)
+		gomega.ExpectWithOffset(1, tmplPlc).To(gomega.BeNil())
+	}
 }
 
 // DoRootComplianceTest asserts that the given policy has the given compliance
