@@ -287,13 +287,14 @@ install-resources:
 e2e-dependencies:
 	$(call go-get-tool,github.com/onsi/ginkgo/v2/ginkgo@$(shell awk '/github.com\/onsi\/ginkgo\/v2/ {print $$2}' go.mod))
 
+E2EPARALLELFLAG ?= "-p"
 GINKGO = $(LOCAL_BIN)/ginkgo
 .PHONY: e2e-test
 e2e-test:
 	@if [ -z "$(TEST_FILE)" ]; then\
-		$(GINKGO) -v --no-color $(TEST_ARGS) --fail-fast test/e2e -- -cluster_namespace=managed ;\
+		$(GINKGO) -v --no-color $(TEST_ARGS) --fail-fast $(E2EPARALLELFLAG) test/e2e -- -cluster_namespace=managed ;\
 	else\
-		$(GINKGO) -v --no-color $(TEST_ARGS) --fail-fast --focus-file=$(TEST_FILE) test/e2e -- -cluster_namespace=managed;\
+		$(GINKGO) -v --no-color $(TEST_ARGS) --fail-fast --focus-file=$(TEST_FILE) test/e2e -- -cluster_namespace=managed ;\
 	fi
 
 .PHONY: e2e-debug

@@ -34,6 +34,7 @@ var (
 	ClusterNamespace       string
 	DefaultTimeoutSeconds  int
 	ManuallyPatchDecisions bool
+	K8sClient              string
 )
 
 func init() {
@@ -43,6 +44,7 @@ func init() {
 	flag.StringVar(&ClusterNamespace, "cluster_namespace", "local-cluster", "cluster ns name")
 	flag.IntVar(&DefaultTimeoutSeconds, "timeout_seconds", 30, "Timeout seconds for assertion")
 	flag.BoolVar(&ManuallyPatchDecisions, "patch_decisions", true, "Whether to 'manually' patch PlacementRules with PlacementDecisions (set to false if the PlacementRule controller is running)")
+	flag.StringVar(&K8sClient, "k8s_client", "oc", "Which k8s client to use for some tests - `oc`, `kubectl`, or something else entirely")
 }
 
 func NewKubeClient(url, kubeconfig, context string) kubernetes.Interface {
@@ -133,7 +135,7 @@ func oc(args ...string) (string, error) {
 			break
 		}
 	}
-	output, err := exec.Command("oc", args...).Output()
+	output, err := exec.Command(K8sClient, args...).Output()
 	if len(args) > 0 && printOutput {
 		fmt.Println(string(output))
 	}
