@@ -4,11 +4,9 @@
 package e2e
 
 import (
-	"context"
-
 	. "github.com/onsi/ginkgo/v2"
-	. "github.com/onsi/gomega"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	policiesv1 "open-cluster-management.io/governance-policy-propagator/api/v1"
 	"open-cluster-management.io/governance-policy-propagator/test/utils"
 
 	"github.com/stolostron/governance-policy-framework/test/common"
@@ -19,50 +17,26 @@ var _ = Describe("Test iam policy", func() {
 		const iamPolicyName string = "iam-policy"
 		const iamPolicyYaml string = "../resources/iam_policy/iam-policy.yaml"
 		It("should be created on managed cluster", func() {
-			By("Creating " + iamPolicyYaml)
-			utils.Kubectl("apply", "-f", iamPolicyYaml, "-n", userNamespace, "--kubeconfig=../../kubeconfig_hub")
-			hubPlc := utils.GetWithTimeout(clientHubDynamic, common.GvrPolicy, iamPolicyName, userNamespace, true, defaultTimeoutSeconds)
-			Expect(hubPlc).NotTo(BeNil())
-			By("Patching " + iamPolicyName + "-plr with decision of cluster managed")
-			plr := utils.GetWithTimeout(clientHubDynamic, common.GvrPlacementRule, iamPolicyName+"-plr", userNamespace, true, defaultTimeoutSeconds)
-			plr.Object["status"] = utils.GeneratePlrStatus("managed")
-			_, err := clientHubDynamic.Resource(common.GvrPlacementRule).Namespace(userNamespace).UpdateStatus(context.TODO(), plr, metav1.UpdateOptions{})
-			Expect(err).To(BeNil())
-			By("Checking " + iamPolicyName + " on managed cluster in ns " + clusterNamespace)
-			managedplc := utils.GetWithTimeout(clientManagedDynamic, common.GvrPolicy, userNamespace+"."+iamPolicyName, clusterNamespace, true, defaultTimeoutSeconds)
-			Expect(managedplc).NotTo(BeNil())
+			common.DoCreatePolicyTest(clientHubDynamic, clientManagedDynamic, iamPolicyYaml)
 		})
 		It("the policy should be compliant as there is no clusterrolebindings", func() {
-			By("Checking if the status of root policy is compliant")
-			yamlPlc := utils.ParseYaml("../resources/iam_policy/" + iamPolicyName + "-compliant.yaml")
-			Eventually(func() interface{} {
-				rootPlc := utils.GetWithTimeout(clientHubDynamic, common.GvrPolicy, iamPolicyName, userNamespace, true, defaultTimeoutSeconds)
-				return rootPlc.Object["status"]
-			}, defaultTimeoutSeconds, 1).Should(utils.SemanticEqual(yamlPlc.Object["status"]))
+			common.DoRootComplianceTest(clientHubDynamic, iamPolicyName, policiesv1.Compliant)
 		})
 		It("the policy should be noncompliant after creating clusterrolebindings", func() {
 			By("Creating ../resources/iam_policy/clusterrolebinding.yaml")
-			utils.Kubectl("apply", "-f", "../resources/iam_policy/clusterrolebinding.yaml", "--kubeconfig=../../kubeconfig_managed")
-			By("Checking if the status of root policy is noncompliant")
-			yamlPlc := utils.ParseYaml("../resources/iam_policy/" + iamPolicyName + "-noncompliant.yaml")
-			Eventually(func() interface{} {
-				rootPlc := utils.GetWithTimeout(clientHubDynamic, common.GvrPolicy, iamPolicyName, userNamespace, true, defaultTimeoutSeconds)
-				return rootPlc.Object["status"]
-			}, defaultTimeoutSeconds, 1).Should(utils.SemanticEqual(yamlPlc.Object["status"]))
+			common.OcManaged("apply", "-f", "../resources/iam_policy/clusterrolebinding.yaml")
+
+			common.DoRootComplianceTest(clientHubDynamic, iamPolicyName, policiesv1.NonCompliant)
 		})
 		It("the policy should be compliant again after delete clusterrolebindings", func() {
 			By("Deleting ../resources/iam_policy/clusterrolebinding.yaml")
-			utils.Kubectl("delete", "-f", "../resources/iam_policy/clusterrolebinding.yaml", "--kubeconfig=../../kubeconfig_managed")
-			By("Checking if the status of root policy is compliant")
-			yamlPlc := utils.ParseYaml("../resources/iam_policy/" + iamPolicyName + "-compliant.yaml")
-			Eventually(func() interface{} {
-				rootPlc := utils.GetWithTimeout(clientHubDynamic, common.GvrPolicy, iamPolicyName, userNamespace, true, defaultTimeoutSeconds)
-				return rootPlc.Object["status"]
-			}, defaultTimeoutSeconds, 1).Should(utils.SemanticEqual(yamlPlc.Object["status"]))
+			common.OcManaged("delete", "-f", "../resources/iam_policy/clusterrolebinding.yaml")
+
+			common.DoRootComplianceTest(clientHubDynamic, iamPolicyName, policiesv1.Compliant)
 		})
 		It("should clean up", func() {
 			By("Deleting " + iamPolicyYaml)
-			utils.Kubectl("delete", "-f", iamPolicyYaml, "-n", userNamespace, "--kubeconfig=../../kubeconfig_hub")
+			common.OcHub("delete", "-f", iamPolicyYaml, "-n", userNamespace)
 			By("Checking if there is any policy left")
 			utils.ListWithTimeout(clientHubDynamic, common.GvrPolicy, metav1.ListOptions{}, 0, true, defaultTimeoutSeconds)
 			utils.ListWithTimeout(clientManagedDynamic, common.GvrPolicy, metav1.ListOptions{}, 0, true, defaultTimeoutSeconds)

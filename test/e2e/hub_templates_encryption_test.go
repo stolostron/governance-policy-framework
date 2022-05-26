@@ -16,6 +16,7 @@ import (
 	"k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
+	policiesv1 "open-cluster-management.io/governance-policy-propagator/api/v1"
 	"open-cluster-management.io/governance-policy-propagator/test/utils"
 
 	"github.com/stolostron/governance-policy-framework/test/common"
@@ -25,7 +26,7 @@ var _ = Describe("Test Hub Template Encryption", Ordered, func() {
 	Describe("Test that a secret can be securely copied to managed clusters", func() {
 		ctx := context.TODO()
 		const policyName = "test-hub-encryption"
-		const policyYAML = "../resources/hub_templates_encryption/policy.yaml"
+		const policyYAML = "../resources/hub_templates_encryption/test-hub-encryption.yaml"
 
 		const secretName = "test-hub-encryption"
 		const secretYAML = "../resources/hub_templates_encryption/secret.yaml"
@@ -51,42 +52,7 @@ var _ = Describe("Test Hub Template Encryption", Ordered, func() {
 			)
 			Expect(err).To(BeNil())
 
-			By("Creating " + policyName)
-			_, err = utils.KubectlWithOutput(
-				"apply", "-f", policyYAML, "-n", userNamespace, "--kubeconfig=../../kubeconfig_hub",
-			)
-			Expect(err).To(BeNil())
-
-			hubPlc := utils.GetWithTimeout(
-				clientHubDynamic, common.GvrPolicy, policyName, userNamespace, true, defaultTimeoutSeconds,
-			)
-			Expect(hubPlc).NotTo(BeNil())
-
-			By("Patching " + policyName + "-plr with the decision of the cluster managed")
-			plr := utils.GetWithTimeout(
-				clientHubDynamic,
-				common.GvrPlacementRule,
-				policyName+"-plr",
-				userNamespace,
-				true,
-				defaultTimeoutSeconds,
-			)
-			plr.Object["status"] = utils.GeneratePlrStatus("managed")
-			_, err = clientHubDynamic.Resource(common.GvrPlacementRule).Namespace(userNamespace).UpdateStatus(
-				ctx, plr, metav1.UpdateOptions{},
-			)
-			Expect(err).To(BeNil())
-
-			By("Checking " + policyName + " on the managed cluster in ns " + clusterNamespace)
-			managedplc := utils.GetWithTimeout(
-				clientManagedDynamic,
-				common.GvrPolicy,
-				userNamespace+"."+policyName,
-				clusterNamespace,
-				true,
-				defaultTimeoutSeconds,
-			)
-			Expect(managedplc).NotTo(BeNil())
+			common.DoCreatePolicyTest(clientHubDynamic, clientManagedDynamic, policyYAML)
 		})
 
 		It("Should be compliant after enforcing it", func() {
@@ -100,24 +66,7 @@ var _ = Describe("Test Hub Template Encryption", Ordered, func() {
 			)
 			Expect(err).To(BeNil())
 
-			By("Waiting for the policy to be compliant")
-			Eventually(func() interface{} {
-				plc := utils.GetWithTimeout(
-					clientHubDynamic,
-					common.GvrPolicy,
-					userNamespace+"."+policyName,
-					clusterNamespace,
-					true,
-					defaultTimeoutSeconds,
-				)
-
-				status, ok := plc.Object["status"].(map[string]interface{})
-				if !ok {
-					return ""
-				}
-
-				return status["compliant"]
-			}, defaultTimeoutSeconds, 1).Should(Equal("Compliant"))
+			common.DoRootComplianceTest(clientHubDynamic, policyName, policiesv1.Compliant)
 		})
 
 		It("Should use encryption in the replicated policy", func() {
