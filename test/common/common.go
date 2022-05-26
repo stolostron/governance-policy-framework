@@ -113,7 +113,7 @@ func GetComplianceState(clientHubDynamic dynamic.Interface, namespace, policyNam
 		rootPlc := utils.GetWithTimeout(clientHubDynamic, GvrPolicy, policyName, namespace, true, DefaultTimeoutSeconds)
 		var policy policiesv1.Policy
 		err := runtime.DefaultUnstructuredConverter.FromUnstructured(rootPlc.UnstructuredContent(), &policy)
-		gomega.Expect(err).To(gomega.BeNil())
+		gomega.ExpectWithOffset(1, err).To(gomega.BeNil())
 		for _, statusPerCluster := range policy.Status.Status {
 			if statusPerCluster.ClusterNamespace == clusterNamespace {
 				return statusPerCluster.ComplianceState
@@ -194,7 +194,7 @@ func DoCreatePolicyTest(hub, managed dynamic.Interface, policyFile string, templ
 	ginkgo.By("Creating " + policyFile)
 	OcHub("apply", "-f", policyFile, "-n", UserNamespace)
 	plc := utils.GetWithTimeout(hub, GvrPolicy, policyName, UserNamespace, true, DefaultTimeoutSeconds)
-	gomega.Expect(plc).NotTo(gomega.BeNil())
+	gomega.ExpectWithOffset(1, plc).NotTo(gomega.BeNil())
 
 	if ManuallyPatchDecisions {
 		plrName := policyName + "-plr"
@@ -202,13 +202,14 @@ func DoCreatePolicyTest(hub, managed dynamic.Interface, policyFile string, templ
 		plr := utils.GetWithTimeout(hub, GvrPlacementRule, plrName, UserNamespace, true, DefaultTimeoutSeconds)
 		plr.Object["status"] = utils.GeneratePlrStatus(ClusterNamespace)
 		_, err := hub.Resource(GvrPlacementRule).Namespace(UserNamespace).UpdateStatus(context.TODO(), plr, metav1.UpdateOptions{})
-		gomega.Expect(err).To(gomega.BeNil())
+		gomega.ExpectWithOffset(1, err).To(gomega.BeNil())
 	}
 
 	managedPolicyName := UserNamespace + "." + policyName
 	ginkgo.By("Checking " + managedPolicyName + " on managed cluster in ns " + ClusterNamespace)
 	mplc := utils.GetWithTimeout(managed, GvrPolicy, managedPolicyName, ClusterNamespace, true, DefaultTimeoutSeconds)
-	gomega.Expect(mplc).NotTo(gomega.BeNil())
+	gomega.ExpectWithOffset(1, mplc).NotTo(gomega.BeNil())
+
 	if templateGVR != nil {
 		ginkgo.By("Checking that the policy template " + policyName + " is present on the managed cluster")
 		tmplPlc := utils.GetWithTimeout(managed, *templateGVR, policyName, ClusterNamespace, true, DefaultTimeoutSeconds)
@@ -243,7 +244,8 @@ func DoCleanupPolicy(hub, managed dynamic.Interface, policyFile string, template
 // on the hub cluster.
 func DoRootComplianceTest(hub dynamic.Interface, policyName string, compliance policiesv1.ComplianceState) {
 	ginkgo.By("Checking if the status of root policy " + policyName + " is " + string(compliance))
-	gomega.Eventually(
+	gomega.EventuallyWithOffset(
+		1,
 		GetComplianceState(hub, UserNamespace, policyName, ClusterNamespace),
 		DefaultTimeoutSeconds,
 		1,
