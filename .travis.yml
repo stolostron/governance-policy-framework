@@ -23,6 +23,10 @@ before_script:
 jobs:
   include:
   - stage: prepare
+    name: Wake up cluster
+    if: type != pull_request AND type != push
+    script: ./build/set-claim.sh
+  - stage: prepare
     name: Patch cluster to latest
     if: type != pull_request AND type != push
     env:
@@ -75,6 +79,7 @@ jobs:
     after_failure:
     - export DEBUG_DIR="results/debug"
     - make e2e-debug-dump
+    - ./build/set-claim.sh --hibernate
   - stage: test-etcd-encryption
     name: Test etcd-encryption policy
     if: type != pull_request AND type != push
@@ -90,6 +95,7 @@ jobs:
     after_failure:
     - export DEBUG_DIR="results/debug"
     - make e2e-debug-dump
+    after_script: ./build/set-claim.sh --hibernate
   - stage: ff
     name: Fast forwarding GRC repos
     if: type != pull_request AND type != push
