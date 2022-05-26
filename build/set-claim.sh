@@ -5,7 +5,7 @@ KUBECONFIG_FILE="${PWD}/kubeconfig-collective"
 touch ${KUBECONFIG_FILE}
 export KUBECONFIG=${KUBECONFIG_FILE}
 
-oc login --token=${COLLECTIVE_TOKEN} https://api.collective.aws.red-chesterfield.com:6443 &>/dev/null
+oc login --token=${COLLECTIVE_TOKEN} https://api.collective.aws.red-chesterfield.com:6443 --insecure-skip-tls-verify &>/dev/null
 if [ $? = "0" ]; then
   echo "Logged in to Collective cluster"
 else
@@ -33,7 +33,7 @@ if [ "${POWER_STATE}" = "Running" ]; then
   for i in {1..10}; do
     echo "Checking whether ClusterClaim ${CLAIM} is Running (${i}/10):"
     oc wait --for=condition=ClusterRunning=True clusterclaims.hive/${CLAIM} --timeout 30s || EXIT_CODE=$?
-    if [ "${EXIT_CODE}" = "0" ]; then
+    if [ -z "${EXIT_CODE}" ]; then
       break
     fi
   done
