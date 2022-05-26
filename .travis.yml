@@ -6,6 +6,7 @@ services:
 branches:
   only:
   - main
+if: type != pull_request AND type != push
 env:
   global:
   - OS=linux
@@ -24,11 +25,9 @@ jobs:
   include:
   - stage: prepare
     name: Wake up cluster
-    if: type != pull_request AND type != push
     script: ./build/set-claim.sh
   - stage: prepare
     name: Patch cluster to latest
-    if: type != pull_request AND type != push
     env:
     - COMPONENT_E2E_TEST_COMMAND=${TRAVIS_BUILD_DIR}/build/patch-cluster.sh
     script:
@@ -37,7 +36,6 @@ jobs:
       make component/test/e2e
   - stage: prepare
     name: Clean up cluster
-    if: type != pull_request AND type != push
     env:
     - COMPONENT_E2E_TEST_COMMAND=${TRAVIS_BUILD_DIR}/build/clean-up-cluster.sh
     script:
@@ -46,7 +44,6 @@ jobs:
       make component/test/e2e
   - stage: test-e2e
     name: Governance framework e2e tests
-    if: type != pull_request AND type != push
     script:
     - |
       make
@@ -55,7 +52,6 @@ jobs:
     - make e2e-debug-dump
   - stage: test-e2e
     name: Governance framework e2e tests with deployOnHub=true
-    if: type != pull_request AND type != push
     env:
     - deployOnHub=true
     script:
@@ -66,7 +62,6 @@ jobs:
     - make e2e-debug-dump
   - stage: test-e2e
     name: Test grc-framework
-    if: type != pull_request AND type != push
     env:
     - COMPONENT_E2E_TEST_COMMAND=${TRAVIS_BUILD_DIR}/build/run-e2e-tests-policy-framework.sh
     - GINKGO_LABEL_FILTER=!etcd
@@ -82,7 +77,6 @@ jobs:
     - ./build/set-claim.sh --hibernate
   - stage: test-etcd-encryption
     name: Test etcd-encryption policy
-    if: type != pull_request AND type != push
     env:
     - COMPONENT_E2E_TEST_COMMAND=${TRAVIS_BUILD_DIR}/build/run-e2e-tests-policy-framework.sh
     - GINKGO_LABEL_FILTER=etcd
@@ -98,7 +92,6 @@ jobs:
     after_script: ./build/set-claim.sh --hibernate
   - stage: ff
     name: Fast forwarding GRC repos
-    if: type != pull_request AND type != push
     script: "./build/ff.sh"
 notifications:
   slack:
