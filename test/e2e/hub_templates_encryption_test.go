@@ -41,15 +41,11 @@ var _ = Describe("Test Hub Template Encryption", Ordered, func() {
 
 		It("Should be created on the managed cluster", func() {
 			By("Creating the " + secretName + " Secret")
-			_, err := utils.KubectlWithOutput(
-				"apply", "-f", secretYAML, "-n", userNamespace, "--kubeconfig=../../kubeconfig_hub",
-			)
+			_, err := common.OcHub("apply", "-f", secretYAML, "-n", userNamespace)
 			Expect(err).To(BeNil())
 
 			By("Creating the " + configMapName + " ConfigMap")
-			_, err = utils.KubectlWithOutput(
-				"apply", "-f", configMapYAML, "-n", userNamespace, "--kubeconfig=../../kubeconfig_hub",
-			)
+			_, err = common.OcHub("apply", "-f", configMapYAML, "-n", userNamespace)
 			Expect(err).To(BeNil())
 
 			common.DoCreatePolicyTest(clientHubDynamic, clientManagedDynamic, policyYAML)

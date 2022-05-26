@@ -170,14 +170,14 @@ var _ = Describe("Test gatekeeper", func() {
 		})
 		It("Creating a valid ns should not be blocked by gatekeeper", func() {
 			By("Creating a namespace called e2etestsuccess on managed")
-			out, _ := utils.KubectlWithOutput("apply", "-f", "../resources/gatekeeper/ns-create-valid.yaml", "--kubeconfig=../../kubeconfig_managed")
+			out, _ := common.OcManaged("apply", "-f", "../resources/gatekeeper/ns-create-valid.yaml")
 			Expect(out).Should(ContainSubstring("namespace/e2etestsuccess created"))
 		})
 		It("Creating an invalid ns should generate a violation message", func() {
 			By("Creating invalid namespace on managed")
 			Eventually(func() interface{} {
-				out, _ := utils.KubectlWithOutput("create", "ns", "e2etestfail", "--kubeconfig=../../kubeconfig_managed")
-				return out
+				_, out := common.OcManaged("create", "ns", "e2etestfail")
+				return out.Error()
 			}, defaultTimeoutSeconds, 1).Should(And(
 				ContainSubstring("validation.gatekeeper.sh"),
 				ContainSubstring("denied"),

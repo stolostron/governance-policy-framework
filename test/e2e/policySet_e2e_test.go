@@ -11,6 +11,7 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"open-cluster-management.io/governance-policy-propagator/test/utils"
 
+	"github.com/stolostron/governance-policy-framework/test/common"
 	testcommon "github.com/stolostron/governance-policy-framework/test/common"
 )
 
@@ -27,11 +28,7 @@ var _ = Describe("Test policy set", func() {
 	Describe("Create policy, policyset, and placement in ns:"+userNamespace, func() {
 		It("Should create and process policy and policyset", func() {
 			By("Creating " + testPolicySetYaml)
-			output, err := utils.KubectlWithOutput("apply",
-				"-f", testPolicySetYaml,
-				"-n", userNamespace,
-				"--kubeconfig=../../kubeconfig_hub")
-			By("Creating " + testPolicySetYaml + " result is " + output)
+			_, err := common.OcHub("apply", "-f", testPolicySetYaml, "-n", userNamespace)
 			Expect(err).To(BeNil())
 
 			rootPolicy := utils.GetWithTimeout(
@@ -76,11 +73,7 @@ var _ = Describe("Test policy set", func() {
 
 		It("Should add a status entry in policyset for a policy that does not exist", func() {
 			By("Creating " + testPolicySetPatchYaml)
-			output, err := utils.KubectlWithOutput("apply",
-				"-f", testPolicySetPatchYaml,
-				"-n", userNamespace,
-				"--kubeconfig=../../kubeconfig_hub")
-			By("Creating " + testPolicySetPatchYaml + " result is " + output)
+			_, err := common.OcHub("apply", "-f", testPolicySetPatchYaml, "-n", userNamespace)
 			Expect(err).To(BeNil())
 
 			plcSet := utils.GetWithTimeout(
@@ -100,11 +93,7 @@ var _ = Describe("Test policy set", func() {
 			}, defaultTimeoutSeconds, 1).Should(utils.SemanticEqual(yamlPlc.Object["status"]))
 
 			By("Undoing patch with " + testPolicySetPatchYaml)
-			output, err = utils.KubectlWithOutput("apply",
-				"-f", testUndoPolicySetPatchYaml,
-				"-n", userNamespace,
-				"--kubeconfig=../../kubeconfig_hub")
-			By("Creating " + testUndoPolicySetPatchYaml + " result is " + output)
+			_, err = common.OcHub("apply", "-f", testUndoPolicySetPatchYaml, "-n", userNamespace)
 			Expect(err).To(BeNil())
 		})
 
@@ -131,11 +120,7 @@ var _ = Describe("Test policy set", func() {
 
 		It("Should update status properly if a policy is disabled", func() {
 			By("Creating " + testedDisablePolicyYaml)
-			output, err := utils.KubectlWithOutput("apply",
-				"-f", testedDisablePolicyYaml,
-				"-n", userNamespace,
-				"--kubeconfig=../../kubeconfig_hub")
-			By("Creating " + testedDisablePolicyYaml + " result is " + output)
+			_, err := common.OcHub("apply", "-f", testedDisablePolicyYaml, "-n", userNamespace)
 			Expect(err).To(BeNil())
 
 			plc := utils.GetWithTimeout(
@@ -156,11 +141,7 @@ var _ = Describe("Test policy set", func() {
 		})
 
 		It("should clean up", func() {
-			output, err := utils.KubectlWithOutput("delete",
-				"-f", testPolicySetYaml,
-				"-n", userNamespace,
-				"--kubeconfig=../../kubeconfig_hub")
-			By("Deleting " + testPolicySetYaml + " result is " + output)
+			_, err := common.OcHub("delete", "-f", testPolicySetYaml, "-n", userNamespace)
 			Expect(err).To(BeNil())
 
 			opt := metav1.ListOptions{}
