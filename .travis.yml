@@ -26,7 +26,11 @@ jobs:
   include:
   - stage: init
     name: Wake up cluster
-    script: ./build/set-claim.sh
+    script:
+    - |
+      make
+      make oc/install
+      ./build/set-claim.sh
   - stage: prepare
     name: Patch cluster to latest
     env:
