@@ -20,10 +20,11 @@ import (
 )
 
 var (
-	clusterNamespace = "managed"
-
-	defaultTimeoutSeconds int
 	userNamespace         string
+	clusterNamespace      string
+	kubeconfigHub         string
+	kubeconfigManaged     string
+	defaultTimeoutSeconds int
 	clientHub             kubernetes.Interface
 	clientHubDynamic      dynamic.Interface
 	clientManaged         kubernetes.Interface
@@ -42,13 +43,16 @@ func init() {
 
 var _ = BeforeSuite(func() {
 	By("Setup hub and managed client")
+	kubeconfigHub = common.KubeconfigHub
+	kubeconfigManaged = common.KubeconfigManaged
 	userNamespace = common.UserNamespace
+	clusterNamespace = common.ClusterNamespace
 	defaultTimeoutSeconds = common.DefaultTimeoutSeconds
 
-	clientHub = common.NewKubeClient("", common.KubeconfigHub, "")
-	clientHubDynamic = common.NewKubeClientDynamic("", common.KubeconfigHub, "")
-	clientManaged = common.NewKubeClient("", common.KubeconfigManaged, "")
-	clientManagedDynamic = common.NewKubeClientDynamic("", common.KubeconfigManaged, "")
+	clientHub = common.NewKubeClient("", kubeconfigHub, "")
+	clientHubDynamic = common.NewKubeClientDynamic("", kubeconfigHub, "")
+	clientManaged = common.NewKubeClient("", kubeconfigManaged, "")
+	clientManagedDynamic = common.NewKubeClientDynamic("", kubeconfigManaged, "")
 
 	By("Create Namespace if needed")
 	namespaces := clientHub.CoreV1().Namespaces()

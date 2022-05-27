@@ -32,15 +32,16 @@ const (
 )
 
 var (
-	userNamespace                           string
-	clusterNamespace                        string
-	kubeconfigHub                           string
-	kubeconfigManaged                       string
-	defaultTimeoutSeconds                   int
-	clientHub                               kubernetes.Interface
-	clientHubDynamic                        dynamic.Interface
-	clientManaged                           kubernetes.Interface
-	clientManagedDynamic                    dynamic.Interface
+	userNamespace         string
+	clusterNamespace      string
+	kubeconfigHub         string
+	kubeconfigManaged     string
+	defaultTimeoutSeconds int
+	clientHub             kubernetes.Interface
+	clientHubDynamic      dynamic.Interface
+	clientManaged         kubernetes.Interface
+	clientManagedDynamic  dynamic.Interface
+
 	getComplianceState                      func(policyName string) func() interface{}
 	canCreateOpenshiftNamespacesInitialized bool
 	canCreateOpenshiftNamespacesResult      bool
