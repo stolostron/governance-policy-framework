@@ -1,15 +1,20 @@
 #! /bin/bash
 
+# Make sure we have `oc`
+./build/download-clis.sh
+
 # Log into Collective cluster
 KUBECONFIG_FILE="${PWD}/kubeconfig-collective"
 touch ${KUBECONFIG_FILE} || { echo "Failed to create kubeconfig file"; exit 1; }
 export KUBECONFIG=${KUBECONFIG_FILE}
 
-oc login --token="${COLLECTIVE_TOKEN}" https://api.collective.aws.red-chesterfield.com:6443 --insecure-skip-tls-verify 1>/dev/null
+OC_OUTPUT=$(oc login --token="${COLLECTIVE_TOKEN}" https://api.collective.aws.red-chesterfield.com:6443 --insecure-skip-tls-verify)
 if [ $? = "0" ]; then
   echo "Logged in to Collective cluster"
 else
+  echo "${OC_OUTPUT}"
   echo "Failed to log in to Collective cluster"
+  rm ${KUBECONFIG_FILE}
   exit 1
 fi
 
