@@ -2,10 +2,10 @@
 
 # Log into Collective cluster
 KUBECONFIG_FILE="${PWD}/kubeconfig-collective"
-touch ${KUBECONFIG_FILE}
+touch ${KUBECONFIG_FILE} || { echo "Failed to create kubeconfig file"; exit 1; }
 export KUBECONFIG=${KUBECONFIG_FILE}
 
-oc login --token=${COLLECTIVE_TOKEN} https://api.collective.aws.red-chesterfield.com:6443 --insecure-skip-tls-verify &>/dev/null
+oc login --token="${COLLECTIVE_TOKEN}" https://api.collective.aws.red-chesterfield.com:6443 --insecure-skip-tls-verify 1>/dev/null
 if [ $? = "0" ]; then
   echo "Logged in to Collective cluster"
 else
