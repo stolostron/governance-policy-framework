@@ -37,7 +37,7 @@ VERSION_TAG="latest"
 if [ "${PULL_BASE_REF}" ] && [ "${PULL_BASE_REF}" != "main" ]; then
   VERSION_TAG="${VERSION_TAG}-${PULL_BASE_REF#*-}"
 fi
-KIND_COMMAND="cd ${WORK_DIR} && GOROOT=/tmp/go PATH=\$GOROOT/bin:\$PATH deployOnHub=${deployOnHub} RELEASE_BRANCH=${PULL_BASE_REF} VERSION_TAG=${VERSION_TAG} CGO_ENABLED=0 ./build/run-e2e-tests.sh"
+KIND_COMMAND="cd ${WORK_DIR} && GOROOT=/tmp/go PATH=\$GOROOT/bin:\$PATH deployOnHub=${deployOnHub} RELEASE_BRANCH=${PULL_BASE_REF} VERSION_TAG=${VERSION_TAG} CGO_ENABLED=0 K8SCLIENT=kubectl ./build/run-e2e-tests.sh"
 ssh "${OPT[@]}" "${HOST}" "${KIND_COMMAND}" > >(tee "${ARTIFACT_DIR}/test-e2e.log") 2>&1 || ERROR_CODE=$?
 
 # Copy any debug logs
