@@ -1,7 +1,7 @@
 #! /bin/bash
 
 # Make sure we have `oc`
-./build/download-clis.sh
+sudo ./build/download-clis.sh
 
 # Log into Collective cluster
 KUBECONFIG_FILE="${PWD}/kubeconfig-collective"
