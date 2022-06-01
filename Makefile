@@ -28,6 +28,12 @@ KIND_HUB_NAMESPACE ?= open-cluster-management
 KIND_MANAGED_NAMESPACE ?= open-cluster-management-agent-addon
 MANAGED_CLUSTER_NAME ?= managed
 HUB_CLUSTER_NAME ?= hub
+KIND_VERSION ?= latest
+ifneq ($(KIND_VERSION), latest)
+	KIND_ARGS = --image kindest/node:$(KIND_VERSION)
+else
+	KIND_ARGS =
+endif
 
 # Fetch OLM version
 OLM_VERSION ?= $(shell curl -s https://api.github.com/repos/operator-framework/operator-lifecycle-manager/releases/latest | jq -r '.tag_name')
@@ -238,7 +244,7 @@ kind-deploy-olm:
 .PHONY: kind-create-cluster
 kind-create-cluster:
 	@echo "creating cluster hub"
-	kind create cluster --name $(HUB_CLUSTER_NAME)
+	kind create cluster --name $(HUB_CLUSTER_NAME) $(KIND_ARGS)
 	kind get kubeconfig --name $(HUB_CLUSTER_NAME) > $(PWD)/kubeconfig_$(HUB_CLUSTER_NAME)
 	# needed for managed -> hub communication
 	kind get kubeconfig --name $(HUB_CLUSTER_NAME) --internal > $(PWD)/kubeconfig_$(HUB_CLUSTER_NAME)_internal
@@ -247,7 +253,7 @@ kind-create-cluster:
 		kind get kubeconfig --name $(HUB_CLUSTER_NAME) > $(PWD)/kubeconfig_$(MANAGED_CLUSTER_NAME);\
 	else\
 		echo creating cluster managed;\
-		kind create cluster --name $(MANAGED_CLUSTER_NAME);\
+		kind create cluster --name $(MANAGED_CLUSTER_NAME) $(KIND_ARGS);\
 		kind get kubeconfig --name $(MANAGED_CLUSTER_NAME) > $(PWD)/kubeconfig_$(MANAGED_CLUSTER_NAME);\
 	fi
 
