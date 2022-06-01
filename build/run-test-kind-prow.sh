@@ -33,6 +33,9 @@ scp "${OPT[@]}" /usr/local/bin/jq "${HOST}:/tmp/go/bin/"
 
 # Run the KinD script on the KinD instance
 echo "* Running E2E script on Kind cluster..."
+# Set tag for images: Use `latest` for `main` and `latest-<version>` for `release-<version>` branches
+# `PULL_BASE_REF` is a variable provided by Prow: 
+# https://github.com/kubernetes/test-infra/blob/master/prow/jobs.md#job-environment-variables
 VERSION_TAG="latest"
 if [ "${PULL_BASE_REF}" ] && [ "${PULL_BASE_REF}" != "main" ]; then
   VERSION_TAG="${VERSION_TAG}-${PULL_BASE_REF#*-}"
