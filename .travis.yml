@@ -20,8 +20,13 @@ stages:
 - test-e2e
 - test-etcd-encryption
 - ff
+- hibernate
 before_script:
 - make init
+after_failure:
+- |
+  [[ "$TRAVIS_BUILD_STAGE_NAME" == "test-"* ]] && make e2e-debug-dump
+  ./build/set-claim.sh --hibernate
 jobs:
   include:
   - stage: init
@@ -49,8 +54,6 @@ jobs:
     - |
       make
       make component/test/e2e
-    after_failure:
-    - make e2e-debug-dump
   - stage: test-e2e
     name: Governance framework e2e tests with deployOnHub=true
     env:
@@ -59,8 +62,6 @@ jobs:
     - |
       make
       make component/test/e2e
-    after_failure:
-    - make e2e-debug-dump
   - stage: test-e2e
     name: Test grc-framework
     env:
@@ -72,10 +73,6 @@ jobs:
       export COMPONENT_NAME="grc-policy-framework-tests"
       make component/pull
       make component/test/e2e
-    after_failure:
-    - export DEBUG_DIR="results/debug"
-    - make e2e-debug-dump
-    - ./build/set-claim.sh --hibernate
   - stage: test-etcd-encryption
     name: Test etcd-encryption policy
     env:
@@ -87,13 +84,12 @@ jobs:
       export COMPONENT_NAME="grc-policy-framework-tests"
       make component/pull
       make component/test/e2e
-    after_failure:
-    - export DEBUG_DIR="results/debug"
-    - make e2e-debug-dump
-    after_script: ./build/set-claim.sh --hibernate
   - stage: ff
     name: Fast forwarding GRC repos
     script: "./build/ff.sh"
+  - stage: hibernate
+    name: Hibernate cluster
+    script: ./build/set-claim.sh --hibernate
 notifications:
   slack:
     on_pull_requests: false

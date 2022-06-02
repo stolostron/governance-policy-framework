@@ -17,7 +17,7 @@ export HUB_KUBECONFIG=${HUB_KUBECONFIG:-`echo ~/.kube/config`}
 export MANAGED_KUBECONFIG=${MANAGED_KUBECONFIG:-`echo ~/.kube/config`}
 export MANAGED_CLUSTER_NAME=${MANAGED_CLUSTER_NAME:-"local-cluster"}
 
-docker run --volume $(pwd)/results:/go/src/github.com/stolostron/governance-policy-framework/test-output \
+docker run --volume $(pwd)/test-output:/go/src/github.com/stolostron/governance-policy-framework/test-output \
     --volume $HUB_KUBECONFIG:/go/src/github.com/stolostron/governance-policy-framework/kubeconfig_hub \
     --volume $MANAGED_KUBECONFIG:/go/src/github.com/stolostron/governance-policy-framework/kubeconfig_managed \
     --env MANAGED_CLUSTER_NAME=$MANAGED_CLUSTER_NAME \

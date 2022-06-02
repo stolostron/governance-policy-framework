@@ -35,10 +35,11 @@ oc patch clusterdeployment.hive $DEPLOYMENT -n $DEPLOYMENT --type='merge' -p $'s
 
 if [ "${POWER_STATE}" = "Running" ]; then
   # Wait for ClusterClaim to be Running
-  for i in {1..10}; do
+  for i in {1..20}; do
     echo "Checking whether ClusterClaim ${CLAIM} is Running (${i}/10):"
-    oc wait --for=condition=ClusterRunning=True clusterclaims.hive/${CLAIM} --timeout 30s || EXIT_CODE=$?
-    if [ -z "${EXIT_CODE}" ]; then
+    oc wait --for=condition=ClusterRunning=True clusterclaims.hive/${CLAIM} --timeout 30s
+    EXIT_CODE=$?
+    if [[ "${EXIT_CODE}" == "0" ]]; then
       break
     fi
   done
