@@ -1,0 +1,113 @@
+on:
+  workflow_call:
+    inputs:
+      go_version:
+        required: false
+        type: string
+        default: '1.17'
+      test_args:
+        required: false
+        type: string
+        default: ''
+
+  pull_request:
+    branches:
+      - main
+      - release-2.[5-9]
+  push:
+    branches:
+      - main
+      - release-2.[5-9]
+
+defaults:
+  run:
+    shell: bash
+    working-directory: governance-policy-framework
+
+jobs:
+  framework-kind-e2e:
+    name: Policy Framework KinD tests
+    runs-on: ubuntu-latest
+    env:
+      REGISTRY: localhost:5000
+    strategy:
+      matrix:
+        # Run tests on oldest and newest supported OCP Kubernetes
+        # - OCP 4.5 runs Kubernetes v1.18
+        # KinD tags: https://hub.docker.com/r/kindest/node/tags
+        kind:
+          # - 'v1.18.15'
+          - 'latest'
+        deployOnHub:
+          - 'true'
+          # - 'false'  
+
+    steps:
+    - name: Checkout Component Repository
+      if: ${{ github.repository != 'JustinKuli/governance-policy-framework' }}
+      uses: actions/checkout@v2
+      with:
+        # (automatically checks out the repo that is calling this workflow)
+        path: policy-component
+
+    - name: Checkout Policy Framework
+      uses: actions/checkout@v2
+      with:
+        repository: stolostron/governance-policy-framework
+        ref: ${{ github.event.pull_request.base.ref }}
+        path: governance-policy-framework
+
+    - name: Set up Go
+      uses: actions/setup-go@v2
+      id: go
+      with:
+        go-version: ${{ inputs.go_version }}
+
+    - name: Policy Framework cluster bootstrap
+      env:
+        deployOnHub: ${{ matrix.deployOnHub }}
+      run: |
+        make e2e-dependencies
+        make kind-bootstrap-cluster
+
+        echo "* Listing all pods on cluster..."
+        kubectl get pods -A
+        
+        # save kubeconfig paths for use in other steps
+        echo "MANAGED_CONFIG=$(pwd)/kubeconfig_managed" >> $GITHUB_ENV
+        echo "HUB_CONFIG=$(pwd)/kubeconfig_hub" >> $GITHUB_ENV
+        echo "HUB_CONFIG_INTERNAL=$(pwd)/kubeconfig_hub_internal" >> $GITHUB_ENV
+
+    - name: Patch image
+      if: ${{ github.repository != 'JustinKuli/governance-policy-framework' }}
+      working-directory: policy-component
+      env:
+        deployOnHub: ${{ matrix.deployOnHub }}
+        WATCH_NAMESPACE: managed
+      run: |
+        export KUBECONFIG=${MANAGED_CONFIG}
+
+        if [[ "${deployOnHub}" == "true" ]]; then
+          export KIND_NAME=hub
+        else
+          export KIND_NAME=managed
+        fi
+
+        make build-images
+        make kind-deploy-controller-dev
+
+    - name: Policy Framework e2e tests
+      env:
+        TEST_ARGS: ${{ inputs.test_args }}
+      run: |
+        make e2e-test
+
+    - name: Debug
+      if: ${{ failure() }}
+      run: |
+        make e2e-debug
+
+    - name: Clean up cluster
+      if: ${{ always() }}
+      run: |
+        make kind-delete-cluster
