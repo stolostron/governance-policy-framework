@@ -27,13 +27,20 @@ echo "* Install cert manager"
 $DIR/install-cert-manager.sh
 
 echo "* Set up cluster for test"
-# Set tag for images: Use `latest` for `main` and `latest-<version>` for `release-<version>` branches
-# `PULL_BASE_REF` is a variable provided by Prow: 
-# https://github.com/kubernetes/test-infra/blob/master/prow/jobs.md#job-environment-variables
-export VERSION_TAG="latest"
-if [ "${PULL_BASE_REF}" ] && [ "${PULL_BASE_REF}" != "main" ]; then
-  export VERSION_TAG="${VERSION_TAG}-${PULL_BASE_REF#*-}"
+
+# Set tag for images: Use `latest` for `main` and `latest-<version>` for `release-<version>`
+# branches. If the PR is in `openshift/release`, parse the job spec for the target branch.
+# Otherwise, use `PULL_BASE_REF`.
+VERSION_TAG="latest"
+if [[ "${REPO_OWNER}" == "openshift" ]] && [[ "${REPO_NAME}" == "release" ]]; then
+  TARGET_BRANCH="$(echo "${JOB_SPEC}" | jq -r '.extra_refs[] | select(.workdir == true).base_ref')"
+else
+  TARGET_BRANCH="${PULL_BASE_REF}"
 fi
+if [[ "${TARGET_BRANCH}" ]] && [[ "${TARGET_BRANCH}" != "main" ]]; then
+  VERSION_TAG="${VERSION_TAG}-${PULL_BASE_REF#*-}"
+fi
+
 $DIR/patch-cluster-prow.sh
 cp ${HUB_KUBE} $DIR/../kubeconfig_hub
 cp ${MANAGED_KUBE} $DIR/../kubeconfig_managed

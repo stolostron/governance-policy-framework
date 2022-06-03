@@ -33,13 +33,20 @@ scp "${OPT[@]}" /usr/local/bin/jq "${HOST}:/tmp/go/bin/"
 
 # Run the KinD script on the KinD instance
 echo "* Running E2E script on Kind cluster..."
-# Set tag for images: Use `latest` for `main` and `latest-<version>` for `release-<version>` branches
-# `PULL_BASE_REF` is a variable provided by Prow: 
-# https://github.com/kubernetes/test-infra/blob/master/prow/jobs.md#job-environment-variables
+
+# Set tag for images: Use `latest` for `main` and `latest-<version>` for `release-<version>`
+# branches. If the PR is in `openshift/release`, parse the job spec for the target branch.
+# Otherwise, use `PULL_BASE_REF`.
 VERSION_TAG="latest"
-if [ "${PULL_BASE_REF}" ] && [ "${PULL_BASE_REF}" != "main" ]; then
+if [[ "${REPO_OWNER}" == "openshift" ]] && [[ "${REPO_NAME}" == "release" ]]; then
+  TARGET_BRANCH="$(echo "${JOB_SPEC}" | jq -r '.extra_refs[] | select(.workdir == true).base_ref')"
+else
+  TARGET_BRANCH="${PULL_BASE_REF}"
+fi
+if [[ "${TARGET_BRANCH}" ]] && [[ "${TARGET_BRANCH}" != "main" ]]; then
   VERSION_TAG="${VERSION_TAG}-${PULL_BASE_REF#*-}"
 fi
+
 KIND_COMMAND="cd ${WORK_DIR} && GOROOT=/tmp/go PATH=\$GOROOT/bin:\$PATH deployOnHub=${deployOnHub} RELEASE_BRANCH=${PULL_BASE_REF} VERSION_TAG=${VERSION_TAG} CGO_ENABLED=0 K8SCLIENT=kubectl ./build/run-e2e-tests.sh"
 ssh "${OPT[@]}" "${HOST}" "${KIND_COMMAND}" > >(tee "${ARTIFACT_DIR}/test-e2e.log") 2>&1 || ERROR_CODE=$?
 
