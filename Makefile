@@ -130,7 +130,7 @@ kustomize: ## Download kustomize locally if necessary.
 
 .PHONY: deploy-policy-framework-hub-crd-operator
 deploy-policy-framework-hub-crd-operator:
-	kubectl create ns $(KIND_HUB_NAMESPACE) || true
+	kubectl create ns $(KIND_HUB_NAMESPACE) --dry-run=client -o yaml | kubectl apply -f -
 	@echo installing Policy CRDs on hub
 	kubectl apply -f https://raw.githubusercontent.com/stolostron/governance-policy-propagator/$(RELEASE_BRANCH)/deploy/crds/policy.open-cluster-management.io_policies.yaml
 	kubectl apply -f https://raw.githubusercontent.com/stolostron/governance-policy-propagator/$(RELEASE_BRANCH)/deploy/crds/policy.open-cluster-management.io_placementbindings.yaml
@@ -147,8 +147,8 @@ deploy-community-policy-framework-hub: deploy-policy-framework-hub-crd-operator
 .PHONY: kind-policy-framework-managed-setup
 kind-policy-framework-managed-setup:
 	kubectl config use-context kind-$(MANAGED_CLUSTER_NAME)
-	kubectl create ns $(KIND_MANAGED_NAMESPACE) || true
-	kubectl create secret -n $(KIND_MANAGED_NAMESPACE) generic hub-kubeconfig --from-file=kubeconfig=$(PWD)/kubeconfig_$(HUB_CLUSTER_NAME)_internal
+	kubectl create ns $(KIND_MANAGED_NAMESPACE) --dry-run=client -o yaml | kubectl apply -f -
+	kubectl create secret -n $(KIND_MANAGED_NAMESPACE) generic hub-kubeconfig --from-file=kubeconfig=$(PWD)/kubeconfig_$(HUB_CLUSTER_NAME)_internal --dry-run=client -o yaml | kubectl apply -f -
 
 .PHONY: deploy-policy-framework-managed-crd-operator
 deploy-policy-framework-managed-crd-operator:
@@ -173,11 +173,11 @@ deploy-community-policy-framework-managed: deploy-policy-framework-managed-crd-o
 .PHONY: kind-deploy-policy-framework
 kind-deploy-policy-framework:
 	@echo installing policy-propagator on hub
-	kubectl create ns $(KIND_HUB_NAMESPACE) --kubeconfig=$(PWD)/kubeconfig_$(HUB_CLUSTER_NAME)
+	kubectl create ns $(KIND_HUB_NAMESPACE) --kubeconfig=$(PWD)/kubeconfig_$(HUB_CLUSTER_NAME) --dry-run=client -o yaml | kubectl apply -f -
 	kubectl apply -f https://raw.githubusercontent.com/stolostron/governance-policy-propagator/$(RELEASE_BRANCH)/deploy/operator.yaml -n $(KIND_HUB_NAMESPACE) --kubeconfig=$(PWD)/kubeconfig_$(HUB_CLUSTER_NAME)
 	@echo creating secrets on managed
-	kubectl create ns $(KIND_MANAGED_NAMESPACE) --kubeconfig=$(PWD)/kubeconfig_$(MANAGED_CLUSTER_NAME)
-	kubectl create secret -n $(KIND_MANAGED_NAMESPACE) generic hub-kubeconfig --from-file=kubeconfig=$(PWD)/kubeconfig_$(HUB_CLUSTER_NAME)_internal --kubeconfig=$(PWD)/kubeconfig_$(MANAGED_CLUSTER_NAME)
+	kubectl create ns $(KIND_MANAGED_NAMESPACE) --kubeconfig=$(PWD)/kubeconfig_$(MANAGED_CLUSTER_NAME) --dry-run=client -o yaml | kubectl apply -f -
+	kubectl create secret -n $(KIND_MANAGED_NAMESPACE) generic hub-kubeconfig --from-file=kubeconfig=$(PWD)/kubeconfig_$(HUB_CLUSTER_NAME)_internal --kubeconfig=$(PWD)/kubeconfig_$(MANAGED_CLUSTER_NAME) --dry-run=client -o yaml | kubectl apply -f -
 	@if [ "$(deployOnHub)" = "true" ]; then\
 		echo skipping installing policy-spec-sync on managed;\
 	else\
@@ -282,12 +282,12 @@ install-crds:
 .PHONY: install-resources
 install-resources:
 	@echo creating user namespace on hub
-	kubectl create ns policy-test --kubeconfig=$(PWD)/kubeconfig_$(HUB_CLUSTER_NAME)
+	kubectl create ns policy-test --kubeconfig=$(PWD)/kubeconfig_$(HUB_CLUSTER_NAME) --dry-run=client -o yaml | kubectl apply -f -
 	@echo creating cluster namespace on hub 
-	kubectl create ns managed --kubeconfig=$(PWD)/kubeconfig_$(HUB_CLUSTER_NAME)
+	kubectl create ns managed --kubeconfig=$(PWD)/kubeconfig_$(HUB_CLUSTER_NAME) --dry-run=client -o yaml | kubectl apply -f -
 	kubectl apply -f test/resources/managed-cluster.yaml --kubeconfig=$(PWD)/kubeconfig_$(HUB_CLUSTER_NAME)
 	@echo creating cluster namespace on managed 
-	kubectl create ns managed --kubeconfig=$(PWD)/kubeconfig_$(MANAGED_CLUSTER_NAME) || true
+	kubectl create ns managed --kubeconfig=$(PWD)/kubeconfig_$(MANAGED_CLUSTER_NAME) --dry-run=client -o yaml | kubectl apply -f -
 
 .PHONY: e2e-dependencies
 e2e-dependencies:
