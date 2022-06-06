@@ -13,6 +13,7 @@ var (
 	GvrPolicySet             = schema.GroupVersionResource{Group: "policy.open-cluster-management.io", Version: "v1beta1", Resource: "policysets"}
 	GvrConfigurationPolicy   = schema.GroupVersionResource{Group: "policy.open-cluster-management.io", Version: "v1", Resource: "configurationpolicies"}
 	GvrCertPolicy            = schema.GroupVersionResource{Group: "policy.open-cluster-management.io", Version: "v1", Resource: "certificatepolicies"}
+	GvrDeployment            = schema.GroupVersionResource{Group: "apps", Version: "v1", Resource: "deployments"}
 	GvrIamPolicy             = schema.GroupVersionResource{Group: "policy.open-cluster-management.io", Version: "v1", Resource: "iampolicies"}
 	GvrPlacementBinding      = schema.GroupVersionResource{Group: "policy.open-cluster-management.io", Version: "v1", Resource: "placementbindings"}
 	GvrPlacementRule         = schema.GroupVersionResource{Group: "apps.open-cluster-management.io", Version: "v1", Resource: "placementrules"}
