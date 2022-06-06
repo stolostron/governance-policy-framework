@@ -1,0 +1,65 @@
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: config-policy-controller
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+  creationTimestamp: null
+  name: config-policy-controller
+rules:
+- apiGroups:
+  - '*'
+  resources:
+  - '*'
+  verbs:
+  - '*'
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRoleBinding
+metadata:
+  name: config-policy-controller
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: ClusterRole
+  name: config-policy-controller
+subjects:
+- kind: ServiceAccount
+  name: config-policy-controller
+  namespace: open-cluster-management-agent-addon
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: config-policy-controller
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      name: config-policy-controller
+  template:
+    metadata:
+      labels:
+        name: config-policy-controller
+    spec:
+      containers:
+      - args:
+        - --enable-lease=true
+        - --log-level=2
+        - --v=0
+        command:
+        - config-policy-controller
+        env:
+        - name: WATCH_NAMESPACE
+          value: managed
+        - name: POD_NAME
+          valueFrom:
+            fieldRef:
+              fieldPath: metadata.name
+        - name: OPERATOR_NAME
+          value: config-policy-controller
+        image: quay.io/open-cluster-management/config-policy-controller:latest
+        imagePullPolicy: Always
+        name: config-policy-controller
+      serviceAccountName: config-policy-controller
