@@ -206,7 +206,7 @@ var _ = Describe("", Ordered, Label("policy-collection", "community"), func() {
 		})
 		It("community/policy-gatekeeper-sample should be compliant", func() {
 			By("Checking if the status of root policy is compliant")
-			Eventually(getComplianceState(GKPolicyName), defaultTimeoutSeconds*6, 1).Should(Equal(policiesv1.Compliant))
+			Eventually(getComplianceState(GKPolicyName), defaultTimeoutSeconds*12, 1).Should(Equal(policiesv1.Compliant))
 			By("Checking if status for policy template policy-gatekeeper-audit is compliant")
 			Eventually(func() interface{} {
 				plc := utils.GetWithTimeout(clientHubDynamic, common.GvrPolicy, userNamespace+"."+GKPolicyName, clusterNamespace, true, defaultTimeoutSeconds)
