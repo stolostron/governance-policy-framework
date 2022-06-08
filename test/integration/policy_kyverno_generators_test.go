@@ -99,7 +99,7 @@ var _ = Describe("GRC: [P1][Sev1][policy-grc] Test the kyverno generator policie
 						kyvernoDeployment,
 						kyvernoNamespace,
 						true,
-						defaultTimeoutSeconds,
+						defaultTimeoutSeconds*6,
 					).Object
 					if status, ok := pod["status"]; ok {
 						if ready, ok := status.(map[string]interface{})["readyReplicas"]; ok {
