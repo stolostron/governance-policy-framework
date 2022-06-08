@@ -60,7 +60,7 @@ var _ = Describe("", Label("policy-collection", "community"), func() {
 			utils.KubectlWithOutput("apply", "-f", gatekeeperPolicyURL, "-n", userNamespace, "--kubeconfig="+kubeconfigHub)
 
 			By("Patching Policy Gatekeeper CR template with namespaceSelector to kubernetes.io/metadata.name=" + userNamespace)
-			utils.KubectlWithOutput("patch", "-n", userNamespace, "policy", gatekeeperPolicyName,
+			utils.KubectlWithOutput("patch", "-n", userNamespace, "policies.policy.open-cluster-management.io", gatekeeperPolicyName,
 				"--type=json", "-p=[{\"op\": \"add\", \"path\": \"/spec/policy-templates/4/objectDefinition/spec/object-templates/0/objectDefinition/spec/webhook/namespaceSelector\","+
 					" \"value\":{\"matchExpressions\":[{\"key\": \"grc\",\"operator\":\"In\",\"values\":[\"true\"]}]}}]",
 				"--kubeconfig="+kubeconfigHub)

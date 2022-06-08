@@ -44,7 +44,7 @@ var _ = Describe("RHACM4K-3055", Label("policy-collection", "stable", "BVT"), fu
 			By("Creating policy on hub")
 			utils.KubectlWithOutput("apply", "-f", gatekeeperPolicyURL, "-n", userNamespace, "--kubeconfig="+kubeconfigHub)
 			By("Patching Policy Gatekeeper CR template with namespaceSelector to kubernetes.io/metadata.name=" + userNamespace)
-			utils.KubectlWithOutput("patch", "-n", userNamespace, "policy", gatekeeperPolicyName,
+			utils.KubectlWithOutput("patch", "-n", userNamespace, "policies.policy.open-cluster-management.io", gatekeeperPolicyName,
 				"--type=json", "-p=[{\"op\": \"add\", \"path\": \"/spec/policy-templates/2/objectDefinition/spec/object-templates/0/objectDefinition/spec/webhook/namespaceSelector\","+
 					" \"value\":{\"matchExpressions\":[{\"key\": \"grc\",\"operator\":\"In\",\"values\":[\"true\"]}]}}]",
 				"--kubeconfig="+kubeconfigHub)
