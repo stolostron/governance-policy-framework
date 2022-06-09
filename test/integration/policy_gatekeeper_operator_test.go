@@ -215,6 +215,17 @@ var _ = Describe("", Ordered, Label("policy-collection", "community"), func() {
 				return details[1].(map[string]interface{})["compliant"]
 			}, defaultTimeoutSeconds, 1).Should(Equal("Compliant"))
 		})
+		It("Grabs the gatekeeper audit duration metric", func() {
+			auditPodName, _ := common.OcManaged("get", "pod", "-n=openshift-gatekeeper-system",
+				"-l=control-plane=audit-controller", `-o=jsonpath={.items[0].metadata.name}`)
+			common.OcManaged("exec", "-n=openshift-gatekeeper-system", auditPodName, "--", "bash",
+				"-c", "curl -s localhost:8888/metrics | grep -A1 audit_duration_seconds_sum")
+			/* example output:
+			gatekeeper-audit-9c88bf969-mgf5r
+			gatekeeper_audit_duration_seconds_sum 1005.4185594219999
+			gatekeeper_audit_duration_seconds_count 25
+			*/
+		})
 		It("Creating a valid ns should not be blocked by gatekeeper", func() {
 			By("Creating a namespace called e2etestsuccess on managed")
 			Eventually(func() interface{} {
