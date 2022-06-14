@@ -5,6 +5,7 @@ package integration
 
 import (
 	"context"
+	"time"
 
 	. "github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
@@ -86,7 +87,7 @@ var _ = Describe("GRC: [P1][Sev1][policy-grc] Test the kyverno generator policie
 			By("Checking if the status of the root policy is Compliant")
 			Eventually(
 				common.GetComplianceState(clientHubDynamic, userNamespace, "policy-install-kyverno", clusterNamespace),
-				defaultTimeoutSeconds*10,
+				10*time.Minute,
 				1,
 			).Should(Equal(policiesv1.Compliant))
 
