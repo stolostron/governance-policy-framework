@@ -7,6 +7,7 @@ import (
 	"context"
 	"fmt"
 	"strings"
+	"time"
 
 	. "github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
@@ -206,13 +207,24 @@ var _ = Describe("", Ordered, Label("policy-collection", "community"), func() {
 		})
 		It("community/policy-gatekeeper-sample should be compliant", func() {
 			By("Checking if the status of root policy is compliant")
-			Eventually(getComplianceState(GKPolicyName), defaultTimeoutSeconds*12, 1).Should(Equal(policiesv1.Compliant))
+			Eventually(getComplianceState(GKPolicyName), 10*time.Minute, 1).Should(Equal(policiesv1.Compliant))
 			By("Checking if status for policy template policy-gatekeeper-audit is compliant")
 			Eventually(func() interface{} {
 				plc := utils.GetWithTimeout(clientHubDynamic, common.GvrPolicy, userNamespace+"."+GKPolicyName, clusterNamespace, true, defaultTimeoutSeconds)
 				details := plc.Object["status"].(map[string]interface{})["details"].([]interface{})
 				return details[1].(map[string]interface{})["compliant"]
 			}, defaultTimeoutSeconds, 1).Should(Equal("Compliant"))
+		})
+		It("Grabs the gatekeeper audit duration metric", func() {
+			auditPodName, _ := common.OcManaged("get", "pod", "-n=openshift-gatekeeper-system",
+				"-l=control-plane=audit-controller", `-o=jsonpath={.items[0].metadata.name}`)
+			common.OcManaged("exec", "-n=openshift-gatekeeper-system", auditPodName, "--", "bash",
+				"-c", "curl -s localhost:8888/metrics | grep -A1 audit_duration_seconds_sum")
+			/* example output:
+			gatekeeper-audit-9c88bf969-mgf5r
+			gatekeeper_audit_duration_seconds_sum 1005.4185594219999
+			gatekeeper_audit_duration_seconds_count 25
+			*/
 		})
 		It("Creating a valid ns should not be blocked by gatekeeper", func() {
 			By("Creating a namespace called e2etestsuccess on managed")

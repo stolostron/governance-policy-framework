@@ -7,6 +7,7 @@ import (
 	"encoding/base64"
 	"fmt"
 	"strings"
+	"time"
 
 	. "github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
@@ -168,7 +169,7 @@ var _ = Describe("GRC: [P1][Sev1][policy-grc] Test policyreport_info metric", Or
 			fmt.Println("metric response received:")
 			fmt.Println(resp)
 			return resp
-		}, defaultTimeoutSeconds*8, 1).Should(common.MatchMetricValue(insightsMetricName, policyLabel, "1"))
+		}, 10*time.Minute, 1).Should(common.MatchMetricValue(insightsMetricName, policyLabel, "1"))
 	})
 	It("Checks that changing the policy to compliant removes the metric", func() {
 		By("Creating a compliant policy")
@@ -199,7 +200,7 @@ var _ = Describe("GRC: [P1][Sev1][policy-grc] Test policyreport_info metric", Or
 			fmt.Println("metric response received:")
 			fmt.Println(resp)
 			return resp
-		}, defaultTimeoutSeconds*8, 1).ShouldNot(common.MatchMetricValue(insightsMetricName, policyLabel, "1"))
+		}, 10*time.Minute, 1).ShouldNot(common.MatchMetricValue(insightsMetricName, policyLabel, "1"))
 	})
 	AfterAll(func() {
 		// unset poll interval
