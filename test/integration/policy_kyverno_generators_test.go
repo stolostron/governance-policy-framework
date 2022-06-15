@@ -80,7 +80,7 @@ var _ = Describe("GRC: [P1][Sev1][policy-grc] Test the kyverno generator policie
 
 			By("Patching the actual placement rule")
 			err = common.PatchPlacementRule(
-				kyvernoNamespace, "kyverno-placement-1", clusterNamespace, kubeconfigManaged,
+				kyvernoNamespace, "kyverno-placement-1", clusterNamespace, kubeconfigHub,
 			)
 			Expect(err).To(BeNil())
 
