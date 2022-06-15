@@ -56,10 +56,9 @@ var _ = Describe("GRC: [P1][Sev1][policy-grc] Test policy set", Ordered, Label("
 			Expect(len(templates)).Should(Equal(1))
 
 			By("Patching placement rule " + testPolicySetName + "-plr")
-			output, err = utils.KubectlWithOutput("patch", "-n", userNamespace, "placementrule.apps.open-cluster-management.io/"+testPolicySetName+"-plr",
-				"--type=json", "-p=[{\"op\": \"replace\", \"path\": \"/spec/clusterSelector/matchExpressions\", \"value\":[{\"key\": \"name\", \"operator\": \"In\", \"values\": ["+clusterNamespace+"]}]}]",
-				"--kubeconfig="+kubeconfigHub)
-			By("Patching placement rule result is " + output)
+			err = testcommon.PatchPlacementRule(
+				userNamespace, testPolicySetName+"-plr", clusterNamespace, kubeconfigHub,
+			)
 			Expect(err).To(BeNil())
 
 			By("Checking " + testPolicyName + " on managed cluster in ns " + clusterNamespace)
