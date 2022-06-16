@@ -18,9 +18,13 @@ makefailure=0
 manifestfailure=0
 
 importexceptions=(
-  "^open-cluster-management\.io\/addon-framework"
-  "^open-cluster-management\.io\/api"
-  "^open-cluster-management\.io\/multicloud-operators-channel"
+  "addon-framework"
+  "api"
+  "multicloud-operators-channel"
+  "multicloud-operators-placementrule"
+  "klusterlet-addon-controller"
+  "library-e2e-go"
+  "library-go"
 )
 
 parse_imports(){
@@ -40,8 +44,9 @@ parse_imports(){
     skip=0
     for idx in ${!importexceptions[@]};
     do
-      ignore_str=${importexceptions[$idx]}
-      if [[ ${line} =~ $ignore_str ]]; then
+      ignore_str_gh=${gh_ocm}\/${importexceptions[$idx]}
+      ignore_str=${ocm}\/${importexceptions[$idx]}
+      if [[ ${line} =~ $ignore_str || ${line} =~ $ignore_str_gh ]]; then
         skip=1
       fi
     done
@@ -54,7 +59,7 @@ parse_imports(){
     if [[ ${line} =~ $gh_ocm || ${line} =~ $ocm ]]; then
       if ! [[ ${line} =~ $replaced ]]; then
         echo ${line}
-        ((replaces++))
+        replaces=$((replaces + 1))
       fi
     fi
   done
@@ -69,14 +74,28 @@ parse_imports(){
 parse_make(){
   echo "Scanning Makefile..."
 
-  ocm_url='.*https://raw.githubusercontent.com/open-cluster-management'
+  ocm_url='.*https:\/\/raw\.githubusercontent\.com\/open-cluster-management-io'
 
   replaces=0
   while read line; do
+    # skip imports in ignore list
+    skip=0
+    for idx in ${!importexceptions[@]};
+    do
+      ignore_str=${ocm_url}\/${importexceptions[$idx]}
+      if [[ ${line} =~ $ignore_str ]]; then
+        skip=1
+      fi
+    done
+
+    if [[ $skip -eq 1 ]]; then
+      continue
+    fi
+
     # find ocm dependencies
     if [[ ${line} =~ $ocm_url ]]; then
       echo ${line}
-      ((replaces++))
+      replaces=$((replaces + 1))
     fi
   done
   if [[ $replaces > 0 ]]; then
