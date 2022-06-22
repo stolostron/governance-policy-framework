@@ -21,6 +21,8 @@ cloneRepos() {
 	if [ ! -d "${COMPONENT_ORG}" ]; then
 		# Collect repos from https://github.com/stolostron/policy-grc-squad/blob/master/main-branch-sync/repo.txt
 		REPOS=$(cat policy-grc-squad/main-branch-sync/repo.txt)
+		# Manually append deprecated repos
+		REPOS="${REPOS} stolostron/grc-ui stolostron/grc-ui-api"
 		for repo in $REPOS; do
 			echo "Cloning $repo ...."
 			git clone --quiet https://github.com/$repo.git $repo
