@@ -4,7 +4,7 @@
 
 COMPONENT_ORG=stolostron
 DEFAULT_BRANCH=${DEFAULT_BRANCH:-"main"}
-CHECK_RELEASES="2.3 2.4 2.5"
+CHECK_RELEASES="2.3 2.4 2.5 2.6"
 # This list can include all postsubmit jobs for all repos--if a job doesn't exist it's filtered to empty and skipped
 CHECK_JOBS=${CHECK_JOBS:-"publish publish-test images latest-image-mirror latest-test-image-mirror"}
 
