@@ -55,7 +55,7 @@ var _ = Describe("GRC: [P1][Sev1][policy-grc] Test policyreport_info metric", Or
 				return err
 			}
 			return pod
-		}, defaultTimeoutSeconds*2, 1).ShouldNot(Equal(""))
+		}, defaultTimeoutSeconds*10, 1).ShouldNot(Equal(""))
 		// checking if old pod with slow refresh has been taken down
 		Eventually(func() interface{} {
 			var err error
