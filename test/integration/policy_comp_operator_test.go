@@ -79,7 +79,7 @@ func complianceScanTest(scanPolicyName string, scanPolicyUrl string, scanName st
 		Eventually(func() interface{} {
 			compliancesuite := utils.GetWithTimeout(clientManagedDynamic, common.GvrComplianceSuite, scanName, "openshift-compliance", true, defaultTimeoutSeconds)
 			return compliancesuite.Object["status"].(map[string]interface{})["phase"]
-		}, defaultTimeoutSeconds*4, 1).Should(Equal("RUNNING"))
+		}, defaultTimeoutSeconds*20, 1).Should(Equal("RUNNING"))
 	})
 	It("Informing stable/"+scanPolicyName+"", func() {
 		Eventually(func() interface{} {
@@ -103,21 +103,21 @@ func complianceScanTest(scanPolicyName string, scanPolicyUrl string, scanName st
 			list, err := clientManagedDynamic.Resource(common.GvrComplianceCheckResult).Namespace("openshift-compliance").List(context.TODO(), metav1.ListOptions{})
 			Expect(err).To(BeNil())
 			return len(list.Items)
-		}, defaultTimeoutSeconds*12, 1).ShouldNot(Equal(0))
+		}, defaultTimeoutSeconds*24, 1).ShouldNot(Equal(0))
 	})
 	It("ComplianceSuite "+scanName+" scan results should be AGGREGATING", func() {
 		By("Checking if ComplianceSuite " + scanName + " scan status.phase is AGGREGATING")
 		Eventually(func() interface{} {
 			compliancesuite := utils.GetWithTimeout(clientManagedDynamic, common.GvrComplianceSuite, scanName, "openshift-compliance", true, defaultTimeoutSeconds)
 			return compliancesuite.Object["status"].(map[string]interface{})["phase"]
-		}, defaultTimeoutSeconds*10, 1).Should(Equal("AGGREGATING"))
+		}, defaultTimeoutSeconds*20, 1).Should(Equal("AGGREGATING"))
 	})
 	It("ComplianceSuite "+scanName+" scan results should be DONE", func() {
 		By("Checking if ComplianceSuite " + scanName + " scan status.phase is DONE")
 		Eventually(func() interface{} {
 			compliancesuite := utils.GetWithTimeout(clientManagedDynamic, common.GvrComplianceSuite, scanName, "openshift-compliance", true, defaultTimeoutSeconds)
 			return compliancesuite.Object["status"].(map[string]interface{})["phase"]
-		}, defaultTimeoutSeconds*10, 1).Should(Equal("DONE"))
+		}, defaultTimeoutSeconds*20, 1).Should(Equal("DONE"))
 	})
 	AfterAll(func() {
 		By("Removing policy")
