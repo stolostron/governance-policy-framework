@@ -10,7 +10,6 @@ DOCKER_URI="quay.io/stolostron"
 
 echo "* Patching hub cluster to ${VERSION_TAG}"
 oc annotate MultiClusterHub multiclusterhub -n ${acm_installed_namespace} mch-pause=true --overwrite
-oc annotate klusterletaddonconfig -n ${acm_installed_namespace} ${acm_installed_namespace} klusterletaddonconfig-pause=true --overwrite=true
 
 # Patch the propagator on the hub
 COMPONENT="governance-policy-propagator"
@@ -37,6 +36,7 @@ MANAGED_CLUSTERS=$(oc get managedcluster -o=jsonpath='{.items[*].metadata.name}'
 
 ADDON_COMPONENTS=(cert-policy-controller config-policy-controller iam-policy-controller governance-policy-framework)
 for MANAGED_CLUSTER in ${MANAGED_CLUSTERS}; do      
+    oc annotate klusterletaddonconfig -n ${MANAGED_CLUSTER} ${MANAGED_CLUSTER} klusterletaddonconfig-pause=true --overwrite=true
     FOUND="false"
     while [[ "${FOUND}" == "false" ]]; do
       echo "* Wait for manifestwork on ${MANAGED_CLUSTER}:"
