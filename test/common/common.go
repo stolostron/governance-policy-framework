@@ -37,6 +37,8 @@ var (
 	K8sClient              string
 )
 
+const MaxTravisTimeoutSeconds = 590 // Travis times out (by default) at 10 minutes
+
 func init() {
 	flag.StringVar(&KubeconfigHub, "kubeconfig_hub", "../../kubeconfig_hub", "Location of the kubeconfig to use; defaults to KUBECONFIG if not set")
 	flag.StringVar(&KubeconfigManaged, "kubeconfig_managed", "../../kubeconfig_managed", "Location of the kubeconfig to use; defaults to KUBECONFIG if not set")

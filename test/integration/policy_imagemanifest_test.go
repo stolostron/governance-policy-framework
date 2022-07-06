@@ -173,7 +173,7 @@ var _ = Describe("GRC: [P1][Sev1][policy-grc] Test the policy-imagemanifestvuln 
 				}
 				return ""
 			},
-			defaultTimeoutSeconds*12,
+			common.MaxTravisTimeoutSeconds,
 			1,
 		).Should(Equal(string(policiesv1.NonCompliant)))
 	})
