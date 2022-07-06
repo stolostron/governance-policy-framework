@@ -5,6 +5,7 @@ package integration
 import (
 	"context"
 	"encoding/base64"
+	"errors"
 	"fmt"
 	"strings"
 	"time"
@@ -39,13 +40,28 @@ var _ = Describe("GRC: [P1][Sev1][policy-grc] Test policyreport_info metric", Or
 
 	It("Sets up the metrics service endpoint for tests", func() {
 		By("Setting the insights client to poll every minute")
-		insightsClient, err := common.OcHub("get", "deployments", "-n", ocmNS, "-l", insightsClientSelector, "-o", "name")
-		Expect(err).To(BeNil())
-		insightsClientPod, err := common.OcHub("get", "pods", "-n", ocmNS, "-l", insightsClientSelector, "-o", "name")
-		Expect(err).To(BeNil())
-		insightsClientPod = strings.Split(insightsClientPod, "pod/")[1]
-		insightsClient = strings.TrimSpace(insightsClient)
-		_, err = common.OcHub("set", "env", "-n", ocmNS, insightsClient, "POLL_INTERVAL=1")
+		var insightsClient, insightsClientPod string
+		Eventually(func() interface{} {
+			var err error
+
+			insightsClient, err = common.OcHub("get", "deployments", "-n", ocmNS, "-l", insightsClientSelector, "-o", "name")
+			insightsClient = strings.TrimSpace(insightsClient)
+			if err != nil || len(insightsClient) == 0 {
+				return errors.New("could not find insights client deployment")
+			}
+
+			insightsClientPod, err = common.OcHub("get", "pods", "-n", ocmNS, "-l", insightsClientSelector, "-o", "name")
+			insightsClientPods := strings.Split(insightsClientPod, "pod/")
+			if err != nil || len(insightsClientPods) < 2 {
+				return errors.New("could not find insights client pod")
+			}
+
+			insightsClientPod = insightsClientPods[1]
+
+			return nil
+		}, defaultTimeoutSeconds*10, 1).Should(BeNil())
+
+		_, err := common.OcHub("set", "env", "-n", ocmNS, insightsClient, "POLL_INTERVAL=1")
 		Expect(err).To(BeNil())
 		// checking if new pod has spun up
 		Eventually(func() interface{} {
