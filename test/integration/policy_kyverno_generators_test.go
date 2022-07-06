@@ -107,7 +107,7 @@ var _ = Describe("GRC: [P1][Sev1][policy-grc] Test the kyverno generator policie
 				}
 				return int64(0)
 			},
-			defaultTimeoutSeconds*20,
+			common.MaxTravisTimeoutSeconds,
 			1,
 		).Should(BeNumerically("==", int64(1)))
 	})
@@ -247,7 +247,6 @@ var _ = Describe("GRC: [P1][Sev1][policy-grc] Test the kyverno generator policie
 	})
 
 	AfterAll(func() {
-
 		// delete the policies
 		for _, url := range policyNameMap {
 			utils.KubectlWithOutput(
