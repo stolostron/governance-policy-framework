@@ -23,6 +23,8 @@ var _ = Describe("GRC: [P1][Sev1][policy-grc] Test policyreport_info metric", La
 		ocmNS                        = "open-cluster-management"
 		saName                       = "grc-framework-sa"
 		roleBindingName              = "grc-framework-role-binding"
+		saTokenName                  = "grc-framework-sa-token-manual"
+		saTokenYaml                  = "../resources/policy_report_metric/metrics_token.yaml"
 		insightsClientSelector       = "component=insights-client"
 		insightsMetricsSelector      = "component=insights-metrics"
 		insightsMetricName           = "policyreport_info"
@@ -101,34 +103,33 @@ var _ = Describe("GRC: [P1][Sev1][policy-grc] Test policyreport_info metric", La
 		routeHost := routeList.Items[0].Object["spec"].(map[string]interface{})["host"].(string)
 		By("Got the metrics route url: " + routeHost)
 		insightsMetricsURL = "https://" + routeHost + "/metrics"
-
-		// get auth token from service account
-		By("Setting up ServiceAccount for authentication")
-		_, err = common.OcHub("create", "serviceaccount", saName, "-n", userNamespace)
-		Expect(err).To(BeNil())
-		_, err = common.OcHub("create", "clusterrolebinding", roleBindingName, "--clusterrole=cluster-admin", fmt.Sprintf("--serviceaccount=%s:%s", userNamespace, saName))
+	})
+	It("Sets up a ServiceAccount with permissions for metrics", func() {
+		_, err := common.OcHub("create", "serviceaccount", saName, "-n", userNamespace)
 		Expect(err).To(BeNil())
 
-		// The secret can take a moment to be created, retry until it is in the cluster.
-		var tokenName string
-		Eventually(func() interface{} {
-			tokenNames, err := common.OcHub("get", fmt.Sprintf("serviceaccount/%s", saName), "-n", userNamespace, "-o", "jsonpath={.secrets[*].name}")
-			if err != nil {
-				return err
-			}
-			tokenNameArr := strings.Split(tokenNames, " ")
-			for _, name := range tokenNameArr {
-				if strings.HasPrefix(name, saName+"-token-") {
-					tokenName = name
-				}
-			}
-			return tokenName
-		}, defaultTimeoutSeconds, 1).Should(ContainSubstring(saName + "-token-"))
-
-		encodedtoken, err := common.OcHub("get", "secret", tokenName, "-n", userNamespace, "-o", "jsonpath={.data.token}")
+		_, err = common.OcHub("create", "clusterrolebinding", roleBindingName, "--clusterrole=cluster-admin",
+			fmt.Sprintf("--serviceaccount=%s:%s", userNamespace, saName))
 		Expect(err).To(BeNil())
+
+		_, err = common.OcHub("apply", "-f", saTokenYaml, "-n", userNamespace)
+		Expect(err).To(BeNil())
+
+		var encodedtoken string
+
+		// The secret could take a moment to be populated with the token
+		Eventually(func(g Gomega) {
+			var err error
+			encodedtoken, err = common.OcHub("get", "secret", saTokenName,
+				"-n", userNamespace, "-o", "jsonpath={.data.token}")
+
+			g.Expect(err).NotTo(HaveOccurred())
+			g.Expect(len(encodedtoken)).To(BeNumerically(">", 0))
+		}, defaultTimeoutSeconds, 1).Should(Succeed())
+
 		decodedToken, err := base64.StdEncoding.DecodeString(encodedtoken)
 		Expect(err).To(BeNil())
+
 		insightsToken = string(decodedToken)
 	})
 	It("Checks that the endpoint does not expose metrics without auth", func() {
