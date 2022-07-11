@@ -1,0 +1,7 @@
+apiVersion: v1
+kind: Secret
+metadata:
+  name: grc-framework-sa-token-manual
+  annotations:
+    kubernetes.io/service-account.name: grc-framework-sa
+type: kubernetes.io/service-account-token
