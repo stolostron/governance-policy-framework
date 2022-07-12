@@ -254,9 +254,14 @@ var _ = Describe("GRC: [P1][Sev1][policy-grc] Test the kyverno generator policie
 			)
 		}
 
+		// remove the kyverno install policy
+		utils.KubectlWithOutput(
+			"delete", "-f", kyvernoInstallURL, "-n", userNamespace, "--kubeconfig="+kubeconfigHub,
+		)
+
 		// delete the subscription
 		utils.KubectlWithOutput(
-			"delete", "subscription.apps.open-cluster-management.io", "-n", kyvernoNamespace, "",
+			"delete", "subscription.apps.open-cluster-management.io", "-n", kyvernoNamespace, "--all",
 			"--kubeconfig="+kubeconfigManaged,
 		)
 
