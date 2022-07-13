@@ -33,6 +33,7 @@ var _ = Describe("GRC: [P1][Sev1][policy-grc] Test the kyverno generator policie
 	const testNamespace = "e2e-kyverno"
 	const kyvernoInstallURL = "https://raw.githubusercontent.com/stolostron/policy-collection/main/community/CM-Configuration-Management/policy-install-kyverno.yaml"
 	const kyvernoInstallPolicy = "policy-install-kyverno"
+	const policyReportCRDURL = "https://raw.githubusercontent.com/kubernetes-sigs/wg-policy-prototypes/master/policy-report/crd/v1alpha2/wgpolicyk8s.io_policyreports.yaml"
 
 	It("Install Kyverno on the managed cluster", func() {
 		By("Creating kyverno resources by deploying the community policy")
@@ -301,6 +302,11 @@ var _ = Describe("GRC: [P1][Sev1][policy-grc] Test the kyverno generator policie
 			"kyverno-policy-validating-webhook-cf",
 			"kyverno-resource-validating-webhook-cfg",
 			"--kubeconfig="+kubeconfigManaged,
+		)
+
+		// ensure the PolicyReport CRD remains on the cluster
+		utils.KubectlWithOutput(
+			"apply", "-f", policyReportCRDURL, "--kubeconfig="+kubeconfigManaged,
 		)
 
 		// delete secret that is synced by the generator
