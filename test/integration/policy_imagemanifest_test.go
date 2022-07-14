@@ -17,7 +17,7 @@ import (
 	"github.com/stolostron/governance-policy-framework/test/common"
 )
 
-var _ = Describe("GRC: [P1][Sev1][policy-grc] Test the policy-imagemanifestvuln policy", Ordered, Label("policy-collection", "stable", "BVT"), func() {
+var _ = Describe("GRC: [P1][Sev1][policy-grc] Test the policy-imagemanifestvuln policy", Ordered, Label("policy-collection", "stable"), func() {
 	const policyIMVURL = policyCollectSIURL + "policy-imagemanifestvuln.yaml"
 	const policyIMVName = "policy-imagemanifestvuln"
 	const subName = "container-security-operator"
