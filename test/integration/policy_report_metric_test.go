@@ -26,7 +26,8 @@ var _ = Describe("GRC: [P1][Sev1][policy-grc] Test policyreport_info metric", Or
 		roleBindingName              = "grc-framework-role-binding"
 		saTokenName                  = "grc-framework-sa-token-manual"
 		saTokenYaml                  = "../resources/policy_report_metric/metrics_token.yaml"
-		insightsClientSelector       = "component=insights-client"
+		insightsClientPodSelector    = "name=insights-client"
+		insightsClientDeployment     = "deployment.apps/insights-client"
 		insightsMetricsSelector      = "component=insights-metrics"
 		insightsMetricName           = "policyreport_info"
 		noncompliantPolicyYamlReport = "../resources/policy_report_metric/noncompliant.yaml"
@@ -42,17 +43,11 @@ var _ = Describe("GRC: [P1][Sev1][policy-grc] Test policyreport_info metric", Or
 
 	It("Sets up the metrics service endpoint for tests", func() {
 		By("Setting the insights client to poll every minute")
-		var insightsClient, insightsClientPod string
+		var insightsClientPod string
 		Eventually(func() interface{} {
 			var err error
 
-			insightsClient, err = common.OcHub("get", "deployments", "-n", ocmNS, "-l", insightsClientSelector, "-o", "name")
-			insightsClient = strings.TrimSpace(insightsClient)
-			if err != nil || len(insightsClient) == 0 {
-				return errors.New("could not find insights client deployment")
-			}
-
-			insightsClientPod, err = common.OcHub("get", "pods", "-n", ocmNS, "-l", insightsClientSelector, "-o", "name")
+			insightsClientPod, err = common.OcHub("get", "pods", "-n", ocmNS, "-l", insightsClientPodSelector, "-o", "name")
 			insightsClientPods := strings.Split(insightsClientPod, "pod/")
 			if err != nil || len(insightsClientPods) < 2 {
 				return errors.New("could not find insights client pod")
@@ -63,12 +58,12 @@ var _ = Describe("GRC: [P1][Sev1][policy-grc] Test policyreport_info metric", Or
 			return nil
 		}, defaultTimeoutSeconds*10, 1).Should(BeNil())
 
-		_, err := common.OcHub("set", "env", "-n", ocmNS, insightsClient, "POLL_INTERVAL=1")
+		_, err := common.OcHub("set", "env", "-n", ocmNS, insightsClientDeployment, "POLL_INTERVAL=1")
 		Expect(err).To(BeNil())
 		// checking if new pod has spun up
 		Eventually(func() interface{} {
 			var err error
-			pod, err := common.OcHub("get", "pods", "-n", ocmNS, "-l", insightsClientSelector, "--field-selector=status.phase=Running,metadata.name!="+insightsClientPod)
+			pod, err := common.OcHub("get", "pods", "-n", ocmNS, "-l", insightsClientPodSelector, "--field-selector=status.phase=Running,metadata.name!="+insightsClientPod)
 			if err != nil {
 				return err
 			}
@@ -77,7 +72,7 @@ var _ = Describe("GRC: [P1][Sev1][policy-grc] Test policyreport_info metric", Or
 		// checking if old pod with slow refresh has been taken down
 		Eventually(func() interface{} {
 			var err error
-			pod, err := common.OcHub("get", "pods", "-n", ocmNS, "-l", insightsClientSelector, "--field-selector=status.phase=Running,metadata.name="+insightsClientPod)
+			pod, err := common.OcHub("get", "pods", "-n", ocmNS, "-l", insightsClientPodSelector, "--field-selector=status.phase=Running,metadata.name="+insightsClientPod)
 			if err != nil {
 				return err
 			}
@@ -167,10 +162,7 @@ var _ = Describe("GRC: [P1][Sev1][policy-grc] Test policyreport_info metric", Or
 		).Should(Equal(policiesv1.NonCompliant))
 
 		By("Checking the policy metric")
-		insightsClient, err := common.OcHub("get", "deployments", "-n", ocmNS, "-l", insightsClientSelector, "-o", "name")
-		Expect(err).To(BeNil())
-		insightsClient = strings.TrimSpace(insightsClient)
-		output, err := common.OcHub("set", "env", "-n", ocmNS, insightsClient, "--list")
+		output, err := common.OcHub("set", "env", "-n", ocmNS, insightsClientDeployment, "--list")
 		Expect(err).To(BeNil())
 		fmt.Println("INSIGHTS CLIENT ENV VARIABLES:")
 		fmt.Println(output)
@@ -198,10 +190,7 @@ var _ = Describe("GRC: [P1][Sev1][policy-grc] Test policyreport_info metric", Or
 		).Should(Equal(policiesv1.Compliant))
 
 		By("Checking the policy metric displays nothing")
-		insightsClient, err := common.OcHub("get", "deployments", "-n", ocmNS, "-l", insightsClientSelector, "-o", "name")
-		Expect(err).To(BeNil())
-		insightsClient = strings.TrimSpace(insightsClient)
-		output, err := common.OcHub("set", "env", "-n", ocmNS, insightsClient, "--list")
+		output, err := common.OcHub("set", "env", "-n", ocmNS, insightsClientDeployment, "--list")
 		Expect(err).To(BeNil())
 		fmt.Println("INSIGHTS CLIENT ENV VARIABLES:")
 		fmt.Println(output)
@@ -221,10 +210,7 @@ var _ = Describe("GRC: [P1][Sev1][policy-grc] Test policyreport_info metric", Or
 	})
 	AfterAll(func() {
 		// unset poll interval
-		insightsClient, err := common.OcHub("get", "deployments", "-n", ocmNS, "-l", insightsClientSelector, "-o", "name")
-		Expect(err).To(BeNil())
-		insightsClient = strings.TrimSpace(insightsClient)
-		_, err = common.OcHub("set", "env", "-n", ocmNS, insightsClient, "POLL_INTERVAL-")
+		_, err := common.OcHub("set", "env", "-n", ocmNS, insightsClientDeployment, "POLL_INTERVAL-")
 		Expect(err).To(BeNil())
 		common.OcHub("delete", "-f", compliantPolicyYamlReport, "-n", userNamespace)
 		common.OcHub("delete", "route", "-n", ocmNS, "-l", insightsMetricsSelector)
