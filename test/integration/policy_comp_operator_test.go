@@ -141,7 +141,7 @@ func complianceScanTest(scanPolicyName string, scanPolicyUrl string, scanName st
 	})
 }
 
-var _ = Describe("RHACM4K-2222 GRC: [P1][Sev1][policy-grc] Test compliance operator and scan", Label("policy-collection", "stable", "BVT"), func() {
+var _ = Describe("RHACM4K-2222 GRC: [P1][Sev1][policy-grc] Test compliance operator and scan", Label("policy-collection", "stable"), func() {
 	const compPolicyURL = policyCollectCAURL + "policy-compliance-operator-install.yaml"
 	const compPolicyName = "policy-comp-operator"
 	const compE8ScanPolicyURL = policyCollectCMURL + "policy-compliance-operator-e8-scan.yaml"
