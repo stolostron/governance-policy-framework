@@ -171,7 +171,7 @@ func OcManaged(args ...string) (string, error) {
 // Patches the clusterSelector of the specified PlacementRule so that it will
 // always only match the targetCluster.
 func PatchPlacementRule(namespace, name, targetCluster, kubeconfigHub string) error {
-	_, err := utils.KubectlWithOutput(
+	output, err := utils.KubectlWithOutput(
 		"patch",
 		"-n",
 		namespace,
@@ -181,6 +181,9 @@ func PatchPlacementRule(namespace, name, targetCluster, kubeconfigHub string) er
 		`-p=[{"op": "replace", "path": "/spec/clusterSelector", "value":{"matchExpressions":[{"key": "name", "operator": "In", "values": ["`+targetCluster+`"]}]}}]`,
 		"--kubeconfig="+kubeconfigHub,
 	)
+	if err != nil {
+		fmt.Println(output)
+	}
 
 	return err
 }
