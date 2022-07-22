@@ -7,6 +7,7 @@ import "k8s.io/apimachinery/pkg/runtime/schema"
 var (
 	GvrPod                   = schema.GroupVersionResource{Version: "v1", Resource: "pods"}
 	GvrNS                    = schema.GroupVersionResource{Version: "v1", Resource: "namespaces"}
+	GvrConfigMap             = schema.GroupVersionResource{Version: "v1", Resource: "configmaps"}
 	GvrRole                  = schema.GroupVersionResource{Group: "rbac.authorization.k8s.io", Version: "v1", Resource: "roles"}
 	GvrCRD                   = schema.GroupVersionResource{Group: "apiextensions.k8s.io", Version: "v1", Resource: "customresourcedefinitions"}
 	GvrPolicy                = schema.GroupVersionResource{Group: "policy.open-cluster-management.io", Version: "v1", Resource: "policies"}
