@@ -16,6 +16,7 @@ import (
 	"k8s.io/client-go/kubernetes"
 	"k8s.io/klog"
 
+	"github.com/stolostron/governance-policy-framework/test"
 	"github.com/stolostron/governance-policy-framework/test/common"
 )
 
@@ -40,6 +41,8 @@ func init() {
 	klog.SetOutput(GinkgoWriter)
 	klog.InitFlags(nil)
 }
+
+var _ = test.ConfigPruneBehavior()
 
 var _ = BeforeSuite(func() {
 	By("Setup hub and managed client")
