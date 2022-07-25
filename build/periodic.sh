@@ -30,6 +30,14 @@ cloneRepos() {
 	fi
 }
 
+# return URL of open sync issues (uses authenticated API to prevent rate limiting)
+getSyncIssues() {
+	component=$1
+	issues="$(curl -s -H "Authorization: token ${GITHUB_TOKEN}" https://api.github.com/repos/${COMPONENT_ORG}/${component}/issues \
+	| jq -r '.[] | select(.pull_request == null) | select(.title|match(".*Failed to sync the upstream PR.*")) | .url')"
+	echo "${issues}"
+}
+
 # return the most recent git sha for a repository's release branch
 # Inputs: getGitSha "component" "version"
 getGitSha() {
@@ -183,6 +191,15 @@ for repo in $REPOS; do
 				fi
 				HAS_IMAGE="$HAS_IMAGE:$release:"
 			done
+		else
+			syncIssue=$(getSyncIssues "$repo")
+			if [[ -n "${syncIssue}" ]]; then
+				echo "****"
+				echo "ERROR: Syncing is paused for $repo" | tee -a ${ERROR_FILE}
+				echo "   Issue: ${syncIssue}" | tee -a ${ERROR_FILE}
+				echo "****"
+				rc=1
+			fi
 		fi
 
 		# check the prow job history
