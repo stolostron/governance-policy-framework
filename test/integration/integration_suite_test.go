@@ -21,7 +21,8 @@ import (
 )
 
 const (
-	policyCollectBaseURL      = "https://raw.githubusercontent.com/stolostron/policy-collection/main/"
+	//policyCollectBaseURL      = "https://raw.githubusercontent.com/stolostron/policy-collection/main/"
+	policyCollectBaseURL      = "https://raw.githubusercontent.com/mahesh-zetta/policy-collection/main/"
 	policyCollectCommunityURL = policyCollectBaseURL + "community/"
 	policyCollectStableURL    = policyCollectBaseURL + "stable/"
 	policyCollectACURL        = policyCollectStableURL + "AC-Access-Control/"
@@ -74,7 +75,7 @@ var _ = BeforeSuite(func() {
 		return common.GetComplianceState(clientHubDynamic, userNamespace, policyName, clusterNamespace)
 	}
 
-	By("Create Namespace if needed")
+	By("Create Namespace " + userNamespace + "if needed") 
 	namespaces := clientHub.CoreV1().Namespaces()
 	if _, err := namespaces.Get(context.TODO(), userNamespace, metav1.GetOptions{}); err != nil && errors.IsNotFound(err) {
 		Expect(namespaces.Create(context.TODO(), &corev1.Namespace{
