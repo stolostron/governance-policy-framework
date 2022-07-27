@@ -34,7 +34,7 @@ cloneRepos() {
 getSyncIssues() {
 	component=$1
 	issues="$(curl -s -H "Authorization: token ${GITHUB_TOKEN}" https://api.github.com/repos/${COMPONENT_ORG}/${component}/issues \
-	| jq -r '.[] | select(.pull_request == null) | select(.title|match(".*Failed to sync the upstream PR.*")) | .url')"
+	| jq -r '.[] | select(.pull_request == null) | select(.title|match(".*Failed to sync the upstream PR.*")) | .html_url')"
 	echo "${issues}"
 }
 
