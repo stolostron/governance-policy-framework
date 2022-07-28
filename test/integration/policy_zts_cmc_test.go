@@ -8,7 +8,6 @@ import (
 
 	. "github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
-	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	k8stypes "k8s.io/apimachinery/pkg/types"
 	policiesv1 "open-cluster-management.io/governance-policy-propagator/api/v1"
@@ -21,9 +20,8 @@ var _ = Describe("GRC: [P1][Sev1][policy-grc] Test the policy-pod policy", Order
 	const (
 		policyPodName   = "policy-zts-cmc"
 		policyPodURL    = policyCollectCMURL + policyPodName + ".yaml"
-		policyPodNSName = "test-policy"
-		podName         = "sample-nginx-pod-2"
-		policyPodKind   = "Pod"
+		policyPodNSName = "default"
+		deploymentName  = "zts-cmc-app-deploy"
 	)
 
 	It("stable/"+policyPodName+" should be created on the Hub", func() {
@@ -31,12 +29,6 @@ var _ = Describe("GRC: [P1][Sev1][policy-grc] Test the policy-pod policy", Order
 		_, err := utils.KubectlWithOutput(
 			"apply", "-f", policyPodURL, "-n", userNamespace, "--kubeconfig="+kubeconfigHub,
 		)
-		Expect(err).To(BeNil())
-
-		By("Creating the " + policyPodNSName + " namespace on the managed cluster")
-		By("Creating the " + policyPodURL + " namespace on the managed cluster")
-		namespace := &corev1.Namespace{ObjectMeta: metav1.ObjectMeta{Name: policyPodNSName, Labels: map[string]string{"e2e": "true"}}}
-		_, err = clientManaged.CoreV1().Namespaces().Create(context.TODO(), namespace, metav1.CreateOptions{})
 		Expect(err).To(BeNil())
 
 		By("Patching the namespaceSelector to use the " + policyPodNSName + " namespace")
@@ -105,30 +97,24 @@ var _ = Describe("GRC: [P1][Sev1][policy-grc] Test the policy-pod policy", Order
 		).Should(Equal(policiesv1.Compliant))
 	})
 
-	It("The Pod should exist", func() {
-		By("Checking the Pod in the " + policyPodNSName + " namespace")
-		Eventually(
-			func() error {
-				_, err := clientManaged.CoreV1().Pods(policyPodNSName).Get(
-					context.TODO(), podName, metav1.GetOptions{},
-				)
-
-				return err
-			},
-			defaultTimeoutSeconds*2,
-			1,
-		).Should(BeNil())
-	})
 
 	AfterAll(func() {
+		out, _ := utils.KubectlWithOutput(
+                "get", "deployment", "-n", policyPodNSName, deploymentName, "--kubeconfig="+kubeconfigHub,
+		)
+		Expect(out).To(ContainSubstring(deploymentName))
+
 		_, err := utils.KubectlWithOutput(
+			"delete", "deployment", "-n", policyPodNSName, deploymentName, "--kubeconfig="+kubeconfigHub,
+		)
+		Expect(err).To(BeNil())
+
+		_, err = utils.KubectlWithOutput(
 			"delete", "-f", policyPodURL, "-n", userNamespace, "--kubeconfig="+kubeconfigHub,
 		)
 		Expect(err).To(BeNil())
 
-		err = clientManaged.CoreV1().Namespaces().Delete(
-			context.TODO(), policyPodNSName, metav1.DeleteOptions{},
-		)
-		Expect(err).To(BeNil())
+
 	})
+
 })
