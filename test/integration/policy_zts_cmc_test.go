@@ -16,7 +16,7 @@ import (
 	"github.com/stolostron/governance-policy-framework/test/common"
 )
 
-var _ = Describe("GRC: [P1][Sev1][policy-grc] Test the policy-pod policy", Ordered, Label("policy-collection", "stable"), func() {
+var _ = Describe("GRC: [P1][Sev1][policy-grc] Test the zts-cmc policy", Ordered, Label("policy-collection", "stable"), func() {
 	const (
 		policyPodName   = "policy-zts-cmc"
 		policyPodURL    = policyCollectCMURL + policyPodName + ".yaml"
