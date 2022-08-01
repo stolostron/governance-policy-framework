@@ -258,3 +258,19 @@ func DoRootComplianceTest(hub dynamic.Interface, policyName string, compliance p
 		1,
 	).Should(gomega.Equal(compliance))
 }
+
+func OutputDebugInfo(testName string, additionalResources ...string) {
+	ginkgo.GinkgoWriter.Printf("%s test Kubernetes info:\n", testName)
+
+	resources := []string{
+		"policies.policy.open-cluster-management.io",
+		"placementrules.apps.open-cluster-management.io",
+		"placements.cluster.open-cluster-management.io",
+		"placementbindings.policy.open-cluster-management.io",
+	}
+	resources = append(resources, additionalResources...)
+
+	for _, resource := range resources {
+		_, _ = utils.KubectlWithOutput("get", resource, "--all-namespaces", "-o", "yaml")
+	}
+}
