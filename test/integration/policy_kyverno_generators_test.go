@@ -248,6 +248,10 @@ var _ = Describe("GRC: [P1][Sev1][policy-grc] Test the kyverno generator policie
 	})
 
 	AfterAll(func() {
+		if CurrentSpecReport().Failed() {
+			common.OutputDebugInfo("Kyverno generator", "clusterpolicies.kyverno.io", "policies.kyverno.io")
+		}
+
 		// delete the policies
 		for _, url := range policyNameMap {
 			utils.KubectlWithOutput(
