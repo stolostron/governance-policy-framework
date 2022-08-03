@@ -93,8 +93,8 @@ clean::
 
 .PHONY: fmt-dependencies
 fmt-dependencies:
-	$(call go-get-tool,github.com/daixiang0/gci@v0.2.9)
-	$(call go-get-tool,mvdan.cc/gofumpt@v0.2.0)
+	$(call go-get-tool,github.com/daixiang0/gci@v0.6.0)
+	$(call go-get-tool,mvdan.cc/gofumpt@v0.3.1)
 
 # All available format: format-go format-protos format-python
 # Default value will run all formats, override these make target with your requirements:
@@ -126,7 +126,7 @@ kind-policy-framework-hub-setup:
 KUSTOMIZE = $(LOCAL_BIN)/kustomize
 .PHONY: kustomize
 kustomize: ## Download kustomize locally if necessary.
-	$(call go-get-tool,sigs.k8s.io/kustomize/kustomize/v4@v4.5.4)
+	$(call go-get-tool,sigs.k8s.io/kustomize/kustomize/v4@v4.5.7)
 
 .PHONY: deploy-policy-framework-hub-crd-operator
 deploy-policy-framework-hub-crd-operator:
