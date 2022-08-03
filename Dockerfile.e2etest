@@ -1,7 +1,7 @@
 # Copyright (c) 2020 Red Hat, Inc.
 
 # Stage 1: Use image builder to retrieve Go binaries
-FROM golang:1.17 AS builder
+FROM registry.ci.openshift.org/stolostron/builder:go1.18-linux AS builder
 
 # Stage 2: Copy Go binaries and run tests on ubi-minimal
 FROM registry.access.redhat.com/ubi8/ubi-minimal:latest
