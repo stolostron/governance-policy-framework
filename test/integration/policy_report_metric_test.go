@@ -41,6 +41,41 @@ var _ = Describe("GRC: [P1][Sev1][policy-grc] Test policyreport_info metric", Or
 		insightsToken      string
 	)
 
+	JustAfterEach(func() {
+		if CurrentSpecReport().Failed() {
+			By("*** Debugging policyreport_info metric failure ***")
+
+			By("Getting current policies")
+			common.OcHub("get", "policies.policy.open-cluster-management.io", "-A", "-o", "yaml")
+
+			By("Getting current configurationpolicies")
+			common.OcHub("get", "configurationpolicies.policy.open-cluster-management.io", "-A", "-o", "yaml")
+
+			By("Getting current policyreports")
+			common.OcHub("get", "policyreports.wgpolicyk8s.io", "-A", "-o", "yaml")
+
+			By("Getting yaml and logs for insights client pod(s)")
+			common.OcHub("get", "pods", "-n", ocmNS, "-l", insightsClientPodSelector, "-o", "yaml")
+
+			clientPodList, err := clientHub.CoreV1().Pods(ocmNS).List(context.TODO(), metav1.ListOptions{LabelSelector: insightsClientPodSelector})
+			Expect(err).To(BeNil())
+			for _, pod := range clientPodList.Items {
+				By("Logs for " + pod.GetName())
+				common.OcHub("logs", "-n", ocmNS, pod.GetName())
+			}
+
+			By("Getting yaml and logs for insights metric pod(s)")
+			common.OcHub("get", "pods", "-n", ocmNS, "-l", insightsMetricsSelector, "-o", "yaml")
+
+			metricsPodList, err := clientHub.CoreV1().Pods(ocmNS).List(context.TODO(), metav1.ListOptions{LabelSelector: insightsMetricsSelector})
+			Expect(err).To(BeNil())
+			for _, pod := range metricsPodList.Items {
+				By("Logs for " + pod.GetName())
+				common.OcHub("logs", "-n", ocmNS, pod.GetName(), "-c", "metrics")
+			}
+		}
+	})
+
 	It("Sets up the metrics service endpoint for tests", func() {
 		By("Setting the insights client to poll every minute")
 		var insightsClientPod string
