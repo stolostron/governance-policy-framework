@@ -14,24 +14,24 @@ import (
 	"open-cluster-management.io/governance-policy-propagator/test/utils"
 )
 
-const (
-	pruneConfigMapName string = "test-prune-configmap"
-	pruneConfigMapYaml string = "../resources/configuration_policy_prune/configmap-only.yaml"
-)
-
 func ConfigPruneBehavior(labels ...string) bool {
+	const (
+		pruneConfigMapName string = "test-prune-configmap"
+		pruneConfigMapYaml string = "../resources/configuration_policy_prune/configmap-only.yaml"
+	)
+
 	pruneTestCreatedByPolicy := func(policyName, policyYaml string, cmShouldBeDeleted bool) {
 		clientManagedDynamic := NewKubeClientDynamic("", KubeconfigManaged, "")
 		clientHubDynamic := NewKubeClientDynamic("", KubeconfigHub, "")
 
-		DoCreatePolicyTest(clientHubDynamic, clientManagedDynamic, policyYaml, &GvrConfigurationPolicy)
+		DoCreatePolicyTest(clientHubDynamic, clientManagedDynamic, policyYaml, GvrConfigurationPolicy)
 
 		DoRootComplianceTest(clientHubDynamic, policyName, policiesv1.Compliant)
 
 		By("Checking that the configmap was created")
 		utils.GetWithTimeout(clientManagedDynamic, GvrConfigMap, pruneConfigMapName, "default", true, DefaultTimeoutSeconds)
 
-		DoCleanupPolicy(clientHubDynamic, clientManagedDynamic, policyYaml, &GvrConfigurationPolicy)
+		DoCleanupPolicy(clientHubDynamic, clientManagedDynamic, policyYaml, GvrConfigurationPolicy)
 
 		By("Checking if the configmap was deleted")
 		utils.GetWithTimeout(clientManagedDynamic, GvrConfigMap, pruneConfigMapName, "default", !cmShouldBeDeleted, DefaultTimeoutSeconds)
@@ -41,7 +41,7 @@ func ConfigPruneBehavior(labels ...string) bool {
 		clientManagedDynamic := NewKubeClientDynamic("", KubeconfigManaged, "")
 		clientHubDynamic := NewKubeClientDynamic("", KubeconfigHub, "")
 
-		DoCreatePolicyTest(clientHubDynamic, clientManagedDynamic, policyYaml, &GvrConfigurationPolicy)
+		DoCreatePolicyTest(clientHubDynamic, clientManagedDynamic, policyYaml, GvrConfigurationPolicy)
 
 		DoRootComplianceTest(clientHubDynamic, policyName, policiesv1.Compliant)
 
@@ -82,7 +82,7 @@ func ConfigPruneBehavior(labels ...string) bool {
 		clientManagedDynamic := NewKubeClientDynamic("", KubeconfigManaged, "")
 		clientHubDynamic := NewKubeClientDynamic("", KubeconfigHub, "")
 
-		DoCreatePolicyTest(clientHubDynamic, clientManagedDynamic, policyYaml, &GvrConfigurationPolicy)
+		DoCreatePolicyTest(clientHubDynamic, clientManagedDynamic, policyYaml, GvrConfigurationPolicy)
 
 		DoRootComplianceTest(clientHubDynamic, policyName, policiesv1.Compliant)
 
@@ -104,7 +104,7 @@ func ConfigPruneBehavior(labels ...string) bool {
 			return remAction
 		}, DefaultTimeoutSeconds, 1).Should(MatchRegexp(".nform"))
 
-		DoCleanupPolicy(clientHubDynamic, clientManagedDynamic, policyYaml, &GvrConfigurationPolicy)
+		DoCleanupPolicy(clientHubDynamic, clientManagedDynamic, policyYaml, GvrConfigurationPolicy)
 
 		By("Checking if the configmap was deleted")
 		utils.GetWithTimeout(clientManagedDynamic, GvrConfigMap, pruneConfigMapName, "default", !cmShouldBeDeleted, DefaultTimeoutSeconds)
@@ -130,7 +130,7 @@ func ConfigPruneBehavior(labels ...string) bool {
 			g.Expect(len(initialValue)).To(BeNumerically(">", 0))
 		}, DefaultTimeoutSeconds, 1)
 
-		DoCreatePolicyTest(clientHubDynamic, clientManagedDynamic, policyYaml, &GvrConfigurationPolicy)
+		DoCreatePolicyTest(clientHubDynamic, clientManagedDynamic, policyYaml, GvrConfigurationPolicy)
 
 		DoRootComplianceTest(clientHubDynamic, policyName, policiesv1.Compliant)
 
@@ -146,7 +146,7 @@ func ConfigPruneBehavior(labels ...string) bool {
 			g.Expect(newValue).To(Not(Equal(initialValue)))
 		}, DefaultTimeoutSeconds, 1)
 
-		DoCleanupPolicy(clientHubDynamic, clientManagedDynamic, policyYaml, &GvrConfigurationPolicy)
+		DoCleanupPolicy(clientHubDynamic, clientManagedDynamic, policyYaml, GvrConfigurationPolicy)
 
 		By("Checking if the configmap was deleted")
 		utils.GetWithTimeout(clientManagedDynamic, GvrConfigMap, pruneConfigMapName, "default", !cmShouldBeDeleted, DefaultTimeoutSeconds)

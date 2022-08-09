@@ -188,14 +188,15 @@ func PatchPlacementRule(namespace, name, targetCluster, kubeconfigHub string) er
 // DoCreatePolicyTest runs usual assertions around creating a policy. It will
 // create the given policy file to the hub cluster, on the user namespace. It
 // also patches the PlacementRule with a PlacementDecision if required. It
-// asserts that the policy was distributed to the managed cluster, and if a non-
-// nil templateGVR is supplied, it asserts that a policy template (for example
-// ConfigurationPolicy) of the same name was created on the managed cluster.
+// asserts that the policy was distributed to the managed cluster, and for any
+// templateGVRs supplied, it asserts that a policy template of that type (for
+// example ConfigurationPolicy) and the same name was created on the managed
+// cluster.
 //
 // It assumes that the given filename (stripped of an extension) matches the
 // name of the policy, and that the PlacementRule has the same name, with '-plr'
 // appended.
-func DoCreatePolicyTest(hub, managed dynamic.Interface, policyFile string, templateGVR *schema.GroupVersionResource) {
+func DoCreatePolicyTest(hub, managed dynamic.Interface, policyFile string, templateGVRs ...schema.GroupVersionResource) {
 	policyName := strings.TrimSuffix(filepath.Base(policyFile), filepath.Ext(policyFile))
 
 	ginkgo.By("Creating " + policyFile)
@@ -217,18 +218,19 @@ func DoCreatePolicyTest(hub, managed dynamic.Interface, policyFile string, templ
 	mplc := utils.GetWithTimeout(managed, GvrPolicy, managedPolicyName, ClusterNamespace, true, DefaultTimeoutSeconds)
 	gomega.ExpectWithOffset(1, mplc).NotTo(gomega.BeNil())
 
-	if templateGVR != nil {
-		ginkgo.By("Checking that the policy template " + policyName + " is present on the managed cluster")
-		tmplPlc := utils.GetWithTimeout(managed, *templateGVR, policyName, ClusterNamespace, true, DefaultTimeoutSeconds)
+	for _, tmplGVR := range templateGVRs {
+		typedName := tmplGVR.String() + "/" + policyName
+		ginkgo.By("Checking that the policy template " + typedName + " is present on the managed cluster")
+		tmplPlc := utils.GetWithTimeout(managed, tmplGVR, policyName, ClusterNamespace, true, DefaultTimeoutSeconds)
 		gomega.ExpectWithOffset(1, tmplPlc).NotTo(gomega.BeNil())
 	}
 }
 
 // DoCleanupPolicy deletes the resources specified in the file, and asserts that
-// the propagated policy was removed from the managed cluster. If given a non-
-// nil templateGVR, it will check that there is no longer a policy template
-// (for example ConfigurationPolicy) of the same name on the managed cluster.
-func DoCleanupPolicy(hub, managed dynamic.Interface, policyFile string, templateGVR *schema.GroupVersionResource) {
+// the propagated policy was removed from the managed cluster. For each templateGVR,
+// it will check that there is no longer a policy template (for example
+// ConfigurationPolicy) of the same name on the managed cluster.
+func DoCleanupPolicy(hub, managed dynamic.Interface, policyFile string, templateGVRs ...schema.GroupVersionResource) {
 	policyName := strings.TrimSuffix(filepath.Base(policyFile), filepath.Ext(policyFile))
 	ginkgo.By("Deleting " + policyFile)
 	OcHub("delete", "-f", policyFile, "-n", UserNamespace)
@@ -240,9 +242,10 @@ func DoCleanupPolicy(hub, managed dynamic.Interface, policyFile string, template
 	mplc := utils.GetWithTimeout(managed, GvrPolicy, managedPolicyName, ClusterNamespace, false, DefaultTimeoutSeconds)
 	gomega.ExpectWithOffset(1, mplc).To(gomega.BeNil())
 
-	if templateGVR != nil {
-		ginkgo.By("Checking that the policy template " + policyName + " was removed from the managed cluster")
-		tmplPlc := utils.GetWithTimeout(managed, *templateGVR, policyName, ClusterNamespace, false, DefaultTimeoutSeconds)
+	for _, tmplGVR := range templateGVRs {
+		typedName := tmplGVR.String() + "/" + policyName
+		ginkgo.By("Checking that the policy template " + typedName + " was removed from the managed cluster")
+		tmplPlc := utils.GetWithTimeout(managed, tmplGVR, policyName, ClusterNamespace, false, DefaultTimeoutSeconds)
 		gomega.ExpectWithOffset(1, tmplPlc).To(gomega.BeNil())
 	}
 }

@@ -21,7 +21,7 @@ var _ = Describe("Test configuration policy", Ordered, func() {
 		const rolePolicyName string = "role-policy-musthave"
 		const rolePolicyYaml string = "../resources/configuration_policy/role-policy-musthave.yaml"
 		It("should be created on managed cluster", func() {
-			common.DoCreatePolicyTest(clientHubDynamic, clientManagedDynamic, rolePolicyYaml, &common.GvrConfigurationPolicy)
+			common.DoCreatePolicyTest(clientHubDynamic, clientManagedDynamic, rolePolicyYaml, common.GvrConfigurationPolicy)
 		})
 		It("the policy should be noncompliant", func() {
 			common.DoRootComplianceTest(clientHubDynamic, rolePolicyName, policiesv1.NonCompliant)
@@ -63,7 +63,7 @@ var _ = Describe("Test configuration policy", Ordered, func() {
 			common.DoRootComplianceTest(clientHubDynamic, rolePolicyName, policiesv1.NonCompliant)
 		})
 		AfterAll(func() {
-			common.DoCleanupPolicy(clientHubDynamic, clientManagedDynamic, rolePolicyYaml, &common.GvrConfigurationPolicy)
+			common.DoCleanupPolicy(clientHubDynamic, clientManagedDynamic, rolePolicyYaml, common.GvrConfigurationPolicy)
 			common.OcManaged("delete", "role", "-n", "default", roleName)
 		})
 	})
@@ -71,7 +71,7 @@ var _ = Describe("Test configuration policy", Ordered, func() {
 		const rolePolicyName string = "role-policy-musthave"
 		const rolePolicyYaml string = "../resources/configuration_policy/role-policy-musthave.yaml"
 		It("should be created on managed cluster", func() {
-			common.DoCreatePolicyTest(clientHubDynamic, clientManagedDynamic, rolePolicyYaml, &common.GvrConfigurationPolicy)
+			common.DoCreatePolicyTest(clientHubDynamic, clientManagedDynamic, rolePolicyYaml, common.GvrConfigurationPolicy)
 		})
 		It("the policy should be noncompliant", func() {
 			common.DoRootComplianceTest(clientHubDynamic, rolePolicyName, policiesv1.NonCompliant)
@@ -123,7 +123,7 @@ var _ = Describe("Test configuration policy", Ordered, func() {
 		})
 
 		AfterAll(func() {
-			common.DoCleanupPolicy(clientHubDynamic, clientManagedDynamic, rolePolicyYaml, &common.GvrConfigurationPolicy)
+			common.DoCleanupPolicy(clientHubDynamic, clientManagedDynamic, rolePolicyYaml, common.GvrConfigurationPolicy)
 			common.OcManaged("delete", "role", "-n", "default", roleName)
 		})
 	})
@@ -131,7 +131,7 @@ var _ = Describe("Test configuration policy", Ordered, func() {
 		const rolePolicyName string = "role-policy-mustnothave"
 		const rolePolicyYaml string = "../resources/configuration_policy/role-policy-mustnothave.yaml"
 		It("should be created on managed cluster", func() {
-			common.DoCreatePolicyTest(clientHubDynamic, clientManagedDynamic, rolePolicyYaml, &common.GvrConfigurationPolicy)
+			common.DoCreatePolicyTest(clientHubDynamic, clientManagedDynamic, rolePolicyYaml, common.GvrConfigurationPolicy)
 		})
 		It("the policy should be compliant", func() {
 			common.DoRootComplianceTest(clientHubDynamic, rolePolicyName, policiesv1.Compliant)
@@ -149,7 +149,7 @@ var _ = Describe("Test configuration policy", Ordered, func() {
 			common.DoRootComplianceTest(clientHubDynamic, rolePolicyName, policiesv1.Compliant)
 		})
 		AfterAll(func() {
-			common.DoCleanupPolicy(clientHubDynamic, clientManagedDynamic, rolePolicyYaml, &common.GvrConfigurationPolicy)
+			common.DoCleanupPolicy(clientHubDynamic, clientManagedDynamic, rolePolicyYaml, common.GvrConfigurationPolicy)
 			common.OcManaged("delete", "role", "-n", "default", roleName)
 		})
 	})
@@ -157,7 +157,7 @@ var _ = Describe("Test configuration policy", Ordered, func() {
 		const rolePolicyName string = "role-policy-mustnothave"
 		const rolePolicyYaml string = "../resources/configuration_policy/role-policy-mustnothave.yaml"
 		It("should be created on managed cluster", func() {
-			common.DoCreatePolicyTest(clientHubDynamic, clientManagedDynamic, rolePolicyYaml, &common.GvrConfigurationPolicy)
+			common.DoCreatePolicyTest(clientHubDynamic, clientManagedDynamic, rolePolicyYaml, common.GvrConfigurationPolicy)
 		})
 		It("the policy should be compliant", func() {
 			common.DoRootComplianceTest(clientHubDynamic, rolePolicyName, policiesv1.Compliant)
@@ -190,7 +190,7 @@ var _ = Describe("Test configuration policy", Ordered, func() {
 			common.DoRootComplianceTest(clientHubDynamic, rolePolicyName, policiesv1.Compliant)
 		})
 		AfterAll(func() {
-			common.DoCleanupPolicy(clientHubDynamic, clientManagedDynamic, rolePolicyYaml, &common.GvrConfigurationPolicy)
+			common.DoCleanupPolicy(clientHubDynamic, clientManagedDynamic, rolePolicyYaml, common.GvrConfigurationPolicy)
 			common.OcManaged("delete", "role", "-n", "default", roleName)
 		})
 	})
@@ -198,7 +198,7 @@ var _ = Describe("Test configuration policy", Ordered, func() {
 		const rolePolicyName string = "role-policy-mustonlyhave"
 		const rolePolicyYaml string = "../resources/configuration_policy/role-policy-mustonlyhave.yaml"
 		It("should be created on managed cluster", func() {
-			common.DoCreatePolicyTest(clientHubDynamic, clientManagedDynamic, rolePolicyYaml, &common.GvrConfigurationPolicy)
+			common.DoCreatePolicyTest(clientHubDynamic, clientManagedDynamic, rolePolicyYaml, common.GvrConfigurationPolicy)
 		})
 		It("the policy should be noncompliant", func() {
 			common.DoRootComplianceTest(clientHubDynamic, rolePolicyName, policiesv1.NonCompliant)
@@ -240,7 +240,7 @@ var _ = Describe("Test configuration policy", Ordered, func() {
 			common.DoRootComplianceTest(clientHubDynamic, rolePolicyName, policiesv1.NonCompliant)
 		})
 		AfterAll(func() {
-			common.DoCleanupPolicy(clientHubDynamic, clientManagedDynamic, rolePolicyYaml, &common.GvrConfigurationPolicy)
+			common.DoCleanupPolicy(clientHubDynamic, clientManagedDynamic, rolePolicyYaml, common.GvrConfigurationPolicy)
 			common.OcManaged("delete", "role", "-n", "default", roleName)
 		})
 	})
@@ -248,7 +248,7 @@ var _ = Describe("Test configuration policy", Ordered, func() {
 		const rolePolicyName string = "role-policy-mustonlyhave"
 		const rolePolicyYaml string = "../resources/configuration_policy/role-policy-mustonlyhave.yaml"
 		It("should be created on managed cluster", func() {
-			common.DoCreatePolicyTest(clientHubDynamic, clientManagedDynamic, rolePolicyYaml, &common.GvrConfigurationPolicy)
+			common.DoCreatePolicyTest(clientHubDynamic, clientManagedDynamic, rolePolicyYaml, common.GvrConfigurationPolicy)
 		})
 		It("the policy should be compliant after enforcing it", func() {
 			By("Patching remediationAction = enforce on root policy")
@@ -321,7 +321,7 @@ var _ = Describe("Test configuration policy", Ordered, func() {
 			common.DoRootComplianceTest(clientHubDynamic, rolePolicyName, policiesv1.Compliant)
 		})
 		AfterAll(func() {
-			common.DoCleanupPolicy(clientHubDynamic, clientManagedDynamic, rolePolicyYaml, &common.GvrConfigurationPolicy)
+			common.DoCleanupPolicy(clientHubDynamic, clientManagedDynamic, rolePolicyYaml, common.GvrConfigurationPolicy)
 			common.OcManaged("delete", "role", "-n", "default", roleName)
 		})
 	})
