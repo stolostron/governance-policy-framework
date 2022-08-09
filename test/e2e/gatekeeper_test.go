@@ -59,7 +59,7 @@ var _ = Describe("Test gatekeeper", Ordered, func() {
 	Describe("Test gatekeeper operator", func() {
 		const GKOPolicyName string = "policy-gatekeeper-operator"
 		It("gatekeeper operator policy should be created on managed", func() {
-			common.DoCreatePolicyTest(clientHubDynamic, clientManagedDynamic, GKOPolicyYaml, nil)
+			common.DoCreatePolicyTest(clientHubDynamic, clientManagedDynamic, GKOPolicyYaml)
 		})
 		It("should create gatekeeper pods on managed cluster", func() {
 			By("Checking number of pods in gatekeeper-system ns")
@@ -83,7 +83,7 @@ var _ = Describe("Test gatekeeper", Ordered, func() {
 			Expect(ctCRD).NotTo(BeNil())
 		})
 		It("configurationPolicies should be created on managed", func() {
-			common.DoCreatePolicyTest(clientHubDynamic, clientManagedDynamic, GKPolicyYaml, nil)
+			common.DoCreatePolicyTest(clientHubDynamic, clientManagedDynamic, GKPolicyYaml)
 
 			By("Checking configpolicies on managed")
 			krl := utils.GetWithTimeout(clientManagedDynamic, common.GvrConfigurationPolicy, cfgpolKRLName, clusterNamespace, true, defaultTimeoutSeconds)
@@ -207,8 +207,8 @@ var _ = Describe("Test gatekeeper", Ordered, func() {
 			}, defaultTimeoutSeconds, 1).Should(Equal("ns-must-have-gk"))
 		})
 		AfterAll(func() {
-			common.DoCleanupPolicy(clientHubDynamic, clientManagedDynamic, GKOPolicyYaml, nil)
-			common.DoCleanupPolicy(clientHubDynamic, clientManagedDynamic, GKPolicyYaml, nil)
+			common.DoCleanupPolicy(clientHubDynamic, clientManagedDynamic, GKOPolicyYaml)
+			common.DoCleanupPolicy(clientHubDynamic, clientManagedDynamic, GKPolicyYaml)
 
 			By("Deleting gatekeeper ConstraintTemplate and K8sRequiredLabels")
 			common.OcManaged("delete", "K8sRequiredLabels", "--all")
