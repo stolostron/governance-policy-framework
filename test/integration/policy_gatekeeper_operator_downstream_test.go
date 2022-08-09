@@ -99,6 +99,10 @@ var _ = Describe("RHACM4K-3055", Ordered, Label("policy-collection", "stable", "
 				g.Expect(err).To(BeNil())
 				for _, item := range podList.Items {
 					if strings.HasPrefix(item.ObjectMeta.Name, "gatekeeper-operator-controller") {
+						// Log the pod status message if there may be a problem starting the pod
+						if len(item.Status.Conditions) > 0 && item.Status.Conditions[0].Status == "False" {
+							GinkgoWriter.Println("Pod status error message: " + item.Status.Conditions[0].Message)
+						}
 						return string(item.Status.Phase)
 					}
 				}
