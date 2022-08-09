@@ -1,0 +1,56 @@
+apiVersion: policy.open-cluster-management.io/v1
+kind: Policy
+metadata:
+  name: pretend-policy-template
+  annotations:
+    policy.open-cluster.management.io/standards: NIST-CSF
+    policy.open-cluster.management.io/categories: PR.PT Protective Technology
+    policy.open-cluster.management.io/controls: PR.PT-3 Least Functionality
+spec:
+  remediationAction: inform
+  disabled: false
+  policy-templates:
+    - objectDefinition:
+        apiVersion: policy.open-cluster-management.io/v1
+        kind: PretendPolicy
+        metadata:
+          name: pretend-policy-template
+        spec:
+          pruneObjectBehavior: None
+          remediationAction: enforce
+          namespaceSelector:
+            exclude: ["kube-*"]
+            include: ["default"]
+          object-templates:
+            - complianceType: mustnothave
+              objectDefinition:
+                apiVersion: v1
+                kind: ConfigMap
+                metadata:
+                  name: test-pretend-policy-configmap
+                data:
+                  testvalue: caterpie
+
+---
+apiVersion: policy.open-cluster-management.io/v1
+kind: PlacementBinding
+metadata:
+  name: pretend-policy-template-pb
+placementRef:
+  apiGroup: apps.open-cluster-management.io
+  kind: PlacementRule
+  name: pretend-policy-template-plr
+subjects:
+- apiGroup: policy.open-cluster-management.io
+  kind: Policy
+  name: pretend-policy-template
+---
+apiVersion: apps.open-cluster-management.io/v1
+kind: PlacementRule
+metadata:
+  name: pretend-policy-template-plr
+spec:
+  clusterConditions: []
+  clusterSelector:
+    matchExpressions:
+      []
