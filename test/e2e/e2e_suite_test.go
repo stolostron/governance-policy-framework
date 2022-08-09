@@ -44,6 +44,8 @@ func init() {
 
 var _ = test.ConfigPruneBehavior()
 
+var _ = test.TemplateSyncErrors()
+
 var _ = BeforeSuite(func() {
 	By("Setup hub and managed client")
 	kubeconfigHub = common.KubeconfigHub

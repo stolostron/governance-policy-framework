@@ -15,6 +15,7 @@ import (
 	ginkgo "github.com/onsi/ginkgo/v2"
 	"github.com/onsi/gomega"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 	"k8s.io/client-go/dynamic"
@@ -276,4 +277,39 @@ func OutputDebugInfo(testName string, additionalResources ...string) {
 	for _, resource := range resources {
 		_, _ = utils.KubectlWithOutput("get", resource, "--all-namespaces", "-o", "yaml")
 	}
+}
+
+// GetLatestStatusMessage returns the most recent status message for the given policy template.
+// If the policy, template, or status do not exist for any reason, an empty string is returned.
+func GetLatestStatusMessage(managed dynamic.Interface, policyName string, templateIdx int) string {
+	replicatedPolicyName := UserNamespace + "." + policyName
+	policyInterface := managed.Resource(GvrPolicy).Namespace(ClusterNamespace)
+
+	policy, err := policyInterface.Get(context.TODO(), replicatedPolicyName, metav1.GetOptions{})
+	if err != nil {
+		return ""
+	}
+
+	details, found, err := unstructured.NestedSlice(policy.Object, "status", "details")
+	if !found || err != nil || len(details) <= templateIdx {
+		return ""
+	}
+
+	templateDetails, ok := details[templateIdx].(map[string]interface{})
+	if !ok {
+		return ""
+	}
+
+	history, found, err := unstructured.NestedSlice(templateDetails, "history")
+	if !found || err != nil || len(history) == 0 {
+		return ""
+	}
+
+	topHistoryItem, ok := history[0].(map[string]interface{})
+	if !ok {
+		return ""
+	}
+
+	message, _, _ := unstructured.NestedString(topHistoryItem, "message")
+	return message
 }
