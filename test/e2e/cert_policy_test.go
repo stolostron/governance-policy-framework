@@ -20,7 +20,7 @@ var _ = Describe("Test cert policy", func() {
 		const certPolicyName string = "cert-policy"
 		const certPolicyYaml string = "../resources/cert_policy/cert-policy.yaml"
 		It("should be created on managed cluster", func() {
-			common.DoCreatePolicyTest(clientHubDynamic, clientManagedDynamic, certPolicyYaml, &common.GvrCertPolicy)
+			common.DoCreatePolicyTest(clientHubDynamic, clientManagedDynamic, certPolicyYaml, common.GvrCertPolicy)
 		})
 		It("the policy should be compliant as there is no certificate", func() {
 			common.DoRootComplianceTest(clientHubDynamic, certPolicyName, policiesv1.Compliant)
@@ -123,7 +123,7 @@ var _ = Describe("Test cert policy", func() {
 			common.DoRootComplianceTest(clientHubDynamic, certPolicyName, policiesv1.Compliant)
 		})
 		AfterAll(func() {
-			common.DoCleanupPolicy(clientHubDynamic, clientManagedDynamic, certPolicyYaml, &common.GvrCertPolicy)
+			common.DoCleanupPolicy(clientHubDynamic, clientManagedDynamic, certPolicyYaml, common.GvrCertPolicy)
 
 			By("Deleting ../resources/cert_policy/issuer.yaml in ns default")
 			common.OcManaged("delete", "-f", "../resources/cert_policy/issuer.yaml", "-n", "default")
