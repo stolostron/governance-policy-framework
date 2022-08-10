@@ -151,15 +151,15 @@ var _ = Describe("Test configuration policy", func() {
 			By("Deleting the role in default namespace on managed cluster")
 			utils.Kubectl("delete", "role", "-n", "default", "--all", "--kubeconfig=../../kubeconfig_managed")
 			By("Checking if the role has been deleted")
-			Eventually(func() interface{} {
+			Eventually(func(g Gomega) interface{} {
 				roleList, err := clientManagedDynamic.Resource(common.GvrRole).Namespace("default").List(context.TODO(), metav1.ListOptions{})
-				Expect(err).To(BeNil())
+				g.Expect(err).To(BeNil())
 				return len(roleList.Items)
 			}, defaultTimeoutSeconds, 1).Should(Equal(0))
 			By("Checking if the role has been recreated")
-			Eventually(func() interface{} {
+			Eventually(func(g Gomega) interface{} {
 				roleList, err := clientManagedDynamic.Resource(common.GvrRole).Namespace("default").List(context.TODO(), metav1.ListOptions{})
-				Expect(err).To(BeNil())
+				g.Expect(err).To(BeNil())
 				return len(roleList.Items)
 			}, defaultTimeoutSeconds, 1).Should(Equal(1))
 			By("Checking if the status of root policy is still compliant")
@@ -219,9 +219,9 @@ var _ = Describe("Test configuration policy", func() {
 			utils.Pause(15)
 			utils.Kubectl("delete", "role", "-n", "default", "--all", "--kubeconfig=../../kubeconfig_managed")
 			By("Checking if there is any role left")
-			Eventually(func() interface{} {
+			Eventually(func(g Gomega) interface{} {
 				roleList, err := clientManagedDynamic.Resource(common.GvrRole).Namespace("default").List(context.TODO(), metav1.ListOptions{})
-				Expect(err).To(BeNil())
+				g.Expect(err).To(BeNil())
 				return len(roleList.Items)
 			}, defaultTimeoutSeconds, 1).Should(Equal(0))
 		})
@@ -334,9 +334,9 @@ var _ = Describe("Test configuration policy", func() {
 			utils.Kubectl("apply", "-f", "../resources/configuration_policy/role-policy-e2e.yaml", "-n", "default", "--kubeconfig=../../kubeconfig_managed")
 			utils.Pause(20)
 			By("Checking if the role has been deleted")
-			Eventually(func() interface{} {
+			Eventually(func(g Gomega) interface{} {
 				roleList, err := clientManagedDynamic.Resource(common.GvrRole).Namespace("default").List(context.TODO(), metav1.ListOptions{})
-				Expect(err).To(BeNil())
+				g.Expect(err).To(BeNil())
 				return len(roleList.Items)
 			}, defaultTimeoutSeconds, 1).Should(Equal(0))
 			By("Checking if the status of root policy is compliant")
@@ -490,9 +490,9 @@ var _ = Describe("Test configuration policy", func() {
 		})
 		It("the role should be created by policy", func() {
 			By("Checking if the role has been created")
-			Eventually(func() interface{} {
+			Eventually(func(g Gomega) interface{} {
 				roleList, err := clientManagedDynamic.Resource(common.GvrRole).Namespace("default").List(context.TODO(), metav1.ListOptions{})
-				Expect(err).To(BeNil())
+				g.Expect(err).To(BeNil())
 				return len(roleList.Items)
 			}, defaultTimeoutSeconds, 1).Should(Equal(1))
 		})
@@ -500,15 +500,15 @@ var _ = Describe("Test configuration policy", func() {
 			By("Deleting the role in default namespace on managed cluster")
 			utils.Kubectl("delete", "role", "-n", "default", "--all", "--kubeconfig=../../kubeconfig_managed")
 			By("Checking if the role has been deleted")
-			Eventually(func() interface{} {
+			Eventually(func(g Gomega) interface{} {
 				roleList, err := clientManagedDynamic.Resource(common.GvrRole).Namespace("default").List(context.TODO(), metav1.ListOptions{})
-				Expect(err).To(BeNil())
+				g.Expect(err).To(BeNil())
 				return len(roleList.Items)
 			}, defaultTimeoutSeconds, 1).Should(Equal(0))
 			By("Checking if the role has been recreated")
-			Eventually(func() interface{} {
+			Eventually(func(g Gomega) interface{} {
 				roleList, err := clientManagedDynamic.Resource(common.GvrRole).Namespace("default").List(context.TODO(), metav1.ListOptions{})
-				Expect(err).To(BeNil())
+				g.Expect(err).To(BeNil())
 				return len(roleList.Items)
 			}, defaultTimeoutSeconds, 1).Should(Equal(1))
 			By("Checking if the status of root policy is still compliant")
