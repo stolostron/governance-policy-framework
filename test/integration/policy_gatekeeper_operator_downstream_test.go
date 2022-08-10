@@ -83,20 +83,20 @@ var _ = Describe("RHACM4K-3055", Ordered, Label("policy-collection", "stable", "
 		It("Gatekeeper operator pod should be running", func() {
 			By("Checking if pod gatekeeper-operator has been created")
 			var i int = 0
-			Eventually(func() interface{} {
+			Eventually(func(g Gomega) interface{} {
 				if i == 60*2 || i == 60*4 {
 					fmt.Println("gatekeeper operator pod still not created, deleting subscription and let it recreate", i)
 					utils.KubectlWithOutput("delete", "-n", "openshift-operators", "subscriptions.operators.coreos.com", "gatekeeper-operator-product", "--kubeconfig="+kubeconfigManaged)
 				}
 				i++
 				podList, err := clientManaged.CoreV1().Pods("openshift-operators").List(context.TODO(), metav1.ListOptions{LabelSelector: "control-plane in (controller-manager, gatekeeper-operator-controller-manager)"})
-				Expect(err).To(BeNil())
+				g.Expect(err).To(BeNil())
 				return len(podList.Items)
 			}, defaultTimeoutSeconds*12, 1).Should(Equal(1))
 			By("Checking if pod gatekeeper-operator is running")
-			Eventually(func() interface{} {
+			Eventually(func(g Gomega) interface{} {
 				podList, err := clientManaged.CoreV1().Pods("openshift-operators").List(context.TODO(), metav1.ListOptions{LabelSelector: "control-plane in (controller-manager, gatekeeper-operator-controller-manager)"})
-				Expect(err).To(BeNil())
+				g.Expect(err).To(BeNil())
 				for _, item := range podList.Items {
 					if strings.HasPrefix(item.ObjectMeta.Name, "gatekeeper-operator-controller") {
 						return string(item.Status.Phase)
@@ -125,29 +125,29 @@ var _ = Describe("RHACM4K-3055", Ordered, Label("policy-collection", "stable", "
 		})
 		It("Gatekeeper audit pod should be running", func() {
 			By("Checking if pod gatekeeper-audit has been created")
-			Eventually(func() interface{} {
+			Eventually(func(g Gomega) interface{} {
 				podList, err := clientManaged.CoreV1().Pods("openshift-gatekeeper-system").List(context.TODO(), metav1.ListOptions{LabelSelector: "control-plane=audit-controller"})
-				Expect(err).To(BeNil())
+				g.Expect(err).To(BeNil())
 				return len(podList.Items)
 			}, defaultTimeoutSeconds*2, 1).Should(Equal(1))
 			By("Checking if pod gatekeeper-audit is running")
-			Eventually(func() interface{} {
+			Eventually(func(g Gomega) interface{} {
 				podList, err := clientManaged.CoreV1().Pods("openshift-gatekeeper-system").List(context.TODO(), metav1.ListOptions{LabelSelector: "control-plane=audit-controller"})
-				Expect(err).To(BeNil())
+				g.Expect(err).To(BeNil())
 				return string(podList.Items[0].Status.Phase)
 			}, defaultTimeoutSeconds*4, 1).Should(Equal("Running"))
 		})
 		It("Gatekeeper controller manager pods should be running", func() {
 			By("Checking if pod gatekeeper-controller-manager has been created")
-			Eventually(func() interface{} {
+			Eventually(func(g Gomega) interface{} {
 				podList, err := clientManaged.CoreV1().Pods("openshift-gatekeeper-system").List(context.TODO(), metav1.ListOptions{LabelSelector: "control-plane=controller-manager"})
-				Expect(err).To(BeNil())
+				g.Expect(err).To(BeNil())
 				return len(podList.Items)
 			}, defaultTimeoutSeconds*2, 1).Should(Equal(2))
 			By("Checking if pod gatekeeper-controller-manager is running")
-			Eventually(func() interface{} {
+			Eventually(func(g Gomega) interface{} {
 				podList, err := clientManaged.CoreV1().Pods("openshift-gatekeeper-system").List(context.TODO(), metav1.ListOptions{LabelSelector: "control-plane=controller-manager"})
-				Expect(err).To(BeNil())
+				g.Expect(err).To(BeNil())
 				return string(podList.Items[0].Status.Phase) + "/" + string(podList.Items[1].Status.Phase)
 			}, defaultTimeoutSeconds*4, 1).Should(Equal("Running/Running"))
 		})
