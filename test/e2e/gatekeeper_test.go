@@ -162,10 +162,10 @@ var _ = Describe("Test gatekeeper", func() {
 				details := plc.Object["status"].(map[string]interface{})["details"].([]interface{})
 				return details[1].(map[string]interface{})["history"]
 			}, defaultTimeoutSeconds, 1).ShouldNot(BeNil())
-			Eventually(func() interface{} {
+			Eventually(func(g Gomega) interface{} {
 				plc := utils.GetWithTimeout(clientHubDynamic, common.GvrPolicy, "default."+GKPolicyName, clusterNamespace, true, defaultTimeoutSeconds)
 				details := plc.Object["status"].(map[string]interface{})["details"].([]interface{})
-				Expect(details[1].(map[string]interface{})["history"]).NotTo(BeNil())
+				g.Expect(details[1].(map[string]interface{})["history"]).NotTo(BeNil())
 				return details[1].(map[string]interface{})["history"].([]interface{})[0].(map[string]interface{})["message"]
 			}, defaultTimeoutSeconds, 1).Should(Equal("Compliant; notification - k8srequiredlabels [ns-must-have-gk] found as specified, therefore this Object template is compliant"))
 			By("Checking if violation message for policy template policy-gatekeeper-admission is compliant")
