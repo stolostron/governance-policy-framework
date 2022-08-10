@@ -80,11 +80,11 @@ var _ = Describe("GRC: [P1][Sev1][policy-grc] Test policy set", Ordered, Label("
 			yamlPlc := utils.ParseYaml("../resources/policy_set/statuscheck-1.yaml")
 
 			policySetRsrc := clientHubDynamic.Resource(testcommon.GvrPolicySet)
-			Eventually(func() interface{} {
+			Eventually(func(g Gomega) interface{} {
 				rootPlcSet, err := policySetRsrc.Namespace(userNamespace).Get(
 					context.TODO(), testPolicySetName, metav1.GetOptions{},
 				)
-				Expect(err).To(BeNil())
+				g.Expect(err).To(BeNil())
 				return rootPlcSet.Object["status"]
 			},
 				defaultTimeoutSeconds*2,
@@ -105,11 +105,11 @@ var _ = Describe("GRC: [P1][Sev1][policy-grc] Test policy set", Ordered, Label("
 			yamlPlc := utils.ParseYaml("../resources/policy_set/statuscheck-2.yaml")
 
 			policySetRsrc := clientHubDynamic.Resource(testcommon.GvrPolicySet)
-			Eventually(func() interface{} {
+			Eventually(func(g Gomega) interface{} {
 				rootPlcSet, err := policySetRsrc.Namespace(userNamespace).Get(
 					context.TODO(), testPolicySetName, metav1.GetOptions{},
 				)
-				Expect(err).To(BeNil())
+				g.Expect(err).To(BeNil())
 				return rootPlcSet.Object["status"]
 			},
 				defaultTimeoutSeconds*2,
@@ -148,11 +148,11 @@ var _ = Describe("GRC: [P1][Sev1][policy-grc] Test policy set", Ordered, Label("
 			yamlPlc := utils.ParseYaml("../resources/policy_set/statuscheck-3.yaml")
 
 			policySetRsrc := clientHubDynamic.Resource(testcommon.GvrPolicySet)
-			Eventually(func() interface{} {
+			Eventually(func(g Gomega) interface{} {
 				rootPlcSet, err := policySetRsrc.Namespace(userNamespace).Get(
 					context.TODO(), testPolicySetName, metav1.GetOptions{},
 				)
-				Expect(err).To(BeNil())
+				g.Expect(err).To(BeNil())
 				return rootPlcSet.Object["status"]
 			},
 				defaultTimeoutSeconds*2,
@@ -186,11 +186,11 @@ var _ = Describe("GRC: [P1][Sev1][policy-grc] Test policy set", Ordered, Label("
 			yamlPlc := utils.ParseYaml("../resources/policy_set/statuscheck-4.yaml")
 
 			policySetRsrc := clientHubDynamic.Resource(testcommon.GvrPolicySet)
-			Eventually(func() interface{} {
+			Eventually(func(g Gomega) interface{} {
 				rootPlcSet, err := policySetRsrc.Namespace(userNamespace).Get(
 					context.TODO(), testPolicySetName, metav1.GetOptions{},
 				)
-				Expect(err).To(BeNil())
+				g.Expect(err).To(BeNil())
 				return rootPlcSet.Object["status"]
 			},
 				defaultTimeoutSeconds*2,
