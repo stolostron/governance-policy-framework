@@ -99,9 +99,9 @@ func complianceScanTest(scanPolicyName string, scanPolicyUrl string, scanName st
 	})
 	It("ComplianceCheckResult should be created", func() {
 		By("Checking if any ComplianceCheckResult CR exists on managed cluster")
-		Eventually(func() interface{} {
+		Eventually(func(g Gomega) interface{} {
 			list, err := clientManagedDynamic.Resource(common.GvrComplianceCheckResult).Namespace("openshift-compliance").List(context.TODO(), metav1.ListOptions{})
-			Expect(err).To(BeNil())
+			g.Expect(err).To(BeNil())
 			return len(list.Items)
 		}, common.MaxTravisTimeoutSeconds, 1).ShouldNot(Equal(0))
 	})
@@ -134,9 +134,9 @@ func complianceScanTest(scanPolicyName string, scanPolicyUrl string, scanName st
 		By("Wait for compliancescan to be deleted")
 		utils.ListWithTimeoutByNamespace(clientManagedDynamic, common.GvrComplianceScan, metav1.ListOptions{}, "openshift-compliance", 0, false, defaultTimeoutSeconds)
 		By("Wait for other pods to be deleted in openshift-compliance ns")
-		Eventually(func() interface{} {
+		Eventually(func(g Gomega) interface{} {
 			podList, err := clientManaged.CoreV1().Pods("openshift-compliance").List(context.TODO(), metav1.ListOptions{})
-			Expect(err).To(BeNil())
+			g.Expect(err).To(BeNil())
 			return len(podList.Items)
 		}, defaultTimeoutSeconds*4, 1).Should(Equal(3))
 	})
@@ -201,7 +201,7 @@ var _ = Describe("RHACM4K-2222 GRC: [P1][Sev1][policy-grc] Test compliance opera
 		It("Compliance operator pod should be running", func() {
 			By("Checking if pod compliance-operator has been created")
 			var i int = 0
-			Eventually(func() interface{} {
+			Eventually(func(g Gomega) interface{} {
 				if i == 60*2 || i == 60*4 {
 					fmt.Println("compliance operator pod still not created, deleting subscription and let it recreate", i)
 					utils.KubectlWithOutput("get", "-n", "openshift-compliance", "subscriptions.operators.coreos.com", "compliance-operator", "-oyaml", "--kubeconfig="+kubeconfigManaged)
@@ -209,39 +209,39 @@ var _ = Describe("RHACM4K-2222 GRC: [P1][Sev1][policy-grc] Test compliance opera
 				}
 				i++
 				podList, err := clientManaged.CoreV1().Pods("openshift-compliance").List(context.TODO(), metav1.ListOptions{LabelSelector: "name=compliance-operator"})
-				Expect(err).To(BeNil())
+				g.Expect(err).To(BeNil())
 				return len(podList.Items)
 			}, defaultTimeoutSeconds*12, 1).Should(Equal(1))
 			By("Checking if pod compliance-operator is running")
-			Eventually(func() interface{} {
+			Eventually(func(g Gomega) interface{} {
 				podList, err := clientManaged.CoreV1().Pods("openshift-compliance").List(context.TODO(), metav1.ListOptions{LabelSelector: "name=compliance-operator"})
-				Expect(err).To(BeNil())
+				g.Expect(err).To(BeNil())
 				return string(podList.Items[0].Status.Phase)
 			}, defaultTimeoutSeconds*6, 1).Should(Equal("Running"))
 		})
 		It("Profile bundle pods should be running", func() {
 			By("Checking if pod ocp4-pp has been created")
-			Eventually(func() interface{} {
+			Eventually(func(g Gomega) interface{} {
 				podList, err := clientManaged.CoreV1().Pods("openshift-compliance").List(context.TODO(), metav1.ListOptions{LabelSelector: "profile-bundle=ocp4"})
-				Expect(err).To(BeNil())
+				g.Expect(err).To(BeNil())
 				return len(podList.Items)
 			}, defaultTimeoutSeconds*6, 1).Should(Equal(1))
 			By("Checking if pod ocp4-pp is running")
-			Eventually(func() interface{} {
+			Eventually(func(g Gomega) interface{} {
 				podList, err := clientManaged.CoreV1().Pods("openshift-compliance").List(context.TODO(), metav1.ListOptions{LabelSelector: "profile-bundle=ocp4"})
-				Expect(err).To(BeNil())
+				g.Expect(err).To(BeNil())
 				return string(podList.Items[0].Status.Phase)
 			}, defaultTimeoutSeconds*8, 1).Should(Equal("Running"))
 			By("Checking if pod rhcos4-pp has been created")
-			Eventually(func() interface{} {
+			Eventually(func(g Gomega) interface{} {
 				podList, err := clientManaged.CoreV1().Pods("openshift-compliance").List(context.TODO(), metav1.ListOptions{LabelSelector: "profile-bundle=rhcos4"})
-				Expect(err).To(BeNil())
+				g.Expect(err).To(BeNil())
 				return len(podList.Items)
 			}, defaultTimeoutSeconds*6, 1).Should(Equal(1))
 			By("Checking if pod rhcos4-pp is running")
-			Eventually(func() interface{} {
+			Eventually(func(g Gomega) interface{} {
 				podList, err := clientManaged.CoreV1().Pods("openshift-compliance").List(context.TODO(), metav1.ListOptions{LabelSelector: "profile-bundle=rhcos4"})
-				Expect(err).To(BeNil())
+				g.Expect(err).To(BeNil())
 				return string(podList.Items[0].Status.Phase)
 			}, defaultTimeoutSeconds*8, 1).Should(Equal("Running"))
 		})
