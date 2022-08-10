@@ -263,7 +263,7 @@ func DoRootComplianceTest(hub dynamic.Interface, policyName string, compliance p
 	).Should(gomega.Equal(compliance))
 }
 
-func OutputDebugInfo(testName string, additionalResources ...string) {
+func OutputDebugInfo(testName string, kubeconfig string, additionalResources ...string) {
 	ginkgo.GinkgoWriter.Printf("%s test Kubernetes info:\n", testName)
 
 	resources := []string{
@@ -275,7 +275,7 @@ func OutputDebugInfo(testName string, additionalResources ...string) {
 	resources = append(resources, additionalResources...)
 
 	for _, resource := range resources {
-		_, _ = utils.KubectlWithOutput("get", resource, "--all-namespaces", "-o", "yaml")
+		_, _ = utils.KubectlWithOutput("get", resource, "--all-namespaces", "-o", "yaml", "--kubeconfig="+kubeconfig)
 	}
 }
 
