@@ -133,7 +133,7 @@ var _ = Describe("GRC: [P1][Sev1][policy-grc] Test policyreport_info metric", Or
 
 		if len(routeList.Items) == 0 {
 			By("Exposing the insights metrics service as a route")
-			_, err = common.OcHub("expose", "service", metricsSvc.Name, "-n", ocmNS, `--overrides={"spec":{"tls":{"termination":"reencrypt"}}}`)
+			_, err = common.OcHub("create", "route", "reencrypt", metricsSvc.Name, "--service="+metricsSvc.Name, "-n", ocmNS)
 			Expect(err).To(BeNil())
 
 			Eventually(func() interface{} {
