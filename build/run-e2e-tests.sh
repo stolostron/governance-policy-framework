@@ -14,7 +14,7 @@ fi
 if ! which oc > /dev/null; then
     echo "Installing oc and kubectl clis..."
     mkdir clis-unpacked
-    curl -kLo oc.tar.gz https://mirror.openshift.com/pub/openshift-v4/clients/ocp/latest/openshift-client-linux.tar.gz
+    curl -kLo oc.tar.gz https://mirror.openshift.com/pub/openshift-v4/clients/ocp/4.10.21/openshift-client-linux.tar.gz
     tar -xzf oc.tar.gz -C clis-unpacked
     chmod +x ./clis-unpacked/oc
     chmod +x ./clis-unpacked/kubectl
