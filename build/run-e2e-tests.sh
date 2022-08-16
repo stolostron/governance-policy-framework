@@ -14,7 +14,7 @@ fi
 if ! which oc > /dev/null; then
     echo "Installing oc and kubectl clis..."
     mkdir clis-unpacked
-    curl -kLo oc.tar.gz https://mirror.openshift.com/pub/openshift-v4/clients/ocp/4.10.21/openshift-client-linux.tar.gz
+    curl --fail -kLo oc.tar.gz https://mirror.openshift.com/pub/openshift-v4/clients/ocp/4.10.21/openshift-client-linux.tar.gz
     tar -xzf oc.tar.gz -C clis-unpacked
     chmod +x ./clis-unpacked/oc
     chmod +x ./clis-unpacked/kubectl
@@ -24,7 +24,7 @@ fi
 if ! which kind > /dev/null; then
     KIND_VERSION="v0.14.0"
     echo "* Installing kind ${KIND_VERSION}..."
-    curl -Lo ./kind https://github.com/kubernetes-sigs/kind/releases/download/${KIND_VERSION}/kind-$(uname)-amd64
+    curl --fail -Lo ./kind https://github.com/kubernetes-sigs/kind/releases/download/${KIND_VERSION}/kind-$(uname)-amd64
     chmod +x ./kind
     sudo mv ./kind /usr/local/bin/kind
 fi
