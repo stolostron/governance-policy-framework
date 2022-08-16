@@ -22,7 +22,7 @@ if ! which oc > /dev/null; then
     sudo mv ./clis-unpacked/oc /usr/local/bin/
 fi
 if ! which kind > /dev/null; then
-    KIND_VERSION=${KIND_VERSION:-"$(curl -s https://api.github.com/repos/kubernetes-sigs/kind/releases/latest | jq -r '.tag_name')"}
+    KIND_VERSION="v0.14.0"
     echo "* Installing kind ${KIND_VERSION}..."
     curl -Lo ./kind https://github.com/kubernetes-sigs/kind/releases/download/${KIND_VERSION}/kind-$(uname)-amd64
     chmod +x ./kind
