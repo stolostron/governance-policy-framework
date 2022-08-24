@@ -42,21 +42,12 @@ var _ = Describe("GRC: [P1][Sev1][policy-grc] Test the kyverno generator policie
 		)
 		Expect(err).To(BeNil())
 
-		By("Checking that " + kyvernoInstallPolicy + " exists on the Hub cluster")
-		rootPolicy := utils.GetWithTimeout(
-			clientHubDynamic, common.GvrPolicy, kyvernoInstallPolicy, userNamespace, true, defaultTimeoutSeconds*2,
-		)
-		Expect(rootPolicy).NotTo(BeNil())
-
-		By("Patching remediationAction = enforce on the root policy")
-		_, err = clientHubDynamic.Resource(common.GvrPolicy).Namespace(userNamespace).Patch(
-			context.TODO(),
-			kyvernoInstallPolicy,
-			k8stypes.JSONPatchType,
-			[]byte(`[{"op": "replace", "path": "/spec/remediationAction", "value": "enforce"}]`),
-			metav1.PatchOptions{},
-		)
-		Expect(err).To(BeNil())
+		By("Checking if the status of the root policy is NonCompliant")
+		Eventually(
+			common.GetComplianceState(clientHubDynamic, userNamespace, kyvernoInstallPolicy, clusterNamespace),
+			defaultTimeoutSeconds*2,
+			1,
+		).Should(Equal(policiesv1.NonCompliant))
 
 		By("Patching the kyverno subscription's placement rule in the policy")
 		_, err = utils.KubectlWithOutput(
@@ -66,20 +57,19 @@ var _ = Describe("GRC: [P1][Sev1][policy-grc] Test the kyverno generator policie
 			"policy.policy.open-cluster-management.io",
 			kyvernoInstallPolicy,
 			"--type=json",
-			"-p=[{\"op\": \"remove\", \"path\": \"/spec/policy-templates/1/objectDefinition/spec/object-templates/3/objectDefinition/spec/clusterSelector/matchLabels\"}]",
+			`-p=[{"op": "replace", "path": "/spec/policy-templates/1/objectDefinition/spec/object-templates/3/objectDefinition/spec/clusterSelector", `+
+				`"value":{"matchExpressions":[{"key": "name", "operator": "In", "values": ["`+clusterNamespace+`"]}]}}]`,
 			"--kubeconfig="+kubeconfigHub,
 		)
 		Expect(err).To(BeNil())
 
-		By("Checking that placementrule kyverno-placement-1 exists on the Hub cluster")
-		placement := utils.GetWithTimeout(
-			clientHubDynamic, common.GvrPlacementRule, "kyverno-placement-1", kyvernoNamespace, true, defaultTimeoutSeconds*2,
-		)
-		Expect(placement).NotTo(BeNil())
-
-		By("Patching the actual placement rule")
-		err = common.PatchPlacementRule(
-			kyvernoNamespace, "kyverno-placement-1", clusterNamespace, kubeconfigHub,
+		By("Patching remediationAction = enforce on the root policy")
+		_, err = clientHubDynamic.Resource(common.GvrPolicy).Namespace(userNamespace).Patch(
+			context.TODO(),
+			kyvernoInstallPolicy,
+			k8stypes.JSONPatchType,
+			[]byte(`[{"op": "replace", "path": "/spec/remediationAction", "value": "enforce"}]`),
+			metav1.PatchOptions{},
 		)
 		Expect(err).To(BeNil())
 
@@ -119,18 +109,13 @@ var _ = Describe("GRC: [P1][Sev1][policy-grc] Test the kyverno generator policie
 			_, err := utils.KubectlWithOutput(
 				"apply", "-f", url, "-n", userNamespace, "--kubeconfig="+kubeconfigHub,
 			)
+			Expect(err).To(BeNil())
 
 			By("Patching " + name + " placement rule")
 			err = common.PatchPlacementRule(
 				userNamespace, "placement-"+name, clusterNamespace, kubeconfigHub,
 			)
 			Expect(err).To(BeNil())
-
-			By("Checking that " + name + " exists on the Hub cluster")
-			rootPolicy := utils.GetWithTimeout(
-				clientHubDynamic, common.GvrPolicy, name, userNamespace, true, defaultTimeoutSeconds,
-			)
-			Expect(rootPolicy).NotTo(BeNil())
 		}
 	})
 
