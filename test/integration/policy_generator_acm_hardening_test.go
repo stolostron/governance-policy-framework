@@ -31,10 +31,17 @@ func cleanup(namespace string, secret string, user common.OCPUser) {
 	// Wait for the namespace to be fully deleted before proceeding.
 	Eventually(
 		func() bool {
-			_, err := clientHub.CoreV1().Namespaces().Get(
+			ns, err := clientHub.CoreV1().Namespaces().Get(
 				context.TODO(), namespace, metav1.GetOptions{},
 			)
-			return k8serrors.IsNotFound(err)
+			if ns != nil {
+				GinkgoWriter.Printf("'%s' namespace still exists: %+v\n", namespace, ns)
+			}
+			isNotFound := k8serrors.IsNotFound(err)
+			if !isNotFound && err != nil {
+				GinkgoWriter.Printf("'%s' namespace 'get' error: %w", err)
+			}
+			return isNotFound
 		},
 		defaultTimeoutSeconds,
 		1,
