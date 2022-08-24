@@ -228,8 +228,12 @@ var _ = Describe("RHACM4K-3055", Ordered, Label("policy-collection", "stable", "
 			By("Creating invalid namespace on managed")
 			Eventually(func() interface{} {
 				out, _ := utils.KubectlWithOutput("apply", "-f", "../resources/gatekeeper/ns-create-invalid.yaml", "--kubeconfig="+kubeconfigManaged)
+				if out == "namespace/e2etestfail created" {
+					GinkgoWriter.Println("Deleting created namespace to retry create:")
+					_, _ = utils.KubectlWithOutput("delete", "-f", "../resources/gatekeeper/ns-create-invalid.yaml", "--kubeconfig="+kubeconfigManaged)
+				}
 				return out
-			}, defaultTimeoutSeconds*6, 1).Should(And(
+			}, defaultTimeoutSeconds*6, 5).Should(And(
 				ContainSubstring("validation.gatekeeper.sh"),
 				ContainSubstring("denied"),
 				ContainSubstring("ns-must-have-gk")))
