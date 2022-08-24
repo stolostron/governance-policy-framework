@@ -65,6 +65,10 @@ endef
 
 USE_VENDORIZED_BUILD_HARNESS ?=
 
+.PHONY: fmt lint fmt-dependencies lint-dependencies
+
+include build/common/Makefile.common.mk
+
 ifndef USE_VENDORIZED_BUILD_HARNESS
 	ifeq ($(TRAVIS_BUILD),1)
 		ifndef GITHUB_TOKEN
@@ -111,7 +115,16 @@ fmt-dependencies:
 fmt: fmt-dependencies
 	find . -not \( -path "./.go" -prune \) -name "*.go" | xargs gofmt -s -w
 	find . -not \( -path "./.go" -prune \) -name "*.go" | xargs gofumpt -l -w
-	find . -not \( -path "./.go" -prune \) -name "*.go" | xargs gci -w -local "$(shell cat go.mod | head -1 | cut -d " " -f 2)"
+
+############################################################
+# lint section
+############################################################
+
+.PHONY: lint-dependencies
+lint-dependencies:
+	$(call go-get-tool,github.com/golangci/golangci-lint/cmd/golangci-lint@v1.46.2)
+
+lint: lint-dependencies lint-all
 
 ############################################################
 # e2e test section

@@ -14,6 +14,7 @@ import (
 	. "github.com/onsi/gomega"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
+	"k8s.io/klog"
 	policiesv1 "open-cluster-management.io/governance-policy-propagator/api/v1"
 
 	"github.com/stolostron/governance-policy-framework/test/common"
@@ -46,32 +47,58 @@ var _ = Describe("GRC: [P1][Sev1][policy-grc] Test policyreport_info metric", Or
 			By("*** Debugging policyreport_info metric failure ***")
 
 			By("Getting current policies")
-			common.OcHub("get", "policies.policy.open-cluster-management.io", "-A", "-o", "yaml")
+			_, err := common.OcHub("get", "policies.policy.open-cluster-management.io", "-A", "-o", "yaml")
+			Expect(err).To(BeNil())
 
 			By("Getting current configurationpolicies")
-			common.OcHub("get", "configurationpolicies.policy.open-cluster-management.io", "-A", "-o", "yaml")
+			_, err = common.OcHub("get", "configurationpolicies.policy.open-cluster-management.io", "-A", "-o", "yaml")
+			Expect(err).To(BeNil())
 
 			By("Getting current policyreports")
-			common.OcHub("get", "policyreports.wgpolicyk8s.io", "-A", "-o", "yaml")
+			_, err = common.OcHub("get", "policyreports.wgpolicyk8s.io", "-A", "-o", "yaml")
+			Expect(err).To(BeNil())
 
 			By("Getting yaml and logs for insights client pod(s)")
-			common.OcHub("get", "pods", "-n", ocmNS, "-l", insightsClientPodSelector, "-o", "yaml")
+			_, err = common.OcHub("get", "pods", "-n", ocmNS, "-l", insightsClientPodSelector, "-o", "yaml")
+			Expect(err).To(BeNil())
 
-			clientPodList, err := clientHub.CoreV1().Pods(ocmNS).List(context.TODO(), metav1.ListOptions{LabelSelector: insightsClientPodSelector})
+			clientPodList, err := clientHub.CoreV1().Pods(ocmNS).List(
+				context.TODO(),
+				metav1.ListOptions{
+					LabelSelector: insightsClientPodSelector,
+				},
+			)
 			Expect(err).To(BeNil())
 			for _, pod := range clientPodList.Items {
 				By("Logs for " + pod.GetName())
-				common.OcHub("logs", "-n", ocmNS, pod.GetName())
+				_, err := common.OcHub("logs", "-n", ocmNS, pod.GetName())
+				Expect(err).To(BeNil())
 			}
 
 			By("Getting yaml and logs for insights metric pod(s)")
-			common.OcHub("get", "pods", "-n", ocmNS, "-l", insightsMetricsSelector, "-o", "yaml")
+			_, err = common.OcHub(
+				"get",
+				"pods",
+				"-n",
+				ocmNS,
+				"-l",
+				insightsMetricsSelector,
+				"-o",
+				"yaml",
+			)
+			Expect(err).To(BeNil())
 
-			metricsPodList, err := clientHub.CoreV1().Pods(ocmNS).List(context.TODO(), metav1.ListOptions{LabelSelector: insightsMetricsSelector})
+			metricsPodList, err := clientHub.CoreV1().Pods(ocmNS).List(
+				context.TODO(),
+				metav1.ListOptions{
+					LabelSelector: insightsMetricsSelector,
+				},
+			)
 			Expect(err).To(BeNil())
 			for _, pod := range metricsPodList.Items {
 				By("Logs for " + pod.GetName())
-				common.OcHub("logs", "-n", ocmNS, pod.GetName(), "-c", "metrics")
+				_, err := common.OcHub("logs", "-n", ocmNS, pod.GetName(), "-c", "metrics")
+				Expect(err).To(BeNil())
 			}
 		}
 	})
@@ -82,7 +109,16 @@ var _ = Describe("GRC: [P1][Sev1][policy-grc] Test policyreport_info metric", Or
 		Eventually(func() interface{} {
 			var err error
 
-			insightsClientPod, err = common.OcHub("get", "pods", "-n", ocmNS, "-l", insightsClientPodSelector, "-o", "name")
+			insightsClientPod, err = common.OcHub(
+				"get",
+				"pods",
+				"-n",
+				ocmNS,
+				"-l",
+				insightsClientPodSelector,
+				"-o",
+				"name",
+			)
 			insightsClientPods := strings.Split(insightsClientPod, "pod/")
 			if err != nil || len(insightsClientPods) < 2 {
 				return errors.New("could not find insights client pod")
@@ -93,29 +129,59 @@ var _ = Describe("GRC: [P1][Sev1][policy-grc] Test policyreport_info metric", Or
 			return nil
 		}, defaultTimeoutSeconds*10, 1).Should(BeNil())
 
-		_, err := common.OcHub("set", "env", "-n", ocmNS, insightsClientDeployment, "POLL_INTERVAL=1")
+		_, err := common.OcHub(
+			"set",
+			"env",
+			"-n",
+			ocmNS,
+			insightsClientDeployment,
+			"POLL_INTERVAL=1",
+		)
 		Expect(err).To(BeNil())
 		// checking if new pod has spun up
 		Eventually(func() interface{} {
 			var err error
-			pod, err := common.OcHub("get", "pods", "-n", ocmNS, "-l", insightsClientPodSelector, "--field-selector=status.phase=Running,metadata.name!="+insightsClientPod)
+			pod, err := common.OcHub(
+				"get",
+				"pods",
+				"-n",
+				ocmNS,
+				"-l",
+				insightsClientPodSelector,
+				"--field-selector=status.phase=Running,metadata.name!="+insightsClientPod,
+			)
 			if err != nil {
 				return err
 			}
+
 			return pod
 		}, defaultTimeoutSeconds*10, 1).ShouldNot(Equal(""))
 		// checking if old pod with slow refresh has been taken down
 		Eventually(func() interface{} {
 			var err error
-			pod, err := common.OcHub("get", "pods", "-n", ocmNS, "-l", insightsClientPodSelector, "--field-selector=status.phase=Running,metadata.name="+insightsClientPod)
+			pod, err := common.OcHub(
+				"get",
+				"pods",
+				"-n",
+				ocmNS,
+				"-l",
+				insightsClientPodSelector,
+				"--field-selector=status.phase=Running,metadata.name="+insightsClientPod,
+			)
 			if err != nil {
 				return err
 			}
+
 			return pod
 		}, defaultTimeoutSeconds*10, 1).Should(Equal(""))
 
 		By("Ensuring the metrics service exists")
-		svcList, err := clientHub.CoreV1().Services(ocmNS).List(context.TODO(), metav1.ListOptions{LabelSelector: insightsMetricsSelector})
+		svcList, err := clientHub.CoreV1().Services(ocmNS).List(
+			context.TODO(),
+			metav1.ListOptions{
+				LabelSelector: insightsMetricsSelector,
+			},
+		)
 		Expect(err).To(BeNil())
 		Expect(len(svcList.Items)).To(Equal(1))
 		metricsSvc := svcList.Items[0]
@@ -124,24 +190,43 @@ var _ = Describe("GRC: [P1][Sev1][policy-grc] Test policyreport_info metric", Or
 		var routeList *unstructured.UnstructuredList
 		Eventually(func() interface{} {
 			var err error
-			routeList, err = clientHubDynamic.Resource(common.GvrRoute).Namespace(ocmNS).List(context.TODO(), metav1.ListOptions{LabelSelector: insightsMetricsSelector})
+			routeList, err = clientHubDynamic.Resource(common.GvrRoute).Namespace(ocmNS).List(
+				context.TODO(),
+				metav1.ListOptions{
+					LabelSelector: insightsMetricsSelector,
+				},
+			)
 			if err != nil {
 				return err
 			}
+
 			return len(routeList.Items)
 		}, defaultTimeoutSeconds, 1).Should(Or(Equal(0), Equal(1)))
 
 		if len(routeList.Items) == 0 {
 			By("Exposing the insights metrics service as a route")
-			_, err = common.OcHub("expose", "service", metricsSvc.Name, "-n", ocmNS, `--overrides={"spec":{"tls":{"termination":"reencrypt"}}}`)
+			_, err = common.OcHub(
+				"expose",
+				"service",
+				metricsSvc.Name,
+				"-n",
+				ocmNS,
+				`--overrides={"spec":{"tls":{"termination":"reencrypt"}}}`,
+			)
 			Expect(err).To(BeNil())
 
 			Eventually(func() interface{} {
 				var err error
-				routeList, err = clientHubDynamic.Resource(common.GvrRoute).Namespace(ocmNS).List(context.TODO(), metav1.ListOptions{LabelSelector: insightsMetricsSelector})
+				routeList, err = clientHubDynamic.Resource(common.GvrRoute).Namespace(ocmNS).List(
+					context.TODO(),
+					metav1.ListOptions{
+						LabelSelector: insightsMetricsSelector,
+					},
+				)
 				if err != nil {
 					return err
 				}
+
 				return len(routeList.Items)
 			}, defaultTimeoutSeconds, 1).Should(Equal(1))
 		}
@@ -184,12 +269,14 @@ var _ = Describe("GRC: [P1][Sev1][policy-grc] Test policyreport_info metric", Or
 			if err != nil {
 				return err
 			}
+
 			return status
 		}, defaultTimeoutSeconds, 1).Should(ContainSubstring("Unauthorized"))
 	})
 	It("Checks that a noncompliant policy reports a metric", func() {
 		By("Creating a noncompliant policy")
-		common.OcHub("apply", "-f", noncompliantPolicyYamlReport, "-n", userNamespace)
+		_, err := common.OcHub("apply", "-f", noncompliantPolicyYamlReport, "-n", userNamespace)
+		Expect(err).To(BeNil())
 		Eventually(
 			getComplianceState(noncompliantPolicyNameReport),
 			defaultTimeoutSeconds*8,
@@ -199,25 +286,30 @@ var _ = Describe("GRC: [P1][Sev1][policy-grc] Test policyreport_info metric", Or
 		By("Checking the policy metric")
 		output, err := common.OcHub("set", "env", "-n", ocmNS, insightsClientDeployment, "--list")
 		Expect(err).To(BeNil())
-		fmt.Println("INSIGHTS CLIENT ENV VARIABLES:")
-		fmt.Println(output)
+		klog.V(5).Infof("INSIGHTS CLIENT ENV VARIABLES:%s\n", output)
 
 		policyLabel := `policy="` + userNamespace + "." + noncompliantPolicyNameReport + `"`
 		Eventually(func() interface{} {
-			resp, _, err := common.GetWithToken(insightsMetricsURL, strings.TrimSpace(insightsToken))
+			resp, _, err := common.GetWithToken(
+				insightsMetricsURL,
+				strings.TrimSpace(insightsToken),
+			)
 			if err != nil {
 				fmt.Println("ERROR GETTING METRIC:")
 				fmt.Println(err)
+
 				return err
 			}
 			fmt.Println("metric response received:")
 			fmt.Println(resp)
+
 			return resp
 		}, 10*time.Minute, 1).Should(common.MatchMetricValue(insightsMetricName, policyLabel, "1"))
 	})
 	It("Checks that changing the policy to compliant removes the metric", func() {
 		By("Creating a compliant policy")
-		common.OcHub("apply", "-f", compliantPolicyYamlReport, "-n", userNamespace)
+		_, err := common.OcHub("apply", "-f", compliantPolicyYamlReport, "-n", userNamespace)
+		Expect(err).To(BeNil())
 		Eventually(
 			getComplianceState(compliantPolicyNameReport),
 			defaultTimeoutSeconds*8,
@@ -227,19 +319,23 @@ var _ = Describe("GRC: [P1][Sev1][policy-grc] Test policyreport_info metric", Or
 		By("Checking the policy metric displays nothing")
 		output, err := common.OcHub("set", "env", "-n", ocmNS, insightsClientDeployment, "--list")
 		Expect(err).To(BeNil())
-		fmt.Println("INSIGHTS CLIENT ENV VARIABLES:")
-		fmt.Println(output)
+		klog.V(5).Infof("INSIGHTS CLIENT ENV VARIABLES:%s\n", output)
 
 		policyLabel := `policy="` + userNamespace + "." + noncompliantPolicyNameReport + `"`
 		Eventually(func() interface{} {
-			resp, _, err := common.GetWithToken(insightsMetricsURL, strings.TrimSpace(insightsToken))
+			resp, _, err := common.GetWithToken(
+				insightsMetricsURL,
+				strings.TrimSpace(insightsToken),
+			)
 			if err != nil {
 				fmt.Println("ERROR GETTING METRIC:")
 				fmt.Println(err)
+
 				return err
 			}
 			fmt.Println("metric response received:")
 			fmt.Println(resp)
+
 			return resp
 		}, 10*time.Minute, 1).ShouldNot(common.MatchMetricValue(insightsMetricName, policyLabel, "1"))
 	})
@@ -247,10 +343,30 @@ var _ = Describe("GRC: [P1][Sev1][policy-grc] Test policyreport_info metric", Or
 		// unset poll interval
 		_, err := common.OcHub("set", "env", "-n", ocmNS, insightsClientDeployment, "POLL_INTERVAL-")
 		Expect(err).To(BeNil())
-		common.OcHub("delete", "-f", compliantPolicyYamlReport, "-n", userNamespace)
-		common.OcHub("delete", "route", "-n", ocmNS, "-l", insightsMetricsSelector)
-		common.OcHub("delete", "clusterrolebinding", roleBindingName)
-		common.OcHub("delete", "serviceaccount", saName, "-n", userNamespace)
-		common.OcHub("delete", "namespace", "policy-metric-test-compliant")
+		_, err = common.OcHub(
+			"delete", "-f", compliantPolicyYamlReport,
+			"-n", userNamespace, "--ignore-not-found",
+		)
+		Expect(err).To(BeNil())
+		_, err = common.OcHub(
+			"delete", "route", "-n", ocmNS, "-l",
+			insightsMetricsSelector, "--ignore-not-found",
+		)
+		Expect(err).To(BeNil())
+		_, err = common.OcHub(
+			"delete", "clusterrolebinding",
+			roleBindingName, "--ignore-not-found",
+		)
+		Expect(err).To(BeNil())
+		_, err = common.OcHub(
+			"delete", "serviceaccount", saName, "-n",
+			userNamespace, "--ignore-not-found",
+		)
+		Expect(err).To(BeNil())
+		_, err = common.OcHub(
+			"delete", "namespace",
+			"policy-metric-test-compliant", "--ignore-not-found",
+		)
+		Expect(err).To(BeNil())
 	})
 })

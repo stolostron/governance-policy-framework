@@ -124,11 +124,11 @@ var _ = Describe(
 
 		AfterAll(func() {
 			_, err := utils.KubectlWithOutput(
-				"delete", "-f", policyYAML, "-n", "default", "--kubeconfig="+kubeconfigHub,
+				"delete", "-f", policyYAML, "-n",
+				"default", "--kubeconfig="+kubeconfigHub,
+				"--ignore-not-found",
 			)
-			if !k8serrors.IsNotFound(err) {
-				Expect(err).To(BeNil())
-			}
+			Expect(err).To(BeNil())
 
 			cleanupConfig(ctx, configMapName, configMapCopyName)
 		})

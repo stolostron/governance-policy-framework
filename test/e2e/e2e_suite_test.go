@@ -61,7 +61,11 @@ var _ = BeforeSuite(func() {
 
 	By("Create Namespace if needed")
 	namespaces := clientHub.CoreV1().Namespaces()
-	if _, err := namespaces.Get(context.TODO(), userNamespace, metav1.GetOptions{}); err != nil && errors.IsNotFound(err) {
+	if _, err := namespaces.Get(
+		context.TODO(),
+		userNamespace,
+		metav1.GetOptions{},
+	); err != nil && errors.IsNotFound(err) {
 		Expect(namespaces.Create(context.TODO(), &corev1.Namespace{
 			ObjectMeta: metav1.ObjectMeta{
 				Name: userNamespace,

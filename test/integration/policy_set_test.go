@@ -44,6 +44,7 @@ var _ = Describe("GRC: [P1][Sev1][policy-grc] Test policy set", Ordered, Label("
 					rootPolicy, err = rootPolicyRsrc.Namespace(userNamespace).Get(
 						context.TODO(), testPolicyName, metav1.GetOptions{},
 					)
+
 					return err
 				},
 				defaultTimeoutSeconds*2,
@@ -69,6 +70,7 @@ var _ = Describe("GRC: [P1][Sev1][policy-grc] Test policy set", Ordered, Label("
 					_, err = policyRsrc.Namespace(clusterNamespace).Get(
 						context.TODO(), userNamespace+"."+testPolicyName, metav1.GetOptions{},
 					)
+
 					return err
 				},
 				defaultTimeoutSeconds*2,
@@ -84,6 +86,7 @@ var _ = Describe("GRC: [P1][Sev1][policy-grc] Test policy set", Ordered, Label("
 					context.TODO(), testPolicySetName, metav1.GetOptions{},
 				)
 				g.Expect(err).To(BeNil())
+
 				return rootPlcSet.Object["status"]
 			},
 				defaultTimeoutSeconds*2,
@@ -109,6 +112,7 @@ var _ = Describe("GRC: [P1][Sev1][policy-grc] Test policy set", Ordered, Label("
 					context.TODO(), testPolicySetName, metav1.GetOptions{},
 				)
 				g.Expect(err).To(BeNil())
+
 				return rootPlcSet.Object["status"]
 			},
 				defaultTimeoutSeconds*2,
@@ -134,13 +138,18 @@ var _ = Describe("GRC: [P1][Sev1][policy-grc] Test policy set", Ordered, Label("
 					rootPlc, err = rootPlcRsrc.Namespace(userNamespace).Get(
 						context.TODO(), testPolicyName, metav1.GetOptions{},
 					)
+
 					return err
 				},
 				defaultTimeoutSeconds*2,
 				1,
 			).Should(BeNil())
 			rootPlc.Object["spec"].(map[string]interface{})["remediationAction"] = "enforce"
-			_, err := clientHubDynamic.Resource(testcommon.GvrPolicy).Namespace(userNamespace).Update(context.TODO(), rootPlc, metav1.UpdateOptions{})
+			_, err := clientHubDynamic.Resource(testcommon.GvrPolicy).Namespace(userNamespace).Update(
+				context.TODO(),
+				rootPlc,
+				metav1.UpdateOptions{},
+			)
 			Expect(err).To(BeNil())
 
 			By("Checking the status of policy set")
@@ -152,6 +161,7 @@ var _ = Describe("GRC: [P1][Sev1][policy-grc] Test policy set", Ordered, Label("
 					context.TODO(), testPolicySetName, metav1.GetOptions{},
 				)
 				g.Expect(err).To(BeNil())
+
 				return rootPlcSet.Object["status"]
 			},
 				defaultTimeoutSeconds*2,
@@ -175,6 +185,7 @@ var _ = Describe("GRC: [P1][Sev1][policy-grc] Test policy set", Ordered, Label("
 					_, err = plcRsrc.Namespace(userNamespace).Get(
 						context.TODO(), testPolicyName, metav1.GetOptions{},
 					)
+
 					return err
 				},
 				defaultTimeoutSeconds*2,
@@ -190,6 +201,7 @@ var _ = Describe("GRC: [P1][Sev1][policy-grc] Test policy set", Ordered, Label("
 					context.TODO(), testPolicySetName, metav1.GetOptions{},
 				)
 				g.Expect(err).To(BeNil())
+
 				return rootPlcSet.Object["status"]
 			},
 				defaultTimeoutSeconds*2,
@@ -201,7 +213,9 @@ var _ = Describe("GRC: [P1][Sev1][policy-grc] Test policy set", Ordered, Label("
 			output, err := utils.KubectlWithOutput("delete",
 				"-f", testPolicySetYaml,
 				"-n", userNamespace,
-				"--kubeconfig="+kubeconfigHub)
+				"--kubeconfig="+kubeconfigHub,
+				"--ignore-not-found",
+			)
 			By("Deleting " + testPolicySetYaml + " result is " + output)
 			Expect(err).To(BeNil())
 		})

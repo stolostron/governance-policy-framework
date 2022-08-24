@@ -9,7 +9,6 @@ import (
 
 	. "github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
-	k8serrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	k8stypes "k8s.io/apimachinery/pkg/types"
 	policiesv1 "open-cluster-management.io/governance-policy-propagator/api/v1"
@@ -18,7 +17,8 @@ import (
 	"github.com/stolostron/governance-policy-framework/test/common"
 )
 
-var _ = Describe("GRC: [P1][Sev1][policy-grc] Test the zts-cmc policy", Ordered, Label("policy-collection", "stable"), func() {
+var _ = Describe("GRC: [P1][Sev1][policy-grc] Test "+
+	"the zts-cmc policy", Ordered, Label("policy-collection", "stable"), func() {
 	const (
 		policyName     = "policy-zts-cmc"
 		policyURL      = policyCollectCMURL + policyName + ".yaml"
@@ -38,7 +38,8 @@ var _ = Describe("GRC: [P1][Sev1][policy-grc] Test the zts-cmc policy", Ordered,
 			context.TODO(),
 			policyName,
 			k8stypes.JSONPatchType,
-			[]byte(`[{"op": "replace", "path": "/spec/policy-templates/0/objectDefinition/spec/namespaceSelector/include", "value": ["`+deploymentNS+`"]}]`),
+			[]byte(`[{"op": "replace", "path": "/spec/policy-templates/0/objectDefinition/`+
+				`spec/namespaceSelector/include", "value": ["`+deploymentNS+`"]}]`),
 			metav1.PatchOptions{},
 		)
 		Expect(err).To(BeNil())
@@ -113,16 +114,16 @@ var _ = Describe("GRC: [P1][Sev1][policy-grc] Test the zts-cmc policy", Ordered,
 
 	AfterAll(func() {
 		_, err := utils.KubectlWithOutput(
-			"delete", "-f", policyURL, "-n", userNamespace, "--kubeconfig="+kubeconfigHub,
+			"delete", "-f", policyURL, "-n", userNamespace,
+			"--kubeconfig="+kubeconfigHub, "--ignore-not-found",
 		)
 		Expect(err).To(BeNil())
 
 		_, err = utils.KubectlWithOutput(
-			"delete", "deployment", "-n", deploymentNS, deploymentName, "--kubeconfig="+kubeconfigManaged,
+			"delete", "deployment", "-n", deploymentNS,
+			deploymentName, "--kubeconfig="+kubeconfigManaged,
+			"--ignore-not-found",
 		)
-		if !k8serrors.IsNotFound(err) {
-			Expect(err).To(BeNil())
-		}
+		Expect(err).To(BeNil())
 	})
-
 })

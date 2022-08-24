@@ -69,6 +69,18 @@ jobs:
       with:
         go-version-file: framework/go.mod
 
+    - name: Verify modules
+      working-directory: framework
+      run: |
+        go mod verify
+        
+    - name: Verify format
+      working-directory: framework
+      run: |
+        make fmt
+        git diff --exit-code
+        make lint
+
     - name: Bootstrap the KinD Cluster
       working-directory: framework
       env:
