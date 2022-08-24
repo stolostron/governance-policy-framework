@@ -29,12 +29,26 @@ func ConfigPruneBehavior(labels ...string) bool {
 		DoRootComplianceTest(clientHubDynamic, policyName, policiesv1.Compliant)
 
 		By("Checking that the configmap was created")
-		utils.GetWithTimeout(clientManagedDynamic, GvrConfigMap, pruneConfigMapName, "default", true, DefaultTimeoutSeconds)
+		utils.GetWithTimeout(
+			clientManagedDynamic,
+			GvrConfigMap,
+			pruneConfigMapName,
+			"default",
+			true,
+			DefaultTimeoutSeconds,
+		)
 
 		DoCleanupPolicy(clientHubDynamic, clientManagedDynamic, policyYaml, GvrConfigurationPolicy)
 
 		By("Checking if the configmap was deleted")
-		utils.GetWithTimeout(clientManagedDynamic, GvrConfigMap, pruneConfigMapName, "default", !cmShouldBeDeleted, DefaultTimeoutSeconds)
+		utils.GetWithTimeout(
+			clientManagedDynamic,
+			GvrConfigMap,
+			pruneConfigMapName,
+			"default",
+			!cmShouldBeDeleted,
+			DefaultTimeoutSeconds,
+		)
 	}
 
 	pruneTestForegroundDeletion := func(policyName, policyYaml string) {
@@ -46,16 +60,45 @@ func ConfigPruneBehavior(labels ...string) bool {
 		DoRootComplianceTest(clientHubDynamic, policyName, policiesv1.Compliant)
 
 		By("Checking that the configmap was created")
-		utils.GetWithTimeout(clientManagedDynamic, GvrConfigMap, pruneConfigMapName, "default", true, DefaultTimeoutSeconds)
+		utils.GetWithTimeout(
+			clientManagedDynamic,
+			GvrConfigMap,
+			pruneConfigMapName,
+			"default",
+			true,
+			DefaultTimeoutSeconds,
+		)
 
 		By("Applying a finalizer to the configmap")
-		_, err := OcManaged("patch", "configmap", pruneConfigMapName, "-n", "default",
-			"--type=json", "-p", `[{"op":"add", "path":"/metadata/finalizers", "value":["test.open-cluster-management.io/prunetest"]}]`)
+
+		_, err := OcManaged(
+			"patch",
+			"configmap",
+			pruneConfigMapName,
+			"-n", "default",
+			"--type=json", "-p",
+			`[{"op":"add", "path":"/metadata/finalizers", `+
+				`"value":["test.open-cluster-management.io/prunetest"]}]`,
+		)
 		Expect(err).To(BeNil())
 
 		By("Deleting the root policy")
-		OcHub("delete", "-f", policyYaml, "-n", UserNamespace)
-		utils.GetWithTimeout(clientHubDynamic, GvrPolicy, policyName, UserNamespace, false, DefaultTimeoutSeconds)
+
+		_, err = OcHub(
+			"delete", "-f", policyYaml,
+			"-n", UserNamespace,
+			"--ignore-not-found",
+		)
+		Expect(err).To(BeNil())
+
+		utils.GetWithTimeout(
+			clientHubDynamic,
+			GvrPolicy,
+			policyName,
+			UserNamespace,
+			false,
+			DefaultTimeoutSeconds,
+		)
 
 		// In the future, we might check the replicated Policy on the hub or managed cluster,
 		// but for now we only ensure the ConfigurationPolicy remains while things are deleting.
@@ -67,15 +110,30 @@ func ConfigPruneBehavior(labels ...string) bool {
 		}, 30, 5).ShouldNot(BeNil())
 
 		By("Removing any finalizers from the configmap")
+
 		_, err = OcManaged("patch", "configmap", pruneConfigMapName, "-n", "default",
 			"--type=json", "-p", `[{"op":"remove", "path":"/metadata/finalizers"}]`)
 		Expect(err).To(BeNil())
 
 		By("Checking that the configmap is deleted")
-		utils.GetWithTimeout(clientManagedDynamic, GvrConfigMap, pruneConfigMapName, "default", false, DefaultTimeoutSeconds)
+		utils.GetWithTimeout(
+			clientManagedDynamic,
+			GvrConfigMap,
+			pruneConfigMapName,
+			"default",
+			false,
+			DefaultTimeoutSeconds,
+		)
 
 		By("Checking that the ConfigurationPolicy is now cleaned up")
-		utils.GetWithTimeout(clientManagedDynamic, GvrConfigurationPolicy, policyName, ClusterNamespace, false, DefaultTimeoutSeconds)
+		utils.GetWithTimeout(
+			clientManagedDynamic,
+			GvrConfigurationPolicy,
+			policyName,
+			ClusterNamespace,
+			false,
+			DefaultTimeoutSeconds,
+		)
 	}
 
 	pruneTestInformPolicy := func(policyName, policyYaml string, cmShouldBeDeleted bool) {
@@ -87,27 +145,54 @@ func ConfigPruneBehavior(labels ...string) bool {
 		DoRootComplianceTest(clientHubDynamic, policyName, policiesv1.Compliant)
 
 		By("Checking that the configmap was created")
-		utils.GetWithTimeout(clientManagedDynamic, GvrConfigMap, pruneConfigMapName, "default", true, DefaultTimeoutSeconds)
+		utils.GetWithTimeout(
+			clientManagedDynamic,
+			GvrConfigMap,
+			pruneConfigMapName,
+			"default", true,
+			DefaultTimeoutSeconds,
+		)
 
 		By("Changing the policy to inform")
-		OcHub("patch", "policies.policy.open-cluster-management.io", policyName, "-n", UserNamespace,
-			"--type=json", "-p", `[{"op":"replace", "path":"/spec/remediationAction", "value":"inform"}]`)
 
+		_, err := OcHub(
+			"patch",
+			"policies.policy.open-cluster-management.io",
+			policyName, "-n", UserNamespace,
+			"--type=json", "-p",
+			`[{"op":"replace", "path":"/spec/remediationAction", "value":"inform"}]`,
+		)
+		Expect(err).To(BeNil())
 		By("Wait for configpolicy to update to inform")
 		Eventually(func() interface{} {
-			configpol := utils.GetWithTimeout(clientManagedDynamic, GvrConfigurationPolicy, policyName, ClusterNamespace, true, DefaultTimeoutSeconds)
+			configpol := utils.GetWithTimeout(
+				clientManagedDynamic,
+				GvrConfigurationPolicy,
+				policyName,
+				ClusterNamespace,
+				true,
+				DefaultTimeoutSeconds,
+			)
 			if configpol == nil {
 				return errors.New("could not get configuration policy")
 			}
 
 			remAction, _, _ := unstructured.NestedString(configpol.Object, "spec", "remediationAction")
+
 			return remAction
 		}, DefaultTimeoutSeconds, 1).Should(MatchRegexp(".nform"))
 
 		DoCleanupPolicy(clientHubDynamic, clientManagedDynamic, policyYaml, GvrConfigurationPolicy)
 
 		By("Checking if the configmap was deleted")
-		utils.GetWithTimeout(clientManagedDynamic, GvrConfigMap, pruneConfigMapName, "default", !cmShouldBeDeleted, DefaultTimeoutSeconds)
+		utils.GetWithTimeout(
+			clientManagedDynamic,
+			GvrConfigMap,
+			pruneConfigMapName,
+			"default",
+			!cmShouldBeDeleted,
+			DefaultTimeoutSeconds,
+		)
 	}
 
 	pruneTestEditedByPolicy := func(policyName, policyYaml string, cmShouldBeDeleted bool) {
@@ -115,12 +200,22 @@ func ConfigPruneBehavior(labels ...string) bool {
 		clientHubDynamic := NewKubeClientDynamic("", KubeconfigHub, "")
 
 		By("Creating the configmap before the policy")
-		OcManaged("apply", "-f", pruneConfigMapYaml)
 
+		_, err := OcManaged("apply", "-f", pruneConfigMapYaml)
+		Expect(err).To(BeNil())
 		By("Checking the configmap's initial data")
+
 		var initialValue string
+
 		Eventually(func(g Gomega) {
-			cm := utils.GetWithTimeout(clientManagedDynamic, GvrConfigMap, pruneConfigMapName, "default", true, DefaultTimeoutSeconds)
+			cm := utils.GetWithTimeout(
+				clientManagedDynamic,
+				GvrConfigMap,
+				pruneConfigMapName,
+				"default",
+				true,
+				DefaultTimeoutSeconds,
+			)
 			data, ok, err := unstructured.NestedMap(cm.Object, "data")
 			g.Expect(ok).To(BeTrue())
 			g.Expect(err).To(BeNil())
@@ -136,7 +231,14 @@ func ConfigPruneBehavior(labels ...string) bool {
 
 		By("Checking the configmap's data was updated")
 		Eventually(func(g Gomega) {
-			cm := utils.GetWithTimeout(clientManagedDynamic, GvrConfigMap, pruneConfigMapName, "default", true, DefaultTimeoutSeconds)
+			cm := utils.GetWithTimeout(
+				clientManagedDynamic,
+				GvrConfigMap,
+				pruneConfigMapName,
+				"default",
+				true,
+				DefaultTimeoutSeconds,
+			)
 			data, ok, err := unstructured.NestedMap(cm.Object, "data")
 			g.Expect(ok).To(BeTrue())
 			g.Expect(err).To(BeNil())
@@ -149,20 +251,45 @@ func ConfigPruneBehavior(labels ...string) bool {
 		DoCleanupPolicy(clientHubDynamic, clientManagedDynamic, policyYaml, GvrConfigurationPolicy)
 
 		By("Checking if the configmap was deleted")
-		utils.GetWithTimeout(clientManagedDynamic, GvrConfigMap, pruneConfigMapName, "default", !cmShouldBeDeleted, DefaultTimeoutSeconds)
+		utils.GetWithTimeout(
+			clientManagedDynamic,
+			GvrConfigMap,
+			pruneConfigMapName,
+			"default",
+			!cmShouldBeDeleted,
+			DefaultTimeoutSeconds,
+		)
 	}
 
-	Describe("GRC: [P1][Sev1][policy-grc] Test configuration policy pruning", Ordered, Label(labels...), func() {
+	Describe("GRC: [P1][Sev1][policy-grc] "+
+		"Test configuration policy pruning", Ordered, Label(labels...), func() {
 		cleanConfigMap := func() {
-			OcManaged("delete", "-f", pruneConfigMapYaml)
+			_, err := OcManaged(
+				"delete", "-f", pruneConfigMapYaml,
+				"--ignore-not-found",
+			)
+			Expect(err).To(BeNil())
 		}
 		BeforeEach(cleanConfigMap)
 		AfterAll(cleanConfigMap)
 
 		cleanPolicy := func(policyName, policyYaml string) func() {
 			return func() {
-				OcHub("delete", "-f", policyYaml)
-				OcManaged("delete", "events", "-n", ClusterNamespace, "--field-selector=involvedObject.name="+UserNamespace+"."+policyName)
+				_, err := OcHub(
+					"delete", "-f", policyYaml,
+					"--ignore-not-found",
+				)
+				Expect(err).To(BeNil())
+				_, err = OcManaged(
+					"delete",
+					"events",
+					"-n",
+					ClusterNamespace,
+					"--field-selector=involvedObject.name="+
+						UserNamespace+"."+policyName,
+					"--ignore-not-found",
+				)
+				Expect(err).To(BeNil())
 			}
 		}
 
@@ -194,10 +321,12 @@ func ConfigPruneBehavior(labels ...string) bool {
 			BeforeEach(cleanPolicy(policyName, policyYaml))
 			AfterAll(cleanPolicy(policyName, policyYaml))
 
-			It("Should delete the configmap created by a DeleteIfCreated policy when the policy is deleted", func() {
+			It("Should delete the configmap created by "+
+				"a DeleteIfCreated policy when the policy is deleted", func() {
 				pruneTestCreatedByPolicy(policyName, policyYaml, true)
 			})
-			It("Should not delete the configmap edited by a DeleteIfCreated policy when the policy is deleted", func() {
+			It("Should not delete the configmap edited by "+
+				"a DeleteIfCreated policy when the policy is deleted", func() {
 				pruneTestEditedByPolicy(policyName, policyYaml, false)
 			})
 		})
@@ -224,10 +353,12 @@ func ConfigPruneBehavior(labels ...string) bool {
 			BeforeEach(cleanPolicy(policyName, policyYaml))
 			AfterAll(cleanPolicy(policyName, policyYaml))
 
-			It("Should not delete the configmap created by a policy that doesn't specify a Prune behavior when the policy is deleted", func() {
+			It("Should not delete the configmap created by a policy that "+
+				"doesn't specify a Prune behavior when the policy is deleted", func() {
 				pruneTestCreatedByPolicy(policyName, policyYaml, false)
 			})
-			It("Should not delete the configmap edited by a policy that doesn't specify a Prune behavior when the policy is deleted", func() {
+			It("Should not delete the configmap edited by a policy that "+
+				"doesn't specify a Prune behavior when the policy is deleted", func() {
 				pruneTestEditedByPolicy(policyName, policyYaml, false)
 			})
 		})

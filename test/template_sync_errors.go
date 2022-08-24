@@ -21,7 +21,12 @@ func TemplateSyncErrors(labels ...string) bool {
 	Describe("GRC: [P1][Sev1][policy-grc] Test handling template-sync errors", Label(labels...), func() {
 		Describe("Test using a template with a non-existent CRD", Ordered, func() {
 			AfterAll(func() {
-				OcHub("delete", "-f", nonexistentPolicyKindYaml, "-n", UserNamespace)
+				_, err := OcHub(
+					"delete", "-f",
+					nonexistentPolicyKindYaml, "-n", UserNamespace,
+					"--ignore-not-found",
+				)
+				Expect(err).To(BeNil())
 			})
 			It("Should be noncompliant with a mapping not found status", func() {
 				clientManagedDynamic := NewKubeClientDynamic("", KubeconfigManaged, "")
@@ -39,13 +44,13 @@ func TemplateSyncErrors(labels ...string) bool {
 				clientManagedDynamic := NewKubeClientDynamic("", KubeconfigManaged, "")
 				clientHubDynamic := NewKubeClientDynamic("", KubeconfigHub, "")
 
-				OcHub("patch", "policies.policy.open-cluster-management.io", nonexistentPolicyKindName,
+				_, err := OcHub("patch", "policies.policy.open-cluster-management.io", nonexistentPolicyKindName,
 					"-n", UserNamespace, "--type=json", "-p", `[{
 						"op":"replace",
 						"path":"/spec/policy-templates/0/objectDefinition/kind",
 						"value":"ConfigurationPolicy"
 					}]`)
-
+				Expect(err).To(BeNil())
 				DoRootComplianceTest(clientHubDynamic, nonexistentPolicyKindName, policiesv1.Compliant)
 
 				Eventually(
@@ -57,8 +62,8 @@ func TemplateSyncErrors(labels ...string) bool {
 				clientManagedDynamic := NewKubeClientDynamic("", KubeconfigManaged, "")
 				clientHubDynamic := NewKubeClientDynamic("", KubeconfigHub, "")
 
-				OcHub("apply", "-f", nonexistentPolicyKindYaml, "-n", UserNamespace)
-
+				_, err := OcHub("apply", "-f", nonexistentPolicyKindYaml, "-n", UserNamespace)
+				Expect(err).To(BeNil())
 				DoRootComplianceTest(clientHubDynamic, nonexistentPolicyKindName, policiesv1.NonCompliant)
 
 				Eventually(
@@ -69,7 +74,11 @@ func TemplateSyncErrors(labels ...string) bool {
 		})
 		Describe("Test using a template with an invalid CR", Ordered, func() {
 			AfterAll(func() {
-				OcHub("delete", "-f", invalidCRPolicyYaml, "-n", UserNamespace)
+				_, err := OcHub(
+					"delete", "-f", invalidCRPolicyYaml,
+					"-n", UserNamespace, "--ignore-not-found",
+				)
+				Expect(err).To(BeNil())
 			})
 			It("Should be noncompliant and report the reason the CR is invalid", func() {
 				clientManagedDynamic := NewKubeClientDynamic("", KubeconfigManaged, "")
@@ -87,13 +96,13 @@ func TemplateSyncErrors(labels ...string) bool {
 				clientManagedDynamic := NewKubeClientDynamic("", KubeconfigManaged, "")
 				clientHubDynamic := NewKubeClientDynamic("", KubeconfigHub, "")
 
-				OcHub("patch", "policies.policy.open-cluster-management.io", invalidCRPolicyName,
+				_, err := OcHub("patch", "policies.policy.open-cluster-management.io", invalidCRPolicyName,
 					"-n", UserNamespace, "--type=json", "-p", `[{
 						"op":"replace",
 						"path":"/spec/policy-templates/0/objectDefinition/spec/pruneObjectBehavior",
 						"value":"None"
 					}]`)
-
+				Expect(err).To(BeNil())
 				DoRootComplianceTest(clientHubDynamic, invalidCRPolicyName, policiesv1.Compliant)
 
 				Eventually(
@@ -105,8 +114,8 @@ func TemplateSyncErrors(labels ...string) bool {
 				clientManagedDynamic := NewKubeClientDynamic("", KubeconfigManaged, "")
 				clientHubDynamic := NewKubeClientDynamic("", KubeconfigHub, "")
 
-				OcHub("apply", "-f", invalidCRPolicyYaml, "-n", UserNamespace)
-
+				_, err := OcHub("apply", "-f", invalidCRPolicyYaml, "-n", UserNamespace)
+				Expect(err).To(BeNil())
 				DoRootComplianceTest(clientHubDynamic, invalidCRPolicyName, policiesv1.NonCompliant)
 
 				Eventually(

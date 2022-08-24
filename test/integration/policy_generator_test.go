@@ -20,7 +20,8 @@ import (
 	"github.com/stolostron/governance-policy-framework/test/common"
 )
 
-var _ = Describe("GRC: [P1][Sev1][policy-grc] Test the Policy Generator in an App subscription", Ordered, Label("BVT"), func() {
+var _ = Describe("GRC: [P1][Sev1][policy-grc] Test the Policy Generator "+
+	"in an App subscription", Ordered, Label("BVT"), func() {
 	const namespace = "grc-e2e-policy-generator"
 	const secret = "grc-e2e-subscription-admin-user"
 	const subAdminBinding = "open-cluster-management:subscription-admin"
@@ -59,7 +60,10 @@ var _ = Describe("GRC: [P1][Sev1][policy-grc] Test the Policy Generator in an Ap
 			context.TODO(), &subAdminBindingObj, metav1.CreateOptions{},
 		)
 		if err != nil {
-			Expect(k8serrors.IsAlreadyExists(err)).Should(BeTrue(), "Expected error to be 'already exists': "+fmt.Sprint(err))
+			Expect(k8serrors.IsAlreadyExists(err)).Should(
+				BeTrue(),
+				"Expected error to be 'already exists': "+fmt.Sprint(err),
+			)
 		}
 
 		By("Cleaning up any existing subscription-admin user config")
@@ -96,6 +100,7 @@ var _ = Describe("GRC: [P1][Sev1][policy-grc] Test the Policy Generator in an Ap
 				kubeconfigSubAdmin, err = common.GetKubeConfig(
 					hubServerURL, ocpUser.Username, ocpUser.Password,
 				)
+
 				return err
 			},
 			fiveMinutes,
@@ -124,6 +129,7 @@ var _ = Describe("GRC: [P1][Sev1][policy-grc] Test the Policy Generator in an Ap
 				policyset, err = policySetRsrc.Namespace(namespace).Get(
 					context.TODO(), "e2e-policyset", metav1.GetOptions{},
 				)
+
 				return err
 			},
 			defaultTimeoutSeconds*4,
@@ -148,6 +154,7 @@ var _ = Describe("GRC: [P1][Sev1][policy-grc] Test the Policy Generator in an Ap
 				policy, err = policyRsrc.Namespace(namespace).Get(
 					context.TODO(), "e2e-grc-policy-app", metav1.GetOptions{},
 				)
+
 				return err
 			},
 			defaultTimeoutSeconds*2,
@@ -178,6 +185,7 @@ var _ = Describe("GRC: [P1][Sev1][policy-grc] Test the Policy Generator in an Ap
 					"grc-e2e-policy-generator.e2e-grc-policy-app",
 					metav1.GetOptions{},
 				)
+
 				return err
 			},
 			defaultTimeoutSeconds*2,
@@ -192,6 +200,7 @@ var _ = Describe("GRC: [P1][Sev1][policy-grc] Test the Policy Generator in an Ap
 				policy, err = configPolicyRsrc.Namespace("local-cluster").Get(
 					context.TODO(), "e2e-grc-policy-app", metav1.GetOptions{},
 				)
+
 				return err
 			},
 			defaultTimeoutSeconds,

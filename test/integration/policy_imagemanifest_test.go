@@ -17,7 +17,8 @@ import (
 	"github.com/stolostron/governance-policy-framework/test/common"
 )
 
-var _ = Describe("GRC: [P1][Sev1][policy-grc] Test the policy-imagemanifestvuln policy", Ordered, Label("policy-collection", "stable"), func() {
+var _ = Describe("GRC: [P1][Sev1][policy-grc] Test "+
+	"the policy-imagemanifestvuln policy", Ordered, Label("policy-collection", "stable"), func() {
 	const policyIMVURL = policyCollectSIURL + "policy-imagemanifestvuln.yaml"
 	const policyIMVName = "policy-imagemanifestvuln"
 	const subName = "container-security-operator"
@@ -127,6 +128,7 @@ var _ = Describe("GRC: [P1][Sev1][policy-grc] Test the policy-imagemanifestvuln 
 						return compliance.(string)
 					}
 				}
+
 				return ""
 			},
 			defaultTimeoutSeconds*2,
@@ -149,6 +151,7 @@ var _ = Describe("GRC: [P1][Sev1][policy-grc] Test the policy-imagemanifestvuln 
 						return compliance.(string)
 					}
 				}
+
 				return ""
 			},
 			defaultTimeoutSeconds*4,
@@ -171,6 +174,7 @@ var _ = Describe("GRC: [P1][Sev1][policy-grc] Test the policy-imagemanifestvuln 
 						return compliance.(string)
 					}
 				}
+
 				return ""
 			},
 			common.MaxTravisTimeoutSeconds,
@@ -189,13 +193,17 @@ var _ = Describe("GRC: [P1][Sev1][policy-grc] Test the policy-imagemanifestvuln 
 
 	AfterAll(func() {
 		_, err := utils.KubectlWithOutput(
-			"delete", "-f", policyIMVURL, "-n", userNamespace, "--kubeconfig="+kubeconfigHub,
+			"delete", "-f", policyIMVURL, "-n",
+			userNamespace, "--kubeconfig="+kubeconfigHub,
+			"--ignore-not-found",
 		)
 		Expect(err).To(BeNil())
 
 		_, err = utils.KubectlWithOutput(
-			"delete", "subscriptions.operators.coreos.com", subName, "-n", "openshift-operators",
+			"delete", "subscriptions.operators.coreos.com",
+			subName, "-n", "openshift-operators",
 			"--kubeconfig="+kubeconfigManaged,
+			"--ignore-not-found",
 		)
 		Expect(err).To(BeNil())
 
@@ -207,18 +215,26 @@ var _ = Describe("GRC: [P1][Sev1][policy-grc] Test the policy-imagemanifestvuln 
 			"--kubeconfig="+kubeconfigManaged,
 		)
 		Expect(err).To(BeNil())
+
 		_, err = utils.KubectlWithOutput(
-			"delete", "csv", csvName, "-n", operatorNS, "--kubeconfig="+kubeconfigManaged,
+			"delete", "csv", csvName, "-n",
+			operatorNS, "--kubeconfig="+kubeconfigManaged,
+			"--ignore-not-found",
 		)
 		Expect(err).To(BeNil())
 
 		_, err = utils.KubectlWithOutput(
-			"delete", "crd", "imagemanifestvulns.secscan.quay.redhat.com", "--kubeconfig="+kubeconfigManaged,
+			"delete", "crd",
+			"imagemanifestvulns.secscan.quay.redhat.com",
+			"--kubeconfig="+kubeconfigManaged,
+			"--ignore-not-found",
 		)
 		Expect(err).To(BeNil())
 
 		_, err = utils.KubectlWithOutput(
-			"delete", "deployment", "-n", "default", "nginx-deployment", "--kubeconfig="+kubeconfigHub,
+			"delete", "deployment", "-n", "default",
+			"nginx-deployment", "--kubeconfig="+kubeconfigHub,
+			"--ignore-not-found",
 		)
 		Expect(err).To(BeNil())
 	})

@@ -8,12 +8,14 @@ import (
 	"context"
 	"crypto/x509"
 	"encoding/pem"
+	"errors"
 	"fmt"
+	"os/exec"
 	"strings"
 
 	. "github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
-	"k8s.io/apimachinery/pkg/api/errors"
+	k8serrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	policiesv1 "open-cluster-management.io/governance-policy-propagator/api/v1"
@@ -210,28 +212,58 @@ var _ = Describe("Test Hub Template Encryption", Ordered, func() {
 			err := clientHubDynamic.Resource(common.GvrPolicy).Namespace(userNamespace).Delete(
 				ctx, policyName, metav1.DeleteOptions{},
 			)
-			if !errors.IsNotFound(err) {
-				Expect(err).To(BeNil())
+			if !k8serrors.IsNotFound(err) {
+				var exitError *exec.ExitError
+				ok := errors.As(err, &exitError)
+				if ok {
+					Expect(exitError.Stderr).To(BeNil())
+				} else {
+					Expect(err).To(BeNil())
+				}
 			}
 
 			err = clientHub.CoreV1().Secrets(userNamespace).Delete(ctx, secretName, metav1.DeleteOptions{})
-			if !errors.IsNotFound(err) {
-				Expect(err).To(BeNil())
+			if !k8serrors.IsNotFound(err) {
+				var exitError *exec.ExitError
+				ok := errors.As(err, &exitError)
+				if ok {
+					Expect(exitError.Stderr).To(BeNil())
+				} else {
+					Expect(err).To(BeNil())
+				}
 			}
 
 			err = clientHub.CoreV1().ConfigMaps(userNamespace).Delete(ctx, configMapName, metav1.DeleteOptions{})
-			if !errors.IsNotFound(err) {
-				Expect(err).To(BeNil())
+			if !k8serrors.IsNotFound(err) {
+				var exitError *exec.ExitError
+				ok := errors.As(err, &exitError)
+				if ok {
+					Expect(exitError.Stderr).To(BeNil())
+				} else {
+					Expect(err).To(BeNil())
+				}
 			}
 
 			err = clientManaged.CoreV1().Secrets(userNamespace).Delete(ctx, secretCopyName, metav1.DeleteOptions{})
-			if !errors.IsNotFound(err) {
-				Expect(err).To(BeNil())
+			if !k8serrors.IsNotFound(err) {
+				var exitError *exec.ExitError
+				ok := errors.As(err, &exitError)
+				if ok {
+					Expect(exitError.Stderr).To(BeNil())
+				} else {
+					Expect(err).To(BeNil())
+				}
 			}
 
 			err = clientHub.CoreV1().ConfigMaps(userNamespace).Delete(ctx, configMapCopyName, metav1.DeleteOptions{})
-			if !errors.IsNotFound(err) {
-				Expect(err).To(BeNil())
+			if !k8serrors.IsNotFound(err) {
+				var exitError *exec.ExitError
+				ok := errors.As(err, &exitError)
+				if ok {
+					Expect(exitError.Stderr).To(BeNil())
+				} else {
+					Expect(err).To(BeNil())
+				}
 			}
 		})
 	})

@@ -41,6 +41,7 @@ func cleanup(namespace string, secret string, user common.OCPUser) {
 			if !isNotFound && err != nil {
 				GinkgoWriter.Printf("'%s' namespace 'get' error: %w", err)
 			}
+
 			return isNotFound
 		},
 		defaultTimeoutSeconds,
@@ -56,7 +57,8 @@ func cleanup(namespace string, secret string, user common.OCPUser) {
 	}
 }
 
-var _ = Describe("GRC: [P1][Sev1][policy-grc] Test the ACM Hardening generated PolicySet in an App subscription", Ordered, Label("policy-collection", "stable"), func() {
+var _ = Describe("GRC: [P1][Sev1][policy-grc] Test the ACM Hardening "+
+	"generated PolicySet in an App subscription", Ordered, Label("policy-collection", "stable"), func() {
 	const namespace = "policies"
 	const secret = "grc-e2e-hardening-sub-admin-user"
 	const clustersetRoleName = "grc-e2e-clusterset-role"
@@ -97,7 +99,10 @@ var _ = Describe("GRC: [P1][Sev1][policy-grc] Test the ACM Hardening generated P
 			context.TODO(), &subAdminBindingObj, metav1.CreateOptions{},
 		)
 		if err != nil {
-			Expect(k8serrors.IsAlreadyExists(err)).Should(BeTrue(), "Expected error to be 'already exists': "+fmt.Sprint(err))
+			Expect(k8serrors.IsAlreadyExists(err)).Should(
+				BeTrue(),
+				"Expected error to be 'already exists': "+fmt.Sprint(err),
+			)
 		}
 
 		By("Verifying that the managed cluster set binding ClusterRole exists")
@@ -161,6 +166,7 @@ var _ = Describe("GRC: [P1][Sev1][policy-grc] Test the ACM Hardening generated P
 				kubeconfigSubAdmin, err = common.GetKubeConfig(
 					hubServerURL, ocpUser.Username, ocpUser.Password,
 				)
+
 				return err
 			},
 			fiveMinutes,
@@ -189,6 +195,7 @@ var _ = Describe("GRC: [P1][Sev1][policy-grc] Test the ACM Hardening generated P
 				policyset, err = policySetRsrc.Namespace(namespace).Get(
 					context.TODO(), "acm-hardening", metav1.GetOptions{},
 				)
+
 				return err
 			},
 			defaultTimeoutSeconds*2,
@@ -223,13 +230,15 @@ var _ = Describe("GRC: [P1][Sev1][policy-grc] Test the ACM Hardening generated P
 						return fmt.Errorf("The policy is not compliant")
 					}
 				}
+
 				return err
 			},
 			defaultTimeoutSeconds*2,
 			1,
 		).Should(BeNil())
 
-		By("Checking that the policy-managedclusteraddon-available policy was propagated to the local-cluster namespace")
+		By("Checking that the policy-managedclusteraddon-available policy " +
+			"was propagated to the local-cluster namespace")
 		Eventually(
 			func() error {
 				_, err := policyRsrc.Namespace("local-cluster").Get(
@@ -237,6 +246,7 @@ var _ = Describe("GRC: [P1][Sev1][policy-grc] Test the ACM Hardening generated P
 					"policies.policy-managedclusteraddon-available",
 					metav1.GetOptions{},
 				)
+
 				return err
 			},
 			defaultTimeoutSeconds*2,
@@ -250,6 +260,7 @@ var _ = Describe("GRC: [P1][Sev1][policy-grc] Test the ACM Hardening generated P
 				_, err := configPolicyRsrc.Namespace("local-cluster").Get(
 					context.TODO(), "policy-check-policyreports", metav1.GetOptions{},
 				)
+
 				return err
 			},
 			defaultTimeoutSeconds,
