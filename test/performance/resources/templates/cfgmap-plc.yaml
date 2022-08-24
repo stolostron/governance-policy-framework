@@ -1,0 +1,104 @@
+apiVersion: policy.open-cluster-management.io/v1
+kind: Policy
+metadata:
+  name: policy-config-[ID]
+  namespace: default
+  annotations:
+    policy.open-cluster-management.io/categories: CM Configuration Management
+    policy.open-cluster-management.io/standards: NIST SP 800-53
+    policy.open-cluster-management.io/controls: CM-2 Baseline Configuration
+  labels:
+    grc-test: config-policy-performance
+spec:
+  disabled: false
+  remediationAction: enforce
+  policy-templates:
+    - objectDefinition:
+        apiVersion: policy.open-cluster-management.io/v1
+        kind: ConfigurationPolicy
+        metadata:
+          name: cfg-create-[ID]
+        spec:
+          remediationAction: enforce
+          severity: low
+          namespaceSelector:
+            exclude:
+              - kube-*
+            include:
+              - default
+          pruneObjectBehavior: DeleteAll
+          object-templates:
+            - complianceType: musthave
+              objectDefinition:
+                apiVersion: v1
+                kind: ConfigMap
+                metadata:
+                  name: cfgmap-[ID]
+                  labels:
+                    grc-test: config-policy-performance
+                data:
+                  description: |
+                    Many applications rely on configuration which is used during either application initialization
+                    or runtime. Most of the times there is a requirement to adjust values assigned to configuration
+                    parameters. ConfigMaps are the Kubernetes way to inject application pods with configuration data.
+                    ConfigMaps allow you to decouple configuration artifacts from image content to keep containerized
+                    applications portable. This page provides a series of usage examples demonstrating how to create
+                    ConfigMaps and configure Pods using data stored in ConfigMaps.
+                  game.properties: |
+                    enemies=aliens
+                    lives=3
+                    enemies.cheat=true
+                    enemies.cheat.level=noGoodRotten
+                    secret.code.passphrase=UUDDLRLRBABAS
+                    secret.code.allowed=true
+                  ui.properties: |
+                    color.good=purple
+                    color.bad=yellow
+                    allow.textmode=true
+                    how.nice.to.look=fairlyNice
+                  data: |
+                    Lorem Ipsum is simply dummy text of the printing and typesetting industry. Lorem Ipsum has been the
+                    industry's standard dummy text ever since the 1500s, when an unknown printer took a galley of type
+                    and scrambled it to make a type specimen book. It has survived not only five centuries, but also
+                    the leap into electronic typesetting, remaining essentially unchanged. It was popularised in the
+                    1960s with the release of Letraset sheets containing Lorem Ipsum passages, and more recently with
+                    desktop publishing software like Aldus PageMaker including versions of Lorem Ipsum.
+                  extra: |
+                    Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore
+                    et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut
+                    aliquip ex ea commodo consequat. Duis aute irure dolor in reprehenderit in voluptate velit esse
+                    cillum dolore eu fugiat nulla pariatur. Excepteur sint occaecat cupidatat non proident, sunt in
+                    culpa qui officia deserunt mollit anim id est laborum.
+
+---
+apiVersion: apps.open-cluster-management.io/v1
+kind: PlacementRule
+metadata:
+  name: policy-config-[ID]-placement
+  namespace: default
+  labels:
+    grc-test: config-policy-performance
+spec:
+  clusterSelector:
+    matchExpressions:
+      - key: local-cluster
+        operator: In
+        values:
+          - "true"
+  clusterConditions: []
+---
+apiVersion: policy.open-cluster-management.io/v1
+kind: PlacementBinding
+metadata:
+  name: policy-config-[ID]-placement
+  namespace: default
+  labels:
+    grc-test: config-policy-performance
+placementRef:
+  name: policy-config-[ID]-placement
+  apiGroup: apps.open-cluster-management.io
+  kind: PlacementRule
+subjects:
+  - name: policy-config-[ID]
+    apiGroup: policy.open-cluster-management.io
+    kind: Policy
