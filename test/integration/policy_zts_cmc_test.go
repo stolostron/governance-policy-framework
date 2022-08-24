@@ -5,6 +5,7 @@ package integration
 
 import (
 	"context"
+	"strings"
 
 	. "github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
@@ -20,7 +21,7 @@ var _ = Describe("GRC: [P1][Sev1][policy-grc] Test the zts-cmc policy", Ordered,
 	const (
 		policyName     = "policy-zts-cmc"
 		policyURL      = policyCollectCMURL + policyName + ".yaml"
-		objectNS       = "default"
+		deploymentNS   = "default"
 		deploymentName = "zts-cmc-app-deploy"
 	)
 
@@ -31,12 +32,12 @@ var _ = Describe("GRC: [P1][Sev1][policy-grc] Test the zts-cmc policy", Ordered,
 		)
 		Expect(err).To(BeNil())
 
-		By("Patching the namespaceSelector to use the " + objectNS + " namespace")
+		By("Patching the namespaceSelector to use the " + deploymentNS + " namespace")
 		_, err = clientHubDynamic.Resource(common.GvrPolicy).Namespace(userNamespace).Patch(
 			context.TODO(),
 			policyName,
 			k8stypes.JSONPatchType,
-			[]byte(`[{"op": "replace", "path": "/spec/policy-templates/0/objectDefinition/spec/namespaceSelector/include", "value": ["`+objectNS+`"]}]`),
+			[]byte(`[{"op": "replace", "path": "/spec/policy-templates/0/objectDefinition/spec/namespaceSelector/include", "value": ["`+deploymentNS+`"]}]`),
 			metav1.PatchOptions{},
 		)
 		Expect(err).To(BeNil())
@@ -88,6 +89,18 @@ var _ = Describe("GRC: [P1][Sev1][policy-grc] Test the zts-cmc policy", Ordered,
 		Expect(err).To(BeNil())
 	})
 
+	It("the "+deploymentName+" deployment should exist in namespace "+deploymentNS, func() {
+		Eventually(func() string {
+			output, _ := common.OcManaged("get", "deployment.apps", "-n",
+				deploymentNS, deploymentName, "-o", "name")
+
+			return strings.TrimSpace(output)
+		},
+			defaultTimeoutSeconds*2,
+			1,
+		).Should(Equal("deployment.apps/" + deploymentName))
+	})
+
 	It("stable/"+policyName+" should be Compliant", func() {
 		By("Checking if the status of the root policy is Compliant")
 		Eventually(
@@ -99,12 +112,12 @@ var _ = Describe("GRC: [P1][Sev1][policy-grc] Test the zts-cmc policy", Ordered,
 
 	AfterAll(func() {
 		out, _ := utils.KubectlWithOutput(
-			"get", "deployment", "-n", objectNS, deploymentName, "--kubeconfig="+kubeconfigHub,
+			"get", "deployment", "-n", deploymentNS, deploymentName, "--kubeconfig="+kubeconfigHub,
 		)
 		Expect(out).To(ContainSubstring(deploymentName))
 
 		_, err := utils.KubectlWithOutput(
-			"delete", "deployment", "-n", objectNS, deploymentName, "--kubeconfig="+kubeconfigHub,
+			"delete", "deployment", "-n", deploymentNS, deploymentName, "--kubeconfig="+kubeconfigHub,
 		)
 		Expect(err).To(BeNil())
 
