@@ -18,48 +18,48 @@ import (
 
 var _ = Describe("GRC: [P1][Sev1][policy-grc] Test the zts-cmc policy", Ordered, Label("policy-collection", "stable"), func() {
 	const (
-		policyPodName   = "policy-zts-cmc"
-		policyPodURL    = policyCollectCMURL + policyPodName + ".yaml"
-		policyPodNSName = "default"
-		deploymentName  = "zts-cmc-app-deploy"
+		policyName     = "policy-zts-cmc"
+		policyURL      = policyCollectCMURL + policyName + ".yaml"
+		objectNS       = "default"
+		deploymentName = "zts-cmc-app-deploy"
 	)
 
-	It("stable/"+policyPodName+" should be created on the Hub", func() {
+	It("stable/"+policyName+" should be created on the Hub", func() {
 		By("Creating the policy on the Hub")
 		_, err := utils.KubectlWithOutput(
-			"apply", "-f", policyPodURL, "-n", userNamespace, "--kubeconfig="+kubeconfigHub,
+			"apply", "-f", policyURL, "-n", userNamespace, "--kubeconfig="+kubeconfigHub,
 		)
 		Expect(err).To(BeNil())
 
-		By("Patching the namespaceSelector to use the " + policyPodNSName + " namespace")
+		By("Patching the namespaceSelector to use the " + objectNS + " namespace")
 		_, err = clientHubDynamic.Resource(common.GvrPolicy).Namespace(userNamespace).Patch(
 			context.TODO(),
-			policyPodName,
+			policyName,
 			k8stypes.JSONPatchType,
-			[]byte(`[{"op": "replace", "path": "/spec/policy-templates/0/objectDefinition/spec/namespaceSelector/include", "value": ["`+policyPodNSName+`"]}]`),
+			[]byte(`[{"op": "replace", "path": "/spec/policy-templates/0/objectDefinition/spec/namespaceSelector/include", "value": ["`+objectNS+`"]}]`),
 			metav1.PatchOptions{},
 		)
 		Expect(err).To(BeNil())
 
 		By("Patching placement rule")
 		err = common.PatchPlacementRule(
-			userNamespace, "placement-"+policyPodName, clusterNamespace, kubeconfigHub,
+			userNamespace, "placement-"+policyName, clusterNamespace, kubeconfigHub,
 		)
 		Expect(err).To(BeNil())
 
-		By("Checking that " + policyPodName + " exists on the Hub cluster")
+		By("Checking that " + policyName + " exists on the Hub cluster")
 		rootPolicy := utils.GetWithTimeout(
-			clientHubDynamic, common.GvrPolicy, policyPodName, userNamespace, true, defaultTimeoutSeconds,
+			clientHubDynamic, common.GvrPolicy, policyName, userNamespace, true, defaultTimeoutSeconds,
 		)
 		Expect(rootPolicy).NotTo(BeNil())
 	})
 
-	It("stable/"+policyPodName+" should be created on managed cluster", func() {
+	It("stable/"+policyName+" should be created on managed cluster", func() {
 		By("Checking the policy on managed cluster in ns " + clusterNamespace)
 		managedPolicy := utils.GetWithTimeout(
 			clientManagedDynamic,
 			common.GvrPolicy,
-			userNamespace+"."+policyPodName,
+			userNamespace+"."+policyName,
 			clusterNamespace,
 			true,
 			defaultTimeoutSeconds,
@@ -67,20 +67,20 @@ var _ = Describe("GRC: [P1][Sev1][policy-grc] Test the zts-cmc policy", Ordered,
 		Expect(managedPolicy).NotTo(BeNil())
 	})
 
-	It("stable/"+policyPodName+" should be NonCompliant", func() {
+	It("stable/"+policyName+" should be NonCompliant", func() {
 		By("Checking if the status of the root policy is NonCompliant")
 		Eventually(
-			common.GetComplianceState(clientHubDynamic, userNamespace, policyPodName, clusterNamespace),
+			common.GetComplianceState(clientHubDynamic, userNamespace, policyName, clusterNamespace),
 			defaultTimeoutSeconds*2,
 			1,
 		).Should(Equal(policiesv1.NonCompliant))
 	})
 
-	It("Enforcing stable/"+policyPodName, func() {
+	It("Enforcing stable/"+policyName, func() {
 		By("Patching remediationAction = enforce on the root policy")
 		_, err := clientHubDynamic.Resource(common.GvrPolicy).Namespace(userNamespace).Patch(
 			context.TODO(),
-			policyPodName,
+			policyName,
 			k8stypes.JSONPatchType,
 			[]byte(`[{"op": "replace", "path": "/spec/remediationAction", "value": "enforce"}]`),
 			metav1.PatchOptions{},
@@ -88,32 +88,30 @@ var _ = Describe("GRC: [P1][Sev1][policy-grc] Test the zts-cmc policy", Ordered,
 		Expect(err).To(BeNil())
 	})
 
-	It("stable/"+policyPodName+" should be Compliant", func() {
+	It("stable/"+policyName+" should be Compliant", func() {
 		By("Checking if the status of the root policy is Compliant")
 		Eventually(
-			common.GetComplianceState(clientHubDynamic, userNamespace, policyPodName, clusterNamespace),
+			common.GetComplianceState(clientHubDynamic, userNamespace, policyName, clusterNamespace),
 			defaultTimeoutSeconds*2,
 			1,
 		).Should(Equal(policiesv1.Compliant))
 	})
 
-
 	AfterAll(func() {
 		out, _ := utils.KubectlWithOutput(
-                "get", "deployment", "-n", policyPodNSName, deploymentName, "--kubeconfig="+kubeconfigHub,
+			"get", "deployment", "-n", objectNS, deploymentName, "--kubeconfig="+kubeconfigHub,
 		)
 		Expect(out).To(ContainSubstring(deploymentName))
 
 		_, err := utils.KubectlWithOutput(
-			"delete", "deployment", "-n", policyPodNSName, deploymentName, "--kubeconfig="+kubeconfigHub,
+			"delete", "deployment", "-n", objectNS, deploymentName, "--kubeconfig="+kubeconfigHub,
 		)
 		Expect(err).To(BeNil())
 
 		_, err = utils.KubectlWithOutput(
-			"delete", "-f", policyPodURL, "-n", userNamespace, "--kubeconfig="+kubeconfigHub,
+			"delete", "-f", policyURL, "-n", userNamespace, "--kubeconfig="+kubeconfigHub,
 		)
 		Expect(err).To(BeNil())
-
 
 	})
 
