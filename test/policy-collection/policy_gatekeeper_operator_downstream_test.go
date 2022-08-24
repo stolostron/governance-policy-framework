@@ -205,8 +205,11 @@ var _ = Describe("RHACM4K-3055", func() {
 			By("Creating invalid namespace on managed")
 			Eventually(func() interface{} {
 				out, _ := utils.KubectlWithOutput("create", "ns", "e2etestfail", "--kubeconfig="+kubeconfigManaged)
+				if out == "namespace/e2etestfail created" {
+					_, _ = utils.KubectlWithOutput("delete", "ns", "e2etestfail", "--kubeconfig="+kubeconfigManaged)
+				}
 				return out
-			}, defaultTimeoutSeconds*6, 1).Should(And(
+			}, defaultTimeoutSeconds*6, 5).Should(And(
 				ContainSubstring("validation.gatekeeper.sh"),
 				ContainSubstring("denied"),
 				ContainSubstring("ns-must-have-gk")))
