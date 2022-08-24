@@ -3,12 +3,13 @@
 package common
 
 import (
+	"context"
 	"crypto/tls"
-	"io/ioutil"
+	"io"
 	"net/http"
 	"time"
 
-	"github.com/onsi/gomega"
+	. "github.com/onsi/gomega"
 	"github.com/onsi/gomega/types"
 )
 
@@ -24,19 +25,23 @@ func GetWithToken(url, authToken string) (body, status string, err error) {
 		},
 		Timeout: 5 * time.Second,
 	}
-	req, err := http.NewRequest("GET", url, nil)
+
+	req, err := http.NewRequestWithContext(context.Background(), http.MethodGet, url, nil)
 	if err != nil {
 		return "", "", err
 	}
+
 	if authToken != "" {
 		req.Header.Add("Authorization", "Bearer "+authToken)
 	}
+
 	resp, err := client.Do(req)
 	if err != nil {
 		return "", "", err
 	}
 	defer resp.Body.Close()
-	bodyBytes, err := ioutil.ReadAll(resp.Body)
+	bodyBytes, err := io.ReadAll(resp.Body)
+
 	return string(bodyBytes), resp.Status, err
 }
 
@@ -47,5 +52,6 @@ func MatchMetricValue(name, label, value string) types.GomegaMatcher {
 	regex += "^" + name + "{"    // full name of metric at start of line
 	regex += ".*" + label + ".*" // label somewhere inside the {...}
 	regex += "} " + value + "$"  // value at the end of line
-	return gomega.MatchRegexp(regex)
+
+	return MatchRegexp(regex)
 }

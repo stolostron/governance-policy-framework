@@ -6,7 +6,7 @@ import (
 	. "github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
 	corev1 "k8s.io/api/core/v1"
-	"k8s.io/apimachinery/pkg/api/errors"
+	k8serrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	policiesv1 "open-cluster-management.io/governance-policy-propagator/api/v1"
 	"open-cluster-management.io/governance-policy-propagator/test/utils"
@@ -15,7 +15,8 @@ import (
 )
 
 // Note that these tests must be run on OpenShift since the tests create an OpenShift group
-var _ = Describe("GRC: [P1][Sev1][policy-grc] Test the policy-limitclusteradmin policy", Ordered, Label("policy-collection", "stable", "BVT"), func() {
+var _ = Describe("GRC: [P1][Sev1][policy-grc] Test "+
+	"the policy-limitclusteradmin policy", Ordered, Label("policy-collection", "stable", "BVT"), func() {
 	const (
 		iamPolicyName             = "policy-limitclusteradmin"
 		iamPolicyURL              = policyCollectACURL + iamPolicyName + ".yaml"
@@ -25,24 +26,55 @@ var _ = Describe("GRC: [P1][Sev1][policy-grc] Test the policy-limitclusteradmin 
 	var getIAMComplianceState func(Gomega) interface{}
 	BeforeEach(func() {
 		// Assign this here to avoid using nil pointers as arguments
-		getIAMComplianceState = common.GetComplianceState(clientHubDynamic, userNamespace, iamPolicyName, clusterNamespace)
+		getIAMComplianceState = common.GetComplianceState(
+			clientHubDynamic,
+			userNamespace,
+			iamPolicyName,
+			clusterNamespace)
 	})
 
 	It("stable/"+iamPolicyName+" should be created on the hub", func() {
 		By("Creating the policy on the hub")
-		utils.KubectlWithOutput("apply", "-f", iamPolicyURL, "-n", userNamespace, "--kubeconfig="+kubeconfigHub)
+		_, err := utils.KubectlWithOutput(
+			"apply", "-f",
+			iamPolicyURL,
+			"-n",
+			userNamespace,
+			"--kubeconfig="+kubeconfigHub,
+		)
+		Expect(err).To(BeNil())
 
 		By("Patching the placement rule")
-		common.PatchPlacementRule(userNamespace, "placement-"+iamPolicyName, clusterNamespace, kubeconfigHub)
+		err = common.PatchPlacementRule(
+			userNamespace,
+			"placement-"+iamPolicyName,
+			clusterNamespace,
+			kubeconfigHub,
+		)
+		Expect(err).To(BeNil())
 
 		By("Checking " + iamPolicyName + " on the hub cluster in the ns " + userNamespace)
-		rootPlc := utils.GetWithTimeout(clientHubDynamic, common.GvrPolicy, iamPolicyName, userNamespace, true, defaultTimeoutSeconds)
+		rootPlc := utils.GetWithTimeout(
+			clientHubDynamic,
+			common.GvrPolicy,
+			iamPolicyName,
+			userNamespace,
+			true,
+			defaultTimeoutSeconds,
+		)
 		Expect(rootPlc).NotTo(BeNil())
 	})
 
 	It("stable/"+iamPolicyName+" should be created on the managed cluster", func() {
 		By("Checking " + iamPolicyName + " on the managed cluster in the ns " + clusterNamespace)
-		managedplc := utils.GetWithTimeout(clientManagedDynamic, common.GvrPolicy, userNamespace+"."+iamPolicyName, clusterNamespace, true, defaultTimeoutSeconds*2)
+		managedplc := utils.GetWithTimeout(
+			clientManagedDynamic,
+			common.GvrPolicy,
+			userNamespace+"."+iamPolicyName,
+			clusterNamespace,
+			true,
+			defaultTimeoutSeconds*2,
+		)
 		Expect(managedplc).NotTo(BeNil())
 	})
 
@@ -65,16 +97,30 @@ var _ = Describe("GRC: [P1][Sev1][policy-grc] Test the policy-limitclusteradmin 
 			metav1.CreateOptions{},
 		)
 		if err != nil {
-			Expect(errors.IsAlreadyExists(err)).Should(BeTrue())
+			Expect(k8serrors.IsAlreadyExists(err)).Should(BeTrue())
 		}
 
 		Expect(namespaces.Get(context.TODO(), iamPolicyManagedNamespace, metav1.GetOptions{})).NotTo(BeNil())
 
 		By("Creating an OpenShift group (RHBZ#1981127)")
-		utils.KubectlWithOutput("apply", "-f", "../resources/iam_policy/group.yaml", "-n", iamPolicyManagedNamespace, "--kubeconfig="+kubeconfigManaged)
+		_, err = utils.KubectlWithOutput(
+			"apply", "-f",
+			"../resources/iam_policy/group.yaml",
+			"-n",
+			iamPolicyManagedNamespace,
+			"--kubeconfig="+kubeconfigManaged,
+		)
+		Expect(err).To(BeNil())
 
 		By("Creating a cluster role binding")
-		utils.KubectlWithOutput("apply", "-f", "../resources/iam_policy/clusterrolebinding.yaml", "-n", iamPolicyManagedNamespace, "--kubeconfig="+kubeconfigManaged)
+		_, err = utils.KubectlWithOutput(
+			"apply", "-f",
+			"../resources/iam_policy/clusterrolebinding.yaml",
+			"-n",
+			iamPolicyManagedNamespace,
+			"--kubeconfig="+kubeconfigManaged,
+		)
+		Expect(err).To(BeNil())
 	})
 
 	It("stable/"+iamPolicyName+" should be noncompliant", func() {
@@ -84,7 +130,15 @@ var _ = Describe("GRC: [P1][Sev1][policy-grc] Test the policy-limitclusteradmin 
 
 	It("Make stable/"+iamPolicyName+" be compliant", func() {
 		By("Deleting the OpenShift group")
-		utils.KubectlWithOutput("delete", "-f", "../resources/iam_policy/group.yaml", "-n", iamPolicyManagedNamespace, "--kubeconfig="+kubeconfigManaged)
+		_, err := utils.KubectlWithOutput(
+			"delete", "-f",
+			"../resources/iam_policy/group.yaml",
+			"-n",
+			iamPolicyManagedNamespace,
+			"--kubeconfig="+kubeconfigManaged,
+			"--ignore-not-found",
+		)
+		Expect(err).To(BeNil())
 	})
 
 	It("stable/"+iamPolicyName+" should be compliant", func() {
@@ -95,15 +149,34 @@ var _ = Describe("GRC: [P1][Sev1][policy-grc] Test the policy-limitclusteradmin 
 	})
 
 	AfterAll(func() {
-		err := clientManaged.CoreV1().Namespaces().Delete(context.TODO(), iamPolicyManagedNamespace, metav1.DeleteOptions{})
+		err := clientManaged.CoreV1().Namespaces().Delete(
+			context.TODO(),
+			iamPolicyManagedNamespace,
+			metav1.DeleteOptions{},
+		)
 		Expect(err).Should(BeNil())
-		utils.KubectlWithOutput("delete", "-f", iamPolicyURL, "-n", userNamespace, "--kubeconfig="+kubeconfigHub)
+
+		_, err = utils.KubectlWithOutput(
+			"delete", "-f",
+			iamPolicyURL,
+			"-n",
+			userNamespace,
+			"--kubeconfig="+kubeconfigHub,
+			"--ignore-not-found",
+		)
+		Expect(err).To(BeNil())
 
 		Eventually(
 			func() interface{} {
 				managedPlc := utils.GetWithTimeout(
-					clientManagedDynamic, common.GvrPolicy, userNamespace+"."+iamPolicyName, clusterNamespace, false, defaultTimeoutSeconds,
+					clientManagedDynamic,
+					common.GvrPolicy,
+					userNamespace+"."+iamPolicyName,
+					clusterNamespace,
+					false,
+					defaultTimeoutSeconds,
 				)
+
 				return managedPlc
 			},
 			defaultTimeoutSeconds,
