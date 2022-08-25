@@ -150,7 +150,7 @@ var _ = Describe("RHACM4K-2222 GRC: [P1][Sev1][policy-grc] Test compliance opera
 	const compCISScanPolicyURL = policyCollectCMURL + "policy-compliance-operator-cis-scan.yaml"
 	const compCISScanPolicyName = "policy-cis-scan"
 
-	var getComplianceState func() interface{}
+	var getComplianceState func(Gomega) interface{}
 
 	BeforeAll(func() {
 		if !isOCP46andAbove() {
