@@ -6,7 +6,6 @@ import (
 	"context"
 	"encoding/hex"
 	"fmt"
-	"io/ioutil"
 	"math/rand"
 	"os"
 	"os/exec"
@@ -60,7 +59,7 @@ func GenerateInsecurePassword() (string, error) {
 // after use.
 func GetKubeConfig(server, username, password string) (string, error) {
 	// Create a temporary file for the kubeconfig that the `oc login` command will generate
-	f, err := ioutil.TempFile("", "e2e-kubeconfig")
+	f, err := os.CreateTemp("", "e2e-kubeconfig")
 	if err != nil {
 		return "", fmt.Errorf("failed to create the temporary kubeconfig")
 	}
