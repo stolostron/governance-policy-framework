@@ -112,12 +112,12 @@ func LoadConfig(url, kubeconfig, context string) (*rest.Config, error) {
 
 // GetComplianceState returns a function that requires no arguments that retrieves the
 // compliance state of the input policy.
-func GetComplianceState(clientHubDynamic dynamic.Interface, namespace, policyName, clusterNamespace string) func() interface{} {
-	return func() interface{} {
+func GetComplianceState(clientHubDynamic dynamic.Interface, namespace, policyName, clusterNamespace string) func(gomega.Gomega) interface{} {
+	return func(g gomega.Gomega) interface{} {
 		rootPlc := utils.GetWithTimeout(clientHubDynamic, GvrPolicy, policyName, namespace, true, DefaultTimeoutSeconds)
 		var policy policiesv1.Policy
 		err := runtime.DefaultUnstructuredConverter.FromUnstructured(rootPlc.UnstructuredContent(), &policy)
-		gomega.ExpectWithOffset(1, err).To(gomega.BeNil())
+		g.ExpectWithOffset(1, err).To(gomega.BeNil())
 		for _, statusPerCluster := range policy.Status.Status {
 			if statusPerCluster.ClusterNamespace == clusterNamespace {
 				return statusPerCluster.ComplianceState
