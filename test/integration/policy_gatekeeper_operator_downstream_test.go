@@ -19,7 +19,7 @@ import (
 )
 
 var _ = Describe("RHACM4K-3055", Ordered, Label("policy-collection", "stable", "BVT"), func() {
-	var getComplianceState func(policyName string) func() interface{}
+	var getComplianceState func(policyName string) func(Gomega) interface{}
 
 	BeforeAll(func() {
 		if isOCP44() {
@@ -27,7 +27,7 @@ var _ = Describe("RHACM4K-3055", Ordered, Label("policy-collection", "stable", "
 		}
 
 		// Assign this here to avoid using nil pointers as arguments
-		getComplianceState = func(policyName string) func() interface{} {
+		getComplianceState = func(policyName string) func(Gomega) interface{} {
 			return common.GetComplianceState(clientHubDynamic, userNamespace, policyName, clusterNamespace)
 		}
 	})

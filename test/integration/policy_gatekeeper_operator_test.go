@@ -32,7 +32,7 @@ func isOCP44() bool {
 }
 
 var _ = Describe("", Ordered, Label("policy-collection", "community"), func() {
-	var getComplianceState func(policyName string) func() interface{}
+	var getComplianceState func(policyName string) func(Gomega) interface{}
 	BeforeAll(func() {
 		if isOCP44() {
 			Skip("Skipping as this is ocp 4.4")
@@ -42,7 +42,7 @@ var _ = Describe("", Ordered, Label("policy-collection", "community"), func() {
 		}
 
 		// Assign this here to avoid using nil pointers as arguments
-		getComplianceState = func(policyName string) func() interface{} {
+		getComplianceState = func(policyName string) func(Gomega) interface{} {
 			return common.GetComplianceState(clientHubDynamic, userNamespace, policyName, clusterNamespace)
 		}
 	})
