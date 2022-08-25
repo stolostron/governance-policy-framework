@@ -98,7 +98,7 @@ var _ = Describe("GRC: [P1][Sev1][policy-grc] Test the Policy Generator in an Ap
 				return err
 			},
 			fiveMinutes,
-			1,
+			10,
 		).Should(BeNil())
 		// Delete the kubeconfig file after the test.
 		defer func() { os.Remove(kubeconfigSubAdmin) }()
