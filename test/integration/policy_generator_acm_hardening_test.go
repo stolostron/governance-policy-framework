@@ -97,7 +97,7 @@ var _ = Describe("GRC: [P1][Sev1][policy-grc] Test the ACM Hardening generated P
 			context.TODO(), &subAdminBindingObj, metav1.CreateOptions{},
 		)
 		if err != nil {
-			Expect(k8serrors.IsAlreadyExists(err)).Should(BeTrue())
+			Expect(k8serrors.IsAlreadyExists(err)).Should(BeTrue(), "Expected error to be 'already exists': "+fmt.Sprint(err))
 		}
 
 		By("Verifying that the managed cluster set binding ClusterRole exists")
