@@ -207,11 +207,9 @@ var _ = Describe("GRC: [P1][Sev1][policy-grc] Test the ACM Hardening generated P
 
 		By("Checking that the subscriptions root policy was created and becomes compliant")
 		policyRsrc := clientHubDynamic.Resource(common.GvrPolicy)
-		var policy *unstructured.Unstructured
 		Eventually(
 			func() error {
-				var err error
-				policy, err = policyRsrc.Namespace(namespace).Get(
+				policy, err := policyRsrc.Namespace(namespace).Get(
 					context.TODO(), "policy-subscriptions", metav1.GetOptions{},
 				)
 				if err != nil {
@@ -234,15 +232,14 @@ var _ = Describe("GRC: [P1][Sev1][policy-grc] Test the ACM Hardening generated P
 		By("Checking that the policy-managedclusteraddon-available policy was propagated to the local-cluster namespace")
 		Eventually(
 			func() error {
-				var err error
-				policy, err = policyRsrc.Namespace("local-cluster").Get(
+				_, err := policyRsrc.Namespace("local-cluster").Get(
 					context.TODO(),
 					"policies.policy-managedclusteraddon-available",
 					metav1.GetOptions{},
 				)
 				return err
 			},
-			defaultTimeoutSeconds,
+			defaultTimeoutSeconds*2,
 			1,
 		).Should(BeNil())
 
@@ -250,8 +247,7 @@ var _ = Describe("GRC: [P1][Sev1][policy-grc] Test the ACM Hardening generated P
 		configPolicyRsrc := clientHubDynamic.Resource(common.GvrConfigurationPolicy)
 		Eventually(
 			func() error {
-				var err error
-				policy, err = configPolicyRsrc.Namespace("local-cluster").Get(
+				_, err := configPolicyRsrc.Namespace("local-cluster").Get(
 					context.TODO(), "policy-check-policyreports", metav1.GetOptions{},
 				)
 				return err
