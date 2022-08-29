@@ -4,6 +4,7 @@ package integration
 
 import (
 	"context"
+	"fmt"
 	"os"
 	"strings"
 
@@ -58,7 +59,7 @@ var _ = Describe("GRC: [P1][Sev1][policy-grc] Test the Policy Generator in an Ap
 			context.TODO(), &subAdminBindingObj, metav1.CreateOptions{},
 		)
 		if err != nil {
-			Expect(k8serrors.IsAlreadyExists(err)).Should(BeTrue())
+			Expect(k8serrors.IsAlreadyExists(err)).Should(BeTrue(), "Expected error to be 'already exists': "+fmt.Sprint(err))
 		}
 
 		By("Cleaning up any existing subscription-admin user config")
