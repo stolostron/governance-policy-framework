@@ -9,6 +9,7 @@ import (
 
 	. "github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
+	k8serrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	k8stypes "k8s.io/apimachinery/pkg/types"
 	policiesv1 "open-cluster-management.io/governance-policy-propagator/api/v1"
@@ -111,21 +112,17 @@ var _ = Describe("GRC: [P1][Sev1][policy-grc] Test the zts-cmc policy", Ordered,
 	})
 
 	AfterAll(func() {
-		out, _ := utils.KubectlWithOutput(
-			"get", "deployment", "-n", deploymentNS, deploymentName, "--kubeconfig="+kubeconfigHub,
-		)
-		Expect(out).To(ContainSubstring(deploymentName))
-
 		_, err := utils.KubectlWithOutput(
-			"delete", "deployment", "-n", deploymentNS, deploymentName, "--kubeconfig="+kubeconfigHub,
-		)
-		Expect(err).To(BeNil())
-
-		_, err = utils.KubectlWithOutput(
 			"delete", "-f", policyURL, "-n", userNamespace, "--kubeconfig="+kubeconfigHub,
 		)
 		Expect(err).To(BeNil())
 
+		_, err = utils.KubectlWithOutput(
+			"delete", "deployment", "-n", deploymentNS, deploymentName, "--kubeconfig="+kubeconfigManaged,
+		)
+		if !k8serrors.IsNotFound(err) {
+			Expect(err).To(BeNil())
+		}
 	})
 
 })
