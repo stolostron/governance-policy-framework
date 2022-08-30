@@ -90,7 +90,7 @@ func GetKubeConfig(server, username, password string) (string, error) {
 
 	output, err := cmd.CombinedOutput()
 	if err != nil {
-		os.Remove(f.Name())
+		os.Remove(kubeconfigPath)
 		return "", fmt.Errorf("failed to login with user '%s': %s", username, string(output))
 	}
 

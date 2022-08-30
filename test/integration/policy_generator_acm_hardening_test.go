@@ -58,7 +58,7 @@ func cleanup(namespace string, secret string, user common.OCPUser) {
 
 var _ = Describe("GRC: [P1][Sev1][policy-grc] Test the ACM Hardening generated PolicySet in an App subscription", Ordered, Label("policy-collection", "stable"), func() {
 	const namespace = "policies"
-	const secret = "grc-e2e-subscription-admin-user"
+	const secret = "grc-e2e-hardening-sub-admin-user"
 	const clustersetRoleName = "grc-e2e-clusterset-role"
 	const subAdminBinding = "open-cluster-management:subscription-admin"
 	ocpUser := common.OCPUser{
@@ -74,7 +74,7 @@ var _ = Describe("GRC: [P1][Sev1][policy-grc] Test the ACM Hardening generated P
 		// Having the proper role in another cluster role binding does not work.
 		ClusterRoleBindings: []string{subAdminBinding},
 		Password:            "",
-		Username:            "grc-e2e-subscription-admin",
+		Username:            "grc-e2e-hardening-sub-admin",
 	}
 
 	It("Sets up the application subscription", func() {
