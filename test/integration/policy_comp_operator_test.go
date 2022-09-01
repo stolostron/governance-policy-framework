@@ -137,12 +137,6 @@ func complianceScanTest(scanPolicyName string, scanPolicyUrl string, scanName st
 		utils.ListWithTimeoutByNamespace(clientManagedDynamic, common.GvrComplianceCheckResult, metav1.ListOptions{}, "openshift-compliance", 0, false, defaultTimeoutSeconds)
 		By("Wait for compliancescan to be deleted")
 		utils.ListWithTimeoutByNamespace(clientManagedDynamic, common.GvrComplianceScan, metav1.ListOptions{}, "openshift-compliance", 0, false, defaultTimeoutSeconds)
-		By("Wait for other pods to be deleted in openshift-compliance ns")
-		Eventually(func(g Gomega) interface{} {
-			podList, err := clientManaged.CoreV1().Pods("openshift-compliance").List(context.TODO(), metav1.ListOptions{})
-			g.Expect(err).To(BeNil())
-			return len(podList.Items)
-		}, defaultTimeoutSeconds*4, 1).Should(Equal(3))
 	})
 }
 
