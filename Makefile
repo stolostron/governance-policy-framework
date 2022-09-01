@@ -82,8 +82,9 @@ default::
 clean::
 	-rm bin/*
 	-rm .build-harness-bootstrap
-	-rm kubeconfig_managed
-	-rm kubeconfig_hub
+	-rm kubeconfig_$(MANAGED_CLUSTER_NAME)
+	-rm kubeconfig_$(HUB_CLUSTER_NAME)
+	-rm kubeconfig_$(HUB_CLUSTER_NAME)_internal
 	-rm -r test-output/
 	-rm -r vendor/
 
