@@ -241,7 +241,7 @@ var _ = Describe("", Ordered, Label("policy-collection", "community"), func() {
 			By("Creating invalid namespace on managed")
 			Eventually(func() interface{} {
 				out, _ := utils.KubectlWithOutput("apply", "-f", "../resources/gatekeeper/ns-create-invalid.yaml", "--kubeconfig="+kubeconfigManaged)
-				if out == "namespace/e2etestfail created" {
+				if strings.Contains(out, "namespace/e2etestfail created") {
 					GinkgoWriter.Println("Deleting created namespace to retry create:")
 					_, _ = utils.KubectlWithOutput("delete", "-f", "../resources/gatekeeper/ns-create-invalid.yaml", "--kubeconfig="+kubeconfigManaged)
 				}
