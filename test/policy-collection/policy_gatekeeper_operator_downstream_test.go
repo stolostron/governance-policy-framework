@@ -205,7 +205,7 @@ var _ = Describe("RHACM4K-3055", func() {
 			By("Creating invalid namespace on managed")
 			Eventually(func() interface{} {
 				out, _ := utils.KubectlWithOutput("create", "ns", "e2etestfail", "--kubeconfig="+kubeconfigManaged)
-				if out == "namespace/e2etestfail created" {
+				if strings.Contains(out, "namespace/e2etestfail created") {
 					_, _ = utils.KubectlWithOutput("delete", "ns", "e2etestfail", "--kubeconfig="+kubeconfigManaged)
 				}
 				return out
