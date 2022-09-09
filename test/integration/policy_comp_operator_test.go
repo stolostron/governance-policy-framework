@@ -108,19 +108,19 @@ func complianceScanTest(scanPolicyName string, scanPolicyUrl string, scanName st
 				return len(list.Items)
 			}, common.MaxTravisTimeoutSeconds, 1).ShouldNot(Equal(0))
 		})
-		It("ComplianceSuite "+scanName+" scan results should be AGGREGATING", func() {
-			By("Checking if ComplianceSuite " + scanName + " scan status.phase is AGGREGATING")
+		It("ComplianceSuite "+scanName+" scan results should be RUNNING", func() {
+			By("Checking if ComplianceSuite " + scanName + " scan status.phase is RUNNING")
 			Eventually(func() interface{} {
 				compliancesuite := utils.GetWithTimeout(clientManagedDynamic, common.GvrComplianceSuite, scanName, "openshift-compliance", true, defaultTimeoutSeconds)
 				return compliancesuite.Object["status"].(map[string]interface{})["phase"]
-			}, common.MaxTravisTimeoutSeconds, 1).Should(Equal("AGGREGATING"))
+			}, common.MaxTravisTimeoutSeconds, 1).Should(Equal("RUNNING"))
 		})
-		It("ComplianceSuite "+scanName+" scan results should be DONE", func() {
-			By("Checking if ComplianceSuite " + scanName + " scan status.phase is DONE")
-			Eventually(func() interface{} {
+		It("ComplianceSuite "+scanName+" scan results should be consistently RUNNING, AGGREGATING or DONE", func() {
+			By("Checking if ComplianceSuite " + scanName + " scan status.phase is consistently RUNNING, AGGREGATING or DONE")
+			Consistently(func() interface{} {
 				compliancesuite := utils.GetWithTimeout(clientManagedDynamic, common.GvrComplianceSuite, scanName, "openshift-compliance", true, defaultTimeoutSeconds)
 				return compliancesuite.Object["status"].(map[string]interface{})["phase"]
-			}, common.MaxTravisTimeoutSeconds, 1).Should(Equal("DONE"))
+			}, common.MaxTravisTimeoutSeconds, 1).Should(BeElementOf([]string{"AGGREGATING", "RUNNING", "DONE"}))
 		})
 	})
 	AfterAll(func() {
