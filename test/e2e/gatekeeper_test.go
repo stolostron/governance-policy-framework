@@ -128,9 +128,13 @@ var _ = Describe("Test gatekeeper", Ordered, func() {
 		})
 		It("should generate statuses properly on hub, no violation expected", func() {
 			By("Checking if status for policy template policy-gatekeeper-k8srequiredlabels is compliant")
-			Eventually(func() interface{} {
+			Eventually(func(g Gomega) interface{} {
 				plc := utils.GetWithTimeout(clientHubDynamic, common.GvrPolicy, userNamespace+"."+GKPolicyName, clusterNamespace, true, defaultTimeoutSeconds)
-				details := plc.Object["status"].(map[string]interface{})["details"].([]interface{})
+				status, ok := plc.Object["status"].(map[string]interface{})
+				g.Expect(ok).To(BeTrue())
+				details, ok := status["details"].([]interface{})
+				g.Expect(ok).To(BeTrue())
+
 				return details[0].(map[string]interface{})["compliant"]
 			}, defaultTimeoutSeconds, 1).Should(Equal("Compliant"))
 			By("Checking if violation message for policy template policy-gatekeeper-audit is compliant")
