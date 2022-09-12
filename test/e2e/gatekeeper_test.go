@@ -56,6 +56,8 @@ func GetClusterLevelWithTimeout(
 const GKOPolicyYaml string = "../resources/gatekeeper/policy-gatekeeper-operator.yaml"
 
 var _ = Describe("Test gatekeeper", Ordered, func() {
+	const gatekeeperNS = "gatekeeper-system"
+
 	Describe("Test gatekeeper operator", func() {
 		const GKOPolicyName string = "policy-gatekeeper-operator"
 		It("gatekeeper operator policy should be created on managed", func() {
@@ -63,7 +65,15 @@ var _ = Describe("Test gatekeeper", Ordered, func() {
 		})
 		It("should create gatekeeper pods on managed cluster", func() {
 			By("Checking number of pods in gatekeeper-system ns")
-			utils.ListWithTimeoutByNamespace(clientManagedDynamic, common.GvrPod, metav1.ListOptions{}, "gatekeeper-system", 6, true, 240)
+			utils.ListWithTimeoutByNamespace(clientManagedDynamic, common.GvrPod, metav1.ListOptions{}, gatekeeperNS, 6, true, 240)
+		})
+
+		AfterAll(func() {
+			if CurrentSpecReport().Failed() {
+				utils.KubectlWithOutput("-n", gatekeeperNS, "get", "pods", "--kubeconfig="+kubeconfigManaged)
+				utils.KubectlWithOutput("-n", gatekeeperNS, "logs", "deployment/gatekeeper-operator-controller", "-c", "manager")
+				common.OutputDebugInfo("gatekeeper operator", kubeconfigHub)
+			}
 		})
 	})
 	Describe("Test gatekeeper policy creation", Ordered, func() {
@@ -218,7 +228,7 @@ var _ = Describe("Test gatekeeper", Ordered, func() {
 			common.OcManaged("delete", "K8sRequiredLabels", "--all")
 			common.OcManaged("delete", "crd", "k8srequiredlabels.constraints.gatekeeper.sh")
 			By("Deleting all events in gatekeeper-system")
-			common.OcManaged("delete", "events", "--all", "-n", "gatekeeper-system")
+			common.OcManaged("delete", "events", "--all", "-n", gatekeeperNS)
 			By("Deleting ns e2etestsuccess")
 			common.OcManaged("delete", "ns", "e2etestsuccess")
 		})
