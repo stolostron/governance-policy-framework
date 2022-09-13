@@ -92,6 +92,47 @@ func query(host string, token string, query string, insecure bool) (time.Time, f
 	return val.Timestamp.Time(), metric
 }
 
+func querySaturation(host string, token string, query string, insecure bool) (time.Time, []int64) {
+	tr := &http.Transport{}
+	if insecure {
+		tr.TLSClientConfig = &tls.Config{InsecureSkipVerify: true}
+	}
+	trHeader := WithHeader(tr)
+	trHeader.Set("Authorization", fmt.Sprintf("Bearer %s", token))
+	cl := &http.Client{Transport: trHeader}
+	client, err := api.NewClient(api.Config{
+		Address: fmt.Sprintf("https://%s", host),
+		Client:  cl,
+	})
+	if err != nil {
+		klog.Exitf("Error creating client: %v\n", err)
+	}
+
+	v1api := v1.NewAPI(client)
+	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
+	defer cancel()
+
+	result, warnings, err := v1api.Query(ctx, query, time.Now())
+	if err != nil {
+		klog.Exitf("Error querying Prometheus: %v\n", err)
+	}
+	if len(warnings) > 0 {
+		klog.Warningf("Prometheus query warnings: %v\n", warnings)
+	}
+
+	resultVec := result.(model.Vector)
+	output := []int64{}
+	for i := 0; i < len(resultVec); i++ {
+		metric, err := strconv.ParseInt(resultVec[i].Value.String(), 10, 32)
+		if err != nil {
+			klog.Exitf("Error parsing metric response: %v\n", err)
+		}
+		output = append(output, metric)
+	}
+
+	return resultVec[0].Timestamp.Time(), output
+}
+
 func setupMetrics() (token []byte, thanosHost string) {
 	// wait for config map to be applied properly before executing command
 	secretOutput, err := exec.Command("kubectl", "get", "secret", "-n", "openshift-user-workload-monitoring").CombinedOutput()
@@ -145,7 +186,7 @@ func setupMetrics() (token []byte, thanosHost string) {
 	return token, strings.Trim(string(thanosB64), "'")
 }
 
-func getMetrics(thanosHost string, token string, perBatchSleep int, numPolicies int, insecure bool) metricData {
+func getMetrics(thanosHost string, token string, perBatchSleep int, numPolicies int, insecure bool) (metricData, saturationData) {
 	// print metrics
 	ts, avgController := query(
 		thanosHost,
@@ -172,19 +213,78 @@ func getMetrics(thanosHost string, token string, perBatchSleep int, numPolicies 
 		insecure,
 	)
 
+	satTS, satLE1 := query(
+		thanosHost,
+		token,
+		`config_policies_evaluation_duration_seconds_bucket{le="1"}`,
+		insecure,
+	)
+
+	_, satLE3 := query(
+		thanosHost,
+		token,
+		`config_policies_evaluation_duration_seconds_bucket{le="3"}`,
+		insecure,
+	)
+
+	_, satLE9 := query(
+		thanosHost,
+		token,
+		`config_policies_evaluation_duration_seconds_bucket{le="9"}`,
+		insecure,
+	)
+
+	_, satLE10 := query(
+		thanosHost,
+		token,
+		`config_policies_evaluation_duration_seconds_bucket{le="10.5"}`,
+		insecure,
+	)
+
+	_, satLE15 := query(
+		thanosHost,
+		token,
+		`config_policies_evaluation_duration_seconds_bucket{le="15"}`,
+		insecure,
+	)
+
+	_, satLE30 := query(
+		thanosHost,
+		token,
+		`config_policies_evaluation_duration_seconds_bucket{le="30"}`,
+		insecure,
+	)
+
+	_, satLEinf := query(
+		thanosHost,
+		token,
+		`config_policies_evaluation_duration_seconds_bucket{le="+Inf"}`,
+		insecure,
+	)
+
 	// log metrics
 	klog.V(2).Infof("CPU utilization over the past %d minutes:", perBatchSleep)
 	klog.V(2).Infof("config policy controller: %.5f / %.5f (avg/max)", avgController, maxController)
 	klog.V(2).Infof("kube API server: %.5f / %.5f (avg/max)", avgApiserver, maxApiserver)
 
 	return metricData{
-		timestamp:     ts.Format("15:04:05"),
-		numPolicies:   numPolicies,
-		controllerAvg: avgController,
-		controllerMax: maxController,
-		apiserverAvg:  avgApiserver,
-		apiserverMax:  maxApiserver,
-	}
+			timestamp:     ts.Format("15:04:05"),
+			numPolicies:   numPolicies,
+			controllerAvg: avgController,
+			controllerMax: maxController,
+			apiserverAvg:  avgApiserver,
+			apiserverMax:  maxApiserver,
+		}, saturationData{
+			timestamp:   satTS.Format("15:04:05"),
+			numPolicies: numPolicies,
+			le1:         int(satLE1),
+			g1le3:       int(satLE3 - satLE1),
+			g3le9:       int(satLE9 - satLE3),
+			g9le10:      int(satLE10 - satLE9),
+			g10le15:     int(satLE15 - satLE10),
+			g15le30:     int(satLE30 - satLE15),
+			g30:         int(satLEinf - satLE30),
+		}
 }
 
 func genUniquePolicy(inFilename string, outFilename string) error {
@@ -212,8 +312,20 @@ type metricData struct {
 	apiserverMax  float64
 }
 
+type saturationData struct {
+	timestamp   string
+	numPolicies int
+	le1         int
+	g1le3       int
+	g3le9       int
+	g9le10      int
+	g10le15     int
+	g15le30     int
+	g30         int
+}
+
 // pretty print table of results to stdout
-func printTable(data []metricData) {
+func printCPUTable(data []metricData) {
 	table := tabwriter.NewWriter(os.Stdout, 1, 4, 1, ' ', tabwriter.Debug|tabwriter.AlignRight)
 	fmt.Fprintln(table, "========\t==========\t====================\t====================\t===================\t===================\t")
 	fmt.Fprintln(table, "time\t# policies\tavg cpu (controller)\tmax cpu (controller)\tavg cpu (apiserver)\tmax cpu (apiserver)\t")
@@ -230,11 +342,73 @@ func printTable(data []metricData) {
 		)
 	}
 
+	fmt.Println("============================================================================================================")
+	fmt.Println("CPU Data (core usage):")
 	table.Flush()
 }
 
+// pretty print table of saturation results to stdout
+func printSaturationTable(data []saturationData) {
+	table := tabwriter.NewWriter(os.Stdout, 1, 4, 1, ' ', tabwriter.Debug|tabwriter.AlignRight)
+	fmt.Fprintln(table, "========\t==========\t=============\t=======\t=======\t==========\t===========\t=========\t===========\t")
+	fmt.Fprintln(table, "time\t# policies\t1 sec or less\t1-3 sec\t3-9 sec\t9-10.5 sec\t10.5-15 sec\t15-30 sec\tover 30 sec\t")
+	fmt.Fprintln(table, "========\t==========\t=============\t=======\t=======\t==========\t===========\t=========\t===========\t")
+
+	for i := 0; i < len(data); i++ {
+		fmt.Fprintf(table, "%s\t%d\t%d\t%d\t%d\t%d\t%d\t%d\t%d\t\n",
+			data[i].timestamp,
+			data[i].numPolicies,
+			data[i].le1,
+			data[i].g1le3,
+			data[i].g3le9,
+			data[i].g9le10,
+			data[i].g10le15,
+			data[i].g15le30,
+			data[i].g30,
+		)
+	}
+
+	fmt.Println("============================================================================================================")
+	fmt.Println("Saturation Data (seconds per config policy evaluation):")
+	table.Flush()
+}
+
+// translate saturation metrics from cumulative to per-batch
+func normalizeSaturationData(data []saturationData) []saturationData {
+	//start baseline at 0 policies evaluated
+	result := []saturationData{{
+		timestamp:   data[0].timestamp,
+		numPolicies: 0,
+		le1:         0,
+		g1le3:       0,
+		g3le9:       0,
+		g9le10:      0,
+		g10le15:     0,
+		g15le30:     0,
+		g30:         0,
+	}}
+
+	// counts are cumulative, so subtract counts from previous batch
+	for i := 1; i < len(data); i++ {
+		baseline := data[i-1]
+		result = append(result, saturationData{
+			timestamp:   data[i].timestamp,
+			numPolicies: data[i].numPolicies,
+			le1:         data[i].le1 - baseline.le1,
+			g1le3:       data[i].g1le3 - baseline.g1le3,
+			g3le9:       data[i].g3le9 - baseline.g3le9,
+			g9le10:      data[i].g9le10 - baseline.g9le10,
+			g10le15:     data[i].g10le15 - baseline.g10le15,
+			g15le30:     data[i].g15le30 - baseline.g15le30,
+			g30:         data[i].g30 - baseline.g30,
+		})
+	}
+
+	return result
+}
+
 // export table of results to a csv file
-func exportTable(data []metricData, filename string) {
+func exportTable(cpuData []metricData, satData []saturationData, filename string) {
 	f, err := os.Create(filename)
 	if err != nil {
 		klog.Exitf("Error: failed to create %s; %s", filename, err)
@@ -249,12 +423,13 @@ func exportTable(data []metricData, filename string) {
 	w := csv.NewWriter(f)
 	defer w.Flush()
 
-	line := []string{"time", "numPolicies", "avg_cpu_controller", "max_cpu_controller", "avg_cpu_apiserver", "max_cpu_apiserver"}
+	line := []string{"time", "numPolicies", "avg_cpu_controller", "max_cpu_controller", "avg_cpu_apiserver",
+		"max_cpu_apiserver", "<1", "1-3", "3-9", "9-10.5", "10.5-15", "15-30", ">30"}
 	if err := w.Write(line); err != nil {
 		klog.Exitf("Error writing headers to file; %s", err)
 	}
 
-	for _, entry := range data {
+	for i, entry := range cpuData {
 		line = []string{
 			entry.timestamp,
 			fmt.Sprintf("%d", entry.numPolicies),
@@ -262,6 +437,13 @@ func exportTable(data []metricData, filename string) {
 			fmt.Sprintf("%.5f", entry.controllerMax),
 			fmt.Sprintf("%.5f", entry.apiserverAvg),
 			fmt.Sprintf("%.5f", entry.apiserverMax),
+			fmt.Sprint(satData[i].le1),
+			fmt.Sprint(satData[i].g1le3),
+			fmt.Sprint(satData[i].g3le9),
+			fmt.Sprint(satData[i].g9le10),
+			fmt.Sprint(satData[i].g10le15),
+			fmt.Sprint(satData[i].g15le30),
+			fmt.Sprint(satData[i].g30),
 		}
 		if err := w.Write(line); err != nil {
 			klog.Exitf("Error writing data to file; %s", err)
@@ -296,8 +478,12 @@ func main() {
 
 	klog.Info("Starting the Config Policy Controller performance test :)")
 	tableData := []metricData{}
+	satTableData := []saturationData{}
 
-	tableData = append(tableData, getMetrics(thanosHost, string(token), perBatchSleep, 0, insecure))
+	cpuMetrics, satMetrics := getMetrics(thanosHost, string(token), perBatchSleep, 0, insecure)
+
+	tableData = append(tableData, cpuMetrics)
+	satTableData = append(satTableData, satMetrics)
 
 	//setup temp directory for auto-generated policy YAML to live in
 	policyDir, err := os.MkdirTemp(path.Join(performanceDir, "resources"), "policies")
@@ -349,10 +535,18 @@ func main() {
 
 		time.Sleep(bonusTime)
 
-		tableData = append(tableData, getMetrics(thanosHost, string(token), perBatchSleep, totalPlcs, insecure))
+		cpuMetrics, satMetrics := getMetrics(thanosHost, string(token), perBatchSleep, totalPlcs, insecure)
+
+		tableData = append(tableData, cpuMetrics)
+		satTableData = append(satTableData, satMetrics)
 	}
 
-	printTable(tableData)
+	printSaturationTable(satTableData)
+
+	satTableData = normalizeSaturationData(satTableData)
+
+	printCPUTable(tableData)
+	printSaturationTable(satTableData)
 
 	wd, err := os.Getwd()
 	if err != nil {
@@ -363,7 +557,7 @@ func main() {
 	if err != nil {
 		klog.Errorf("Error creating output directory: %s", err)
 	}
-	exportTable(tableData, path.Join(performanceDir, "output", outputFilename))
+	exportTable(tableData, satTableData, path.Join(performanceDir, "output", outputFilename))
 
 	klog.Info("Performance test completed! Cleaning up...")
 	deletionOutput, err := exec.Command("kubectl", "delete", "policies.policy.open-cluster-management.io", "-l", "grc-test=config-policy-performance").CombinedOutput()
