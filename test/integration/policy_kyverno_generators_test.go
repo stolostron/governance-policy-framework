@@ -34,6 +34,7 @@ var _ = Describe("GRC: [P1][Sev1][policy-grc] Test the kyverno generator policie
 	const kyvernoInstallURL = "https://raw.githubusercontent.com/stolostron/policy-collection/main/community/CM-Configuration-Management/policy-install-kyverno.yaml"
 	const kyvernoInstallPolicy = "policy-install-kyverno"
 	const policyReportCRDURL = "https://raw.githubusercontent.com/kubernetes-sigs/wg-policy-prototypes/master/policy-report/crd/v1alpha2/wgpolicyk8s.io_policyreports.yaml"
+	const localClusterName = "local-cluster"
 
 	It("Install Kyverno on the managed cluster", func() {
 		By("Creating kyverno resources by deploying the community policy")
@@ -44,7 +45,7 @@ var _ = Describe("GRC: [P1][Sev1][policy-grc] Test the kyverno generator policie
 
 		By("Checking if the status of the root policy is NonCompliant")
 		Eventually(
-			common.GetComplianceState(clientHubDynamic, userNamespace, kyvernoInstallPolicy, clusterNamespace),
+			common.GetComplianceState(clientHubDynamic, userNamespace, kyvernoInstallPolicy, localClusterName),
 			defaultTimeoutSeconds*2,
 			1,
 		).Should(Equal(policiesv1.NonCompliant))
@@ -75,7 +76,7 @@ var _ = Describe("GRC: [P1][Sev1][policy-grc] Test the kyverno generator policie
 
 		By("Checking if the status of the root policy is Compliant")
 		Eventually(
-			common.GetComplianceState(clientHubDynamic, userNamespace, "policy-install-kyverno", clusterNamespace),
+			common.GetComplianceState(clientHubDynamic, userNamespace, "policy-install-kyverno", localClusterName),
 			defaultTimeoutSeconds*10,
 			1,
 		).Should(Equal(policiesv1.Compliant))
