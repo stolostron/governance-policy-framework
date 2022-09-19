@@ -82,55 +82,19 @@ func query(host string, token string, query string, insecure bool) (time.Time, f
 	if len(warnings) > 0 {
 		klog.Warningf("Prometheus query warnings: %v\n", warnings)
 	}
-
-	val := result.(model.Vector)[0]
-	metric, err := strconv.ParseFloat(val.Value.String(), 32)
-	if err != nil {
-		klog.Exitf("Error parsing metric response: %v\n", err)
-	}
-
-	return val.Timestamp.Time(), metric
-}
-
-func querySaturation(host string, token string, query string, insecure bool) (time.Time, []int64) {
-	tr := &http.Transport{}
-	if insecure {
-		tr.TLSClientConfig = &tls.Config{InsecureSkipVerify: true}
-	}
-	trHeader := WithHeader(tr)
-	trHeader.Set("Authorization", fmt.Sprintf("Bearer %s", token))
-	cl := &http.Client{Transport: trHeader}
-	client, err := api.NewClient(api.Config{
-		Address: fmt.Sprintf("https://%s", host),
-		Client:  cl,
-	})
-	if err != nil {
-		klog.Exitf("Error creating client: %v\n", err)
-	}
-
-	v1api := v1.NewAPI(client)
-	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
-	defer cancel()
-
-	result, warnings, err := v1api.Query(ctx, query, time.Now())
-	if err != nil {
-		klog.Exitf("Error querying Prometheus: %v\n", err)
-	}
-	if len(warnings) > 0 {
-		klog.Warningf("Prometheus query warnings: %v\n", warnings)
-	}
-
-	resultVec := result.(model.Vector)
-	output := []int64{}
-	for i := 0; i < len(resultVec); i++ {
-		metric, err := strconv.ParseInt(resultVec[i].Value.String(), 10, 32)
+	if len(result.(model.Vector)) > 0 {
+		val := result.(model.Vector)[0]
+		metric, err := strconv.ParseFloat(val.Value.String(), 32)
 		if err != nil {
 			klog.Exitf("Error parsing metric response: %v\n", err)
 		}
-		output = append(output, metric)
+
+		return val.Timestamp.Time(), metric
 	}
 
-	return resultVec[0].Timestamp.Time(), output
+	klog.Exitf("Error: metrics response is empty: %v\n", result)
+
+	return time.Time{}, -1
 }
 
 func setupMetrics() (token []byte, thanosHost string) {
@@ -255,6 +219,13 @@ func getMetrics(thanosHost string, token string, perBatchSleep int, numPolicies 
 		insecure,
 	)
 
+	_, satLE60 := query(
+		thanosHost,
+		token,
+		`config_policies_evaluation_duration_seconds_bucket{le="60"}`,
+		insecure,
+	)
+
 	_, satLEinf := query(
 		thanosHost,
 		token,
@@ -283,7 +254,8 @@ func getMetrics(thanosHost string, token string, perBatchSleep int, numPolicies 
 			g9le10:      int(satLE10 - satLE9),
 			g10le15:     int(satLE15 - satLE10),
 			g15le30:     int(satLE30 - satLE15),
-			g30:         int(satLEinf - satLE30),
+			g30le60:     int(satLE60 - satLE30),
+			g60:         int(satLEinf - satLE60),
 		}
 }
 
@@ -321,7 +293,8 @@ type saturationData struct {
 	g9le10      int
 	g10le15     int
 	g15le30     int
-	g30         int
+	g30le60     int
+	g60         int
 }
 
 // pretty print table of results to stdout
@@ -350,12 +323,12 @@ func printCPUTable(data []metricData) {
 // pretty print table of saturation results to stdout
 func printSaturationTable(data []saturationData) {
 	table := tabwriter.NewWriter(os.Stdout, 1, 4, 1, ' ', tabwriter.Debug|tabwriter.AlignRight)
-	fmt.Fprintln(table, "========\t==========\t=============\t=======\t=======\t==========\t===========\t=========\t===========\t")
-	fmt.Fprintln(table, "time\t# policies\t1 sec or less\t1-3 sec\t3-9 sec\t9-10.5 sec\t10.5-15 sec\t15-30 sec\tover 30 sec\t")
-	fmt.Fprintln(table, "========\t==========\t=============\t=======\t=======\t==========\t===========\t=========\t===========\t")
+	fmt.Fprintln(table, "========\t==========\t=============\t=======\t=======\t==========\t===========\t=========\t=========\t===========\t")
+	fmt.Fprintln(table, "time\t# policies\t1 sec or less\t1-3 sec\t3-9 sec\t9-10.5 sec\t10.5-15 sec\t15-30 sec\t30-60 sec\tover 60 sec\t")
+	fmt.Fprintln(table, "========\t==========\t=============\t=======\t=======\t==========\t===========\t=========\t=========\t===========\t")
 
 	for i := 0; i < len(data); i++ {
-		fmt.Fprintf(table, "%s\t%d\t%d\t%d\t%d\t%d\t%d\t%d\t%d\t\n",
+		fmt.Fprintf(table, "%s\t%d\t%d\t%d\t%d\t%d\t%d\t%d\t%d\t%d\t\n",
 			data[i].timestamp,
 			data[i].numPolicies,
 			data[i].le1,
@@ -364,12 +337,14 @@ func printSaturationTable(data []saturationData) {
 			data[i].g9le10,
 			data[i].g10le15,
 			data[i].g15le30,
-			data[i].g30,
+			data[i].g30le60,
+			data[i].g60,
 		)
 	}
 
-	fmt.Println("============================================================================================================")
-	fmt.Println("Saturation Data (seconds per config policy evaluation):")
+	fmt.Println("===================================================================================================================")
+	fmt.Println("Saturation Data (config policy evaluation loops / second):")
+	fmt.Println("Note: saturation occurs when the evaluation time starts to exceed the 10 second interval between loops")
 	table.Flush()
 }
 
@@ -385,7 +360,8 @@ func normalizeSaturationData(data []saturationData) []saturationData {
 		g9le10:      0,
 		g10le15:     0,
 		g15le30:     0,
-		g30:         0,
+		g30le60:     0,
+		g60:         0,
 	}}
 
 	// counts are cumulative, so subtract counts from previous batch
@@ -400,7 +376,8 @@ func normalizeSaturationData(data []saturationData) []saturationData {
 			g9le10:      data[i].g9le10 - baseline.g9le10,
 			g10le15:     data[i].g10le15 - baseline.g10le15,
 			g15le30:     data[i].g15le30 - baseline.g15le30,
-			g30:         data[i].g30 - baseline.g30,
+			g30le60:     data[i].g30le60 - baseline.g30le60,
+			g60:         data[i].g60 - baseline.g60,
 		})
 	}
 
@@ -443,7 +420,8 @@ func exportTable(cpuData []metricData, satData []saturationData, filename string
 			fmt.Sprint(satData[i].g9le10),
 			fmt.Sprint(satData[i].g10le15),
 			fmt.Sprint(satData[i].g15le30),
-			fmt.Sprint(satData[i].g30),
+			fmt.Sprint(satData[i].g30le60),
+			fmt.Sprint(satData[i].g60),
 		}
 		if err := w.Write(line); err != nil {
 			klog.Exitf("Error writing data to file; %s", err)
@@ -540,8 +518,6 @@ func main() {
 		tableData = append(tableData, cpuMetrics)
 		satTableData = append(satTableData, satMetrics)
 	}
-
-	printSaturationTable(satTableData)
 
 	satTableData = normalizeSaturationData(satTableData)
 
