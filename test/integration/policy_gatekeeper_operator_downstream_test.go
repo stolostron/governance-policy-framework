@@ -418,6 +418,13 @@ var _ = Describe("RHACM4K-3055", Ordered, Label("policy-collection", "stable", "
 	})
 
 	AfterAll(func() {
+		if CurrentSpecReport().Failed() {
+			common.OutputDebugInfo(
+				"Gatekeeper policies",
+				kubeconfigHub,
+				"constrainttemplates.templates.gatekeeper.sh",
+			)
+		}
 		// Clean up mutation policies
 		utils.KubectlWithOutput("delete", "-f", GKAssignMetadataPolicyYaml, "-n", userNamespace, "--kubeconfig="+kubeconfigHub)
 		Eventually(func() interface{} {
