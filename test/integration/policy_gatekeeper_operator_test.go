@@ -431,6 +431,13 @@ var _ = Describe("", Ordered, Label("policy-collection", "community"), func() {
 	})
 
 	AfterAll(func() {
+		if CurrentSpecReport().Failed() {
+			common.OutputDebugInfo(
+				"Gatekeeper policies",
+				kubeconfigHub,
+				"constrainttemplates.templates.gatekeeper.sh",
+			)
+		}
 		// Clean up mutation policies
 		utils.KubectlWithOutput("delete", "-f", GKAssignMetadataPolicyYaml, "-n", userNamespace, "--kubeconfig="+kubeconfigHub)
 		Eventually(func() interface{} {
