@@ -8,6 +8,9 @@ on:
         type: string
         default: 'false'
 
+env:
+  RELEASE_BRANCH: ${{ github.event.pull_request.base.ref || github.ref_name }}
+
 defaults:
   run:
     shell: bash
@@ -50,7 +53,7 @@ jobs:
       with:
         repository: stolostron/governance-policy-framework
         path: framework
-        ref: ${{ github.event.pull_request.base.ref }} # like main or release-*
+        ref: ${{ env.RELEASE_BRANCH }} # like main or release-*
 
     - name: Checkout Policy Framework
       # Checkout like "usual" when called from this repository
