@@ -1,0 +1,75 @@
+# This reusable workflow allows securely calling SonarCloud on PRs from forks and pushes to branches.
+# When using this workflow, it is meant to be called on "workflow_run" with the type "completed".
+# Note that this workflow requires that an archive called "artifacts" be uploaded by the triggering workflow run. This
+# archive must contain the test coverage output files, gosec files, and an event.json file with the contents of the
+# github.event variable.
+name: SonarCloud scan
+
+on:
+  workflow_call:
+
+jobs:
+  sonarcloud:
+    runs-on: ubuntu-latest
+    if: |
+      github.repository_owner == 'stolostron' &&
+      (github.event.workflow_run.event == 'push' || github.event.workflow_run.event == 'pull_request') &&
+      github.event.workflow_run.conclusion == 'success'
+    steps:
+      - name: Checkout the repo
+        uses: actions/checkout@v3
+        with:
+          fetch-depth: 0 # Fetch all history for all tags and branches
+
+      - name: Checkout the triggering workflow commit
+        run: |
+          git fetch origin "+refs/pull/*/head:refs/remotes/origin/pr/*"
+          git checkout ${{ github.event.workflow_run.head_commit.id }}
+
+      - name: Download the artifacts
+        uses: actions/github-script@v6
+        with:
+          # Taken from https://docs.github.com/en/actions/using-workflows/events-that-trigger-workflows#workflow_run
+          script: |
+            let allArtifacts = await github.rest.actions.listWorkflowRunArtifacts({
+               owner: context.repo.owner,
+               repo: context.repo.repo,
+               run_id: context.payload.workflow_run.id,
+            });
+
+            let matchArtifact = allArtifacts.data.artifacts.filter((artifact) => {
+              return artifact.name == "artifacts"
+            })[0];
+
+            let download = await github.rest.actions.downloadArtifact({
+               owner: context.repo.owner,
+               repo: context.repo.repo,
+               artifact_id: matchArtifact.id,
+               archive_format: 'zip',
+            });
+
+            let fs = require('fs');
+            fs.writeFileSync(`${process.env.GITHUB_WORKSPACE}/artifacts.zip`, Buffer.from(download.data));
+
+      - name: Unzip the artifacts
+        run: unzip artifacts.zip
+
+      - name: Set the PR properties in SonarCloud
+        if: github.event.workflow_run.event == 'pull_request'
+        run: |
+          echo "sonar.pullrequest.base=$(jq -r .pull_request.base.ref event.json)" >> sonar-project.properties
+          echo "sonar.pullrequest.key=$(jq -r .pull_request.number event.json)" >> sonar-project.properties
+          echo "sonar.pullrequest.branch=$(jq -r .pull_request.head.ref event.json)" >> sonar-project.properties
+
+      - name: Set additional properties in SonarCloud
+        run: |
+          echo "sonar.scm.revision=${{ github.event.workflow_run.head_commit.id }}" >> sonar-project.properties
+
+      - name: SonarCloud Analysis
+        uses: sonarsource/sonarcloud-github-action@master
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
+        with:
+          args: >
+            --debug
