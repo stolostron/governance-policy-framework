@@ -6,7 +6,7 @@ PWD := $(shell pwd)
 LOCAL_BIN ?= $(PWD)/bin
 deployOnHub ?= false
 RELEASE_BRANCH ?= main
-OCM_API_COMMIT ?= 3297cac74dc5e7fd2a82056cf3b93a5a88939d81
+OCM_API_COMMIT ?= $(shell awk '/open-cluster-management.io\/api/ {print $$2}' go.mod)
 DOCKER_URI ?= quay.io/stolostron
 VERSION_TAG ?= latest
 
