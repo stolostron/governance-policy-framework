@@ -21,6 +21,11 @@ stages:
 - test-etcd-encryption
 - ff
 - hibernate
+before_install:
+- sudo apt-get -y install yamllint
+addons:
+  apt:
+    update: true
 before_script:
 - make init
 after_failure:
