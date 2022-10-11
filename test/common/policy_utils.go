@@ -19,7 +19,7 @@ import (
 	"open-cluster-management.io/governance-policy-propagator/test/utils"
 )
 
-// GetComplianceState returns a function that requires no arguments that retrieves the
+// GetComplianceState returns a function usable by ginkgo.Eventually that retrieves the
 // compliance state of the input policy.
 func GetComplianceState(
 	clientHubDynamic dynamic.Interface,
@@ -159,36 +159,38 @@ func DoRootComplianceTest(hub dynamic.Interface, policyName string, compliance p
 
 // GetLatestStatusMessage returns the most recent status message for the given policy template.
 // If the policy, template, or status do not exist for any reason, an empty string is returned.
-func GetLatestStatusMessage(managed dynamic.Interface, policyName string, templateIdx int) string {
-	replicatedPolicyName := UserNamespace + "." + policyName
-	policyInterface := managed.Resource(GvrPolicy).Namespace(ClusterNamespace)
+func GetLatestStatusMessage(managed dynamic.Interface, policyName string, templateIdx int) func() string {
+	return func() string {
+		replicatedPolicyName := UserNamespace + "." + policyName
+		policyInterface := managed.Resource(GvrPolicy).Namespace(ClusterNamespace)
 
-	policy, err := policyInterface.Get(context.TODO(), replicatedPolicyName, metav1.GetOptions{})
-	if err != nil {
-		return ""
+		policy, err := policyInterface.Get(context.TODO(), replicatedPolicyName, metav1.GetOptions{})
+		if err != nil {
+			return ""
+		}
+
+		details, found, err := unstructured.NestedSlice(policy.Object, "status", "details")
+		if !found || err != nil || len(details) <= templateIdx {
+			return ""
+		}
+
+		templateDetails, ok := details[templateIdx].(map[string]interface{})
+		if !ok {
+			return ""
+		}
+
+		history, found, err := unstructured.NestedSlice(templateDetails, "history")
+		if !found || err != nil || len(history) == 0 {
+			return ""
+		}
+
+		topHistoryItem, ok := history[0].(map[string]interface{})
+		if !ok {
+			return ""
+		}
+
+		message, _, _ := unstructured.NestedString(topHistoryItem, "message")
+
+		return message
 	}
-
-	details, found, err := unstructured.NestedSlice(policy.Object, "status", "details")
-	if !found || err != nil || len(details) <= templateIdx {
-		return ""
-	}
-
-	templateDetails, ok := details[templateIdx].(map[string]interface{})
-	if !ok {
-		return ""
-	}
-
-	history, found, err := unstructured.NestedSlice(templateDetails, "history")
-	if !found || err != nil || len(history) == 0 {
-		return ""
-	}
-
-	topHistoryItem, ok := history[0].(map[string]interface{})
-	if !ok {
-		return ""
-	}
-
-	message, _, _ := unstructured.NestedString(topHistoryItem, "message")
-
-	return message
 }
