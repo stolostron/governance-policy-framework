@@ -42,7 +42,6 @@ var (
 	clientManaged         kubernetes.Interface
 	clientManagedDynamic  dynamic.Interface
 
-	getComplianceState                      func(policyName string) func(Gomega) interface{}
 	canCreateOpenshiftNamespacesInitialized bool
 	canCreateOpenshiftNamespacesResult      bool
 )
@@ -72,10 +71,6 @@ var _ = BeforeSuite(func() {
 	clientHubDynamic = common.ClientHubDynamic
 	clientManaged = common.ClientManaged
 	clientManagedDynamic = common.ClientManagedDynamic
-
-	getComplianceState = func(policyName string) func(Gomega) interface{} {
-		return common.GetComplianceState(userNamespace, policyName, clusterNamespace)
-	}
 
 	By("Create Namespace if needed")
 	namespaces := clientHub.CoreV1().Namespaces()

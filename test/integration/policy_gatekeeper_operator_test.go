@@ -40,7 +40,6 @@ func isOCP44() bool {
 }
 
 var _ = Describe("", Ordered, Label("policy-collection", "community"), func() {
-	var getComplianceState func(policyName string) func(Gomega) interface{}
 	BeforeAll(func() {
 		if isOCP44() {
 			Skip("Skipping as this is ocp 4.4")
@@ -48,11 +47,6 @@ var _ = Describe("", Ordered, Label("policy-collection", "community"), func() {
 		if !canCreateOpenshiftNamespaces() {
 			Skip("Skipping as upstream gatekeeper operator requires the ability to " +
 				"create the openshift-gatekeeper-system namespace")
-		}
-
-		// Assign this here to avoid using nil pointers as arguments
-		getComplianceState = func(policyName string) func(Gomega) interface{} {
-			return common.GetComplianceState(userNamespace, policyName, clusterNamespace)
 		}
 	})
 	const gatekeeperPolicyURL = policyCollectCommunityURL +
@@ -82,12 +76,7 @@ var _ = Describe("", Ordered, Label("policy-collection", "community"), func() {
 				"--kubeconfig="+kubeconfigHub)
 			Expect(err).To(BeNil())
 			By("Patching placement rule")
-			err = common.PatchPlacementRule(
-				userNamespace,
-				"placement-"+gatekeeperPolicyName,
-				clusterNamespace,
-				kubeconfigHub,
-			)
+			err = common.PatchPlacementRule(userNamespace, "placement-"+gatekeeperPolicyName)
 			Expect(err).To(BeNil())
 
 			By("Checking policy-gatekeeper-operator on hub cluster in ns " + userNamespace)
@@ -116,7 +105,7 @@ var _ = Describe("", Ordered, Label("policy-collection", "community"), func() {
 		It("community/policy-gatekeeper-operator should be noncompliant", func() {
 			By("Checking if the status of root policy is noncompliant")
 			Eventually(
-				getComplianceState(gatekeeperPolicyName),
+				common.GetComplianceState(gatekeeperPolicyName),
 				defaultTimeoutSeconds*2,
 				1,
 			).Should(Equal(policiesv1.NonCompliant))
@@ -291,7 +280,7 @@ var _ = Describe("", Ordered, Label("policy-collection", "community"), func() {
 		It("community/policy-gatekeeper-operator should be compliant", func() {
 			By("Checking if the status of root policy is compliant")
 			Eventually(
-				getComplianceState(gatekeeperPolicyName),
+				common.GetComplianceState(gatekeeperPolicyName),
 				defaultTimeoutSeconds*6,
 				1,
 			).Should(Equal(policiesv1.Compliant))

@@ -63,9 +63,7 @@ var _ = Describe("GRC: [P1][Sev1][policy-grc] Test the policy-limitmemory policy
 			Expect(err).To(BeNil())
 
 			By("Patching placement rule")
-			err = common.PatchPlacementRule(
-				userNamespace, "placement-"+policyLimitMemoryName, clusterNamespace, kubeconfigHub,
-			)
+			err = common.PatchPlacementRule(userNamespace, "placement-"+policyLimitMemoryName)
 			Expect(err).To(BeNil())
 
 			By("Checking that " + policyLimitMemoryName + " exists on the Hub cluster")
@@ -96,7 +94,7 @@ var _ = Describe("GRC: [P1][Sev1][policy-grc] Test the policy-limitmemory policy
 		It("stable/"+policyLimitMemoryName+" should be NonCompliant", func() {
 			By("Checking if the status of the root policy is NonCompliant")
 			Eventually(
-				common.GetComplianceState(userNamespace, policyLimitMemoryName, clusterNamespace),
+				common.GetComplianceState(policyLimitMemoryName),
 				defaultTimeoutSeconds*2,
 				1,
 			).Should(Equal(policiesv1.NonCompliant))
@@ -117,7 +115,7 @@ var _ = Describe("GRC: [P1][Sev1][policy-grc] Test the policy-limitmemory policy
 		It("stable/"+policyLimitMemoryName+" should be Compliant", func() {
 			By("Checking if the status of the root policy is Compliant")
 			Eventually(
-				common.GetComplianceState(userNamespace, policyLimitMemoryName, clusterNamespace),
+				common.GetComplianceState(policyLimitMemoryName),
 				defaultTimeoutSeconds*2,
 				1,
 			).Should(Equal(policiesv1.Compliant))
