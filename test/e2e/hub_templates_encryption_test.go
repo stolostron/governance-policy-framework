@@ -53,17 +53,8 @@ var _ = Describe("Test Hub Template Encryption", Ordered, func() {
 			common.DoCreatePolicyTest(policyYAML, common.GvrConfigurationPolicy)
 		})
 
-		It("Should be compliant after enforcing it", FlakeAttempts(3), func() {
-			By("Patching remediationAction=enforce on the root policy")
-			rootPlc := utils.GetWithTimeout(
-				clientHubDynamic, common.GvrPolicy, policyName, userNamespace, true, defaultTimeoutSeconds,
-			)
-			rootPlc.Object["spec"].(map[string]interface{})["remediationAction"] = "enforce"
-			_, err := clientHubDynamic.Resource(common.GvrPolicy).Namespace(userNamespace).Update(
-				ctx, rootPlc, metav1.UpdateOptions{},
-			)
-			Expect(err).To(BeNil())
-
+		It("Should be compliant after enforcing it", func() {
+			common.EnforcePolicy(policyName, common.GvrConfigurationPolicy)
 			common.DoRootComplianceTest(policyName, policiesv1.Compliant)
 		})
 
