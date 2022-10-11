@@ -203,3 +203,54 @@ func GetLatestStatusMessage(policyName string, templateIdx int) func() string {
 		return message
 	}
 }
+
+// EnforcePolicy patches the root policy to be enforced, and asserts that the
+// replicated policy on the managed cluster, and policy template objects (based
+// on the provided GVRs) are enforced. Note: when checking a policy template, it
+// assumes the template's name matches the root policy's name.
+func EnforcePolicy(policyName string, templateGVRs ...schema.GroupVersionResource) {
+	ctx := context.TODO()
+	rootPolicyClient := ClientHubDynamic.Resource(GvrPolicy).Namespace(UserNamespace)
+
+	By("Patching remediationAction = enforce on root policy")
+	EventuallyWithOffset(1, func(g Gomega) {
+		rootPlc, err := rootPolicyClient.Get(ctx, policyName, metav1.GetOptions{})
+		g.ExpectWithOffset(1, err).To(BeNil())
+
+		err = unstructured.SetNestedField(rootPlc.Object, "enforce", "spec", "remediationAction")
+		g.ExpectWithOffset(1, err).To(BeNil())
+
+		_, err = rootPolicyClient.Update(ctx, rootPlc, metav1.UpdateOptions{})
+		g.ExpectWithOffset(1, err).To(BeNil())
+	}, DefaultTimeoutSeconds, 1).Should(Succeed())
+
+	managedPolicyClient := ClientManagedDynamic.Resource(GvrPolicy).Namespace(ClusterNamespace)
+
+	By("Checking that remediationAction = enforce on replicated policy")
+	EventuallyWithOffset(1, func(g Gomega) {
+		managedPlc, err := managedPolicyClient.Get(ctx, UserNamespace+"."+policyName, metav1.GetOptions{})
+		g.ExpectWithOffset(1, err).To(BeNil())
+
+		action, found, err := unstructured.NestedString(managedPlc.Object, "spec", "remediationAction")
+		g.ExpectWithOffset(1, err).To(BeNil())
+		g.ExpectWithOffset(1, found).To(BeTrue())
+		g.ExpectWithOffset(1, action).To(Equal("enforce"))
+	}, DefaultTimeoutSeconds, 1).Should(Succeed())
+
+	for _, tmplGVR := range templateGVRs {
+		typedName := tmplGVR.String() + "/" + policyName
+		By("Checking that remediationAction = enforce on policy template " + typedName)
+
+		templateClient := ClientManagedDynamic.Resource(tmplGVR).Namespace(ClusterNamespace)
+
+		EventuallyWithOffset(1, func(g Gomega) {
+			template, err := templateClient.Get(ctx, policyName, metav1.GetOptions{})
+			g.ExpectWithOffset(1, err).To(BeNil())
+
+			action, found, err := unstructured.NestedString(template.Object, "spec", "remediationAction")
+			g.ExpectWithOffset(1, err).To(BeNil())
+			g.ExpectWithOffset(1, found).To(BeTrue())
+			g.ExpectWithOffset(1, action).To(Equal("enforce"))
+		}, DefaultTimeoutSeconds, 1)
+	}
+}

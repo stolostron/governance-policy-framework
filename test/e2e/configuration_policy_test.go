@@ -106,23 +106,7 @@ var _ = Describe("Test configuration policy", Ordered, func() {
 			common.DoRootComplianceTest(rolePolicyName, policiesv1.NonCompliant)
 		})
 		It("the policy should be compliant after enforcing it", func() {
-			By("Patching remediationAction = enforce on root policy")
-			rootPlc := utils.GetWithTimeout(
-				clientHubDynamic,
-				common.GvrPolicy,
-				rolePolicyName,
-				userNamespace,
-				true,
-				defaultTimeoutSeconds,
-			)
-			rootPlc.Object["spec"].(map[string]interface{})["remediationAction"] = "enforce"
-			rootPlc, _ = clientHubDynamic.Resource(common.GvrPolicy).Namespace(userNamespace).Update(
-				context.TODO(),
-				rootPlc,
-				metav1.UpdateOptions{},
-			)
-			Expect(rootPlc.Object["spec"].(map[string]interface{})["remediationAction"]).To(Equal("enforce"))
-
+			common.EnforcePolicy(rolePolicyName, common.GvrConfigurationPolicy)
 			common.DoRootComplianceTest(rolePolicyName, policiesv1.Compliant)
 		})
 		It("should recreate the role if manually deleted", func() {
@@ -263,23 +247,7 @@ var _ = Describe("Test configuration policy", Ordered, func() {
 			common.DoRootComplianceTest(rolePolicyName, policiesv1.NonCompliant)
 		})
 		It("the policy should be compliant after enforcing it", func() {
-			By("Patching remediationAction = enforce on root policy")
-			rootPlc := utils.GetWithTimeout(
-				clientHubDynamic,
-				common.GvrPolicy,
-				rolePolicyName,
-				userNamespace,
-				true,
-				defaultTimeoutSeconds,
-			)
-			rootPlc.Object["spec"].(map[string]interface{})["remediationAction"] = "enforce"
-			rootPlc, _ = clientHubDynamic.Resource(common.GvrPolicy).Namespace(userNamespace).Update(
-				context.TODO(),
-				rootPlc,
-				metav1.UpdateOptions{},
-			)
-			Expect(rootPlc.Object["spec"].(map[string]interface{})["remediationAction"]).To(Equal("enforce"))
-
+			common.EnforcePolicy(rolePolicyName, common.GvrConfigurationPolicy)
 			common.DoRootComplianceTest(rolePolicyName, policiesv1.Compliant)
 		})
 		It("the policy should remove the role on managed cluster if manually created", func() {
@@ -409,39 +377,7 @@ var _ = Describe("Test configuration policy", Ordered, func() {
 			common.DoCreatePolicyTest(rolePolicyYaml, common.GvrConfigurationPolicy)
 		})
 		It("the policy should be compliant after enforcing it", func() {
-			By("Patching remediationAction = enforce on root policy")
-			rootPlc := utils.GetWithTimeout(
-				clientHubDynamic,
-				common.GvrPolicy,
-				rolePolicyName,
-				userNamespace,
-				true,
-				defaultTimeoutSeconds,
-			)
-			rootPlc.Object["spec"].(map[string]interface{})["remediationAction"] = "enforce"
-			_, err := clientHubDynamic.Resource(common.GvrPolicy).Namespace(userNamespace).Update(
-				context.TODO(),
-				rootPlc,
-				metav1.UpdateOptions{},
-			)
-			Expect(err).To(BeNil())
-			Eventually(func() interface{} {
-				rootPlc := utils.GetWithTimeout(
-					clientHubDynamic,
-					common.GvrPolicy,
-					rolePolicyName,
-					userNamespace,
-					true,
-					defaultTimeoutSeconds,
-				)
-				remediation, ok := rootPlc.Object["spec"].(map[string]interface{})["remediationAction"]
-				if !ok {
-					return nil
-				}
-
-				return remediation
-			}, defaultTimeoutSeconds, 1).Should(utils.SemanticEqual("enforce"))
-
+			common.EnforcePolicy(rolePolicyName, common.GvrConfigurationPolicy)
 			common.DoRootComplianceTest(rolePolicyName, policiesv1.Compliant)
 		})
 		It("the role should be created by policy", func() {
