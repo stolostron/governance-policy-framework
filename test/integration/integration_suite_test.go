@@ -55,20 +55,23 @@ func TestIntegration(t *testing.T) {
 func init() {
 	klog.SetOutput(GinkgoWriter)
 	klog.InitFlags(nil)
+	common.InitFlags(nil)
 }
 
 var _ = BeforeSuite(func() {
 	By("Setup hub and managed client")
+	common.InitInterfaces(common.KubeconfigHub, common.KubeconfigManaged)
+
 	kubeconfigHub = common.KubeconfigHub
 	kubeconfigManaged = common.KubeconfigManaged
 	userNamespace = common.UserNamespace
 	clusterNamespace = common.ClusterNamespace
 	defaultTimeoutSeconds = common.DefaultTimeoutSeconds
 
-	clientHub = common.NewKubeClient("", kubeconfigHub, "")
-	clientHubDynamic = common.NewKubeClientDynamic("", kubeconfigHub, "")
-	clientManaged = common.NewKubeClient("", kubeconfigManaged, "")
-	clientManagedDynamic = common.NewKubeClientDynamic("", kubeconfigManaged, "")
+	clientHub = common.ClientHub
+	clientHubDynamic = common.ClientHubDynamic
+	clientManaged = common.ClientManaged
+	clientManagedDynamic = common.ClientManagedDynamic
 
 	getComplianceState = func(policyName string) func(Gomega) interface{} {
 		return common.GetComplianceState(clientHubDynamic, userNamespace, policyName, clusterNamespace)
