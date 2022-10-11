@@ -15,23 +15,23 @@ env:
   - COMPONENT_INIT_COMMAND=${TRAVIS_BUILD_DIR}/build/install-dependencies.sh
   - COMPONENT_E2E_TEST_COMMAND=${TRAVIS_BUILD_DIR}/build/run-e2e-tests.sh
 stages:
-- init
+# - init
 - prepare
 - test-e2e
 - test-etcd-encryption
 - ff
-- hibernate
+# - hibernate
 before_script:
 - make init
 after_failure:
 - |
   [[ "$TRAVIS_BUILD_STAGE_NAME" == "test-"* ]] && make e2e-debug-dump
-  ./build/set-claim.sh --hibernate
+  # ./build/set-claim.sh --hibernate
 jobs:
   include:
-  - stage: init
-    name: Wake up cluster
-    script: ./build/set-claim.sh
+  # - stage: init
+  #   name: Wake up cluster
+  #   script: ./build/set-claim.sh
   - stage: prepare
     name: Patch cluster to latest
     env:
@@ -87,9 +87,9 @@ jobs:
   - stage: ff
     name: Fast forwarding GRC repos
     script: "./build/ff.sh"
-  - stage: hibernate
-    name: Hibernate cluster
-    script: ./build/set-claim.sh --hibernate
+  # - stage: hibernate
+  #   name: Hibernate cluster
+  #   script: ./build/set-claim.sh --hibernate
 notifications:
   slack:
     on_pull_requests: false
