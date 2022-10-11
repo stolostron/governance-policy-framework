@@ -366,11 +366,7 @@ var _ = Describe("RHACM4K-2222 GRC: [P1][Sev1][policy-grc] "+
 		}
 
 		// Assign this here to avoid using nil pointers as arguments
-		getComplianceState = common.GetComplianceState(
-			clientHubDynamic,
-			userNamespace,
-			compPolicyName,
-			clusterNamespace)
+		getComplianceState = common.GetComplianceState(userNamespace, compPolicyName, clusterNamespace)
 	})
 	Describe("Test stable/"+compPolicyName, Label("BVT"), func() {
 		It("stable/"+compPolicyName+" should be created on hub", func() {

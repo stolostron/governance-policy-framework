@@ -70,7 +70,7 @@ var _ = Describe(
 		It("stable/"+policyEtcdEncryptionName+" should be NonCompliant", func() {
 			By("Checking if the status of the root policy is NonCompliant")
 			Eventually(
-				common.GetComplianceState(clientHubDynamic, userNamespace, policyEtcdEncryptionName, clusterNamespace),
+				common.GetComplianceState(userNamespace, policyEtcdEncryptionName, clusterNamespace),
 				defaultTimeoutSeconds*2,
 				1,
 			).Should(Equal(policiesv1.NonCompliant))

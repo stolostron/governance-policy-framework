@@ -76,12 +76,7 @@ var _ = Describe("GRC: [P1][Sev1][policy-grc] Test the policy-psp policy",
 		It("stable/"+rootPolicyName+" should be NonCompliant", func() {
 			By("Checking the status of the root policy " + rootPolicyName + " is NonCompliant")
 			Eventually(
-				common.GetComplianceState(
-					clientHubDynamic,
-					userNamespace,
-					rootPolicyName,
-					clusterNamespace,
-				),
+				common.GetComplianceState(userNamespace, rootPolicyName, clusterNamespace),
 				defaultTimeoutSeconds*2,
 				1,
 			).Should(Equal(policiesv1.NonCompliant))
@@ -102,12 +97,7 @@ var _ = Describe("GRC: [P1][Sev1][policy-grc] Test the policy-psp policy",
 		It("stable/"+rootPolicyName+" should be Compliant", func() {
 			By("Checking if the status of the root policy " + rootPolicyName + " is Compliant")
 			Eventually(
-				common.GetComplianceState(
-					clientHubDynamic,
-					userNamespace,
-					rootPolicyName,
-					clusterNamespace,
-				),
+				common.GetComplianceState(userNamespace, rootPolicyName, clusterNamespace),
 				defaultTimeoutSeconds*4,
 				1,
 			).Should(Equal(policiesv1.Compliant))
