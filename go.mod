@@ -15,7 +15,6 @@ require (
 	k8s.io/client-go v12.0.0+incompatible
 	k8s.io/klog v1.0.0
 	open-cluster-management.io/governance-policy-propagator v0.0.0
-	sigs.k8s.io/controller-runtime v0.11.2
 )
 
 require (
@@ -48,6 +47,7 @@ require (
 	k8s.io/utils v0.0.0-20220728103510-ee6ede2d64ed // indirect
 	open-cluster-management.io/api v0.8.0 // indirect
 	open-cluster-management.io/multicloud-operators-subscription v0.8.0 // indirect
+	sigs.k8s.io/controller-runtime v0.11.2 // indirect
 	sigs.k8s.io/json v0.0.0-20220713155537-f223a00ba0e2 // indirect
 	sigs.k8s.io/structured-merge-diff/v4 v4.2.3 // indirect
 	sigs.k8s.io/yaml v1.3.0 // indirect
