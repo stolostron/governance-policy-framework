@@ -12,7 +12,6 @@ import (
 	k8serrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	policiesv1 "open-cluster-management.io/governance-policy-propagator/api/v1"
-	"open-cluster-management.io/governance-policy-propagator/test/utils"
 
 	"github.com/stolostron/governance-policy-framework/test/common"
 )
@@ -20,7 +19,7 @@ import (
 // cleanup will remove any test data/configuration on the OpenShift cluster that was added/updated
 // as part of the test. Any errors will be propagated as gomega failed assertions.
 func cleanupConfig(ctx context.Context, configMapName string, configMapCopyName string) {
-	err := clientHub.CoreV1().ConfigMaps("default").Delete(ctx, configMapName, metav1.DeleteOptions{})
+	err := clientHub.CoreV1().ConfigMaps(userNamespace).Delete(ctx, configMapName, metav1.DeleteOptions{})
 	if !k8serrors.IsNotFound(err) {
 		Expect(err).To(BeNil())
 	}
@@ -39,7 +38,7 @@ var _ = Describe(
 	func() {
 		const (
 			policyName        = "policy-hub-templates-21440"
-			policyYAML        = "../resources/policy_hub_templates_21440/policy.yaml"
+			policyYAML        = "../resources/policy_hub_templates_21440/policy-hub-templates-21440.yaml"
 			configMapName     = policyName
 			configMapCopyName = policyName + "-copy"
 		)
@@ -58,50 +57,16 @@ var _ = Describe(
 				},
 			}
 
-			_, err := clientHub.CoreV1().ConfigMaps("default").Create(ctx, configMap, metav1.CreateOptions{})
+			_, err := clientHub.CoreV1().ConfigMaps(userNamespace).Create(ctx, configMap, metav1.CreateOptions{})
 			Expect(err).To(BeNil())
 		})
 
 		It(policyName+" should be created on the Hub", func() {
-			By("Creating the policy on the Hub")
-			_, err := utils.KubectlWithOutput(
-				"apply", "-f", policyYAML, "-n", "default", "--kubeconfig="+kubeconfigHub,
-			)
-			Expect(err).To(BeNil())
-
-			By("Patching the placement rule")
-			err = common.PatchPlacementRule(
-				"default", "placement-"+policyName, clusterNamespace, kubeconfigHub,
-			)
-			Expect(err).To(BeNil())
-
-			By("Checking that " + policyName + " exists on the Hub cluster")
-			rootPolicy := utils.GetWithTimeout(
-				clientHubDynamic, common.GvrPolicy, policyName, "default", true, defaultTimeoutSeconds,
-			)
-			Expect(rootPolicy).NotTo(BeNil())
-		})
-
-		It(policyName+" should be created on the managed cluster", func() {
-			By("Checking the policy on the managed cluster in the namespace " + clusterNamespace)
-			managedPolicy := utils.GetWithTimeout(
-				clientManagedDynamic,
-				common.GvrPolicy,
-				"default."+policyName,
-				clusterNamespace,
-				true,
-				defaultTimeoutSeconds,
-			)
-			Expect(managedPolicy).NotTo(BeNil())
+			common.DoCreatePolicyTest(policyYAML, common.GvrConfigurationPolicy)
 		})
 
 		It(policyName+" should be Compliant", func() {
-			By("Checking if the status of the root policy is Compliant")
-			Eventually(
-				common.GetComplianceState("default", policyName, clusterNamespace),
-				defaultTimeoutSeconds*2,
-				1,
-			).Should(Equal(policiesv1.Compliant))
+			common.DoRootComplianceTest(policyName, policiesv1.Compliant)
 		})
 
 		It("The ConfigMap "+configMapCopyName+" should have been created on the managed cluster", func() {
@@ -123,13 +88,7 @@ var _ = Describe(
 		})
 
 		AfterAll(func() {
-			_, err := utils.KubectlWithOutput(
-				"delete", "-f", policyYAML, "-n",
-				"default", "--kubeconfig="+kubeconfigHub,
-				"--ignore-not-found",
-			)
-			Expect(err).To(BeNil())
-
+			common.DoCleanupPolicy(policyYAML, common.GvrConfigurationPolicy)
 			cleanupConfig(ctx, configMapName, configMapCopyName)
 		})
 	})
