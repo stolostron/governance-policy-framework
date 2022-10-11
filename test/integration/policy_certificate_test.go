@@ -100,7 +100,7 @@ var _ = Describe(
 		It("stable/"+policyCertificateName+" should be Compliant", func() {
 			By("Checking if the status of the root policy is Compliant")
 			Eventually(
-				common.GetComplianceState(clientHubDynamic, userNamespace, policyCertificateName, clusterNamespace),
+				common.GetComplianceState(userNamespace, policyCertificateName, clusterNamespace),
 				defaultTimeoutSeconds*2,
 				1,
 			).Should(Equal(policiesv1.Compliant))
@@ -143,7 +143,7 @@ var _ = Describe(
 		It("stable/"+policyCertificateName+" should be NonCompliant", func() {
 			By("Checking if the status of the root policy is NonCompliant")
 			Eventually(
-				common.GetComplianceState(clientHubDynamic, userNamespace, policyCertificateName, clusterNamespace),
+				common.GetComplianceState(userNamespace, policyCertificateName, clusterNamespace),
 				defaultTimeoutSeconds*2,
 				1,
 			).Should(Equal(policiesv1.NonCompliant))

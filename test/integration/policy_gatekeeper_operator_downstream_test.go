@@ -28,7 +28,7 @@ var _ = Describe("RHACM4K-3055", Ordered, Label("policy-collection", "stable", "
 
 		// Assign this here to avoid using nil pointers as arguments
 		getComplianceState = func(policyName string) func(Gomega) interface{} {
-			return common.GetComplianceState(clientHubDynamic, userNamespace, policyName, clusterNamespace)
+			return common.GetComplianceState(userNamespace, policyName, clusterNamespace)
 		}
 	})
 	const gatekeeperPolicyURL = policyCollectStableURL +
