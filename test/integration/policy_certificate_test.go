@@ -72,9 +72,7 @@ var _ = Describe(
 			Expect(err).To(BeNil())
 
 			By("Patching placement rule")
-			err = common.PatchPlacementRule(
-				userNamespace, "placement-"+policyCertificateName, clusterNamespace, kubeconfigHub,
-			)
+			err = common.PatchPlacementRule(userNamespace, "placement-"+policyCertificateName)
 			Expect(err).To(BeNil())
 
 			By("Checking that " + policyCertificateName + " exists on the Hub cluster")
@@ -100,7 +98,7 @@ var _ = Describe(
 		It("stable/"+policyCertificateName+" should be Compliant", func() {
 			By("Checking if the status of the root policy is Compliant")
 			Eventually(
-				common.GetComplianceState(userNamespace, policyCertificateName, clusterNamespace),
+				common.GetComplianceState(policyCertificateName),
 				defaultTimeoutSeconds*2,
 				1,
 			).Should(Equal(policiesv1.Compliant))
@@ -143,7 +141,7 @@ var _ = Describe(
 		It("stable/"+policyCertificateName+" should be NonCompliant", func() {
 			By("Checking if the status of the root policy is NonCompliant")
 			Eventually(
-				common.GetComplianceState(userNamespace, policyCertificateName, clusterNamespace),
+				common.GetComplianceState(policyCertificateName),
 				defaultTimeoutSeconds*2,
 				1,
 			).Should(Equal(policiesv1.NonCompliant))
