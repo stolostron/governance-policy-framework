@@ -27,11 +27,11 @@ spec:
 apiVersion: policy.open-cluster-management.io/v1
 kind: PlacementBinding
 metadata:
-  name: binding-policy-hub-templates-21440
+  name: policy-hub-templates-21440-pb
 placementRef:
   apiGroup: apps.open-cluster-management.io
   kind: PlacementRule
-  name: placement-policy-hub-templates-21440
+  name: policy-hub-templates-21440-plr
 subjects:
 - apiGroup: policy.open-cluster-management.io
   kind: Policy
@@ -40,7 +40,7 @@ subjects:
 apiVersion: apps.open-cluster-management.io/v1
 kind: PlacementRule
 metadata:
-  name: placement-policy-hub-templates-21440
+  name: policy-hub-templates-21440-plr
 spec:
   clusterConditions:
   - status: "True"
