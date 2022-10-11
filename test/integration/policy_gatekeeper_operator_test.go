@@ -122,48 +122,7 @@ var _ = Describe("", Ordered, Label("policy-collection", "community"), func() {
 			).Should(Equal(policiesv1.NonCompliant))
 		})
 		It("Enforcing community/policy-gatekeeper-operator", func() {
-			Eventually(func() interface{} {
-				By("Patching remediationAction = enforce on root policy")
-				rootPlc := utils.GetWithTimeout(
-					clientHubDynamic,
-					common.GvrPolicy,
-					gatekeeperPolicyName,
-					userNamespace,
-					true,
-					defaultTimeoutSeconds,
-				)
-				rootPlc.Object["spec"].(map[string]interface{})["remediationAction"] = "enforce"
-				_, err := clientHubDynamic.Resource(common.GvrPolicy).Namespace(userNamespace).Update(
-					context.TODO(),
-					rootPlc,
-					metav1.UpdateOptions{},
-				)
-				Expect(err).To(BeNil())
-				By("Checking if remediationAction is enforce for root policy")
-				rootPlc = utils.GetWithTimeout(
-					clientHubDynamic,
-					common.GvrPolicy,
-					gatekeeperPolicyName,
-					userNamespace,
-					true,
-					defaultTimeoutSeconds,
-				)
-
-				return rootPlc.Object["spec"].(map[string]interface{})["remediationAction"]
-			}, defaultTimeoutSeconds, 1).Should(Equal("enforce"))
-			By("Checking if remediationAction is enforce for replicated policy")
-			Eventually(func() interface{} {
-				managedPlc := utils.GetWithTimeout(
-					clientManagedDynamic,
-					common.GvrPolicy,
-					userNamespace+"."+gatekeeperPolicyName,
-					clusterNamespace,
-					true,
-					defaultTimeoutSeconds,
-				)
-
-				return managedPlc.Object["spec"].(map[string]interface{})["remediationAction"]
-			}, defaultTimeoutSeconds, 1).Should(Equal("enforce"))
+			common.EnforcePolicy(gatekeeperPolicyName)
 		})
 		It("Gatekeeper operator pod should be running", func() {
 			By("Checking if pod gatekeeper-operator-controller-manager has been created")
