@@ -63,9 +63,7 @@ var _ = Describe("GRC: [P1][Sev1][policy-grc] Test the policy-pod policy",
 			Expect(err).To(BeNil())
 
 			By("Patching placement rule")
-			err = common.PatchPlacementRule(
-				userNamespace, "placement-"+policyPodName, clusterNamespace, kubeconfigHub,
-			)
+			err = common.PatchPlacementRule(userNamespace, "placement-"+policyPodName)
 			Expect(err).To(BeNil())
 
 			By("Checking that " + policyPodName + " exists on the Hub cluster")
@@ -91,7 +89,7 @@ var _ = Describe("GRC: [P1][Sev1][policy-grc] Test the policy-pod policy",
 		It("stable/"+policyPodName+" should be NonCompliant", func() {
 			By("Checking if the status of the root policy is NonCompliant")
 			Eventually(
-				common.GetComplianceState(userNamespace, policyPodName, clusterNamespace),
+				common.GetComplianceState(policyPodName),
 				defaultTimeoutSeconds*2,
 				1,
 			).Should(Equal(policiesv1.NonCompliant))
@@ -112,7 +110,7 @@ var _ = Describe("GRC: [P1][Sev1][policy-grc] Test the policy-pod policy",
 		It("stable/"+policyPodName+" should be Compliant", func() {
 			By("Checking if the status of the root policy is Compliant")
 			Eventually(
-				common.GetComplianceState(userNamespace, policyPodName, clusterNamespace),
+				common.GetComplianceState(policyPodName),
 				defaultTimeoutSeconds*2,
 				1,
 			).Should(Equal(policiesv1.Compliant))

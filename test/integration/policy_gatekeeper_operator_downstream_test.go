@@ -19,16 +19,9 @@ import (
 )
 
 var _ = Describe("RHACM4K-3055", Ordered, Label("policy-collection", "stable", "BVT"), func() {
-	var getComplianceState func(policyName string) func(Gomega) interface{}
-
 	BeforeAll(func() {
 		if isOCP44() {
 			Skip("Skipping as this is ocp 4.4")
-		}
-
-		// Assign this here to avoid using nil pointers as arguments
-		getComplianceState = func(policyName string) func(Gomega) interface{} {
-			return common.GetComplianceState(userNamespace, policyName, clusterNamespace)
 		}
 	})
 	const gatekeeperPolicyURL = policyCollectStableURL +
@@ -68,12 +61,7 @@ var _ = Describe("RHACM4K-3055", Ordered, Label("policy-collection", "stable", "
 			)
 			Expect(err).To(BeNil())
 			By("Patching placement rule")
-			err = common.PatchPlacementRule(
-				userNamespace,
-				"placement-"+gatekeeperPolicyName,
-				clusterNamespace,
-				kubeconfigHub,
-			)
+			err = common.PatchPlacementRule(userNamespace, "placement-"+gatekeeperPolicyName)
 			Expect(err).To(BeNil())
 			By("Checking policy-gatekeeper-operator on hub cluster in ns " + userNamespace)
 			rootPlc := utils.GetWithTimeout(
@@ -101,7 +89,7 @@ var _ = Describe("RHACM4K-3055", Ordered, Label("policy-collection", "stable", "
 		It("stable/policy-gatekeeper-operator should be noncompliant", func() {
 			By("Checking if the status of root policy is noncompliant")
 			Eventually(
-				getComplianceState(gatekeeperPolicyName),
+				common.GetComplianceState(gatekeeperPolicyName),
 				defaultTimeoutSeconds*2,
 				1,
 			).Should(Equal(policiesv1.NonCompliant))
@@ -296,7 +284,7 @@ var _ = Describe("RHACM4K-3055", Ordered, Label("policy-collection", "stable", "
 		It("stable/policy-gatekeeper-operator should be compliant", func() {
 			By("Checking if the status of root policy is compliant")
 			Eventually(
-				getComplianceState(gatekeeperPolicyName),
+				common.GetComplianceState(gatekeeperPolicyName),
 				defaultTimeoutSeconds*6,
 				10,
 			).Should(Equal(policiesv1.Compliant))
