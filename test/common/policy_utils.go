@@ -14,20 +14,15 @@ import (
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/runtime/schema"
-	"k8s.io/client-go/dynamic"
 	policiesv1 "open-cluster-management.io/governance-policy-propagator/api/v1"
 	"open-cluster-management.io/governance-policy-propagator/test/utils"
 )
 
 // GetComplianceState returns a function usable by ginkgo.Eventually that retrieves the
 // compliance state of the input policy.
-func GetComplianceState(
-	clientHubDynamic dynamic.Interface,
-	namespace, policyName,
-	clusterNamespace string,
-) func(Gomega) interface{} {
+func GetComplianceState(namespace, policyName, clusterNamespace string) func(Gomega) interface{} {
 	return func(g Gomega) interface{} {
-		rootPlc := utils.GetWithTimeout(clientHubDynamic, GvrPolicy, policyName, namespace, true, DefaultTimeoutSeconds)
+		rootPlc := utils.GetWithTimeout(ClientHubDynamic, GvrPolicy, policyName, namespace, true, DefaultTimeoutSeconds)
 		var policy policiesv1.Policy
 		err := runtime.DefaultUnstructuredConverter.FromUnstructured(rootPlc.UnstructuredContent(), &policy)
 		g.ExpectWithOffset(1, err).To(BeNil())
@@ -72,12 +67,7 @@ func PatchPlacementRule(namespace, name, targetCluster, kubeconfigHub string) er
 // It assumes that the given filename (stripped of an extension) matches the
 // name of the policy, and that the PlacementRule has the same name, with '-plr'
 // appended.
-func DoCreatePolicyTest(
-	hub,
-	managed dynamic.Interface,
-	policyFile string,
-	templateGVRs ...schema.GroupVersionResource,
-) {
+func DoCreatePolicyTest(policyFile string, templateGVRs ...schema.GroupVersionResource) {
 	policyName := strings.TrimSuffix(filepath.Base(policyFile), filepath.Ext(policyFile))
 
 	By("DoCreatePolicyTest creates " + policyFile + "on namespace" + UserNamespace)
@@ -85,15 +75,17 @@ func DoCreatePolicyTest(
 	ExpectWithOffset(1, err).To(BeNil())
 	By("DoCreatePolicyTest OcHub apply output " + output)
 
-	plc := utils.GetWithTimeout(hub, GvrPolicy, policyName, UserNamespace, true, DefaultTimeoutSeconds)
+	plc := utils.GetWithTimeout(ClientHubDynamic, GvrPolicy, policyName, UserNamespace, true, DefaultTimeoutSeconds)
 	ExpectWithOffset(1, plc).NotTo(BeNil())
 
 	if ManuallyPatchDecisions {
 		plrName := policyName + "-plr"
 		By("Patching " + plrName + " with decision of cluster " + ClusterNamespace)
-		plr := utils.GetWithTimeout(hub, GvrPlacementRule, plrName, UserNamespace, true, DefaultTimeoutSeconds)
+		plr := utils.GetWithTimeout(
+			ClientHubDynamic, GvrPlacementRule, plrName, UserNamespace, true, DefaultTimeoutSeconds,
+		)
 		plr.Object["status"] = utils.GeneratePlrStatus(ClusterNamespace)
-		_, err := hub.Resource(GvrPlacementRule).Namespace(UserNamespace).UpdateStatus(
+		_, err := ClientHubDynamic.Resource(GvrPlacementRule).Namespace(UserNamespace).UpdateStatus(
 			context.TODO(),
 			plr,
 			metav1.UpdateOptions{},
@@ -103,14 +95,18 @@ func DoCreatePolicyTest(
 
 	managedPolicyName := UserNamespace + "." + policyName
 	By("Checking " + managedPolicyName + " on managed cluster in ns " + ClusterNamespace)
-	mplc := utils.GetWithTimeout(managed, GvrPolicy, managedPolicyName, ClusterNamespace, true, DefaultTimeoutSeconds)
+	mplc := utils.GetWithTimeout(
+		ClientManagedDynamic, GvrPolicy, managedPolicyName, ClusterNamespace, true, DefaultTimeoutSeconds,
+	)
 	ExpectWithOffset(1, mplc).NotTo(BeNil())
 
 	for _, tmplGVR := range templateGVRs {
 		typedName := tmplGVR.String() + "/" + policyName
 		By("Checking that the policy template " + typedName + " is present on the managed cluster")
 
-		tmplPlc := utils.GetWithTimeout(managed, tmplGVR, policyName, ClusterNamespace, true, DefaultTimeoutSeconds)
+		tmplPlc := utils.GetWithTimeout(
+			ClientManagedDynamic, tmplGVR, policyName, ClusterNamespace, true, DefaultTimeoutSeconds,
+		)
 		ExpectWithOffset(1, tmplPlc).NotTo(BeNil())
 	}
 }
@@ -119,7 +115,7 @@ func DoCreatePolicyTest(
 // the propagated policy was removed from the managed cluster. For each templateGVR,
 // it will check that there is no longer a policy template (for example
 // ConfigurationPolicy) of the same name on the managed cluster.
-func DoCleanupPolicy(hub, managed dynamic.Interface, policyFile string, templateGVRs ...schema.GroupVersionResource) {
+func DoCleanupPolicy(policyFile string, templateGVRs ...schema.GroupVersionResource) {
 	policyName := strings.TrimSuffix(filepath.Base(policyFile), filepath.Ext(policyFile))
 	By("Deleting " + policyFile)
 	_, err := OcHub(
@@ -128,30 +124,34 @@ func DoCleanupPolicy(hub, managed dynamic.Interface, policyFile string, template
 	)
 	Expect(err).To(BeNil())
 
-	plc := utils.GetWithTimeout(hub, GvrPolicy, policyName, UserNamespace, false, DefaultTimeoutSeconds)
+	plc := utils.GetWithTimeout(ClientHubDynamic, GvrPolicy, policyName, UserNamespace, false, DefaultTimeoutSeconds)
 	ExpectWithOffset(1, plc).To(BeNil())
 
 	managedPolicyName := UserNamespace + "." + policyName
 	By("Checking " + managedPolicyName + " was removed from managed cluster in ns " + ClusterNamespace)
-	mplc := utils.GetWithTimeout(managed, GvrPolicy, managedPolicyName, ClusterNamespace, false, DefaultTimeoutSeconds)
+	mplc := utils.GetWithTimeout(
+		ClientManagedDynamic, GvrPolicy, managedPolicyName, ClusterNamespace, false, DefaultTimeoutSeconds,
+	)
 	ExpectWithOffset(1, mplc).To(BeNil())
 
 	for _, tmplGVR := range templateGVRs {
 		typedName := tmplGVR.String() + "/" + policyName
 		By("Checking that the policy template " + typedName + " was removed from the managed cluster")
 
-		tmplPlc := utils.GetWithTimeout(managed, tmplGVR, policyName, ClusterNamespace, false, DefaultTimeoutSeconds)
+		tmplPlc := utils.GetWithTimeout(
+			ClientManagedDynamic, tmplGVR, policyName, ClusterNamespace, false, DefaultTimeoutSeconds,
+		)
 		ExpectWithOffset(1, tmplPlc).To(BeNil())
 	}
 }
 
 // DoRootComplianceTest asserts that the given policy has the given compliance
 // on the root policy on the hub cluster.
-func DoRootComplianceTest(hub dynamic.Interface, policyName string, compliance policiesv1.ComplianceState) {
+func DoRootComplianceTest(policyName string, compliance policiesv1.ComplianceState) {
 	By("Checking if the status of root policy " + policyName + " is " + string(compliance))
 	EventuallyWithOffset(
 		1,
-		GetComplianceState(hub, UserNamespace, policyName, ClusterNamespace),
+		GetComplianceState(UserNamespace, policyName, ClusterNamespace),
 		DefaultTimeoutSeconds,
 		1,
 	).Should(Equal(compliance))
@@ -159,10 +159,10 @@ func DoRootComplianceTest(hub dynamic.Interface, policyName string, compliance p
 
 // GetLatestStatusMessage returns the most recent status message for the given policy template.
 // If the policy, template, or status do not exist for any reason, an empty string is returned.
-func GetLatestStatusMessage(managed dynamic.Interface, policyName string, templateIdx int) func() string {
+func GetLatestStatusMessage(policyName string, templateIdx int) func() string {
 	return func() string {
 		replicatedPolicyName := UserNamespace + "." + policyName
-		policyInterface := managed.Resource(GvrPolicy).Namespace(ClusterNamespace)
+		policyInterface := ClientManagedDynamic.Resource(GvrPolicy).Namespace(ClusterNamespace)
 
 		policy, err := policyInterface.Get(context.TODO(), replicatedPolicyName, metav1.GetOptions{})
 		if err != nil {

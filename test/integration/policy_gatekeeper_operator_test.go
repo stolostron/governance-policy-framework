@@ -52,7 +52,7 @@ var _ = Describe("", Ordered, Label("policy-collection", "community"), func() {
 
 		// Assign this here to avoid using nil pointers as arguments
 		getComplianceState = func(policyName string) func(Gomega) interface{} {
-			return common.GetComplianceState(clientHubDynamic, userNamespace, policyName, clusterNamespace)
+			return common.GetComplianceState(userNamespace, policyName, clusterNamespace)
 		}
 	})
 	const gatekeeperPolicyURL = policyCollectCommunityURL +
