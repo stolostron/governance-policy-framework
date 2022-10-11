@@ -37,9 +37,7 @@ var _ = Describe(
 			Expect(err).To(BeNil())
 
 			By("Patching placement rule")
-			err = common.PatchPlacementRule(
-				userNamespace, "placement-"+policyEtcdEncryptionName, clusterNamespace, kubeconfigHub,
-			)
+			err = common.PatchPlacementRule(userNamespace, "placement-"+policyEtcdEncryptionName)
 			Expect(err).To(BeNil())
 
 			By("Checking that " + policyEtcdEncryptionName + " exists on the Hub cluster")
@@ -70,7 +68,7 @@ var _ = Describe(
 		It("stable/"+policyEtcdEncryptionName+" should be NonCompliant", func() {
 			By("Checking if the status of the root policy is NonCompliant")
 			Eventually(
-				common.GetComplianceState(userNamespace, policyEtcdEncryptionName, clusterNamespace),
+				common.GetComplianceState(policyEtcdEncryptionName),
 				defaultTimeoutSeconds*2,
 				1,
 			).Should(Equal(policiesv1.NonCompliant))
