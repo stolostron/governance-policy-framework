@@ -30,32 +30,50 @@ var (
 	DefaultTimeoutSeconds  int
 	ManuallyPatchDecisions bool
 	K8sClient              string
+
+	ClientHub            kubernetes.Interface
+	ClientHubDynamic     dynamic.Interface
+	ClientManaged        kubernetes.Interface
+	ClientManagedDynamic dynamic.Interface
 )
 
 const MaxTravisTimeoutSeconds = 590 // Travis times out (by default) at 10 minutes
 
-func init() {
-	flag.StringVar(
+func InitFlags(flagset *flag.FlagSet) {
+	if flagset == nil {
+		flagset = flag.CommandLine
+	}
+
+	flagset.StringVar(
 		&KubeconfigHub, "kubeconfig_hub", "../../kubeconfig_hub",
 		"Location of the kubeconfig to use; defaults to KUBECONFIG if not set",
 	)
-	flag.StringVar(
+	flagset.StringVar(
 		&KubeconfigManaged, "kubeconfig_managed", "../../kubeconfig_managed",
 		"Location of the kubeconfig to use; defaults to KUBECONFIG if not set",
 	)
-	flag.StringVar(&UserNamespace, "user_namespace", "policy-test", "ns on hub to create root policy")
-	flag.StringVar(&ClusterNamespace, "cluster_namespace", "local-cluster", "cluster ns name")
-	flag.IntVar(&DefaultTimeoutSeconds, "timeout_seconds", 30, "Timeout seconds for assertion")
-	flag.BoolVar(
+	flagset.StringVar(&UserNamespace, "user_namespace", "policy-test", "ns on hub to create root policy")
+	flagset.StringVar(&ClusterNamespace, "cluster_namespace", "local-cluster", "cluster ns name")
+	flagset.IntVar(&DefaultTimeoutSeconds, "timeout_seconds", 30, "Timeout seconds for assertion")
+	flagset.BoolVar(
 		&ManuallyPatchDecisions, "patch_decisions", true,
 		"Whether to 'manually' patch PlacementRules with PlacementDecisions "+
 			"(set to false if the PlacementRule controller is running)",
 	)
-	flag.StringVar(
+	flagset.StringVar(
 		&K8sClient, "k8s_client", "oc",
 		"Which k8s client to use for some tests - `oc`, `kubectl`, "+
 			"or something else entirely",
 	)
+}
+
+// Initializes the Hub and Managed Clients. Should be called after InitFlags,
+// and before any tests using common functions are run.
+func InitInterfaces(hubConfig, managedConfig string) {
+	ClientHub = NewKubeClient("", hubConfig, "")
+	ClientHubDynamic = NewKubeClientDynamic("", hubConfig, "")
+	ClientManaged = NewKubeClient("", managedConfig, "")
+	ClientManagedDynamic = NewKubeClientDynamic("", managedConfig, "")
 }
 
 func NewKubeClient(url, kubeconfig, context string) kubernetes.Interface {
