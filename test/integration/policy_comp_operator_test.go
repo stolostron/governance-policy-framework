@@ -88,50 +88,8 @@ func complianceScanTest(scanPolicyName string, scanPolicyURL string, scanName st
 			)
 			Expect(managedplc).NotTo(BeNil())
 		})
-		It("Enforcing stable/"+scanPolicyName+"", func() {
-			Eventually(func() interface{} {
-				By("Patching remediationAction = enforce on root policy")
-				rootPlc := utils.GetWithTimeout(
-					clientHubDynamic,
-					common.GvrPolicy,
-					scanPolicyName,
-					userNamespace,
-					true,
-					defaultTimeoutSeconds,
-				)
-				rootPlc.Object["spec"].(map[string]interface{})["remediationAction"] = "enforce"
-				_, err := clientHubDynamic.Resource(common.GvrPolicy).Namespace(userNamespace).Update(
-					context.TODO(),
-					rootPlc,
-					metav1.UpdateOptions{},
-				)
-				Expect(err).To(BeNil())
-
-				By("Checking if remediationAction is enforce for root policy")
-				rootPlc = utils.GetWithTimeout(
-					clientHubDynamic,
-					common.GvrPolicy,
-					scanPolicyName,
-					userNamespace,
-					true,
-					defaultTimeoutSeconds,
-				)
-
-				return rootPlc.Object["spec"].(map[string]interface{})["remediationAction"]
-			}, defaultTimeoutSeconds, 1).Should(Equal("enforce"))
-			By("Checking if remediationAction is enforce for replicated policy")
-			Eventually(func() interface{} {
-				managedPlc := utils.GetWithTimeout(
-					clientManagedDynamic,
-					common.GvrPolicy,
-					userNamespace+"."+scanPolicyName,
-					clusterNamespace,
-					true,
-					defaultTimeoutSeconds,
-				)
-
-				return managedPlc.Object["spec"].(map[string]interface{})["remediationAction"]
-			}, defaultTimeoutSeconds, 1).Should(Equal("enforce"))
+		It("Enforcing stable/"+scanPolicyName, func() {
+			common.EnforcePolicy(scanPolicyName)
 		})
 		It("ComplianceSuite "+scanName+" should be created", func() {
 			By("Checking if ComplianceSuite " + scanName + " exists on managed cluster")
@@ -404,48 +362,7 @@ var _ = Describe("RHACM4K-2222 GRC: [P1][Sev1][policy-grc] "+
 			Eventually(getComplianceState, defaultTimeoutSeconds*2, 1).Should(Equal(policiesv1.NonCompliant))
 		})
 		It("Enforcing stable/"+compPolicyName, func() {
-			Eventually(func() interface{} {
-				By("Patching remediationAction = enforce on root policy")
-				rootPlc := utils.GetWithTimeout(
-					clientHubDynamic,
-					common.GvrPolicy,
-					compPolicyName,
-					userNamespace,
-					true,
-					defaultTimeoutSeconds,
-				)
-				rootPlc.Object["spec"].(map[string]interface{})["remediationAction"] = "enforce"
-				_, err := clientHubDynamic.Resource(common.GvrPolicy).Namespace(userNamespace).Update(
-					context.TODO(),
-					rootPlc,
-					metav1.UpdateOptions{},
-				)
-				Expect(err).To(BeNil())
-				By("Checking if remediationAction is enforce for root policy")
-				rootPlc = utils.GetWithTimeout(
-					clientHubDynamic,
-					common.GvrPolicy,
-					compPolicyName,
-					userNamespace,
-					true,
-					defaultTimeoutSeconds,
-				)
-
-				return rootPlc.Object["spec"].(map[string]interface{})["remediationAction"]
-			}, defaultTimeoutSeconds, 1).Should(Equal("enforce"))
-			By("Checking if remediationAction is enforce for replicated policy")
-			Eventually(func() interface{} {
-				managedPlc := utils.GetWithTimeout(
-					clientManagedDynamic,
-					common.GvrPolicy,
-					userNamespace+"."+compPolicyName,
-					clusterNamespace,
-					true,
-					defaultTimeoutSeconds,
-				)
-
-				return managedPlc.Object["spec"].(map[string]interface{})["remediationAction"]
-			}, defaultTimeoutSeconds, 1).Should(Equal("enforce"))
+			common.EnforcePolicy(compPolicyName)
 		})
 		It("Compliance operator pod should be running", func() {
 			By("Checking if pod compliance-operator has been created")
