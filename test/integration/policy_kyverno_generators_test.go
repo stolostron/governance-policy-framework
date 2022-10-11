@@ -49,7 +49,7 @@ var _ = Describe("GRC: [P1][Sev1][policy-grc] Test the kyverno generator "+
 
 		By("Checking if the status of the root policy is NonCompliant")
 		Eventually(
-			common.GetComplianceState(clientHubDynamic, userNamespace, kyvernoInstallPolicy, localClusterName),
+			common.GetComplianceState(userNamespace, kyvernoInstallPolicy, localClusterName),
 			defaultTimeoutSeconds*2,
 			1,
 		).Should(Equal(policiesv1.NonCompliant))
@@ -82,7 +82,7 @@ var _ = Describe("GRC: [P1][Sev1][policy-grc] Test the kyverno generator "+
 
 		By("Checking if the status of the root policy is Compliant")
 		Eventually(
-			common.GetComplianceState(clientHubDynamic, userNamespace, "policy-install-kyverno", localClusterName),
+			common.GetComplianceState(userNamespace, "policy-install-kyverno", localClusterName),
 			defaultTimeoutSeconds*10,
 			1,
 		).Should(Equal(policiesv1.Compliant))
@@ -156,7 +156,7 @@ var _ = Describe("GRC: [P1][Sev1][policy-grc] Test the kyverno generator "+
 		for name := range policyNameMap {
 			By("Checking if the status of root policy " + name + " is NonCompliant")
 			Eventually(
-				common.GetComplianceState(clientHubDynamic, userNamespace, name, clusterNamespace),
+				common.GetComplianceState(userNamespace, name, clusterNamespace),
 				defaultTimeoutSeconds*2,
 				1,
 			).Should(Equal(policiesv1.NonCompliant))
@@ -177,7 +177,7 @@ var _ = Describe("GRC: [P1][Sev1][policy-grc] Test the kyverno generator "+
 
 			By("Checking if the status of root policy " + name + " is now Compliant")
 			Eventually(
-				common.GetComplianceState(clientHubDynamic, userNamespace, name, clusterNamespace),
+				common.GetComplianceState(userNamespace, name, clusterNamespace),
 				defaultTimeoutSeconds*2,
 				1,
 			).Should(Equal(policiesv1.Compliant))

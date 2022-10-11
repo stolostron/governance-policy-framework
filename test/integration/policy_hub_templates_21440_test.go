@@ -98,7 +98,7 @@ var _ = Describe(
 		It(policyName+" should be Compliant", func() {
 			By("Checking if the status of the root policy is Compliant")
 			Eventually(
-				common.GetComplianceState(clientHubDynamic, "default", policyName, clusterNamespace),
+				common.GetComplianceState("default", policyName, clusterNamespace),
 				defaultTimeoutSeconds*2,
 				1,
 			).Should(Equal(policiesv1.Compliant))
