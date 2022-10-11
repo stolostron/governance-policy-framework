@@ -50,7 +50,7 @@ var _ = Describe("Test Hub Template Encryption", Ordered, func() {
 			_, err = common.OcHub("apply", "-f", configMapYAML, "-n", userNamespace)
 			Expect(err).To(BeNil())
 
-			common.DoCreatePolicyTest(clientHubDynamic, clientManagedDynamic, policyYAML, common.GvrConfigurationPolicy)
+			common.DoCreatePolicyTest(policyYAML, common.GvrConfigurationPolicy)
 		})
 
 		It("Should be compliant after enforcing it", FlakeAttempts(3), func() {
@@ -64,7 +64,7 @@ var _ = Describe("Test Hub Template Encryption", Ordered, func() {
 			)
 			Expect(err).To(BeNil())
 
-			common.DoRootComplianceTest(clientHubDynamic, policyName, policiesv1.Compliant)
+			common.DoRootComplianceTest(policyName, policiesv1.Compliant)
 		})
 
 		It("Should use encryption in the replicated policy", func() {

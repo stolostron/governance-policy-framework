@@ -26,11 +26,7 @@ var _ = Describe("GRC: [P1][Sev1][policy-grc] Test "+
 	var getIAMComplianceState func(Gomega) interface{}
 	BeforeEach(func() {
 		// Assign this here to avoid using nil pointers as arguments
-		getIAMComplianceState = common.GetComplianceState(
-			clientHubDynamic,
-			userNamespace,
-			iamPolicyName,
-			clusterNamespace)
+		getIAMComplianceState = common.GetComplianceState(userNamespace, iamPolicyName, clusterNamespace)
 	})
 
 	It("stable/"+iamPolicyName+" should be created on the hub", func() {
