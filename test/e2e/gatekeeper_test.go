@@ -65,7 +65,7 @@ var _ = Describe("Test gatekeeper", Ordered, func() {
 	Describe("Test gatekeeper operator", func() {
 		const GKOPolicyName string = "policy-gatekeeper-operator"
 		It("gatekeeper operator policy should be created on managed", func() {
-			common.DoCreatePolicyTest(clientHubDynamic, clientManagedDynamic, GKOPolicyYaml)
+			common.DoCreatePolicyTest(GKOPolicyYaml)
 		})
 		It("should create gatekeeper pods on managed cluster", func() {
 			By("Checking number of pods in gatekeeper-system ns")

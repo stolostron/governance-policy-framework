@@ -74,7 +74,7 @@ var _ = BeforeSuite(func() {
 	clientManagedDynamic = common.ClientManagedDynamic
 
 	getComplianceState = func(policyName string) func(Gomega) interface{} {
-		return common.GetComplianceState(clientHubDynamic, userNamespace, policyName, clusterNamespace)
+		return common.GetComplianceState(userNamespace, policyName, clusterNamespace)
 	}
 
 	By("Create Namespace if needed")
