@@ -12,6 +12,7 @@ import (
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"open-cluster-management.io/governance-policy-propagator/test/utils"
 
+	"github.com/stolostron/governance-policy-framework/test/common"
 	testcommon "github.com/stolostron/governance-policy-framework/test/common"
 )
 
@@ -127,28 +128,7 @@ var _ = Describe("GRC: [P1][Sev1][policy-grc] Test policy set", Ordered, Label("
 		})
 
 		It("Should update to compliant if all its child policy violations have been remediated", func() {
-			By("Enforcing the policy to make it compliant")
-			rootPlcRsrc := clientHubDynamic.Resource(testcommon.GvrPolicy)
-			var rootPlc *unstructured.Unstructured
-			Eventually(
-				func() error {
-					var err error
-					rootPlc, err = rootPlcRsrc.Namespace(userNamespace).Get(
-						context.TODO(), testPolicyName, metav1.GetOptions{},
-					)
-
-					return err
-				},
-				defaultTimeoutSeconds*2,
-				1,
-			).Should(BeNil())
-			rootPlc.Object["spec"].(map[string]interface{})["remediationAction"] = "enforce"
-			_, err := clientHubDynamic.Resource(testcommon.GvrPolicy).Namespace(userNamespace).Update(
-				context.TODO(),
-				rootPlc,
-				metav1.UpdateOptions{},
-			)
-			Expect(err).To(BeNil())
+			common.EnforcePolicy(testPolicyName)
 
 			By("Checking the status of policy set")
 			yamlPlc := utils.ParseYaml("../resources/policy_set/statuscheck-3.yaml")

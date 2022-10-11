@@ -107,17 +107,7 @@ var _ = Describe("Test policy set", func() {
 		})
 
 		It("Should update to compliant if all its child policy violations have been remediated", func() {
-			By("Enforcing the policy to make it compliant")
-			rootPlc := utils.GetWithTimeout(
-				clientHubDynamic, common.GvrPolicy, testPolicyName, userNamespace, true, defaultTimeoutSeconds,
-			)
-			rootPlc.Object["spec"].(map[string]interface{})["remediationAction"] = "enforce"
-			_, err := clientHubDynamic.Resource(common.GvrPolicy).Namespace(userNamespace).Update(
-				context.TODO(),
-				rootPlc,
-				metav1.UpdateOptions{},
-			)
-			Expect(err).To(BeNil())
+			common.EnforcePolicy(testPolicyName)
 
 			By("Checking the status of policy set")
 			yamlPlc := utils.ParseYaml("../resources/policy_set/statuscheck-5.yaml")
