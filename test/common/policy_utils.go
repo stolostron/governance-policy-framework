@@ -19,16 +19,24 @@ import (
 )
 
 // GetComplianceState returns a function usable by ginkgo.Eventually that retrieves the
-// compliance state of the input policy.
-func GetComplianceState(namespace, policyName, clusterNamespace string) func(Gomega) interface{} {
+// compliance state of the input policy in the globally configured managed cluster.
+func GetComplianceState(policyName string) func(Gomega) interface{} {
+	return GetClusterComplianceState(policyName, ClusterNamespace)
+}
+
+// GetClusterComplianceState returns a function usable by ginkgo.Eventually that retrieves the
+// compliance state of the input policy on the specified cluster.
+func GetClusterComplianceState(policyName, clusterName string) func(Gomega) interface{} {
 	return func(g Gomega) interface{} {
-		rootPlc := utils.GetWithTimeout(ClientHubDynamic, GvrPolicy, policyName, namespace, true, DefaultTimeoutSeconds)
+		rootPlc := utils.GetWithTimeout(
+			ClientHubDynamic, GvrPolicy, policyName, UserNamespace, true, DefaultTimeoutSeconds,
+		)
 		var policy policiesv1.Policy
 		err := runtime.DefaultUnstructuredConverter.FromUnstructured(rootPlc.UnstructuredContent(), &policy)
 		g.ExpectWithOffset(1, err).To(BeNil())
 
 		for _, statusPerCluster := range policy.Status.Status {
-			if statusPerCluster.ClusterNamespace == clusterNamespace {
+			if statusPerCluster.ClusterNamespace == clusterName {
 				return statusPerCluster.ComplianceState
 			}
 		}
@@ -39,18 +47,19 @@ func GetComplianceState(namespace, policyName, clusterNamespace string) func(Gom
 
 // Patches the clusterSelector of the specified PlacementRule so that it will
 // always only match the targetCluster.
-func PatchPlacementRule(namespace, name, targetCluster, kubeconfigHub string) error {
-	_, err := utils.KubectlWithOutput(
+func PatchPlacementRule(namespace, name string) error {
+	_, err := OcHub(
 		"patch",
 		"-n",
 		namespace,
 		"placementrule.apps.open-cluster-management.io",
 		name,
 		"--type=json",
-		`-p=[{"op": "replace", "path": "/spec/clusterSelector", `+
-			`"value":{"matchExpressions":[{"key": "name", "operator": "In", "values": ["`+
-			targetCluster+`"]}]}}]`,
-		"--kubeconfig="+kubeconfigHub,
+		`-p=[{
+			"op": "replace",
+			"path": "/spec/clusterSelector",
+			"value":{"matchExpressions":[{"key": "name", "operator": "In", "values": ["`+ClusterNamespace+`"]}]}
+		}]`,
 	)
 
 	return err
@@ -151,7 +160,7 @@ func DoRootComplianceTest(policyName string, compliance policiesv1.ComplianceSta
 	By("Checking if the status of root policy " + policyName + " is " + string(compliance))
 	EventuallyWithOffset(
 		1,
-		GetComplianceState(UserNamespace, policyName, ClusterNamespace),
+		GetComplianceState(policyName),
 		DefaultTimeoutSeconds,
 		1,
 	).Should(Equal(compliance))

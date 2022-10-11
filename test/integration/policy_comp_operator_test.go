@@ -62,12 +62,7 @@ func complianceScanTest(scanPolicyName string, scanPolicyURL string, scanName st
 			Expect(err).To(BeNil())
 
 			By("Patching placement rule")
-			err = common.PatchPlacementRule(
-				userNamespace,
-				"placement-"+scanPolicyName,
-				clusterNamespace,
-				kubeconfigHub,
-			)
+			err = common.PatchPlacementRule(userNamespace, "placement-"+scanPolicyName)
 			Expect(err).To(BeNil())
 
 			By("Checking policy on hub cluster in ns " + userNamespace)
@@ -366,7 +361,7 @@ var _ = Describe("RHACM4K-2222 GRC: [P1][Sev1][policy-grc] "+
 		}
 
 		// Assign this here to avoid using nil pointers as arguments
-		getComplianceState = common.GetComplianceState(userNamespace, compPolicyName, clusterNamespace)
+		getComplianceState = common.GetComplianceState(compPolicyName)
 	})
 	Describe("Test stable/"+compPolicyName, Label("BVT"), func() {
 		It("stable/"+compPolicyName+" should be created on hub", func() {
@@ -379,12 +374,7 @@ var _ = Describe("RHACM4K-2222 GRC: [P1][Sev1][policy-grc] "+
 			)
 			Expect(err).To(BeNil())
 			By("Patching placement rule")
-			err = common.PatchPlacementRule(
-				userNamespace,
-				"placement-"+compPolicyName,
-				clusterNamespace,
-				kubeconfigHub,
-			)
+			err = common.PatchPlacementRule(userNamespace, "placement-"+compPolicyName)
 			Expect(err).To(BeNil())
 			By("Checking " + compPolicyName + " on hub cluster in ns " + userNamespace)
 			rootPlc := utils.GetWithTimeout(

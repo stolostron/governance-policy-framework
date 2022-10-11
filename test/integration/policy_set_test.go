@@ -57,9 +57,7 @@ var _ = Describe("GRC: [P1][Sev1][policy-grc] Test policy set", Ordered, Label("
 			Expect(len(templates)).Should(Equal(1))
 
 			By("Patching placement rule " + testPolicySetName + "-plr")
-			err = testcommon.PatchPlacementRule(
-				userNamespace, testPolicySetName+"-plr", clusterNamespace, kubeconfigHub,
-			)
+			err = testcommon.PatchPlacementRule(userNamespace, testPolicySetName+"-plr")
 			Expect(err).To(BeNil())
 
 			By("Checking " + testPolicyName + " on managed cluster in ns " + clusterNamespace)

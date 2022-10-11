@@ -49,7 +49,7 @@ var _ = Describe("GRC: [P1][Sev1][policy-grc] Test the kyverno generator "+
 
 		By("Checking if the status of the root policy is NonCompliant")
 		Eventually(
-			common.GetComplianceState(userNamespace, kyvernoInstallPolicy, localClusterName),
+			common.GetClusterComplianceState(kyvernoInstallPolicy, localClusterName),
 			defaultTimeoutSeconds*2,
 			1,
 		).Should(Equal(policiesv1.NonCompliant))
@@ -82,7 +82,7 @@ var _ = Describe("GRC: [P1][Sev1][policy-grc] Test the kyverno generator "+
 
 		By("Checking if the status of the root policy is Compliant")
 		Eventually(
-			common.GetComplianceState(userNamespace, "policy-install-kyverno", localClusterName),
+			common.GetClusterComplianceState("policy-install-kyverno", localClusterName),
 			defaultTimeoutSeconds*10,
 			1,
 		).Should(Equal(policiesv1.Compliant))
@@ -120,9 +120,7 @@ var _ = Describe("GRC: [P1][Sev1][policy-grc] Test the kyverno generator "+
 			Expect(err).To(BeNil())
 
 			By("Patching " + name + " placement rule")
-			err = common.PatchPlacementRule(
-				userNamespace, "placement-"+name, clusterNamespace, kubeconfigHub,
-			)
+			err = common.PatchPlacementRule(userNamespace, "placement-"+name)
 			Expect(err).To(BeNil())
 		}
 	})
@@ -156,7 +154,7 @@ var _ = Describe("GRC: [P1][Sev1][policy-grc] Test the kyverno generator "+
 		for name := range policyNameMap {
 			By("Checking if the status of root policy " + name + " is NonCompliant")
 			Eventually(
-				common.GetComplianceState(userNamespace, name, clusterNamespace),
+				common.GetComplianceState(name),
 				defaultTimeoutSeconds*2,
 				1,
 			).Should(Equal(policiesv1.NonCompliant))
@@ -177,7 +175,7 @@ var _ = Describe("GRC: [P1][Sev1][policy-grc] Test the kyverno generator "+
 
 			By("Checking if the status of root policy " + name + " is now Compliant")
 			Eventually(
-				common.GetComplianceState(userNamespace, name, clusterNamespace),
+				common.GetComplianceState(name),
 				defaultTimeoutSeconds*2,
 				1,
 			).Should(Equal(policiesv1.Compliant))

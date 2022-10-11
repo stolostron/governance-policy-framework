@@ -26,7 +26,7 @@ var _ = Describe("GRC: [P1][Sev1][policy-grc] Test "+
 	var getIAMComplianceState func(Gomega) interface{}
 	BeforeEach(func() {
 		// Assign this here to avoid using nil pointers as arguments
-		getIAMComplianceState = common.GetComplianceState(userNamespace, iamPolicyName, clusterNamespace)
+		getIAMComplianceState = common.GetComplianceState(iamPolicyName)
 	})
 
 	It("stable/"+iamPolicyName+" should be created on the hub", func() {
@@ -41,12 +41,7 @@ var _ = Describe("GRC: [P1][Sev1][policy-grc] Test "+
 		Expect(err).To(BeNil())
 
 		By("Patching the placement rule")
-		err = common.PatchPlacementRule(
-			userNamespace,
-			"placement-"+iamPolicyName,
-			clusterNamespace,
-			kubeconfigHub,
-		)
+		err = common.PatchPlacementRule(userNamespace, "placement-"+iamPolicyName)
 		Expect(err).To(BeNil())
 
 		By("Checking " + iamPolicyName + " on the hub cluster in the ns " + userNamespace)
