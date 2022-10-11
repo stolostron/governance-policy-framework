@@ -63,11 +63,11 @@ echo "Checking installation of $(1)" ;\
 GOBIN=$(LOCAL_BIN) go install $(1)
 endef
 
+.PHONY: default
+default::
+	@echo "Build Harness Bootstrapped"
+
 USE_VENDORIZED_BUILD_HARNESS ?=
-
-.PHONY: fmt lint fmt-dependencies lint-dependencies
-
-include build/common/Makefile.common.mk
 
 ifndef USE_VENDORIZED_BUILD_HARNESS
 	ifeq ($(TRAVIS_BUILD),1)
@@ -81,9 +81,7 @@ else
 -include vbh/.build-harness-vendorized
 endif
 
-.PHONY: default
-default::
-	@echo "Build Harness Bootstrapped"
+include build/common/Makefile.common.mk
 
 ############################################################
 # clean section
@@ -124,6 +122,7 @@ fmt: fmt-dependencies
 lint-dependencies:
 	$(call go-get-tool,github.com/golangci/golangci-lint/cmd/golangci-lint@v1.46.2)
 
+.PHONY: lint
 lint: lint-dependencies lint-all
 
 ############################################################
