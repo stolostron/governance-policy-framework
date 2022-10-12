@@ -24,10 +24,8 @@ The governance policy framework consists of following components:
 
 - [Governance dashboard](https://github.com/stolostron/grc-ui): Console
 - Govenance policy framework: A framework to distribute various supported policies to managed clusters and collect results to be sent to the hub cluster.
-    - [Policy propagator](https://github.com/stolostron/governance-policy-propagator) 
-    - [Policy spec sync](https://github.com/stolostron/governance-policy-spec-sync)
-    - [Policy status sync](https://github.com/stolostron/governance-policy-status-sync)
-    - [Policy template sync](https://github.com/stolostron/governance-policy-template-sync)
+    - [Policy propagator](https://github.com/stolostron/governance-policy-propagator)
+    - [Governance policy framework addon](https://github.com/stolostron/governance-policy-framework-addon)
 - Policy controllers: Policy engines that run on managed clusters to evaluate policy rules distributed by the policy framework and generate results.
     - [Configuration policy controller](https://github.com/stolostron/config-policy-controller)
       - [Usage examples](./doc/configuration-policy/README.md)

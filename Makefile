@@ -46,7 +46,7 @@ endif
 OLM_VERSION ?= v0.21.2
 
 # Debugging configuration
-KIND_COMPONENTS := config-policy-controller cert-policy-controller iam-policy-controller governance-policy-spec-sync governance-policy-status-sync governance-policy-template-sync
+KIND_COMPONENTS := config-policy-controller cert-policy-controller iam-policy-controller governance-policy-framework-addon
 KIND_COMPONENT_SELECTOR := name
 ACM_COMPONENTS := cert-policy-controller klusterlet-addon-iampolicyctrl policy-config-policy policy-framework
 ACM_COMPONENT_SELECTOR := app
@@ -174,15 +174,9 @@ kind-policy-framework-managed-setup:
 deploy-policy-framework-managed-crd-operator:
 	@echo installing Policy CRD on managed
 	kubectl apply -f https://raw.githubusercontent.com/stolostron/governance-policy-propagator/$(RELEASE_BRANCH)/deploy/crds/policy.open-cluster-management.io_policies.yaml
-	@echo installing policy-spec-sync on managed
-	kubectl apply -f https://raw.githubusercontent.com/stolostron/governance-policy-spec-sync/$(RELEASE_BRANCH)/deploy/operator.yaml -n $(KIND_MANAGED_NAMESPACE)
-	kubectl patch deployment governance-policy-spec-sync -n $(KIND_MANAGED_NAMESPACE) -p "{\"spec\":{\"template\":{\"spec\":{\"containers\":[{\"name\":\"governance-policy-spec-sync\",\"env\":[{\"name\":\"WATCH_NAMESPACE\",\"value\":\"$(MANAGED_CLUSTER_NAME)\"}]}]}}}}"
-	@echo installing policy-status-sync on managed
-	kubectl apply -f https://raw.githubusercontent.com/stolostron/governance-policy-status-sync/$(RELEASE_BRANCH)/deploy/operator.yaml -n $(KIND_MANAGED_NAMESPACE)
-	kubectl patch deployment governance-policy-status-sync -n $(KIND_MANAGED_NAMESPACE) -p "{\"spec\":{\"template\":{\"spec\":{\"containers\":[{\"name\":\"governance-policy-status-sync\",\"env\":[{\"name\":\"WATCH_NAMESPACE\",\"value\":\"$(MANAGED_CLUSTER_NAME)\"}]}]}}}}"
-	@echo installing policy-template-sync on managed
-	kubectl apply -f https://raw.githubusercontent.com/stolostron/governance-policy-template-sync/$(RELEASE_BRANCH)/deploy/operator.yaml -n $(KIND_MANAGED_NAMESPACE)
-	kubectl patch deployment governance-policy-template-sync -n $(KIND_MANAGED_NAMESPACE) -p "{\"spec\":{\"template\":{\"spec\":{\"containers\":[{\"name\":\"governance-policy-template-sync\",\"env\":[{\"name\":\"WATCH_NAMESPACE\",\"value\":\"$(MANAGED_CLUSTER_NAME)\"}]}]}}}}"
+	@echo installing governance-policy-framework-addon on managed
+	kubectl apply -f https://raw.githubusercontent.com/stolostron/governance-policy-framework-addon/$(RELEASE_BRANCH)/deploy/operator.yaml -n $(KIND_MANAGED_NAMESPACE)
+		kubectl patch deployment governance-policy-framework-addon -n $(KIND_MANAGED_NAMESPACE) -p "{\"spec\":{\"template\":{\"spec\":{\"containers\":[{\"name\":\"governance-policy-framework-addon\",\"args\":[\"--hub-cluster-configfile=/var/run/klusterlet/kubeconfig\", \"--cluster-namespace=$(MANAGED_CLUSTER_NAME)\", \"--enable-lease=true\", \"--log-level=2\", \"--disable-spec-sync=$(deployOnHub)\"]}]}}}}";\
 
 .PHONY: deploy-policy-framework-managed
 deploy-policy-framework-managed: kind-policy-framework-managed-setup deploy-policy-framework-managed-crd-operator
@@ -198,26 +192,11 @@ kind-deploy-policy-framework:
 	@echo creating secrets on managed
 	kubectl create ns $(KIND_MANAGED_NAMESPACE) --kubeconfig=$(PWD)/kubeconfig_$(MANAGED_CLUSTER_NAME)
 	kubectl create secret -n $(KIND_MANAGED_NAMESPACE) generic hub-kubeconfig --from-file=kubeconfig=$(PWD)/kubeconfig_$(HUB_CLUSTER_NAME)_internal --kubeconfig=$(PWD)/kubeconfig_$(MANAGED_CLUSTER_NAME)
-	@if [ "$(deployOnHub)" = "true" ]; then\
-		echo skipping installing policy-spec-sync on managed;\
-	else\
-		echo installing policy-spec-sync on managed;\
-		kubectl apply -f https://raw.githubusercontent.com/stolostron/governance-policy-spec-sync/$(RELEASE_BRANCH)/deploy/operator.yaml -n $(KIND_MANAGED_NAMESPACE) --kubeconfig=$(PWD)/kubeconfig_$(MANAGED_CLUSTER_NAME);\
-		kubectl patch deployment governance-policy-spec-sync -n $(KIND_MANAGED_NAMESPACE) --kubeconfig=$(PWD)/kubeconfig_$(MANAGED_CLUSTER_NAME) \
-			-p "{\"spec\":{\"template\":{\"spec\":{\"containers\":[{\"name\":\"governance-policy-spec-sync\",\"image\":\"${DOCKER_URI}/governance-policy-spec-sync:${VERSION_TAG}\"}]}}}}";\
-	fi
-	@echo "installing policy-status-sync on managed"
-	kubectl apply -f https://raw.githubusercontent.com/stolostron/governance-policy-status-sync/$(RELEASE_BRANCH)/deploy/operator.yaml -n $(KIND_MANAGED_NAMESPACE) --kubeconfig=$(PWD)/kubeconfig_$(MANAGED_CLUSTER_NAME)
-	@if [ "$(deployOnHub)" = "true" ]; then\
-		echo patching policy-status-sync with ON_MULTICLUSTERHUB;\
-		kubectl set env deployment/governance-policy-status-sync ON_MULTICLUSTERHUB=true -n $(KIND_MANAGED_NAMESPACE) --kubeconfig=$(PWD)/kubeconfig_$(MANAGED_CLUSTER_NAME);\
-	fi
-	kubectl patch deployment governance-policy-status-sync -n $(KIND_MANAGED_NAMESPACE) --kubeconfig=$(PWD)/kubeconfig_$(MANAGED_CLUSTER_NAME) \
-		-p "{\"spec\":{\"template\":{\"spec\":{\"containers\":[{\"name\":\"governance-policy-status-sync\",\"image\":\"${DOCKER_URI}/governance-policy-status-sync:${VERSION_TAG}\"}]}}}}"
-	@echo installing policy-template-sync on managed
-	kubectl apply -f https://raw.githubusercontent.com/stolostron/governance-policy-template-sync/$(RELEASE_BRANCH)/deploy/operator.yaml -n $(KIND_MANAGED_NAMESPACE) --kubeconfig=$(PWD)/kubeconfig_$(MANAGED_CLUSTER_NAME)
-	kubectl patch deployment governance-policy-template-sync -n $(KIND_MANAGED_NAMESPACE) --kubeconfig=$(PWD)/kubeconfig_$(MANAGED_CLUSTER_NAME) \
-		-p "{\"spec\":{\"template\":{\"spec\":{\"containers\":[{\"name\":\"governance-policy-template-sync\",\"image\":\"${DOCKER_URI}/governance-policy-template-sync:${VERSION_TAG}\"}]}}}}"
+	@echo installing governance-policy-framework-addon on managed
+	kubectl apply -f https://raw.githubusercontent.com/stolostron/governance-policy-framework-addon/$(RELEASE_BRANCH)/deploy/operator.yaml -n $(KIND_MANAGED_NAMESPACE) --kubeconfig=$(PWD)/kubeconfig_$(MANAGED_CLUSTER_NAME)
+	echo patching governance-policy-framework-addon to set the managed cluster
+	kubectl patch deployment governance-policy-framework-addon -n $(KIND_MANAGED_NAMESPACE) --kubeconfig=$(PWD)/kubeconfig_$(MANAGED_CLUSTER_NAME) \
+		-p "{\"spec\":{\"template\":{\"spec\":{\"containers\":[{\"name\":\"governance-policy-framework-addon\",\"image\":\"${DOCKER_URI}/governance-policy-framework-addon:${VERSION_TAG}\",\"args\":[\"--hub-cluster-configfile=/var/run/klusterlet/kubeconfig\", \"--cluster-namespace=$(MANAGED_CLUSTER_NAME)\", \"--enable-lease=true\", \"--log-level=2\", \"--disable-spec-sync=$(deployOnHub)\"]}]}}}}"
 
 .PHONY: kind-deploy-config-policy-controller
 kind-deploy-config-policy-controller:
