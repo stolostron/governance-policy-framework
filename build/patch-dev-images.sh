@@ -24,7 +24,7 @@ DEPLOYMENT=$(oc get deployment -l ${LABEL} -n ${acm_installed_namespace} -o=json
 oc patch deployment ${DEPLOYMENT} -n ${acm_installed_namespace} -p "{\"spec\":{\"template\":{\"spec\":{\"containers\":[{\"name\":\"manager\",\"imagePullPolicy\":\"Always\",\"image\":\"${DOCKER_URI}/${COMPONENT}:${VERSION_TAG}\"}]}}}}"
 
 # Patch the addon-controller envs
-CONTAINERS=(cert-policy-controller config-policy-controller iam-policy-controller governance-policy-spec-sync governance-policy-status-sync governance-policy-template-sync)
+CONTAINERS=(cert-policy-controller config-policy-controller iam-policy-controller governance-policy-framework-addon)
 for CONTAINER in ${CONTAINERS[@]}; do
   IMAGE_NAME=$(echo $CONTAINER | tr 'a-z' 'A-Z' | tr '-' '_')_IMAGE
   oc set env deployment/${DEPLOYMENT} -n ${acm_installed_namespace} ${IMAGE_NAME}=${DOCKER_URI}/${CONTAINER}:${VERSION_TAG}
