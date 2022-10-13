@@ -70,11 +70,13 @@ jobs:
         go-version-file: framework/go.mod
 
     - name: Verify modules
+      if: ${{ github.event.repository.name == 'governance-policy-framework' }}
       working-directory: framework
       run: |
         go mod verify
         
     - name: Verify format
+      if: ${{ github.event.repository.name == 'governance-policy-framework' }}
       working-directory: framework
       run: |
         make fmt
