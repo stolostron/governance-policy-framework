@@ -33,8 +33,6 @@ var _ = Describe("GRC: [P1][Sev1][policy-grc] Test the Policy Generator "+
 				Namespace: namespace,
 			},
 		},
-		// To be considered a subscription-admin you must be part of this cluster role binding.
-		// Having the proper role in another cluster role binding does not work.
 		ClusterRoleBindings: []string{subAdminBinding},
 		Password:            "",
 		Username:            "grc-e2e-subscription-admin",
@@ -119,7 +117,9 @@ var _ = Describe("GRC: [P1][Sev1][policy-grc] Test the Policy Generator "+
 			"--kubeconfig="+kubeconfigSubAdmin,
 		)
 		Expect(err).Should(BeNil())
+	})
 
+	It("Validates the propagated policies", func() {
 		By("Checking that the policy set was created")
 		policySetRsrc := clientHubDynamic.Resource(common.GvrPolicySet)
 		var policyset *unstructured.Unstructured
