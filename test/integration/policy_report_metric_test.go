@@ -27,8 +27,7 @@ var _ = Describe("GRC: [P1][Sev1][policy-grc] Test policyreport_info metric", Or
 		roleBindingName              = "grc-framework-role-binding"
 		saTokenName                  = "grc-framework-sa-token-manual"
 		saTokenYaml                  = "../resources/policy_report_metric/metrics_token.yaml"
-		insightsClientPodSelector    = "name=insights-client"
-		insightsClientDeployment     = "deployment.apps/insights-client"
+		insightsClientPodSelector    = "component=insights-client"
 		insightsMetricsSelector      = "component=insights-metrics"
 		insightsMetricName           = "policyreport_info"
 		noncompliantPolicyYamlReport = "../resources/policy_report_metric/noncompliant.yaml"
@@ -38,8 +37,9 @@ var _ = Describe("GRC: [P1][Sev1][policy-grc] Test policyreport_info metric", Or
 	)
 
 	var (
-		insightsMetricsURL string
-		insightsToken      string
+		insightsMetricsURL       string
+		insightsToken            string
+		insightsClientDeployment string
 	)
 
 	JustAfterEach(func() {
@@ -125,6 +125,11 @@ var _ = Describe("GRC: [P1][Sev1][policy-grc] Test policyreport_info metric", Or
 			}
 
 			insightsClientPod = insightsClientPods[1]
+
+			// The pod is formatted as "policyreport-0f89c-insights-client-5c7d5fd5b4-5fdbz". The deployment name
+			// is the pod name without the "-5c7d5fd5b4-5fdbz" suffix.
+			splitPodName := strings.SplitN(insightsClientPod, "-", 5)
+			insightsClientDeployment = "deployment.apps/" + strings.Join(splitPodName[:len(splitPodName)-1], "-")
 
 			return nil
 		}, defaultTimeoutSeconds*10, 1).Should(BeNil())
