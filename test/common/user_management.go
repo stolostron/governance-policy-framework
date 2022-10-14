@@ -104,7 +104,7 @@ func GetKubeConfig(server, username, password string) (string, error) {
 // CreateOCPUser will create an OpenShift user on a cluster, configure the identity provider for
 // that user, and add the desired roles to the user. This function is idempotent.
 func CreateOCPUser(
-	client kubernetes.Interface, dynamicClient dynamic.Interface, secretName string, user OCPUser,
+	client kubernetes.Interface, dynamicClient dynamic.Interface, user OCPUser,
 ) error {
 	// Hash the password in the format expected by an htpasswd file.
 	passwordBytes, err := bcrypt.GenerateFromPassword([]byte(user.Password), bcrypt.DefaultCost)
@@ -117,7 +117,7 @@ func CreateOCPUser(
 	// Create a secret to hold the generated htpasswd file with the user's credentials.
 	htpasswd := []byte(fmt.Sprintf("%s:%s\n", user.Username, string(passwordBytes)))
 	secret := corev1.Secret{
-		ObjectMeta: metav1.ObjectMeta{Name: secretName},
+		ObjectMeta: metav1.ObjectMeta{Name: user.Username},
 		Data:       map[string][]byte{"htpasswd": htpasswd},
 		Type:       corev1.SecretTypeOpaque,
 	}
@@ -126,11 +126,11 @@ func CreateOCPUser(
 		context.TODO(), &secret, metav1.CreateOptions{},
 	)
 	if err != nil {
-		return fmt.Errorf("failed to create the secret %s/%s: %w", ocpConfigNs, secretName, err)
+		return fmt.Errorf("failed to create the secret %s/%s: %w", ocpConfigNs, user.Username, err)
 	}
 
 	// Configure the identity provider with this new htpasswd.
-	err = addHtPasswd(dynamicClient, secretName)
+	err = addHtPasswd(dynamicClient, user.Username)
 	if err != nil {
 		return fmt.Errorf(
 			"failed to configure the OpenShift identity provider for these users: %w", err,
@@ -410,23 +410,23 @@ func addClusterRoles(client kubernetes.Interface, user OCPUser) error {
 
 // CleanupOCPUser will revert changes made to the cluster by the CreateOCPUser function.
 func CleanupOCPUser(
-	client kubernetes.Interface, dynamicClient dynamic.Interface, secretName string, user OCPUser,
+	client kubernetes.Interface, dynamicClient dynamic.Interface, user OCPUser,
 ) error {
-	err := deleteHtPasswd(dynamicClient, secretName, user)
+	err := deleteHtPasswd(dynamicClient, user.Username, user)
 	if err != nil {
 		return fmt.Errorf(
 			"failed to delete the OpenShift identity provider for the associated secret %s: %w",
-			secretName,
+			user.Username,
 			err,
 		)
 	}
 
 	err = client.CoreV1().Secrets(ocpConfigNs).Delete(
-		context.TODO(), secretName, metav1.DeleteOptions{},
+		context.TODO(), user.Username, metav1.DeleteOptions{},
 	)
 
 	if err != nil && !k8serrors.IsNotFound(err) {
-		return fmt.Errorf("failed to delete the secret %s/%s: %w", ocpConfigNs, secretName, err)
+		return fmt.Errorf("failed to delete the secret %s/%s: %w", ocpConfigNs, user.Username, err)
 	}
 
 	err = removeClusterRoleBindings(client, user)
