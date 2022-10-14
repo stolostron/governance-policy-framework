@@ -39,6 +39,7 @@ type OCPUser struct {
 	ClusterRoleBindings []string
 	Password            string
 	Username            string
+	Kubeconfig          string
 }
 
 // GenerateInsecurePassword is a random password generator from 15-30 bytes. It is insecure
@@ -99,6 +100,16 @@ func GetKubeConfig(server, username, password string) (string, error) {
 	}
 
 	return kubeconfigPath, nil
+}
+
+// Runs the given oc/kubectl command using the given OCPUser.
+// Prints and returns the stdout from the command.
+// If the command fails (non-zero exit code) and stderr was populated, that
+// content will be returned in the error.
+func OcUser(user OCPUser, args ...string) (string, error) {
+	args = append([]string{"--kubeconfig=" + user.Kubeconfig}, args...)
+
+	return oc(args...)
 }
 
 // CreateOCPUser will create an OpenShift user on a cluster, configure the identity provider for
@@ -261,7 +272,7 @@ func getClusterOAuthConfig(dynamicClient dynamic.Interface) (*unstructured.Unstr
 	return clusterOAuth, nil
 }
 
-// addClusterRoleBindings will add the user to the desired cluster role bindings without removing
+// AddClusterRoleBindings will add the user to the desired cluster role bindings without removing
 // existing subjects. If the bindings are already set, nothing will occur.
 func addClusterRoleBindings(client kubernetes.Interface, user OCPUser) error {
 	for _, binding := range user.ClusterRoleBindings {
