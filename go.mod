@@ -54,6 +54,7 @@ require (
 )
 
 replace (
+	golang.org/x/text => golang.org/x/text v0.3.8 // CVE-2022-32149
 	k8s.io/client-go => k8s.io/client-go v0.23.9
 	open-cluster-management.io/governance-policy-propagator => github.com/stolostron/governance-policy-propagator v0.0.0-20220727212642-86a318ab17cf
 )
