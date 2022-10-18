@@ -37,7 +37,7 @@ var (
 	ClientManagedDynamic dynamic.Interface
 )
 
-const MaxTravisTimeoutSeconds = 590 // Travis times out (by default) at 10 minutes
+const MaxTimeoutSeconds = 900 // 15 minutes
 
 func InitFlags(flagset *flag.FlagSet) {
 	if flagset == nil {
