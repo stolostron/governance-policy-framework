@@ -175,7 +175,7 @@ var _ = Describe("GRC: [P1][Sev1][policy-grc] Test "+
 
 				return ""
 			},
-			common.MaxTravisTimeoutSeconds,
+			common.MaxTimeoutSeconds,
 			1,
 		).Should(Equal(string(policiesv1.NonCompliant)))
 	})

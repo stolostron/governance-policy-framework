@@ -106,7 +106,7 @@ var _ = Describe("GRC: [P1][Sev1][policy-grc] Test the kyverno generator "+
 
 				return int64(0)
 			},
-			common.MaxTravisTimeoutSeconds,
+			common.MaxTimeoutSeconds,
 			1,
 		).Should(BeNumerically("==", int64(1)))
 	})

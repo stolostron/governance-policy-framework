@@ -127,7 +127,7 @@ func complianceScanTest(scanPolicyName string, scanPolicyURL string, scanName st
 				)
 
 				return compliancesuite.Object["status"].(map[string]interface{})["phase"]
-			}, common.MaxTravisTimeoutSeconds, 1).Should(Equal("RUNNING"))
+			}, common.MaxTimeoutSeconds, 1).Should(Equal("RUNNING"))
 		})
 		It("Informing stable/"+scanPolicyName+"", func() {
 			Eventually(func() interface{} {
@@ -190,7 +190,7 @@ func complianceScanTest(scanPolicyName string, scanPolicyURL string, scanName st
 				g.Expect(err).To(BeNil())
 
 				return len(list.Items)
-			}, common.MaxTravisTimeoutSeconds, 1).ShouldNot(Equal(0))
+			}, common.MaxTimeoutSeconds, 1).ShouldNot(Equal(0))
 		})
 		It("ComplianceSuite "+scanName+" scan results should be AGGREGATING", func() {
 			By("Checking if ComplianceSuite " + scanName + " scan status.phase is AGGREGATING")
@@ -205,7 +205,7 @@ func complianceScanTest(scanPolicyName string, scanPolicyURL string, scanName st
 				)
 
 				return compliancesuite.Object["status"].(map[string]interface{})["phase"]
-			}, common.MaxTravisTimeoutSeconds, 1).Should(Equal("AGGREGATING"))
+			}, common.MaxTimeoutSeconds, 1).Should(Equal("AGGREGATING"))
 		})
 		It("ComplianceSuite "+scanName+" scan results should be DONE", func() {
 			By("Checking if ComplianceSuite " + scanName + " scan status.phase is DONE")
@@ -220,7 +220,7 @@ func complianceScanTest(scanPolicyName string, scanPolicyURL string, scanName st
 				)
 
 				return compliancesuite.Object["status"].(map[string]interface{})["phase"]
-			}, common.MaxTravisTimeoutSeconds, 1).Should(Equal("DONE"))
+			}, common.MaxTimeoutSeconds, 1).Should(Equal("DONE"))
 		})
 	})
 	AfterAll(func() {
