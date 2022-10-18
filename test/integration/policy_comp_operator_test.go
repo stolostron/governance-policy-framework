@@ -19,6 +19,8 @@ import (
 	"github.com/stolostron/governance-policy-framework/test/common"
 )
 
+const ComplianceScanTimeoutSeconds = 900
+
 func isOCP46andAbove() bool {
 	clusterVersion, err := clientManagedDynamic.Resource(common.GvrClusterVersion).Get(
 		context.TODO(),
@@ -127,7 +129,7 @@ func complianceScanTest(scanPolicyName string, scanPolicyURL string, scanName st
 				)
 
 				return compliancesuite.Object["status"].(map[string]interface{})["phase"]
-			}, common.MaxTravisTimeoutSeconds, 1).Should(Equal("RUNNING"))
+			}, ComplianceScanTimeoutSeconds, 1).Should(Equal("RUNNING"))
 		})
 		It("Informing stable/"+scanPolicyName+"", func() {
 			Eventually(func() interface{} {
@@ -190,7 +192,7 @@ func complianceScanTest(scanPolicyName string, scanPolicyURL string, scanName st
 				g.Expect(err).To(BeNil())
 
 				return len(list.Items)
-			}, common.MaxTravisTimeoutSeconds, 1).ShouldNot(Equal(0))
+			}, ComplianceScanTimeoutSeconds, 1).ShouldNot(Equal(0))
 		})
 		It("ComplianceSuite "+scanName+" scan results should be AGGREGATING", func() {
 			By("Checking if ComplianceSuite " + scanName + " scan status.phase is AGGREGATING")
@@ -205,7 +207,7 @@ func complianceScanTest(scanPolicyName string, scanPolicyURL string, scanName st
 				)
 
 				return compliancesuite.Object["status"].(map[string]interface{})["phase"]
-			}, common.MaxTravisTimeoutSeconds, 1).Should(Equal("AGGREGATING"))
+			}, ComplianceScanTimeoutSeconds, 1).Should(Equal("AGGREGATING"))
 		})
 		It("ComplianceSuite "+scanName+" scan results should be DONE", func() {
 			By("Checking if ComplianceSuite " + scanName + " scan status.phase is DONE")
@@ -220,7 +222,7 @@ func complianceScanTest(scanPolicyName string, scanPolicyURL string, scanName st
 				)
 
 				return compliancesuite.Object["status"].(map[string]interface{})["phase"]
-			}, common.MaxTravisTimeoutSeconds, 1).Should(Equal("DONE"))
+			}, ComplianceScanTimeoutSeconds, 1).Should(Equal("DONE"))
 		})
 	})
 	AfterAll(func() {
