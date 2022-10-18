@@ -22,7 +22,12 @@ cloneRepos() {
 		# Collect repos from https://github.com/stolostron/policy-grc-squad/blob/master/main-branch-sync/repo.txt
 		REPOS=$(cat policy-grc-squad/main-branch-sync/repo.txt)
 		# Manually append deprecated repos
-		REPOS="${REPOS} stolostron/grc-ui stolostron/grc-ui-api"
+		REPOS="${REPOS}
+			stolostron/grc-ui
+			stolostron/grc-ui-api
+			stolostron/governance-policy-spec-sync
+			stolostron/governance-policy-status-sync
+			stolostron/governance-policy-template-sync"
 		for repo in $REPOS; do
 			echo "Cloning $repo ...."
 			git clone --quiet https://github.com/$repo.git $repo
