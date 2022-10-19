@@ -5,6 +5,8 @@
 set -e
 TEST_IMAGE_URI=$1
 
+while sleep 5m; do echo "\n=====[ $SECONDS seconds elapsed, keep Travis running ]=====\n"; done &
+
 sudo ./build/download-clis.sh
 
 echo "Login hub"
