@@ -1,4 +1,4 @@
-#!/bin/sh
+#! /bin/bash
 
 # Validate the pipeline is up to date and that no failed prow jobs exist
 
@@ -47,11 +47,9 @@ getSyncIssues() {
 getGitSha() {
 	component=$1
 	release=release-$2
-	cd $COMPONENT_ORG/$component
-	co=`git checkout --quiet $release`
-	GITSHA=`git log -n 1 --no-decorate --pretty=oneline | awk '{print $1}'`
+	co=`git -C $COMPONENT_ORG/$component checkout --quiet $release`
+	GITSHA=`git -C $COMPONENT_ORG/$component log -n 1 --no-decorate --pretty=oneline | awk '{print $1}'`
 	echo "$GITSHA"
-	cd $BASEDIR
 }
 
 # Fetch a value from the Pipeline manifest
@@ -61,11 +59,9 @@ getPipelineValue() {
 	release="${2}-integration"
 	key="$3"
 
-	cd pipeline
-	co=$(git checkout --quiet "$release")
-	value=`jq -r '.[] |select(.["image-name"] == "'$component'") | .["'$key'"]' manifest.json`
+	co=$(git -C pipeline/ checkout --quiet "$release")
+	value=`jq -r '.[] |select(.["image-name"] == "'$component'") | .["'$key'"]' pipeline/manifest.json`
 	echo "$value"
-	cd $BASEDIR
 }
 
 # Check for Prow job failures
@@ -122,10 +118,9 @@ cleanup() {
 	rm -rf "$COMPONENT_ORG"
 }
 
-BASEDIR=$(pwd)
 rc=0
 
-ARTIFACT_DIR=${ARTIFACT_DIR:-${BASEDIR}}
+ARTIFACT_DIR=${ARTIFACT_DIR:-$(pwd)}
 ERROR_FILE="${ARTIFACT_DIR}/errors.log"
 
 # Clean up error file if it exists
