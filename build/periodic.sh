@@ -111,6 +111,62 @@ checkProwJob() {
 	return $rcode
 }
 
+# Get the diff of CRDs across RHACM
+crdDiff() {
+	if [ "$1" = "$DEFAULT_BRANCH" ]; then
+		BRANCH="$1"
+	else
+		BRANCH="release-$1"
+	fi
+	propagator_path="stolostron/governance-policy-propagator/deploy/crds"
+	mch_path="multiclusterhub-operator/pkg/templates/crds/grc"
+	mch_repo="multiclusterhub-operator"
+
+	# Check out the target release branch in the repos
+	git -C stolostron/governance-policy-propagator/ checkout --quiet $BRANCH
+	git -C $mch_repo/ checkout --quiet $BRANCH
+
+	echo "Checking that all CRDs are present in the MultiClusterHub GRC chart for $BRANCH ..."
+	PROPAGATOR_CRD_FILES=$(ls -p -1 $propagator_path | grep -v /)
+	CRD_LIST=$(diff <( echo "${PROPAGATOR_CRD_FILES}" ) <( ls -p -1 ${mch_path} | sed 's/_crd//'))
+	if [[ -n "${CRD_LIST}" ]]; then
+		echo "****"
+		echo "ERROR: CRDs are not synced to $mch_repo for $BRANCH" | tee -a ${ERROR_FILE}
+		echo "${CRD_LIST}" | sed 's/^/   /' | tee -a ${ERROR_FILE}
+		echo "***"
+		return 1
+	fi
+
+	rcode=0
+	for crd_file in ${PROPAGATOR_CRD_FILES}; do
+		CRD_DIFF="$(diff ${propagator_path}/${crd_file} ${mch_path}/${crd_file})"
+		if [[ -n "${CRD_DIFF}" ]]; then
+			echo "****"
+			echo "ERROR: CRD $crd_file is not synced to $mch_repo for $BRANCH" | tee -a ${ERROR_FILE}
+			echo "${CRD_DIFF}" | sed 's/^/   /' | tee -a ${ERROR_FILE}
+			echo "***"
+			rcode=1
+		fi
+	done
+	
+	return $rcode
+}
+
+crdSyncCheck() {
+	echo "Checking the CRD sync GitHub Action in governance-policy-addon-controller ..."
+	WORKFLOW_JSON=$(curl -s https://api.github.com/repos/stolostron/governance-policy-addon-controller/actions/workflows/crd-sync.yml/runs)
+	WORKFLOW_CONCLUSION=$(echo "$WORKFLOW_JSON" | jq -r '.workflow_runs[0].conclusion')
+	WORKFLOW_URL=$(echo "$WORKFLOW_JSON" | jq -r '.workflow_runs[0].html_url')
+	if [[ "${WORKFLOW_CONCLUSION}" != "success" ]]; then
+		echo "WORKFLOW_CONCLUSION=${WORKFLOW_CONCLUSION}"
+		echo "****"
+		echo "ERROR: CRD sync action is failing in governance-policy-addon-controller" | tee -a ${ERROR_FILE}
+		echo "   Link: ${WORKFLOW_URL}" | tee -a ${ERROR_FILE}
+		echo "***"
+		return 1
+	fi
+}
+
 cleanup() {
 	for repo_dir in ${UTIL_REPOS}; do
 		rm -rf ${repo_dir}
@@ -208,6 +264,19 @@ for repo in $REPOS; do
 		fi
 	done
 done
+
+# Check CRDs for default branch and latest release
+for release in $DEFAULT_BRANCH ${CHECK_RELEASES##* }; do
+	crdDiff "$release"
+	if [ $? -eq 1 ]; then
+		rc=1
+	fi
+done
+
+crdSyncCheck
+if [ $? -eq 1 ]; then
+	rc=1
+fi
 
 cleanup
 
