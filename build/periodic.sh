@@ -7,17 +7,16 @@ DEFAULT_BRANCH=${DEFAULT_BRANCH:-"main"}
 CHECK_RELEASES="2.4 2.5 2.6 2.7"
 # This list can include all postsubmit jobs for all repos--if a job doesn't exist it's filtered to empty and skipped
 CHECK_JOBS=${CHECK_JOBS:-"publish publish-test images latest-image-mirror latest-test-image-mirror"}
+UTIL_REPOS="policy-grc-squad pipeline multiclusterhub-operator"
 
 # Clone the repositories needed for this script to work
 cloneRepos() {
-	if [ ! -d "policy-grc-squad" ]; then
-		echo "Cloning policy-grc-squad ..."
-		git clone --quiet https://${GITHUB_USER}:${GITHUB_TOKEN}@github.com/$COMPONENT_ORG/policy-grc-squad.git
-	fi
-	if [ ! -d "pipeline" ]; then
-		echo "Cloning pipeline ..."
-		git clone --quiet https://${GITHUB_USER}:${GITHUB_TOKEN}@github.com/$COMPONENT_ORG/pipeline.git
-	fi
+	for prereqrepo in ${UTIL_REPOS}; do
+		if [ ! -d ${prereqrepo} ]; then
+			echo "Cloning ${prereqrepo} ..."
+			git clone --quiet https://${GITHUB_USER}:${GITHUB_TOKEN}@github.com/${COMPONENT_ORG}/${prereqrepo}.git
+		fi
+	done
 	if [ ! -d "${COMPONENT_ORG}" ]; then
 		# Collect repos from https://github.com/stolostron/policy-grc-squad/blob/master/main-branch-sync/repo.txt
 		REPOS=$(cat policy-grc-squad/main-branch-sync/repo.txt)
@@ -117,9 +116,9 @@ checkProwJob() {
 }
 
 cleanup() {
-	cd "$BASEDIR"
-	rm -rf pipeline
-	rm -rf policy-grc-squad
+	for repo_dir in ${UTIL_REPOS}; do
+		rm -rf ${repo_dir}
+	done
 	rm -rf "$COMPONENT_ORG"
 }
 
