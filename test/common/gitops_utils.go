@@ -117,13 +117,24 @@ func GitOpsUserSetup(
 // as part of the GitOps test. The kubeconfig file is also deleted from the filesystem. Any errors will
 // be propagated as gomega failed assertions.
 func GitOpsCleanup(namespace string, user OCPUser) {
+	By("Cleaning up artifacts from user " + user.Username)
 	// Delete kubeconfig file if it is specified
 	if user.Kubeconfig != "" {
 		err := os.Remove(user.Kubeconfig)
 		ExpectWithOffset(1, err).Should(BeNil())
 	}
 
-	err := ClientHub.CoreV1().Namespaces().Delete(context.TODO(), namespace, metav1.DeleteOptions{})
+	err := CleanupOCPUser(ClientHub, ClientHubDynamic, user)
+	ExpectWithOffset(1, err).Should(BeNil())
+
+	err = ClientHub.CoreV1().Secrets("openshift-config").Delete(context.TODO(), user.Username, metav1.DeleteOptions{})
+	if !k8serrors.IsNotFound(err) {
+		ExpectWithOffset(1, err).Should(BeNil())
+	}
+
+	By("Deleting namespace " + namespace)
+
+	err = ClientHub.CoreV1().Namespaces().Delete(context.TODO(), namespace, metav1.DeleteOptions{})
 	if !k8serrors.IsNotFound(err) {
 		ExpectWithOffset(1, err).Should(BeNil())
 	}
@@ -144,12 +155,4 @@ func GitOpsCleanup(namespace string, user OCPUser) {
 		DefaultTimeoutSeconds,
 		1,
 	).Should(BeTrue())
-
-	err = CleanupOCPUser(ClientHub, ClientHubDynamic, user)
-	ExpectWithOffset(1, err).Should(BeNil())
-
-	err = ClientHub.CoreV1().Secrets("openshift-config").Delete(context.TODO(), user.Username, metav1.DeleteOptions{})
-	if !k8serrors.IsNotFound(err) {
-		ExpectWithOffset(1, err).Should(BeNil())
-	}
 }
