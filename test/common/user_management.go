@@ -451,6 +451,28 @@ func CleanupOCPUser(
 // deleteHtPasswd deletes the htpasswd identity provider configuration entry of the input name and
 // deletes the User and Identity objects created by OpenShift.
 func deleteHtPasswd(dynamicClient dynamic.Interface, authName string, user OCPUser) error {
+	// Delete the User and Identity objects created by OpenShift
+	err := dynamicClient.Resource(GvrUser).Delete(
+		context.TODO(), user.Username, metav1.DeleteOptions{},
+	)
+	if err != nil && !k8serrors.IsNotFound(err) {
+		return fmt.Errorf(
+			`failed to delete the OpenShift "User" of "%s": %w`, user.Username, err,
+		)
+	}
+
+	identityName := fmt.Sprintf("%s:%s", user.Username, user.Username)
+
+	err = dynamicClient.Resource(GvrIdentity).Delete(
+		context.TODO(), identityName, metav1.DeleteOptions{},
+	)
+	if err != nil && !k8serrors.IsNotFound(err) {
+		return fmt.Errorf(
+			`failed to delete the OpenShift "Identity" of "%s": %w`, identityName, err,
+		)
+	}
+
+	// Remove the Identity Provider (IDP) from the OAuth object
 	const oAuthName = "cluster"
 
 	clusterOAuth, err := getClusterOAuthConfig(dynamicClient)
@@ -521,27 +543,6 @@ func deleteHtPasswd(dynamicClient dynamic.Interface, authName string, user OCPUs
 			oAuthName,
 			idpIndex,
 			err,
-		)
-	}
-
-	// Delete the User and Identity objects created by OpenShift
-	err = dynamicClient.Resource(GvrUser).Delete(
-		context.TODO(), user.Username, metav1.DeleteOptions{},
-	)
-	if err != nil && !k8serrors.IsNotFound(err) {
-		return fmt.Errorf(
-			`failed to delete the OpenShift "User" of "%s": %w`, user.Username, err,
-		)
-	}
-
-	identityName := fmt.Sprintf("%s-user:%s", user.Username, user.Username)
-
-	err = dynamicClient.Resource(GvrIdentity).Delete(
-		context.TODO(), identityName, metav1.DeleteOptions{},
-	)
-	if err != nil && !k8serrors.IsNotFound(err) {
-		return fmt.Errorf(
-			`failed to delete the OpenShift "Identity" of "%s": %w`, identityName, err,
 		)
 	}
 
