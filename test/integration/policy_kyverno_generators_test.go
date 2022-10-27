@@ -333,7 +333,7 @@ var _ = Describe("GRC: [P1][Sev1][policy-grc] Test the kyverno generator "+
 		_, err = utils.KubectlWithOutput(
 			"delete",
 			"validatingwebhookconfigurations",
-			"kyverno-policy-validating-webhook-cf",
+			"kyverno-policy-validating-webhook-cfg",
 			"kyverno-resource-validating-webhook-cfg",
 			"--kubeconfig="+kubeconfigManaged,
 			"--ignore-not-found",
