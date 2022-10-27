@@ -265,91 +265,93 @@ var _ = Describe("GRC: [P1][Sev1][policy-grc] Test the kyverno generator "+
 			)
 		}
 
-		// delete the policies
-		for _, url := range policyNameMap {
+		Eventually(func(g Gomega) {
+			// delete the policies
+			for _, url := range policyNameMap {
+				_, err := utils.KubectlWithOutput(
+					"delete", "-f", url, "-n",
+					userNamespace, "--kubeconfig="+kubeconfigHub,
+					"--ignore-not-found",
+				)
+				g.Expect(err).To(BeNil())
+			}
+
+			// remove the kyverno install policy
 			_, err := utils.KubectlWithOutput(
-				"delete", "-f", url, "-n",
-				userNamespace, "--kubeconfig="+kubeconfigHub,
+				"delete", "-f", kyvernoInstallURL,
+				"-n", userNamespace, "--kubeconfig="+kubeconfigHub,
 				"--ignore-not-found",
 			)
-			Expect(err).To(BeNil())
-		}
+			g.Expect(err).To(BeNil())
 
-		// remove the kyverno install policy
-		_, err := utils.KubectlWithOutput(
-			"delete", "-f", kyvernoInstallURL,
-			"-n", userNamespace, "--kubeconfig="+kubeconfigHub,
-			"--ignore-not-found",
-		)
-		Expect(err).To(BeNil())
+			// delete the subscription
+			_, err = utils.KubectlWithOutput(
+				"delete", "subscription.apps.open-cluster-management.io",
+				"-n", kyvernoNamespace, "--all",
+				"--kubeconfig="+kubeconfigManaged,
+				"--ignore-not-found",
+			)
+			g.Expect(err).To(BeNil())
 
-		// delete the subscription
-		_, err = utils.KubectlWithOutput(
-			"delete", "subscription.apps.open-cluster-management.io",
-			"-n", kyvernoNamespace, "--all",
-			"--kubeconfig="+kubeconfigManaged,
-			"--ignore-not-found",
-		)
-		Expect(err).To(BeNil())
+			// make sure kyverno mutating webhooks are removed
+			_, err = utils.KubectlWithOutput(
+				"delete", "mutatingwebhookconfigurations",
+				"kyverno-policy-mutating-webhook-cfg",
+				"kyverno-resource-mutating-webhook-cfg",
+				"kyverno-verify-mutating-webhook-cfg",
+				"--kubeconfig="+kubeconfigManaged,
+				"--ignore-not-found",
+			)
+			g.Expect(err).To(BeNil())
 
-		// make sure kyverno mutating webhooks are removed
-		_, err = utils.KubectlWithOutput(
-			"delete", "mutatingwebhookconfigurations",
-			"kyverno-policy-mutating-webhook-cfg",
-			"kyverno-resource-mutating-webhook-cfg",
-			"kyverno-verify-mutating-webhook-cfg",
-			"--kubeconfig="+kubeconfigManaged,
-			"--ignore-not-found",
-		)
-		Expect(err).To(BeNil())
+			// make sure kyverno validating webhooks are removed
+			_, err = utils.KubectlWithOutput(
+				"delete",
+				"validatingwebhookconfigurations",
+				"kyverno-policy-validating-webhook-cfg",
+				"kyverno-resource-validating-webhook-cfg",
+				"--kubeconfig="+kubeconfigManaged,
+				"--ignore-not-found",
+			)
+			g.Expect(err).To(BeNil())
 
-		// make sure kyverno validating webhooks are removed
-		_, err = utils.KubectlWithOutput(
-			"delete",
-			"validatingwebhookconfigurations",
-			"kyverno-policy-validating-webhook-cfg",
-			"kyverno-resource-validating-webhook-cfg",
-			"--kubeconfig="+kubeconfigManaged,
-			"--ignore-not-found",
-		)
-		Expect(err).To(BeNil())
+			// delete the namespace created to test the generators
+			_, err = utils.KubectlWithOutput(
+				"delete", "ns", testNamespace,
+				"--kubeconfig="+kubeconfigManaged,
+				"--ignore-not-found",
+			)
+			g.Expect(err).To(BeNil())
 
-		// delete the namespace created to test the generators
-		_, err = utils.KubectlWithOutput(
-			"delete", "ns", testNamespace,
-			"--kubeconfig="+kubeconfigManaged,
-			"--ignore-not-found",
-		)
-		Expect(err).To(BeNil())
+			// delete the channel namespace
+			_, err = utils.KubectlWithOutput(
+				"delete", "ns",
+				"kyverno-channel",
+				"--kubeconfig="+kubeconfigManaged,
+				"--ignore-not-found",
+			)
+			g.Expect(err).To(BeNil())
 
-		// delete the channel namespace
-		_, err = utils.KubectlWithOutput(
-			"delete", "ns",
-			"kyverno-channel",
-			"--kubeconfig="+kubeconfigManaged,
-			"--ignore-not-found",
-		)
-		Expect(err).To(BeNil())
+			// delete the kyverno namespace
+			_, err = utils.KubectlWithOutput(
+				"delete", "ns",
+				"kyverno",
+				"--kubeconfig="+kubeconfigManaged,
+				"--ignore-not-found",
+			)
+			g.Expect(err).To(BeNil())
 
-		// delete the kyverno namespace
-		_, err = utils.KubectlWithOutput(
-			"delete", "ns",
-			"kyverno",
-			"--kubeconfig="+kubeconfigManaged,
-			"--ignore-not-found",
-		)
-		Expect(err).To(BeNil())
+			// ensure the PolicyReport CRD remains on the cluster
+			_, _ = utils.KubectlWithOutput(
+				"apply", "-f", policyReportCRDURL, "--kubeconfig="+kubeconfigManaged,
+			)
 
-		// ensure the PolicyReport CRD remains on the cluster
-		_, _ = utils.KubectlWithOutput(
-			"apply", "-f", policyReportCRDURL, "--kubeconfig="+kubeconfigManaged,
-		)
-
-		// delete secret that is synced by the generator
-		_, err = utils.KubectlWithOutput(
-			"delete", "secret", "-n", "default", "regcred",
-			"--kubeconfig="+kubeconfigManaged, "--ignore-not-found",
-		)
-		Expect(err).To(BeNil())
+			// delete secret that is synced by the generator
+			_, err = utils.KubectlWithOutput(
+				"delete", "secret", "-n", "default", "regcred",
+				"--kubeconfig="+kubeconfigManaged, "--ignore-not-found",
+			)
+			g.Expect(err).To(BeNil())
+		}, defaultTimeoutSeconds*2)
 	})
 })
