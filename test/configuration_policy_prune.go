@@ -220,7 +220,7 @@ func ConfigPruneBehavior(labels ...string) bool {
 			initialValue, ok = data["testvalue"].(string)
 			g.Expect(ok).To(BeTrue())
 			g.Expect(len(initialValue)).To(BeNumerically(">", 0))
-		}, DefaultTimeoutSeconds, 1)
+		}, DefaultTimeoutSeconds, 1).Should(Succeed())
 
 		DoCreatePolicyTest(policyYaml, GvrConfigurationPolicy)
 
@@ -243,7 +243,7 @@ func ConfigPruneBehavior(labels ...string) bool {
 			newValue, ok := data["testvalue"].(string)
 			g.Expect(ok).To(BeTrue())
 			g.Expect(newValue).To(Not(Equal(initialValue)))
-		}, DefaultTimeoutSeconds, 1)
+		}, DefaultTimeoutSeconds, 1).Should(Succeed())
 
 		DoCleanupPolicy(policyYaml, GvrConfigurationPolicy)
 

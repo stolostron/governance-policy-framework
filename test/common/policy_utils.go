@@ -251,6 +251,6 @@ func EnforcePolicy(policyName string, templateGVRs ...schema.GroupVersionResourc
 			g.ExpectWithOffset(1, err).To(BeNil())
 			g.ExpectWithOffset(1, found).To(BeTrue())
 			g.ExpectWithOffset(1, action).To(Equal("enforce"))
-		}, DefaultTimeoutSeconds, 1)
+		}, DefaultTimeoutSeconds, 1).Should(Succeed())
 	}
 }
