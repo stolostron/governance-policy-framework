@@ -352,6 +352,6 @@ var _ = Describe("GRC: [P1][Sev1][policy-grc] Test the kyverno generator "+
 				"--kubeconfig="+kubeconfigManaged, "--ignore-not-found",
 			)
 			g.Expect(err).To(BeNil())
-		}, defaultTimeoutSeconds*2)
+		}, defaultTimeoutSeconds*2).Should(Succeed())
 	})
 })
