@@ -122,7 +122,7 @@ var _ = Describe("GRC: [P1][Sev1][policy-grc] Test policy set", Ordered, Label("
 			output, err = utils.KubectlWithOutput("apply",
 				"-f", testUndoPolicySetPatchYaml,
 				"-n", userNamespace,
-				"--kubeconfig=../../kubeconfig_hub")
+				"--kubeconfig="+kubeconfigHub)
 			By("Creating " + testUndoPolicySetPatchYaml + " result is " + output)
 			Expect(err).To(BeNil())
 		})
