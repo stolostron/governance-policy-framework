@@ -293,6 +293,15 @@ var _ = Describe("GRC: [P1][Sev1][policy-grc] Test the kyverno generator "+
 			)
 			g.Expect(err).To(BeNil())
 
+			// delete the channel namespace
+			_, err = utils.KubectlWithOutput(
+				"delete", "ns",
+				"kyverno-channel",
+				"--kubeconfig="+kubeconfigManaged,
+				"--ignore-not-found",
+			)
+			g.Expect(err).To(BeNil())
+
 			// make sure kyverno mutating webhooks are removed
 			_, err = utils.KubectlWithOutput(
 				"delete", "mutatingwebhookconfigurations",
@@ -323,19 +332,10 @@ var _ = Describe("GRC: [P1][Sev1][policy-grc] Test the kyverno generator "+
 			)
 			g.Expect(err).To(BeNil())
 
-			// delete the channel namespace
-			_, err = utils.KubectlWithOutput(
-				"delete", "ns",
-				"kyverno-channel",
-				"--kubeconfig="+kubeconfigManaged,
-				"--ignore-not-found",
-			)
-			g.Expect(err).To(BeNil())
-
 			// delete the kyverno namespace
 			_, err = utils.KubectlWithOutput(
 				"delete", "ns",
-				"kyverno",
+				kyvernoNamespace,
 				"--kubeconfig="+kubeconfigManaged,
 				"--ignore-not-found",
 			)
