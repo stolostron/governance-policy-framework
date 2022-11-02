@@ -128,7 +128,7 @@ crdDiff() {
 
 	echo "Checking that all CRDs are present in the MultiClusterHub GRC chart for $BRANCH ..."
 	PROPAGATOR_CRD_FILES=$(ls -p -1 $propagator_path | grep -v /)
-	CRD_LIST=$(diff <( echo "${PROPAGATOR_CRD_FILES}" ) <( ls -p -1 ${mch_path} | sed 's/_crd//'))
+	CRD_LIST=$(diff <( echo "${PROPAGATOR_CRD_FILES}" ) <( ls -p -1 ${mch_path} | sed 's/_crd//' | grep -v OWNERS))
 	if [[ -n "${CRD_LIST}" ]]; then
 		echo "****"
 		echo "ERROR: CRDs are not synced to $mch_repo for $BRANCH" | tee -a ${ERROR_FILE}
