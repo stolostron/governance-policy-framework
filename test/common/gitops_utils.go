@@ -152,7 +152,7 @@ func GitOpsCleanup(namespace string, user OCPUser) {
 
 			return isNotFound
 		},
-		DefaultTimeoutSeconds,
+		DefaultTimeoutSeconds*2,
 		1,
 	).Should(BeTrue())
 }
