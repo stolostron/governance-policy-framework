@@ -79,10 +79,10 @@ func PatchPlacementRule(namespace, name string) error {
 func DoCreatePolicyTest(policyFile string, templateGVRs ...schema.GroupVersionResource) {
 	policyName := strings.TrimSuffix(filepath.Base(policyFile), filepath.Ext(policyFile))
 
-	By("DoCreatePolicyTest creates " + policyFile + "on namespace" + UserNamespace)
+	By("DoCreatePolicyTest creates " + policyFile + " on namespace " + UserNamespace)
 	output, err := OcHub("apply", "-f", policyFile, "-n", UserNamespace)
 	ExpectWithOffset(1, err).To(BeNil())
-	By("DoCreatePolicyTest OcHub apply output " + output)
+	By("DoCreatePolicyTest OcHub apply output: " + output)
 
 	plc := utils.GetWithTimeout(ClientHubDynamic, GvrPolicy, policyName, UserNamespace, true, DefaultTimeoutSeconds)
 	ExpectWithOffset(1, plc).NotTo(BeNil())

@@ -4,8 +4,8 @@ go 1.19
 
 require (
 	github.com/google/uuid v1.3.0
-	github.com/onsi/ginkgo/v2 v2.1.4
-	github.com/onsi/gomega v1.20.0
+	github.com/onsi/ginkgo/v2 v2.1.6
+	github.com/onsi/gomega v1.20.1
 	github.com/prometheus/client_golang v1.13.0
 	github.com/prometheus/common v0.37.0
 	github.com/spf13/pflag v1.0.5
@@ -56,5 +56,5 @@ require (
 replace (
 	golang.org/x/text => golang.org/x/text v0.3.8 // CVE-2022-32149
 	k8s.io/client-go => k8s.io/client-go v0.23.9
-	open-cluster-management.io/governance-policy-propagator => github.com/stolostron/governance-policy-propagator v0.0.0-20220727212642-86a318ab17cf
+	open-cluster-management.io/governance-policy-propagator => github.com/stolostron/governance-policy-propagator v0.0.0-20221111153041-9a7f9c8a6090
 )
