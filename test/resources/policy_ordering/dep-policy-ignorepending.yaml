@@ -1,0 +1,74 @@
+apiVersion: policy.open-cluster-management.io/v1
+kind: Policy
+metadata:
+  name: dep-policy-ignorepending
+  annotations:
+    policy.open-cluster.management.io/standards: NIST-CSF
+    policy.open-cluster.management.io/categories: PR.PT Protective Technology
+    policy.open-cluster.management.io/controls: PR.PT-3 Least Functionality
+spec:
+  remediationAction: enforce
+  disabled: false
+  policy-templates:
+    - objectDefinition:
+        apiVersion: policy.open-cluster-management.io/v1
+        kind: ConfigurationPolicy
+        metadata:
+          name: dep-policy-ignorepending
+        spec:
+          remediationAction: inform
+          object-templates:
+            - complianceType: musthave
+              objectDefinition:
+                apiVersion: v1
+                data:
+                  game.properties: enemies=potato
+                kind: ConfigMap
+                metadata:
+                  name: dep-ignorepending-cfgmap
+                  namespace: default
+    - extraDependencies:
+        - apiVersion: policy.open-cluster-management.io/v1
+          kind: ConfigurationPolicy
+          name: dep-policy-one
+          namespace: ""
+          compliance: OnFire
+      ignorePending: true
+      objectDefinition:
+        apiVersion: policy.open-cluster-management.io/v1
+        kind: ConfigurationPolicy
+        metadata:
+          name: dep-policy-ignorepending-extra
+        spec:
+          remediationAction: inform
+          object-templates:
+            - complianceType: musthave
+              objectDefinition:
+                apiVersion: v1
+                data:
+                  game.properties: enemies=potato
+                kind: ConfigMap
+                metadata:
+                  name: dep-ignorepending-extra-cfgmap
+                  namespace: default
+---
+apiVersion: policy.open-cluster-management.io/v1
+kind: PlacementBinding
+metadata:
+  name: dep-policy-ignorepending-pb
+placementRef:
+  apiGroup: apps.open-cluster-management.io
+  kind: PlacementRule
+  name: dep-policy-ignorepending-plr
+subjects:
+- apiGroup: policy.open-cluster-management.io
+  kind: Policy
+  name: dep-policy-ignorepending
+---
+apiVersion: apps.open-cluster-management.io/v1
+kind: PlacementRule
+metadata:
+  name: dep-policy-ignorepending-plr
+spec:
+  clusterSelector:
+    matchExpressions: []

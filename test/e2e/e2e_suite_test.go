@@ -47,6 +47,8 @@ var _ = test.ConfigPruneBehavior()
 
 var _ = test.TemplateSyncErrors()
 
+var _ = test.PolicyOrdering()
+
 var _ = BeforeSuite(func() {
 	By("Setup hub and managed client")
 	common.InitInterfaces(common.KubeconfigHub, common.KubeconfigManaged)
