@@ -4,9 +4,12 @@
 package test
 
 import (
+	"context"
+
 	. "github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
 	. "github.com/stolostron/governance-policy-framework/test/common"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	policiesv1 "open-cluster-management.io/governance-policy-propagator/api/v1"
 	"open-cluster-management.io/governance-policy-propagator/test/utils"
 )
@@ -21,6 +24,11 @@ func PolicyOrdering(labels ...string) bool {
 		policyWithExtraDepName = "dep-policy-extradepconfig"
 		ignorePendingYaml      = "../resources/policy_ordering/dep-policy-ignorepending.yaml"
 		ignorePendingName      = "dep-policy-ignorepending"
+		testPolicySetYaml      = "../resources/policy_ordering/dep-plcset.yaml"
+		testPolicySetName      = "test-policyset"
+		testPolicyName         = "test-policy"
+		plcWithDepOnSetYaml    = "../resources/policy_ordering/dep-policy-dep-on-plcset.yaml"
+		plcWithDepOnSetName    = "dep-policy-dep-on-plcset"
 	)
 
 	cleanup := func() {
@@ -29,6 +37,7 @@ func PolicyOrdering(labels ...string) bool {
 		DoCleanupPolicy(policyWithDepYaml)
 		DoCleanupPolicy(policyWithExtraDepYaml)
 		DoCleanupPolicy(ignorePendingYaml)
+		DoCleanupPolicy(plcWithDepOnSetYaml)
 
 		configmapNames := []string{
 			"dep-initial-cfgmap",
@@ -42,6 +51,12 @@ func PolicyOrdering(labels ...string) bool {
 			_, err := OcManaged("delete", "configmap", name, "-n=default", "--ignore-not-found")
 			Expect(err).To(BeNil())
 		}
+
+		_, err := OcHub(
+			"delete", "-f", testPolicySetYaml,
+			"-n", UserNamespace, "--ignore-not-found",
+		)
+		Expect(err).To(BeNil())
 	}
 
 	Describe("GRC: [P1][Sev1][policy-grc] Test policy ordering", Ordered, Label(labels...), func() {
@@ -108,6 +123,84 @@ func PolicyOrdering(labels ...string) bool {
 					ClientManagedDynamic, GvrConfigurationPolicy, "dep-policy-ignorepending-extra",
 					ClusterNamespace, false, DefaultTimeoutSeconds,
 				)
+			})
+			AfterAll(cleanup)
+		})
+		Describe("Ordering via a dependency on a PolicySet", func() {
+			It("Should create policyset with noncompliant status", func() {
+				By("Creating the initial policy set to use as a dependency")
+				_, err := OcHub("apply", "-f", testPolicySetYaml, "-n", UserNamespace)
+				Expect(err).To(BeNil())
+
+				rootPolicy := utils.GetWithTimeout(
+					ClientHubDynamic, GvrPolicy, testPolicyName, UserNamespace, true, DefaultTimeoutSeconds,
+				)
+				Expect(rootPolicy).NotTo(BeNil())
+
+				By("Patching " + testPolicySetName + "-plr with decision of cluster managed")
+				plr := utils.GetWithTimeout(
+					ClientHubDynamic, GvrPlacementRule, testPolicySetName+"-plr", UserNamespace,
+					true, DefaultTimeoutSeconds,
+				)
+				plr.Object["status"] = utils.GeneratePlrStatus(ClusterNamespace)
+				_, err = ClientHubDynamic.Resource(GvrPlacementRule).Namespace(UserNamespace).UpdateStatus(
+					context.TODO(), plr, metav1.UpdateOptions{},
+				)
+				Expect(err).To(BeNil())
+
+				By("Checking " + testPolicyName + " on managed cluster in ns " + ClusterNamespace)
+				managedplc := utils.GetWithTimeout(
+					ClientHubDynamic, GvrPolicy, UserNamespace+"."+testPolicyName, ClusterNamespace, true,
+					DefaultTimeoutSeconds,
+				)
+				Expect(managedplc).NotTo(BeNil())
+
+				plcSet := utils.GetWithTimeout(
+					ClientHubDynamic, GvrPolicySet, testPolicySetName, UserNamespace, true, DefaultTimeoutSeconds,
+				)
+				Expect(plcSet).NotTo(BeNil())
+
+				By("Checking the status of policy set - NonCompliant")
+				yamlPlc := utils.ParseYaml("../resources/policy_ordering/dep-plcset-statuscheck.yaml")
+
+				Eventually(func() interface{} {
+					rootPlcSet := utils.GetWithTimeout(
+						ClientHubDynamic,
+						GvrPolicySet,
+						testPolicySetName,
+						UserNamespace,
+						true,
+						DefaultTimeoutSeconds,
+					)
+
+					return rootPlcSet.Object["status"]
+				}, DefaultTimeoutSeconds, 1).Should(utils.SemanticEqual(yamlPlc.Object["status"]))
+			})
+			It("Should be pending while the initial policy is non-compliant", func() {
+				By("Creating the policy that depends on the initial policy")
+				DoCreatePolicyTest(plcWithDepOnSetYaml)
+				DoRootComplianceTest(plcWithDepOnSetName, policiesv1.Pending)
+			})
+			It("Should become active after the initial policy is enforced", func() {
+				EnforcePolicy(testPolicyName, GvrConfigurationPolicy)
+				DoRootComplianceTest(testPolicyName, policiesv1.Compliant)
+				DoRootComplianceTest(plcWithDepOnSetName, policiesv1.NonCompliant)
+			})
+			It("Should become pending again when the initial policy is deleted", func() {
+				_, err := OcHub(
+					"delete", "-f", testPolicySetYaml,
+					"-n", UserNamespace, "--ignore-not-found",
+				)
+				Expect(err).To(BeNil())
+
+				_, err = OcManaged(
+					"delete", "pod",
+					"-n", "default",
+					"pod-dne", "--ignore-not-found",
+				)
+				Expect(err).To(BeNil())
+
+				DoRootComplianceTest(plcWithDepOnSetName, policiesv1.Pending)
 			})
 			AfterAll(cleanup)
 		})
