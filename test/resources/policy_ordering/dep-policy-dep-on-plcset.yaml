@@ -1,0 +1,56 @@
+apiVersion: policy.open-cluster-management.io/v1
+kind: Policy
+metadata:
+  name: dep-policy-dep-on-plcset
+  annotations:
+    policy.open-cluster.management.io/standards: NIST-CSF
+    policy.open-cluster.management.io/categories: PR.PT Protective Technology
+    policy.open-cluster.management.io/controls: PR.PT-3 Least Functionality
+spec:
+  dependencies:
+    - apiVersion: policy.open-cluster-management.io/v1beta1
+      kind: PolicySet
+      name: test-policyset
+      namespace: ""
+      compliance: Compliant
+  remediationAction: inform
+  disabled: false
+  policy-templates:
+    - objectDefinition:
+        apiVersion: policy.open-cluster-management.io/v1
+        kind: ConfigurationPolicy
+        metadata:
+          name: dep-policy-dep-on-plcset
+        spec:
+          remediationAction: inform
+          object-templates:
+            - complianceType: musthave
+              objectDefinition:
+                apiVersion: v1
+                data:
+                  game.properties: enemies=potato
+                kind: ConfigMap
+                metadata:
+                  name: dep-on-plcset-cfgmap
+                  namespace: default
+---
+apiVersion: policy.open-cluster-management.io/v1
+kind: PlacementBinding
+metadata:
+  name: dep-policy-dep-on-plcset-pb
+placementRef:
+  apiGroup: apps.open-cluster-management.io
+  kind: PlacementRule
+  name: dep-policy-dep-on-plcset-plr
+subjects:
+- apiGroup: policy.open-cluster-management.io
+  kind: Policy
+  name: dep-policy-dep-on-plcset
+---
+apiVersion: apps.open-cluster-management.io/v1
+kind: PlacementRule
+metadata:
+  name: dep-policy-dep-on-plcset-plr
+spec:
+  clusterSelector:
+    matchExpressions: []
