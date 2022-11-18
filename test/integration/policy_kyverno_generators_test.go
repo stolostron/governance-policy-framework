@@ -288,7 +288,7 @@ var _ = Describe("GRC: [P1][Sev1][policy-grc] Test the kyverno generator "+
 			_, err = utils.KubectlWithOutput(
 				"delete", "subscription.apps.open-cluster-management.io",
 				"-n", kyvernoNamespace, "--all",
-				"--kubeconfig="+kubeconfigManaged,
+				"--kubeconfig="+kubeconfigHub,
 				"--ignore-not-found",
 			)
 			g.Expect(err).To(BeNil())
