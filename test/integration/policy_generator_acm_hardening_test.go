@@ -63,6 +63,24 @@ var _ = Describe("GRC: [P1][Sev1][policy-grc] Test the ACM Hardening "+
 			Expect(k8serrors.IsAlreadyExists(err)).Should(BeTrue())
 		}
 
+		By("Verifying that the default ManagedClusterSet exists")
+		mcs := unstructured.Unstructured{
+			Object: map[string]interface{}{
+				"apiVersion": "cluster.open-cluster-management.io/v1beta2",
+				"kind":       "ManagedClusterSet",
+				"metadata": map[string]interface{}{
+					"name": "default",
+				},
+			},
+		}
+
+		_, err = clientHubDynamic.Resource(common.GvrManagedClusterSet).Create(
+			context.TODO(), &mcs, metav1.CreateOptions{},
+		)
+		if !k8serrors.IsAlreadyExists(err) {
+			Expect(err).To(BeNil())
+		}
+
 		By("Creating the application subscription")
 		_, err = common.OcUser(
 			ocpUser,
