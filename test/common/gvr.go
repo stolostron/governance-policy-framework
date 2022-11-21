@@ -122,4 +122,9 @@ var (
 		Version:  "v1",
 		Resource: "identities",
 	}
+	GvrManagedClusterSet = schema.GroupVersionResource{
+		Group:    "cluster.open-cluster-management.io",
+		Version:  "v1beta2",
+		Resource: "managedclustersets",
+	}
 )
