@@ -66,7 +66,7 @@ var _ = Describe("GRC: [P1][Sev1][policy-grc] Test the ACM Hardening "+
 		By("Verifying that the default ManagedClusterSet exists")
 		mcs := unstructured.Unstructured{
 			Object: map[string]interface{}{
-				"apiVersion": "cluster.open-cluster-management.io/v1beta2",
+				"apiVersion": "cluster.open-cluster-management.io/v1beta1",
 				"kind":       "ManagedClusterSet",
 				"metadata": map[string]interface{}{
 					"name": "default",
