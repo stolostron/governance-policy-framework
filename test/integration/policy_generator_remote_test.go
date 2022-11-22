@@ -17,12 +17,12 @@ var _ = Describe("GRC: [P1][Sev1][policy-grc] Test the Policy Generator "+
 	"with a remote Kustomize directory", Ordered, Label("SVT"), func() {
 	const policyName = "e2e-grc-remote-policy-app"
 	const namespace = "grc-e2e-remote-policy-generator"
-	const username = "grc-e2e-subadmin-user-remotepolgen"
+	const usernameSuffix = "remotepolgen"
 	var ocpUser common.OCPUser
 
 	It("Sets up the application subscription", func() {
 		By("Creating and setting up the GitOps user")
-		ocpUser = common.GitOpsUserSetup(namespace, username)
+		ocpUser = common.GitOpsUserSetup(namespace, usernameSuffix)
 
 		By("Creating the application subscription")
 		_, err := common.OcUser(

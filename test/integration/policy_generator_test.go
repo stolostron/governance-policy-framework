@@ -17,12 +17,12 @@ var _ = Describe("GRC: [P1][Sev1][policy-grc] Test the Policy Generator "+
 	"in an App subscription", Ordered, Label("BVT"), func() {
 	const policyName = "e2e-grc-policy-app"
 	const namespace = "grc-e2e-policy-generator"
-	const username = "grc-e2e-subadmin-user-polgen"
+	const usernameSuffix = "polgen"
 	var ocpUser common.OCPUser
 
 	It("Sets up the application subscription", func() {
 		By("Creating and setting up the GitOps user")
-		ocpUser = common.GitOpsUserSetup(namespace, username)
+		ocpUser = common.GitOpsUserSetup(namespace, usernameSuffix)
 
 		By("Creating the application subscription")
 		_, err := common.OcUser(
