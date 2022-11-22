@@ -26,14 +26,14 @@ var _ = Describe("GRC: [P1][Sev1][policy-grc] Test the ACM Hardening "+
 		"policy-subscriptions",
 	}
 	const namespace = "policies"
-	const username = "grc-e2e-subadmin-user-hardening"
+	const usernameSuffix = "hardening"
 	const clustersetRoleName = "grc-e2e-clusterset-role"
 	var ocpUser common.OCPUser
 
 	It("Sets up the application subscription", func() {
 		By("Creating and setting up the GitOps user")
 		ocpUser = common.GitOpsUserSetup(
-			namespace, username, types.NamespacedName{Name: clustersetRoleName},
+			namespace, usernameSuffix, types.NamespacedName{Name: clustersetRoleName},
 		)
 
 		By("Setting up the managed cluster set binding role for the GitOps user")

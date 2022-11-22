@@ -18,11 +18,13 @@ import (
 	"k8s.io/apimachinery/pkg/types"
 )
 
+const gitOpsUserPrefix = "grc-e2e-subadmin-user-"
+
 // GitOpsUserSetup configures a new user to use for the GitOps deployments.
 // The provided namespace is deleted and recreated as part of the setup.
 // It returns the OCPUser instance, which contains a path to the created kubeconfig file.
 func GitOpsUserSetup(
-	namespace string, username string, additionalRoles ...types.NamespacedName,
+	namespace string, usernameSuffix string, additionalRoles ...types.NamespacedName,
 ) OCPUser {
 	const subAdminBinding = "open-cluster-management:subscription-admin"
 
@@ -36,7 +38,7 @@ func GitOpsUserSetup(
 		},
 		ClusterRoleBindings: []string{subAdminBinding},
 		Password:            "",
-		Username:            username,
+		Username:            gitOpsUserPrefix + usernameSuffix,
 	}
 
 	// Append any additional provided ClusterRoles
