@@ -9,6 +9,7 @@ import (
 	"math/rand"
 	"os"
 	"os/exec"
+	"strings"
 	"time"
 
 	"golang.org/x/crypto/bcrypt"
@@ -461,15 +462,27 @@ func deleteHtPasswd(dynamicClient dynamic.Interface, authName string, user OCPUs
 		)
 	}
 
-	identityName := fmt.Sprintf("%s:%s", user.Username, user.Username)
-
-	err = dynamicClient.Resource(GvrIdentity).Delete(
-		context.TODO(), identityName, metav1.DeleteOptions{},
-	)
-	if err != nil && !k8serrors.IsNotFound(err) {
+	// Search for and delete any identities that have our user (which is also the IDP name)
+	identities, err := dynamicClient.Resource(GvrIdentity).List(context.TODO(), metav1.ListOptions{})
+	if err != nil {
 		return fmt.Errorf(
-			`failed to delete the OpenShift "Identity" of "%s": %w`, identityName, err,
+			"failed to retrieve the list of identities for cleanup: %w", err,
 		)
+	}
+
+	for _, identity := range identities.Items {
+		identityName := identity.GetName()
+
+		if strings.Contains(identityName, user.Username) {
+			err = dynamicClient.Resource(GvrIdentity).Delete(
+				context.TODO(), identityName, metav1.DeleteOptions{},
+			)
+			if err != nil && !k8serrors.IsNotFound(err) {
+				return fmt.Errorf(
+					`failed to delete the OpenShift "Identity" of "%s": %w`, identityName, err,
+				)
+			}
+		}
 	}
 
 	// Remove the Identity Provider (IDP) from the OAuth object
