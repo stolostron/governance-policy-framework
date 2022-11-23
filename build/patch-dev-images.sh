@@ -42,7 +42,7 @@ for MANAGED_CLUSTER in ${MANAGED_CLUSTERS}; do
       echo "* Wait for manifestwork on ${MANAGED_CLUSTER}:"
       FOUND="true"
       for COMPONENT in ${ADDON_COMPONENTS[@]}; do
-        if (! oc get manifestwork -n ${MANAGED_CLUSTER} addon-${COMPONENT}-deploy); then
+        if (! oc get manifestwork -n ${MANAGED_CLUSTER} addon-${COMPONENT}-deploy-0); then
           FOUND="false"
         fi
       done
