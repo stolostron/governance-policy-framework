@@ -14,7 +14,7 @@ cloneRepos() {
 	for prereqrepo in ${UTIL_REPOS}; do
 		if [ ! -d ${prereqrepo} ]; then
 			echo "Cloning ${prereqrepo} ..."
-			git clone --quiet https://${GITHUB_USER}:${GITHUB_TOKEN}@github.com/${COMPONENT_ORG}/${prereqrepo}.git
+			git clone --quiet https://${GITHUB_USER}:${GITHUB_TOKEN}@github.com/${COMPONENT_ORG}/${prereqrepo}.git || exit 1
 		fi
 	done
 	if [ ! -d "${COMPONENT_ORG}" ]; then
@@ -29,7 +29,7 @@ cloneRepos() {
 			stolostron/governance-policy-template-sync"
 		for repo in $REPOS; do
 			echo "Cloning $repo ...."
-			git clone --quiet https://github.com/$repo.git $repo
+			git clone --quiet https://github.com/$repo.git $repo || exit 1
 		done
 	fi
 }
