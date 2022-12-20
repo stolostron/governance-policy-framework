@@ -1,0 +1,7 @@
+apiVersion: v1
+kind: Secret
+metadata:
+  name: grc-e2e-metrics-test-token-manual
+  annotations:
+    kubernetes.io/service-account.name: grc-e2e-metrics-test
+type: kubernetes.io/service-account-token
