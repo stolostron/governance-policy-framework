@@ -120,33 +120,36 @@ var _ = Describe("GRC: [P1][Sev1][policy-grc] Test required metrics are availabl
 
 		for _, metric := range requiredMetrics {
 			By("Checking the metric " + metric)
-			req, err := http.NewRequest(http.MethodGet, prometheusURL, nil)
-			Expect(err).To(BeNil())
+			// Timeout after 60 seconds since this is double the Prometheus scrape time, so it should show up by then.
+			Eventually(func(g Gomega) {
+				req, err := http.NewRequest(http.MethodGet, prometheusURL, nil)
+				g.Expect(err).To(BeNil())
 
-			req.Header.Set("Authorization", "Bearer "+string(decodedToken))
-			req.Header.Set("Accept", "application/json")
+				req.Header.Set("Authorization", "Bearer "+string(decodedToken))
+				req.Header.Set("Accept", "application/json")
 
-			q := req.URL.Query()
-			q.Add("query", metric)
-			req.URL.RawQuery = q.Encode()
+				q := req.URL.Query()
+				q.Add("query", metric)
+				req.URL.RawQuery = q.Encode()
 
-			res, err := httpClient.Do(req)
-			Expect(err).To(BeNil())
+				res, err := httpClient.Do(req)
+				g.Expect(err).To(BeNil())
 
-			resBody, err := io.ReadAll(res.Body)
-			Expect(err).To(BeNil())
+				resBody, err := io.ReadAll(res.Body)
+				g.Expect(err).To(BeNil())
 
-			resJSON := map[string]interface{}{}
-			err = json.Unmarshal(resBody, &resJSON)
-			Expect(err).To(BeNil())
-			Expect(resJSON["status"]).To(Equal("success"))
+				resJSON := map[string]interface{}{}
+				err = json.Unmarshal(resBody, &resJSON)
+				g.Expect(err).To(BeNil())
+				g.Expect(resJSON["status"]).To(Equal("success"))
 
-			data, ok := resJSON["data"].(map[string]interface{})
-			Expect(ok).To(BeTrue())
+				data, ok := resJSON["data"].(map[string]interface{})
+				g.Expect(ok).To(BeTrue())
 
-			result, ok := data["result"].([]interface{})
-			Expect(ok).To(BeTrue())
-			Expect(result).ToNot(HaveLen(0))
+				result, ok := data["result"].([]interface{})
+				g.Expect(ok).To(BeTrue())
+				g.Expect(result).ToNot(HaveLen(0))
+			}, "60s", 1).Should(Succeed())
 		}
 	})
 })
