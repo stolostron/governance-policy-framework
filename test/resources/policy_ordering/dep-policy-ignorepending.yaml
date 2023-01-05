@@ -32,7 +32,7 @@ spec:
           kind: ConfigurationPolicy
           name: dep-policy-one
           namespace: ""
-          compliance: OnFire
+          compliance: Compliant
       ignorePending: true
       objectDefinition:
         apiVersion: policy.open-cluster-management.io/v1
