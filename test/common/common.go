@@ -3,6 +3,7 @@
 package common
 
 import (
+	"context"
 	"errors"
 	"flag"
 	"fmt"
@@ -13,6 +14,10 @@ import (
 	"strings"
 
 	. "github.com/onsi/ginkgo/v2"
+	"golang.org/x/mod/semver"
+	k8serrors "k8s.io/apimachinery/pkg/api/errors"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"k8s.io/client-go/dynamic"
 	"k8s.io/client-go/kubernetes"
 	"k8s.io/client-go/rest"
@@ -211,4 +216,34 @@ func OutputDebugInfo(testName string, kubeconfig string, additionalResources ...
 	for _, resource := range resources {
 		_, _ = utils.KubectlWithOutput("get", resource, "--all-namespaces", "-o", "yaml", "--kubeconfig="+kubeconfig)
 	}
+}
+
+// IsAtLeastVersion detects OCP versions given an x.y version lower bound
+func IsAtLeastVersion(minVersion string) bool {
+	clusterVersion, err := ClientManagedDynamic.Resource(GvrClusterVersion).Get(
+		context.TODO(),
+		"version",
+		metav1.GetOptions{},
+	)
+	if err != nil {
+		if k8serrors.IsNotFound(err) {
+			// no version CR, not ocp
+			klog.V(5).Info("This is not an OCP cluster")
+		} else {
+			klog.Infof("Encountered an error fetching the OCP version: %v", err)
+		}
+
+		return false
+	}
+
+	version, _, _ := unstructured.NestedString(clusterVersion.Object, "status", "desired", "version")
+
+	klog.V(5).Info("OCP Version " + version)
+
+	// Convert to valid semantic versions by adding the "v" prefix
+	minSemVer := fmt.Sprintf("v%s", minVersion)
+	ocpSemVer := semver.MajorMinor(fmt.Sprintf("v%s", version))
+
+	// Compare returns: 0 if ver1 == ver2, -1 if ver1 < ver2, or +1 if ver1 > ver2
+	return semver.Compare(ocpSemVer, minSemVer) >= 0
 }
