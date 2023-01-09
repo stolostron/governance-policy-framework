@@ -27,6 +27,12 @@ var _ = Describe("GRC: [P1][Sev1][policy-grc] Test the policy-psp policy",
 			pspName        = "sample-restricted-psp"
 		)
 
+		BeforeAll(func() {
+			if common.IsAtLeastVersion("4.12") {
+				Skip("Skipping as the PodSecurityPolicy is removed in OCP v4.12 and above")
+			}
+		})
+
 		It("stable/"+rootPolicyName+" should be created on the hub cluster", func() {
 			By("Creating " + rootPolicyName + " on the hub cluster")
 			_, err := utils.KubectlWithOutput(
