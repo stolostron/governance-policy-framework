@@ -6,46 +6,15 @@ package integration
 import (
 	"context"
 	"fmt"
-	"strings"
 
 	. "github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
-	k8serrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	"k8s.io/klog"
 	policiesv1 "open-cluster-management.io/governance-policy-propagator/api/v1"
 	"open-cluster-management.io/governance-policy-propagator/test/utils"
 
 	"github.com/stolostron/governance-policy-framework/test/common"
 )
-
-func isOCP46andAbove() bool {
-	clusterVersion, err := clientManagedDynamic.Resource(common.GvrClusterVersion).Get(
-		context.TODO(),
-		"version",
-		metav1.GetOptions{},
-	)
-
-	if err != nil && k8serrors.IsNotFound(err) {
-		// no version CR, not ocp
-		klog.V(5).Infof("This is not an OCP cluster")
-
-		return false
-	}
-
-	desired := clusterVersion.Object["status"].(map[string]interface{})["desired"]
-	version, _ := desired.(map[string]interface{})["version"].(string)
-
-	klog.V(5).Infof(fmt.Sprintf("OCP Version " + version))
-
-	if strings.HasPrefix(version, "4.3") || strings.HasPrefix(version, "4.4") || strings.HasPrefix(version, "4.5") {
-		// not ocp 4.3, 4.4 or 4.5
-		return false
-	}
-
-	// should be ocp 4.6 and above
-	return true
-}
 
 func complianceScanTest(scanPolicyName string, scanPolicyURL string, scanName string) {
 	Describe("create and enforce the stable/"+scanPolicyName+" policy", Ordered, Label("BVT"), func() {
@@ -301,17 +270,19 @@ func complianceScanTest(scanPolicyName string, scanPolicyURL string, scanName st
 
 var _ = Describe("RHACM4K-2222 GRC: [P1][Sev1][policy-grc] "+
 	"Test compliance operator and scan", Ordered, Label("policy-collection", "stable"), func() {
-	const compPolicyURL = policyCollectCAURL + "policy-compliance-operator-install.yaml"
-	const compPolicyName = "policy-comp-operator"
-	const compE8scanPolicyURL = policyCollectCMURL + "policy-compliance-operator-e8-scan.yaml"
-	const compE8ScanPolicyName = "policy-e8-scan"
-	const compCISscanPolicyURL = policyCollectCMURL + "policy-compliance-operator-cis-scan.yaml"
-	const compCISScanPolicyName = "policy-cis-scan"
+	const (
+		compPolicyURL         = policyCollectCAURL + "policy-compliance-operator-install.yaml"
+		compPolicyName        = "policy-comp-operator"
+		compE8scanPolicyURL   = policyCollectCMURL + "policy-compliance-operator-e8-scan.yaml"
+		compE8ScanPolicyName  = "policy-e8-scan"
+		compCISscanPolicyURL  = policyCollectCMURL + "policy-compliance-operator-cis-scan.yaml"
+		compCISScanPolicyName = "policy-cis-scan"
+	)
 
 	var getComplianceState func(Gomega) interface{}
 
 	BeforeAll(func() {
-		if !isOCP46andAbove() {
+		if !common.IsAtLeastVersion("4.6") {
 			Skip("Skipping as compliance operator is only supported on OCP 4.6 and above")
 		}
 		if !canCreateOpenshiftNamespaces() {
