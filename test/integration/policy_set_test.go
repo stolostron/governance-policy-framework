@@ -12,7 +12,6 @@ import (
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"open-cluster-management.io/governance-policy-propagator/test/utils"
 
-	"github.com/stolostron/governance-policy-framework/test/common"
 	testcommon "github.com/stolostron/governance-policy-framework/test/common"
 )
 
@@ -128,7 +127,7 @@ var _ = Describe("GRC: [P1][Sev1][policy-grc] Test policy set", Ordered, Label("
 		})
 
 		It("Should update to compliant if all its child policy violations have been remediated", func() {
-			common.EnforcePolicy(testPolicyName)
+			testcommon.EnforcePolicy(testPolicyName)
 
 			By("Checking the status of policy set")
 			yamlPlc := utils.ParseYaml("../resources/policy_set/statuscheck-3.yaml")
