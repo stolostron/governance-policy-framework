@@ -5,6 +5,7 @@ package test
 
 import (
 	"errors"
+	"os"
 
 	. "github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
@@ -19,6 +20,26 @@ func ConfigPruneBehavior(labels ...string) bool {
 		pruneConfigMapName string = "test-prune-configmap"
 		pruneConfigMapYaml string = "../resources/configuration_policy_prune/configmap-only.yaml"
 	)
+
+	cleanPolicy := func(policyName, policyYaml string) func() {
+		return func() {
+			_, err := OcHub(
+				"delete", "-f", policyYaml,
+				"--ignore-not-found",
+			)
+			Expect(err).To(BeNil())
+			_, err = OcManaged(
+				"delete",
+				"events",
+				"-n",
+				ClusterNamespace,
+				"--field-selector=involvedObject.name="+
+					UserNamespace+"."+policyName,
+				"--ignore-not-found",
+			)
+			Expect(err).To(BeNil())
+		}
+	}
 
 	pruneTestCreatedByPolicy := func(policyName, policyYaml string, cmShouldBeDeleted bool) {
 		clientManagedDynamic := NewKubeClientDynamic("", KubeconfigManaged, "")
@@ -270,26 +291,6 @@ func ConfigPruneBehavior(labels ...string) bool {
 		BeforeEach(cleanConfigMap)
 		AfterAll(cleanConfigMap)
 
-		cleanPolicy := func(policyName, policyYaml string) func() {
-			return func() {
-				_, err := OcHub(
-					"delete", "-f", policyYaml,
-					"--ignore-not-found",
-				)
-				Expect(err).To(BeNil())
-				_, err = OcManaged(
-					"delete",
-					"events",
-					"-n",
-					ClusterNamespace,
-					"--field-selector=involvedObject.name="+
-						UserNamespace+"."+policyName,
-					"--ignore-not-found",
-				)
-				Expect(err).To(BeNil())
-			}
-		}
-
 		Describe("Test DeleteAll pruning", func() {
 			policyName := "cm-policy-prune-all"
 			policyYaml := "../resources/configuration_policy_prune/cm-policy-prune-all.yaml"
@@ -358,6 +359,101 @@ func ConfigPruneBehavior(labels ...string) bool {
 				"doesn't specify a Prune behavior when the policy is deleted", func() {
 				pruneTestEditedByPolicy(policyName, policyYaml, false)
 			})
+		})
+	})
+
+	Describe("GRC: [P1][Sev1][policy-grc] Test cleanup during controller removal", Ordered, func() {
+		var configpolicyDeploymentYaml string
+		var configpolicyCRDYaml string
+
+		clientManagedDynamic := NewKubeClientDynamic("", KubeconfigManaged, "")
+		policyName := "cm-policy-prune-all"
+		policyYaml := "../resources/configuration_policy_prune/cm-policy-prune-all.yaml"
+		pruneFinalizer := "policy.open-cluster-management.io/delete-related-objects"
+
+		BeforeAll(func() {
+			var err error
+
+			configpolicyDeploymentYaml, err = OcManaged("get", "deployment", "-o=yaml",
+				"--namespace=open-cluster-management-agent-addon", "config-policy-controller")
+			Expect(err).To(BeNil())
+
+			configpolicyCRDYaml, err = OcManaged("get", "crd", "-o=yaml",
+				"configurationpolicies.policy.open-cluster-management.io")
+			Expect(err).To(BeNil())
+		})
+
+		AfterAll(func() {
+			By("Re-applying the config policy controller deployment")
+			tmpDeployFile, err := os.CreateTemp("", "config-policy-controller-*.yaml")
+			Expect(err).To(BeNil())
+
+			defer os.Remove(tmpDeployFile.Name())
+
+			_, err = tmpDeployFile.WriteString(configpolicyDeploymentYaml)
+			Expect(err).To(BeNil())
+
+			Expect(tmpDeployFile.Close()).To(BeNil())
+
+			_, err = OcManaged("apply", "-f", tmpDeployFile.Name())
+			Expect(err).To(BeNil())
+
+			By("Re-applying the configuration policy CRD")
+			tmpCRDFile, err := os.CreateTemp("", "config-policy-crd-*.yaml")
+			Expect(err).To(BeNil())
+
+			defer os.Remove(tmpCRDFile.Name())
+
+			_, err = tmpCRDFile.WriteString(configpolicyCRDYaml)
+			Expect(err).To(BeNil())
+
+			Expect(tmpCRDFile.Close()).To(BeNil())
+
+			_, err = OcManaged("apply", "-f", tmpCRDFile.Name())
+			Expect(err).To(BeNil())
+		})
+
+		AfterAll(cleanPolicy(policyName, policyYaml))
+
+		It("Should have the finalizer on the deployment", func() {
+			DoCreatePolicyTest(policyYaml, GvrConfigurationPolicy)
+
+			By("Checking for the finalizer")
+			Eventually(func(g Gomega) {
+				deployment := utils.GetWithTimeout(
+					clientManagedDynamic,
+					GvrDeployment,
+					"config-policy-controller",
+					"open-cluster-management-agent-addon",
+					true,
+					DefaultTimeoutSeconds,
+				)
+
+				g.Expect(deployment.GetFinalizers()).Should(ContainElement(pruneFinalizer))
+			}, DefaultTimeoutSeconds, 1).Should(Succeed())
+		})
+
+		It("Should eventually remove the deployment despite the finalizer", func() {
+			// Ignoring error because it probably should take more than 1 second,
+			// but we check whether it eventually succeeds separately.
+			// nolint: errcheck
+			OcManaged("delete", "deployment", "--timeout=1s",
+				"--namespace=open-cluster-management-agent-addon", "config-policy-controller")
+
+			utils.GetWithTimeout(
+				clientManagedDynamic,
+				GvrDeployment,
+				"config-policy-controller",
+				"open-cluster-management-agent-addon",
+				false,
+				DefaultTimeoutSeconds,
+			)
+		})
+
+		It("Should remove the CRD in a timely manner", func() {
+			_, err := OcManaged("delete", "crd", "--timeout=15s",
+				"configurationpolicies.policy.open-cluster-management.io")
+			Expect(err).To(BeNil())
 		})
 	})
 
