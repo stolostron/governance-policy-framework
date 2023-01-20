@@ -5,8 +5,7 @@
 set -e
 
 echo "Login hub"
-export OC_CLUSTER_URL=$OC_HUB_CLUSTER_URL
-export OC_CLUSTER_PASS=$OC_HUB_CLUSTER_PASS
-make oc/login
+# These are provided in the Travis environment
+oc login ${OC_HUB_CLUSTER_URL} --insecure-skip-tls-verify=true -u ${OC_CLUSTER_USER} -p ${OC_HUB_CLUSTER_PASS}
 
 ./build/patch-dev-images.sh
