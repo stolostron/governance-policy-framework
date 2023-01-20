@@ -10,10 +10,6 @@ if: type != pull_request AND type != push
 env:
   global:
   - OS=linux
-  - COMPONENT_VERSION="latest"
-  - COMPONENT_TAG_EXTENSION=""
-  - COMPONENT_INIT_COMMAND=${TRAVIS_BUILD_DIR}/build/install-dependencies.sh
-  - COMPONENT_E2E_TEST_COMMAND=${TRAVIS_BUILD_DIR}/build/run-e2e-tests.sh
 stages:
 # - init
 - prepare
@@ -21,8 +17,6 @@ stages:
 - test-etcd-encryption
 - ff
 # - hibernate
-before_script:
-- make init
 after_failure:
 - |
   [[ "$TRAVIS_BUILD_STAGE_NAME" == "test-"* ]] && make e2e-debug-dump
@@ -34,56 +28,38 @@ jobs:
   #   script: ./build/set-claim.sh
   - stage: prepare
     name: Patch cluster to latest
-    env:
-    - COMPONENT_E2E_TEST_COMMAND=${TRAVIS_BUILD_DIR}/build/patch-cluster.sh
     script:
-    - |
-      make
-      make component/test/e2e
+    - ${TRAVIS_BUILD_DIR}/build/patch-cluster.sh
   - stage: prepare
     name: Clean up cluster
-    env:
-    - COMPONENT_E2E_TEST_COMMAND=${TRAVIS_BUILD_DIR}/build/clean-up-cluster.sh
     script:
-    - |
-      make
-      make component/test/e2e
+    - ${TRAVIS_BUILD_DIR}/build/clean-up-cluster.sh
   - stage: test-e2e
     name: Governance framework e2e tests
     script:
-    - |
-      make
-      make component/test/e2e
+    - ${TRAVIS_BUILD_DIR}/build/run-e2e-tests.sh
   - stage: test-e2e
     name: Governance framework e2e tests with deployOnHub=true
     env:
     - deployOnHub=true
     script:
-    - |
-      make
-      make component/test/e2e
+    - ${TRAVIS_BUILD_DIR}/build/run-e2e-tests.sh
   - stage: test-e2e
     name: Test grc-framework
     env:
-    - COMPONENT_E2E_TEST_COMMAND=${TRAVIS_BUILD_DIR}/build/run-e2e-tests-policy-framework.sh
     - GINKGO_LABEL_FILTER=!etcd
     script:
     - |
-      make
-      export COMPONENT_NAME="grc-policy-framework-tests"
-      make component/pull
-      make component/test/e2e
+      docker pull quay.io/stolostron/grc-policy-framework-tests:latest
+      ${TRAVIS_BUILD_DIR}/build/run-e2e-tests-policy-framework.sh
   - stage: test-etcd-encryption
     name: Test etcd-encryption policy
     env:
-    - COMPONENT_E2E_TEST_COMMAND=${TRAVIS_BUILD_DIR}/build/run-e2e-tests-policy-framework.sh
     - GINKGO_LABEL_FILTER=etcd
     script:
     - |
-      make
-      export COMPONENT_NAME="grc-policy-framework-tests"
-      make component/pull
-      make component/test/e2e
+      docker pull quay.io/stolostron/grc-policy-framework-tests:latest
+      ${TRAVIS_BUILD_DIR}/build/run-e2e-tests-policy-framework.sh
   - stage: ff
     name: Fast forwarding GRC repos
     script: "./build/ff.sh"
