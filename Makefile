@@ -63,24 +63,6 @@ echo "Checking installation of $(1)" ;\
 GOBIN=$(LOCAL_BIN) go install $(1)
 endef
 
-.PHONY: default
-default::
-	@echo "Build Harness Bootstrapped"
-
-USE_VENDORIZED_BUILD_HARNESS ?=
-
-ifndef USE_VENDORIZED_BUILD_HARNESS
-	ifeq ($(TRAVIS_BUILD),1)
-		ifndef GITHUB_TOKEN
-		-include $(shell curl -H 'Accept: application/vnd.github.v4.raw' -L https://api.github.com/repos/stolostron/build-harness-extensions/contents/templates/Makefile.build-harness-bootstrap -o .build-harness-bootstrap; echo .build-harness-bootstrap)
-		else
-		-include $(shell curl -H 'Authorization: token ${GITHUB_TOKEN}' -H 'Accept: application/vnd.github.v4.raw' -L https://api.github.com/repos/stolostron/build-harness-extensions/contents/templates/Makefile.build-harness-bootstrap -o .build-harness-bootstrap; echo .build-harness-bootstrap)
-		endif
-	endif
-else
--include vbh/.build-harness-vendorized
-endif
-
 include build/common/Makefile.common.mk
 
 ############################################################
@@ -90,7 +72,6 @@ include build/common/Makefile.common.mk
 .PHONY: clean
 clean::
 	-rm bin/*
-	-rm .build-harness-bootstrap
 	-rm kubeconfig_$(MANAGED_CLUSTER_NAME)
 	-rm kubeconfig_$(HUB_CLUSTER_NAME)
 	-rm kubeconfig_$(HUB_CLUSTER_NAME)_internal
