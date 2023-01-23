@@ -19,7 +19,7 @@ stages:
 - test-etcd-encryption
 - ff
 # - hibernate
-before_script:
+before_install:
 - mkdir -p $CLI_DESTINATION_DIR
 - ${TRAVIS_BUILD_DIR}/build/download-clis.sh
 after_failure:
