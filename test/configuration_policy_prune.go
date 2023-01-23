@@ -23,20 +23,18 @@ func ConfigPruneBehavior(labels ...string) bool {
 
 	cleanPolicy := func(policyName, policyYaml string) func() {
 		return func() {
-			_, err := OcHub(
-				"delete", "-f", policyYaml,
-				"--ignore-not-found",
-			)
+			By("Cleaning up policy " + policyName + ", ignoring if not found")
+
+			outHub, err := OcHub("delete", "-f", policyYaml, "-n", UserNamespace, "--ignore-not-found")
+			GinkgoWriter.Printf("cleanPolicy OcHub output: %v\n", outHub)
 			Expect(err).To(BeNil())
-			_, err = OcManaged(
-				"delete",
-				"events",
-				"-n",
-				ClusterNamespace,
-				"--field-selector=involvedObject.name="+
-					UserNamespace+"."+policyName,
+
+			outManaged, err := OcManaged(
+				"delete", "events", "-n", ClusterNamespace,
+				"--field-selector=involvedObject.name="+UserNamespace+"."+policyName,
 				"--ignore-not-found",
 			)
+			GinkgoWriter.Printf("cleanPolicy OcManaged output: %v\n", outManaged)
 			Expect(err).To(BeNil())
 		}
 	}
