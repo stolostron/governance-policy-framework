@@ -17,6 +17,8 @@ stages:
 - test-etcd-encryption
 - ff
 # - hibernate
+before_script:
+- ${TRAVIS_BUILD_DIR}/build/download-clis.sh
 after_failure:
 - |
   [[ "$TRAVIS_BUILD_STAGE_NAME" == "test-"* ]] && make e2e-debug-dump
