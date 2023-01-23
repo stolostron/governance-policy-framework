@@ -10,6 +10,8 @@ if: type != pull_request AND type != push
 env:
   global:
   - OS=linux
+  - CLI_DESTINATION_DIR=${TRAVIS_BUILD_DIR}/bin
+  - PATH=${PATH}:${CLI_DESTINATION_DIR}
 stages:
 # - init
 - prepare
@@ -18,6 +20,7 @@ stages:
 - ff
 # - hibernate
 before_script:
+- mkdir -p $CLI_DESTINATION_DIR
 - ${TRAVIS_BUILD_DIR}/build/download-clis.sh
 after_failure:
 - |
