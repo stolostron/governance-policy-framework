@@ -7,8 +7,6 @@ TEST_IMAGE_URI=$1
 
 while sleep 5m; do echo "\n=====[ $SECONDS seconds elapsed, keep Travis running ]=====\n"; done &
 
-sudo ./build/download-clis.sh
-
 echo "Login hub"
 export OC_CLUSTER_URL=${OC_HUB_CLUSTER_URL:-${OC_CLUSTER_URL}}
 export OC_CLUSTER_USER=${OC_CLUSTER_USER:-kubeadmin}
