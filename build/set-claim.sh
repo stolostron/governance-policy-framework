@@ -1,8 +1,5 @@
 #! /bin/bash
 
-# Make sure we have `oc`
-sudo ./build/download-clis.sh
-
 # Log into Collective cluster
 KUBECONFIG_FILE="${PWD}/kubeconfig-collective"
 touch ${KUBECONFIG_FILE} || { echo "Failed to create kubeconfig file"; exit 1; }
