@@ -15,4 +15,6 @@ if ! which oc > /dev/null; then
     chmod 755 ./clis-unpacked/kubectl
     mv ./clis-unpacked/oc "$CLI_DESTINATION_DIR/oc"
     mv ./clis-unpacked/kubectl "$CLI_DESTINATION_DIR/kubectl"
+    rm -rf ./clis-unpacked
+    rm -f oc.tar.gz
 fi
