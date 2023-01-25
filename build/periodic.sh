@@ -6,7 +6,7 @@ COMPONENT_ORG=stolostron
 DEFAULT_BRANCH=${DEFAULT_BRANCH:-"main"}
 CHECK_RELEASES="2.4 2.5 2.6 2.7"
 # This list can include all postsubmit jobs for all repos--if a job doesn't exist it's filtered to empty and skipped
-CHECK_JOBS=${CHECK_JOBS:-"publish publish-test images latest-image-mirror latest-test-image-mirror"}
+CHECK_JOBS=${CHECK_JOBS:-"publish publish-test images images-arm64 latest-image-mirror latest-test-image-mirror"}
 UTIL_REPOS="policy-grc-squad pipeline multiclusterhub-operator"
 
 # Clone the repositories needed for this script to work
