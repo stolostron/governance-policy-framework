@@ -30,12 +30,6 @@ MANAGED_CLUSTER_NAME ?= managed
 HUB_CLUSTER_NAME ?= hub
 KIND_VERSION ?= latest
 
-# TODO: Remove this since this a workaround until the following is addressed.
-# https://github.com/stolostron/backlog/issues/25698
-ifeq ($(KIND_VERSION), latest)
-	KIND_VERSION = v1.24.4
-endif
-
 ifneq ($(KIND_VERSION), latest)
 	KIND_ARGS = --image kindest/node:$(KIND_VERSION)
 else
