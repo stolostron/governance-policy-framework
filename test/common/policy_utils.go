@@ -4,6 +4,7 @@ package common
 
 import (
 	"context"
+	"errors"
 	"path/filepath"
 	"strings"
 
@@ -166,29 +167,36 @@ func DoRootComplianceTest(policyName string, compliance policiesv1.ComplianceSta
 	).Should(Equal(compliance))
 }
 
+func GetHistoryMessages(policyName string, templateIdx int) ([]interface{}, bool, error) {
+	empty := make([]interface{}, 0)
+	replicatedPolicyName := UserNamespace + "." + policyName
+	policyInterface := ClientManagedDynamic.Resource(GvrPolicy).Namespace(ClusterNamespace)
+
+	policy, err := policyInterface.Get(context.TODO(), replicatedPolicyName, metav1.GetOptions{})
+	if err != nil {
+		return empty, false, errors.New("error in getting policy")
+	}
+
+	details, found, err := unstructured.NestedSlice(policy.Object, "status", "details")
+	if !found || err != nil || len(details) <= templateIdx {
+		return empty, false, errors.New("error in getting status")
+	}
+
+	templateDetails, ok := details[templateIdx].(map[string]interface{})
+	if !ok {
+		return empty, false, errors.New("error in getting detail")
+	}
+
+	history, found, err := unstructured.NestedSlice(templateDetails, "history")
+
+	return history, found, err
+}
+
 // GetLatestStatusMessage returns the most recent status message for the given policy template.
 // If the policy, template, or status do not exist for any reason, an empty string is returned.
 func GetLatestStatusMessage(policyName string, templateIdx int) func() string {
 	return func() string {
-		replicatedPolicyName := UserNamespace + "." + policyName
-		policyInterface := ClientManagedDynamic.Resource(GvrPolicy).Namespace(ClusterNamespace)
-
-		policy, err := policyInterface.Get(context.TODO(), replicatedPolicyName, metav1.GetOptions{})
-		if err != nil {
-			return ""
-		}
-
-		details, found, err := unstructured.NestedSlice(policy.Object, "status", "details")
-		if !found || err != nil || len(details) <= templateIdx {
-			return ""
-		}
-
-		templateDetails, ok := details[templateIdx].(map[string]interface{})
-		if !ok {
-			return ""
-		}
-
-		history, found, err := unstructured.NestedSlice(templateDetails, "history")
+		history, found, err := GetHistoryMessages(policyName, templateIdx)
 		if !found || err != nil || len(history) == 0 {
 			return ""
 		}
@@ -202,6 +210,25 @@ func GetLatestStatusMessage(policyName string, templateIdx int) func() string {
 
 		return message
 	}
+}
+
+func DoHistoryUpdatedTest(policyName string, messages ...string) {
+	By("Getting policy history")
+	Eventually(func(g Gomega) {
+		history, _, err := GetHistoryMessages(policyName, 0)
+		g.Expect(err).Should(BeNil())
+		lenMessage := len(messages)
+		historyMsgs := []string{}
+		for _, h := range history {
+			historyItem, _ := h.(map[string]interface{})
+			m, _, _ := unstructured.NestedString(historyItem, "message")
+			historyMsgs = append(historyMsgs, m)
+		}
+		By("Check history length is same")
+		g.Expect(len(history)).Should(Equal(lenMessage))
+		By("Check history message same")
+		g.Expect(strings.Join(historyMsgs, "")).Should(Equal(strings.Join(messages, "")))
+	}, DefaultTimeoutSeconds, 1).Should(Succeed())
 }
 
 // EnforcePolicy patches the root policy to be enforced, and asserts that the

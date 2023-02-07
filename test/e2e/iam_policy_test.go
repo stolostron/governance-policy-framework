@@ -36,8 +36,34 @@ var _ = Describe("Test iam policy", func() {
 			Expect(err).To(BeNil())
 			common.DoRootComplianceTest(iamPolicyName, policiesv1.Compliant)
 		})
+		It("the messages from histry should match", func() {
+			By("the policy should have matched history after all these test")
+			common.DoHistoryUpdatedTest(iamPolicyName,
+				"Compliant; The number of users with the cluster-admin role is at least 0 above the specified limit",
+				"NonCompliant; The number of users with the cluster-admin role is at least 1 above the specified limit",
+				"Compliant; The number of users with the cluster-admin role is at least 0 above the specified limit",
+			)
+		})
 		AfterAll(func() {
+			By("Deleting the policy and events on managed cluster")
 			common.DoCleanupPolicy(iamPolicyYaml, common.GvrIamPolicy)
+			_, err := common.OcManaged(
+				"delete", "-f", "../resources/iam_policy/clusterrolebinding.yaml",
+				"--ignore-not-found",
+			)
+			Expect(err).To(BeNil())
+			_, err = common.OcManaged(
+				"delete", "clusterrolebinding",
+				"e2e-test",
+				"--ignore-not-found",
+			)
+			Expect(err).To(BeNil())
+			_, err = common.OcManaged(
+				"delete", "events", "-n", "managed",
+				"--all",
+				"--ignore-not-found",
+			)
+			Expect(err).To(BeNil())
 		})
 	})
 })
