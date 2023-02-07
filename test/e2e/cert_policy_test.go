@@ -56,7 +56,6 @@ var _ = Describe("Test cert policy", func() {
 			Expect(err).To(BeNil())
 
 			common.DoRootComplianceTest(certPolicyName, policiesv1.NonCompliant)
-
 			By("Creating ../resources/cert_policy/certificate_compliant.yaml in ns default")
 			_, err = common.OcManaged(
 				"apply", "-f",
@@ -178,7 +177,28 @@ var _ = Describe("Test cert policy", func() {
 			Expect(err).To(BeNil())
 			common.DoRootComplianceTest(certPolicyName, policiesv1.Compliant)
 		})
+		It("the messages from histry should match", func() {
+			By("the policy should have matched history after all these test")
+			common.DoHistoryUpdatedTest(certPolicyName,
+				"Compliant",
+				"NonCompliant;  1 certificates defined SAN entries do not match pattern Allowed: "+
+					".*.test.com Disallowed: [\\*]: default:cert-policy-secret",
+				"Compliant",
+				"NonCompliant;  1 certificates defined SAN entries do not match pattern Allowed: "+
+					".*.test.com Disallowed: [\\*]: default:cert-policy-secret",
+				"Compliant",
+				"NonCompliant;  1 CA certificates exceed the maximum duration of 26280h0m0s: "+
+					"default:cert-policy-secret",
+				"Compliant",
+				"NonCompliant;  1 certificates exceed the maximum duration of 9528h0m0s: "+
+					"default:cert-policy-secret",
+				"Compliant",
+				"NonCompliant;  1 CA certificates expire in less than 45h0m0s: default:cert-policy-secret",
+			)
+		})
 		AfterAll(func() {
+			By("Deleting the resource, policy and events on managed cluster")
+
 			common.DoCleanupPolicy(certPolicyYaml, common.GvrCertPolicy)
 
 			By("Deleting ../resources/cert_policy/issuer.yaml in ns default")
@@ -199,6 +219,13 @@ var _ = Describe("Test cert policy", func() {
 			_, err = common.OcManaged(
 				"delete", "secret",
 				"cert-policy-secret", "-n", "default",
+				"--ignore-not-found",
+			)
+			Expect(err).To(BeNil())
+
+			_, err = common.OcManaged(
+				"delete", "events", "-n", "managed",
+				"--all",
 				"--ignore-not-found",
 			)
 			Expect(err).To(BeNil())
