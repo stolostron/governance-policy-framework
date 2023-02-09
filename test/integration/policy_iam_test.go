@@ -124,8 +124,6 @@ var _ = Describe("GRC: [P1][Sev1][policy-grc] Test "+
 		_, err := utils.KubectlWithOutput(
 			"delete", "-f",
 			"../resources/iam_policy/group.yaml",
-			"-n",
-			iamPolicyManagedNamespace,
 			"--kubeconfig="+kubeconfigManaged,
 			"--ignore-not-found",
 		)
@@ -173,5 +171,14 @@ var _ = Describe("GRC: [P1][Sev1][policy-grc] Test "+
 			defaultTimeoutSeconds,
 			1,
 		).Should(BeNil())
+
+		By("Ensuring the test OpenShift group is gone")
+		_, err = utils.KubectlWithOutput(
+			"delete", "-f",
+			"../resources/iam_policy/group.yaml",
+			"--kubeconfig="+kubeconfigManaged,
+			"--ignore-not-found",
+		)
+		Expect(err).To(BeNil())
 	})
 })
