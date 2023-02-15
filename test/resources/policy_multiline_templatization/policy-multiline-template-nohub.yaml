@@ -1,0 +1,52 @@
+apiVersion: policy.open-cluster-management.io/v1
+kind: Policy
+metadata:
+  name: policy-multiline-template-nohub
+spec:
+  remediationAction: enforce
+  disabled: false
+  policy-templates:
+    - objectDefinition:
+        apiVersion: policy.open-cluster-management.io/v1
+        kind: ConfigurationPolicy
+        metadata:
+          name: policy-multiline-template-nohub
+        spec:
+          remediationAction: enforce
+          severity: low
+          object-templates-raw: |
+            {{range (lookup "v1" "ConfigMap" "policy-test" "").items }}
+              - complianceType: musthave
+                objectDefinition:
+                  apiVersion: v1
+                  kind: ConfigMap
+                  metadata:
+                    name: {{ .metadata.name }}-copy
+                    namespace: config-test
+                  data:
+                    extraData: exists!
+            {{ end }}
+---
+apiVersion: policy.open-cluster-management.io/v1
+kind: PlacementBinding
+metadata:
+  name: policy-multiline-template-nohub-pb
+placementRef:
+  apiGroup: apps.open-cluster-management.io
+  kind: PlacementRule
+  name: policy-multiline-template-nohub-plr
+subjects:
+- apiGroup: policy.open-cluster-management.io
+  kind: Policy
+  name: policy-multiline-template-nohub
+---
+apiVersion: apps.open-cluster-management.io/v1
+kind: PlacementRule
+metadata:
+  name: policy-multiline-template-nohub-plr
+spec:
+  clusterConditions:
+  - status: "True"
+    type: ManagedClusterConditionAvailable
+  clusterSelector:
+    matchExpressions: []
