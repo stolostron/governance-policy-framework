@@ -18,11 +18,6 @@ import (
 )
 
 var _ = Describe("RHACM4K-3055", Ordered, Label("policy-collection", "stable", "BVT"), func() {
-	BeforeAll(func() {
-		if isOCP44() {
-			Skip("Skipping as this is ocp 4.4")
-		}
-	})
 	const gatekeeperPolicyURL = policyCollectStableURL +
 		"CM-Configuration-Management/policy-gatekeeper-operator-downstream.yaml"
 	const gatekeeperPolicyName = "policy-gatekeeper-operator"
