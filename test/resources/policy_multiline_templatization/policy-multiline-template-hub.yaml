@@ -1,0 +1,52 @@
+apiVersion: policy.open-cluster-management.io/v1
+kind: Policy
+metadata:
+  name: policy-multiline-template-hub
+spec:
+  remediationAction: enforce
+  disabled: false
+  policy-templates:
+    - objectDefinition:
+        apiVersion: policy.open-cluster-management.io/v1
+        kind: ConfigurationPolicy
+        metadata:
+          name: policy-multiline-template-hub
+        spec:
+          remediationAction: enforce
+          severity: low
+          object-templates-raw: |
+            {{hub range (lookup "v1" "ConfigMap" "policy-test" "").items hub}}
+              - complianceType: musthave
+                objectDefinition:
+                  apiVersion: v1
+                  kind: ConfigMap
+                  metadata:
+                    name: {{hub .metadata.name hub}}
+                    namespace: policy-test
+                  data:
+                    extraData: exists!
+            {{hub end hub}}
+---
+apiVersion: policy.open-cluster-management.io/v1
+kind: PlacementBinding
+metadata:
+  name: policy-multiline-template-hub-pb
+placementRef:
+  apiGroup: apps.open-cluster-management.io
+  kind: PlacementRule
+  name: policy-multiline-template-hub-plr
+subjects:
+- apiGroup: policy.open-cluster-management.io
+  kind: Policy
+  name: policy-multiline-template-hub
+---
+apiVersion: apps.open-cluster-management.io/v1
+kind: PlacementRule
+metadata:
+  name: policy-multiline-template-hub-plr
+spec:
+  clusterConditions:
+  - status: "True"
+    type: ManagedClusterConditionAvailable
+  clusterSelector:
+    matchExpressions: []
