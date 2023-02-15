@@ -94,9 +94,6 @@ jobs:
         echo "::endgroup::"
 
         echo "::group::make kind-bootstrap-cluster"
-        if [[ "${RELEASE_BRANCH}" != "main" ]]; then
-          export VERSION_TAG=latest-${RELEASE_BRANCH#*-}
-        fi
         make kind-bootstrap-cluster
         echo "::endgroup::"
 
