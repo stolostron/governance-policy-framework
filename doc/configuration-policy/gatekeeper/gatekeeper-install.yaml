@@ -1,3 +1,7 @@
+# This policy verifies the installation of the official and supported version of
+# the Gatekeeper Operator on the managed clusters.
+#
+# If set to "enforce" it'll install the operator.
 apiVersion: policy.open-cluster-management.io/v1
 kind: Policy
 metadata:
@@ -7,69 +11,14 @@ metadata:
     policy.open-cluster-management.io/categories: CM Configuration Management
     policy.open-cluster-management.io/controls: CM-2 Baseline Configuration
 spec:
-  remediationAction: enforce                # enforce to install
+  remediationAction: inform
   disabled: false
   policy-templates:
   - objectDefinition:
       apiVersion: policy.open-cluster-management.io/v1
       kind: ConfigurationPolicy
       metadata:
-        name: gatekeeper-operator-ns        # create namespace where gatekeeper operator is going to run
-      spec:
-        remediationAction: inform
-        severity: high
-        object-templates:
-          - complianceType: musthave
-            objectDefinition:
-              apiVersion: v1
-              kind: Namespace
-              metadata:
-                name: gatekeeper-system
-  - objectDefinition:
-      apiVersion: policy.open-cluster-management.io/v1
-      kind: ConfigurationPolicy
-      metadata:
-        name: gatekeeper-operator-catalog-source
-      spec:
-        remediationAction: inform
-        severity: high
-        object-templates:
-          - complianceType: musthave
-            objectDefinition:
-              apiVersion: operators.coreos.com/v1alpha1
-              kind: CatalogSource
-              metadata:
-                name: gatekeeper-operator        # create CatalogSource for gatekeeper operator
-                namespace: gatekeeper-system  
-              spec:
-                displayName: Gatekeeper Operator Upstream
-                publisher: github.com/font/gatekeeper-operator
-                sourceType: grpc
-                image: 'quay.io/gatekeeper/gatekeeper-operator-bundle-index:latest'
-                updateStrategy:
-                  registryPoll:
-                    interval: 45m
-  - objectDefinition:
-      apiVersion: policy.open-cluster-management.io/v1
-      kind: ConfigurationPolicy
-      metadata:
-        name: gatekeeper-operator-group
-      spec:
-        remediationAction: inform
-        severity: high
-        object-templates:
-          - complianceType: musthave
-            objectDefinition:
-              apiVersion: operators.coreos.com/v1
-              kind: OperatorGroup
-              metadata:
-                name: gatekeeper-operator    # create OperatorGroup for gatekeeper operator
-                namespace: gatekeeper-system
-  - objectDefinition:
-      apiVersion: policy.open-cluster-management.io/v1
-      kind: ConfigurationPolicy
-      metadata:
-        name: gatekeeper-operator-subscription
+        name: gatekeeper-operator-product-sub
       spec:
         remediationAction: inform
         severity: high
@@ -79,13 +28,33 @@ spec:
               apiVersion: operators.coreos.com/v1alpha1
               kind: Subscription
               metadata:
-                name: gatekeeper-operator-sub   # create Subscription for gatekeeper operator
-                namespace: gatekeeper-system
+                name: gatekeeper-operator-product
+                namespace: openshift-operators
               spec:
                 channel: stable
-                name: gatekeeper-operator
-                source: gatekeeper-operator
-                sourceNamespace: gatekeeper-system
+                installPlanApproval: Automatic
+                name: gatekeeper-operator-product
+                source: redhat-operators
+                sourceNamespace: openshift-marketplace
+  - objectDefinition:
+      apiVersion: policy.open-cluster-management.io/v1
+      kind: ConfigurationPolicy
+      metadata:
+        name: gatekeeper-operator-status
+      spec:
+        remediationAction: inform
+        severity: high
+        object-templates:
+          - complianceType: musthave
+            objectDefinition:
+              apiVersion: operators.coreos.com/v1alpha1
+              kind: ClusterServiceVersion
+              metadata:
+                namespace: openshift-gatekeeper-system
+              spec:
+                displayName: Gatekeeper Operator
+              status:
+                phase: Succeeded   # check the csv status to determine if operator is running or not
   - objectDefinition:
       apiVersion: policy.open-cluster-management.io/v1
       kind: ConfigurationPolicy
@@ -100,19 +69,47 @@ spec:
               apiVersion: operator.gatekeeper.sh/v1alpha1
               kind: Gatekeeper
               metadata:
-                name: gatekeeper       # create Gatekeeper CR to configure gatekeeper
+                name: gatekeeper
               spec:
                 audit:
+                  auditChunkSize: 500
                   logLevel: INFO
                   replicas: 1
-                image:
-                  image: 'docker.io/openpolicyagent/gatekeeper:v3.3.0'
                 validatingWebhook: Enabled
                 mutatingWebhook: Disabled
                 webhook:
-                  emitAdmissionEvents: Enabled    # enable generating admission events
+                  emitAdmissionEvents: Enabled
                   logLevel: INFO
                   replicas: 2
+  - objectDefinition:
+      apiVersion: policy.open-cluster-management.io/v1
+      kind: ConfigurationPolicy
+      metadata:
+        name: gatekeeper-status
+      spec:
+        remediationAction: inform
+        severity: high
+        object-templates:
+          - complianceType: musthave
+            objectDefinition:
+              apiVersion: v1
+              kind: Pod
+              metadata:
+                namespace: openshift-gatekeeper-system
+                labels:
+                  control-plane: audit-controller
+              status:
+                phase: Running   # check the pod status to determine if operator is running or not
+          - complianceType: musthave
+            objectDefinition:
+              apiVersion: v1
+              kind: Pod
+              metadata:
+                namespace: openshift-gatekeeper-system
+                labels:
+                  control-plane: controller-manager
+              status:
+                phase: Running   # check the pod status to determine if operator is running or not
 ---
 apiVersion: policy.open-cluster-management.io/v1
 kind: PlacementBinding
