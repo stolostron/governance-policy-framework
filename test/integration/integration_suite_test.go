@@ -41,6 +41,7 @@ var (
 	clientHubDynamic      dynamic.Interface
 	clientManaged         kubernetes.Interface
 	clientManagedDynamic  dynamic.Interface
+	gitopsUser            common.OCPUser
 
 	canCreateOpenshiftNamespacesInitialized bool
 	canCreateOpenshiftNamespacesResult      bool
@@ -86,6 +87,9 @@ var _ = BeforeSuite(func() {
 		}, metav1.CreateOptions{})).NotTo(BeNil())
 	}
 	Expect(namespaces.Get(context.TODO(), userNamespace, metav1.GetOptions{})).NotTo(BeNil())
+
+	By("Setting up GitOps user")
+	gitopsUser = common.GitOpsUserSetup()
 })
 
 var _ = AfterSuite(func() {
@@ -101,6 +105,8 @@ var _ = AfterSuite(func() {
 		"pod-that-does-not-exist", "--ignore-not-found",
 	)
 	Expect(err).To(BeNil())
+
+	common.GitOpsCleanup(gitopsUser)
 })
 
 func canCreateOpenshiftNamespaces() bool {
