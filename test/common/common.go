@@ -14,6 +14,7 @@ import (
 	"strings"
 
 	. "github.com/onsi/ginkgo/v2"
+	. "github.com/onsi/gomega"
 	"golang.org/x/mod/semver"
 	k8serrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -246,4 +247,30 @@ func IsAtLeastVersion(minVersion string) bool {
 
 	// Compare returns: 0 if ver1 == ver2, -1 if ver1 < ver2, or +1 if ver1 > ver2
 	return semver.Compare(ocpSemVer, minSemVer) >= 0
+}
+
+func CleanupHubNamespace(namespace string) {
+	By("Deleting namespace " + namespace)
+
+	err := ClientHub.CoreV1().Namespaces().Delete(context.TODO(), namespace, metav1.DeleteOptions{})
+	if !k8serrors.IsNotFound(err) {
+		ExpectWithOffset(1, err).Should(BeNil())
+	}
+
+	// Wait for the namespace to be fully deleted before proceeding.
+	EventuallyWithOffset(1,
+		func() bool {
+			_, err := ClientHub.CoreV1().Namespaces().Get(
+				context.TODO(), namespace, metav1.GetOptions{},
+			)
+			isNotFound := k8serrors.IsNotFound(err)
+			if !isNotFound && err != nil {
+				GinkgoWriter.Printf("'%s' namespace 'get' error: %w", err)
+			}
+
+			return isNotFound
+		},
+		DefaultTimeoutSeconds*4,
+		1,
+	).Should(BeTrue())
 }

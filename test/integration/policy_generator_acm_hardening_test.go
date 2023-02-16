@@ -8,11 +8,9 @@ import (
 
 	. "github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
-	rbacv1 "k8s.io/api/rbac/v1"
 	k8serrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
-	"k8s.io/apimachinery/pkg/types"
 
 	"github.com/stolostron/governance-policy-framework/test/common"
 )
@@ -26,43 +24,8 @@ var _ = Describe("GRC: [P1][Sev1][policy-grc] Test the ACM Hardening "+
 		"policy-subscriptions",
 	}
 	const namespace = "policies"
-	const usernameSuffix = "hardening"
-	const clustersetRoleName = "grc-e2e-clusterset-role"
-	var ocpUser common.OCPUser
 
 	It("Sets up the application subscription", func() {
-		By("Creating and setting up the GitOps user")
-		ocpUser = common.GitOpsUserSetup(
-			namespace, usernameSuffix, types.NamespacedName{Name: clustersetRoleName},
-		)
-
-		By("Setting up the managed cluster set binding role for the GitOps user")
-		clusterSetRule := rbacv1.ClusterRole{
-			ObjectMeta: metav1.ObjectMeta{
-				Name: clustersetRoleName,
-			},
-			Rules: []rbacv1.PolicyRule{
-				{
-					APIGroups:     []string{"cluster.open-cluster-management.io"},
-					Verbs:         []string{"create"},
-					Resources:     []string{"managedclustersets/bind"},
-					ResourceNames: []string{"default"},
-				},
-				{
-					APIGroups: []string{"cluster.open-cluster-management.io"},
-					Verbs:     []string{"get", "list", "watch"},
-					Resources: []string{"placementdecisions"},
-				},
-			},
-		}
-
-		_, err := clientHub.RbacV1().ClusterRoles().Create(
-			context.TODO(), &clusterSetRule, metav1.CreateOptions{},
-		)
-		if err != nil {
-			Expect(k8serrors.IsAlreadyExists(err)).Should(BeTrue())
-		}
-
 		By("Verifying that the default ManagedClusterSet exists")
 		mcs := unstructured.Unstructured{
 			Object: map[string]interface{}{
@@ -74,7 +37,7 @@ var _ = Describe("GRC: [P1][Sev1][policy-grc] Test the ACM Hardening "+
 			},
 		}
 
-		_, err = clientHubDynamic.Resource(common.GvrManagedClusterSet).Create(
+		_, err := clientHubDynamic.Resource(common.GvrManagedClusterSet).Create(
 			context.TODO(), &mcs, metav1.CreateOptions{},
 		)
 		if !k8serrors.IsAlreadyExists(err) {
@@ -83,7 +46,7 @@ var _ = Describe("GRC: [P1][Sev1][policy-grc] Test the ACM Hardening "+
 
 		By("Creating the application subscription")
 		_, err = common.OcUser(
-			ocpUser,
+			gitopsUser,
 			"apply",
 			"-f",
 			"../resources/policy_generator/acm-hardening_subscription.yaml",
@@ -176,7 +139,6 @@ var _ = Describe("GRC: [P1][Sev1][policy-grc] Test the ACM Hardening "+
 	})
 
 	AfterAll(func() {
-		By("Cleaning up the changes made to the cluster in the test")
-		common.GitOpsCleanup(namespace, ocpUser)
+		common.CleanupHubNamespace(namespace)
 	})
 })
