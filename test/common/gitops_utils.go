@@ -18,31 +18,62 @@ import (
 	"k8s.io/apimachinery/pkg/types"
 )
 
-const gitOpsUserPrefix = "grc-e2e-subadmin-user-"
-
-// GitOpsUserSetup configures a new user to use for the GitOps deployments.
-// The provided namespace is deleted and recreated as part of the setup.
+// GitOpsUserSetup configures a new user to use for the GitOps tests.
 // It returns the OCPUser instance, which contains a path to the created kubeconfig file.
-func GitOpsUserSetup(
-	namespace string, usernameSuffix string, additionalRoles ...types.NamespacedName,
-) OCPUser {
+func GitOpsUserSetup() OCPUser {
 	const subAdminBinding = "open-cluster-management:subscription-admin"
+	const clustersetRoleName = "grc-e2e-clusterset-role"
 
 	ocpUser := OCPUser{
 		ClusterRoles: []types.NamespacedName{
 			{Name: "open-cluster-management:admin:local-cluster"},
-			{
-				Name:      "admin",
-				Namespace: namespace,
-			},
+			{Name: clustersetRoleName},
 		},
 		ClusterRoleBindings: []string{subAdminBinding},
-		Password:            "",
-		Username:            gitOpsUserPrefix + usernameSuffix,
+		Username:            "grc-e2e-subadmin-user",
 	}
 
-	// Append any additional provided ClusterRoles
-	ocpUser.ClusterRoles = append(ocpUser.ClusterRoles, additionalRoles...)
+	gitopsTestNamespaces := []string{
+		"grc-e2e-policy-generator",
+		"grc-e2e-remote-policy-generator",
+		"policies",
+	}
+
+	// Add additional cluster roles for each namespace
+	for _, ns := range gitopsTestNamespaces {
+		ocpUser.ClusterRoles = append(ocpUser.ClusterRoles, types.NamespacedName{
+			Name:      "admin",
+			Namespace: ns,
+		})
+	}
+
+	By("Setting up the managed cluster set binding role for the GitOps user")
+
+	clusterSetRule := rbacv1.ClusterRole{
+		ObjectMeta: metav1.ObjectMeta{
+			Name: clustersetRoleName,
+		},
+		Rules: []rbacv1.PolicyRule{
+			{
+				APIGroups:     []string{"cluster.open-cluster-management.io"},
+				Verbs:         []string{"create"},
+				Resources:     []string{"managedclustersets/bind"},
+				ResourceNames: []string{"default"},
+			},
+			{
+				APIGroups: []string{"cluster.open-cluster-management.io"},
+				Verbs:     []string{"get", "list", "watch"},
+				Resources: []string{"placementdecisions"},
+			},
+		},
+	}
+
+	_, err := ClientHub.RbacV1().ClusterRoles().Create(
+		context.TODO(), &clusterSetRule, metav1.CreateOptions{},
+	)
+	if err != nil {
+		Expect(k8serrors.IsAlreadyExists(err)).Should(BeTrue())
+	}
 
 	// Occasionally, the subscription-admin ClusterRoleBinding may not exist due to some unknown
 	// error. This ClusterRoleBinding is supposed to have been created by the App Lifecycle
@@ -61,7 +92,7 @@ func GitOpsUserSetup(
 
 	By("Verifying that the subscription-admin ClusterRoleBinding exists")
 
-	_, err := ClientHub.RbacV1().ClusterRoleBindings().Create(
+	_, err = ClientHub.RbacV1().ClusterRoleBindings().Create(
 		context.TODO(), &subAdminBindingObj, metav1.CreateOptions{},
 	)
 	if err != nil {
@@ -72,15 +103,21 @@ func GitOpsUserSetup(
 	}
 
 	By("Cleaning up any existing subscription-admin user config")
-	GitOpsCleanup(namespace, ocpUser)
+	GitOpsCleanup(ocpUser)
+
+	for _, ns := range gitopsTestNamespaces {
+		CleanupHubNamespace(ns)
+	}
 
 	By("Creating a subscription-admin user and configuring IDP")
 	// Create a namespace to house the subscription configuration.
-	nsObj := corev1.Namespace{ObjectMeta: metav1.ObjectMeta{Name: namespace}}
-	_, err = ClientHub.CoreV1().Namespaces().Create(
-		context.TODO(), &nsObj, metav1.CreateOptions{},
-	)
-	ExpectWithOffset(1, err).Should(BeNil())
+	for _, ns := range gitopsTestNamespaces {
+		nsObj := corev1.Namespace{ObjectMeta: metav1.ObjectMeta{Name: ns}}
+		_, err = ClientHub.CoreV1().Namespaces().Create(
+			context.TODO(), &nsObj, metav1.CreateOptions{},
+		)
+		ExpectWithOffset(1, err).Should(BeNil())
+	}
 
 	// Create the OpenShift user that can be used for logging in.
 	ocpUser.Password, err = GenerateInsecurePassword()
@@ -118,7 +155,7 @@ func GitOpsUserSetup(
 // GitOpsCleanup will remove any test data/configuration on the OpenShift cluster that was added/updated
 // as part of the GitOps test. The kubeconfig file is also deleted from the filesystem. Any errors will
 // be propagated as gomega failed assertions.
-func GitOpsCleanup(namespace string, user OCPUser) {
+func GitOpsCleanup(user OCPUser) {
 	By("Cleaning up artifacts from user " + user.Username)
 	// Delete kubeconfig file if it is specified
 	if user.Kubeconfig != "" {
@@ -133,28 +170,4 @@ func GitOpsCleanup(namespace string, user OCPUser) {
 	if !k8serrors.IsNotFound(err) {
 		ExpectWithOffset(1, err).Should(BeNil())
 	}
-
-	By("Deleting namespace " + namespace)
-
-	err = ClientHub.CoreV1().Namespaces().Delete(context.TODO(), namespace, metav1.DeleteOptions{})
-	if !k8serrors.IsNotFound(err) {
-		ExpectWithOffset(1, err).Should(BeNil())
-	}
-
-	// Wait for the namespace to be fully deleted before proceeding.
-	EventuallyWithOffset(1,
-		func() bool {
-			_, err := ClientHub.CoreV1().Namespaces().Get(
-				context.TODO(), namespace, metav1.GetOptions{},
-			)
-			isNotFound := k8serrors.IsNotFound(err)
-			if !isNotFound && err != nil {
-				GinkgoWriter.Printf("'%s' namespace 'get' error: %w", err)
-			}
-
-			return isNotFound
-		},
-		DefaultTimeoutSeconds*2,
-		1,
-	).Should(BeTrue())
 }
