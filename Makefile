@@ -77,6 +77,11 @@ clean::
 	-rm kubeconfig_$(HUB_CLUSTER_NAME)_internal
 	-rm -r test-output/
 	-rm -r vendor/
+	-rm build/_output/bin/*
+	-rm coverage*.out
+	-rm *.kubeconfig
+	-rm *.kubeconfig-internal
+    
 
 ############################################################
 # format section
@@ -86,6 +91,8 @@ clean::
 fmt-dependencies:
 	$(call go-get-tool,github.com/daixiang0/gci@v0.6.0)
 	$(call go-get-tool,mvdan.cc/gofumpt@v0.3.1)
+	$(call go-get-tool,github.com/daixiang0/gci@v0.2.9)
+	$(call go-get-tool,mvdan.cc/gofumpt@v0.2.0)
 
 # All available format: format-go format-protos format-python
 # Default value will run all formats, override these make target with your requirements:
@@ -94,6 +101,9 @@ fmt-dependencies:
 fmt: fmt-dependencies
 	find . -not \( -path "./.go" -prune \) -name "*.go" | xargs gofmt -s -w
 	find . -not \( -path "./.go" -prune \) -name "*.go" | xargs gofumpt -l -w
+	find . -not \( -path "./.go" -prune -or -path "./vendor" -prune \) -name "*.go" | xargs gofmt -s -w
+	find . -not \( -path "./.go" -prune -or -path "./vendor" -prune \) -name "*.go" | xargs gci -w -local "$(shell cat go.mod | head -1 | cut -d " " -f 2)"
+	find . -not \( -path "./.go" -prune -or -path "./vendor" -prune \) -name "*.go" | xargs gofumpt -l -w
 
 ############################################################
 # lint section
@@ -349,3 +359,135 @@ integration-test:
 	else\
 		$(GINKGO) -v $(TEST_ARGS) --fail-fast --focus-file=$(TEST_FILE) test/integration;\
 	fi
+
+# hosted 
+## IMAImage URL to use all building/pushing image targets; 
+IMG ?= governance-policy-addon-controller
+REGISTRY ?= quay.io/open-cluster-management
+TAG ?= latest
+VERSION ?= 1.0.0
+IMAGE_NAME_AND_VERSION ?= $(REGISTRY)/$(IMG) 
+
+##@ Kind
+KIND_NAME ?= policy-addon-ctrl1
+KIND_KUBECONFIG ?= $(PWD)/$(KIND_NAME).kubeconfig
+KIND_KUBECONFIG_INTERNAL ?= $(PWD)/$(KIND_NAME).kubeconfig-internal
+MANAGED_CLUSTER_NAME_HOSTED ?= cluster1
+HUB_KUBECONFIG ?= $(PWD)/policy-addon-ctrl1.kubeconfig
+HUB_KUBECONFIG_INTERNAL ?= $(PWD)/policy-addon-ctrl1.kubeconfig-internal
+HUB_CLUSTER_NAME ?= policy-addon-ctrl1
+
+CONTROLLER_NAMESPACE ?= governance-policy-addon-controller-system
+KIND_VERSION ?= latest
+# Set the Kind version tag
+ifeq ($(KIND_VERSION), minimum)
+	KIND_ARGS = --image kindest/node:v1.19.16
+else ifneq ($(KIND_VERSION), latest)
+	KIND_ARGS = --image kindest/node:$(KIND_VERSION)
+else
+	KIND_ARGS =
+endif
+
+kind-create-cluster-hosted: $(KIND_KUBECONFIG)
+
+## delete hosted 
+.PHONY: kind-delete-cluster-hosted
+kind-delete-cluster-hosted: ## Delete a kind cluster.
+	-kind delete cluster --name $(KIND_NAME)
+	-rm $(KIND_KUBECONFIG)
+	-rm $(KIND_KUBECONFIG_INTERNAL)
+
+CONTROLLER_GEN = $(LOCAL_BIN)/controller-gen
+
+.PHONY: generate
+generate: controller-gen ## Generate code containing DeepCopy, DeepCopyInto, and DeepCopyObject method implementations.
+	$(CONTROLLER_GEN) object:headerFile="hack/boilerplate.go.txt" paths="./..."
+
+.PHONY: controller-gen
+controller-gen: ## Download controller-gen locally if necessary.
+	$(call go-get-tool,sigs.k8s.io/controller-tools/cmd/controller-gen@v0.8.0)
+
+.PHONY: build-images
+build-images: generate fmt vet
+	@docker build -t ${IMAGE_NAME_AND_VERSION} -f build/Dockerfile .
+	@docker tag ${IMAGE_NAME_AND_VERSION} $(REGISTRY)/$(IMG):$(TAG)
+
+.PHONY: vet
+vet: ## Run go vet against code.
+	go vet ./...
+
+.PHONY: kind-load-image
+kind-load-image: build-images $(KIND_KUBECONFIG) ## Build and load the docker image into kind.
+	kind load docker-image $(IMAGE_NAME_AND_VERSION) --name $(KIND_NAME)
+
+.PHONY: kind-regenerate-controller
+kind-regenerate-controller: manifests generate kustomize $(KIND_KUBECONFIG) ## Refresh (or initially deploy) the policy-addon-controller.
+	cp config/default/kustomization.yaml config/default/kustomization.yaml.tmp
+	cd config/default && $(KUSTOMIZE) edit set image policy-addon-image=$(IMAGE_NAME_AND_VERSION)
+	$(KUSTOMIZE) build config/default | KUBECONFIG=$(KIND_KUBECONFIG) kubectl apply -f -
+	mv config/default/kustomization.yaml.tmp config/default/kustomization.yaml
+	KUBECONFIG=$(KIND_KUBECONFIG) kubectl delete -n $(CONTROLLER_NAMESPACE) pods -l=app=governance-policy-addon-controller
+
+.PHONY: kind-deploy-controller
+kind-deploy-controller: kind-prep-ocm kind-load-image kind-regenerate-controller ## Deploy the policy-addon-controller to the kind cluster.
+
+.PHONY: kind-deploy-addons-managed
+kind-deploy-addons-managed: ## Apply ManagedClusterAddon manifests to hub to deploy governance addons to a managed cluster.
+	@echo "Creating ManagedClusterAddon for managed cluster $(MANAGED_CLUSTER_NAME_HOSTED)"
+	KUBECONFIG=$(KIND_KUBECONFIG) kubectl apply -f test/resources/config_policy_addon_cr.yaml -n $(MANAGED_CLUSTER_NAME_HOSTED)
+	KUBECONFIG=$(KIND_KUBECONFIG) kubectl apply -f test/resources/framework_addon_cr.yaml -n $(MANAGED_CLUSTER_NAME_HOSTED)
+
+.PHONY: kind-deploy-addons-hub
+kind-deploy-addons-hub: kind-deploy-addons-managed ## Apply ManagedClusterAddon manifests to hub to deploy governance addons to a managed hub cluster.
+	KUBECONFIG=$(KIND_KUBECONFIG) kubectl annotate ManagedClusterAddon governance-policy-framework addon.open-cluster-management.io/on-multicluster-hub='true' -n $(MANAGED_CLUSTER_NAME_HOSTED)
+
+KUBEWAIT ?= $(PWD)/build/common/scripts/kubewait.sh
+.PHONY: kind-approve-cluster
+kind-approve-cluster: $(KIND_KUBECONFIG) ## Approve managed cluster in the kind cluster.
+	KUBECONFIG=$(KIND_KUBECONFIG) $(KUBEWAIT) -r "csr -l open-cluster-management.io/cluster-name=$(MANAGED_CLUSTER_NAME_HOSTED)" -m 120
+	KUBECONFIG=$(KIND_KUBECONFIG) kubectl certificate approve "$$(KUBECONFIG=$(KIND_KUBECONFIG) kubectl get csr -l open-cluster-management.io/cluster-name=$(MANAGED_CLUSTER_NAME_HOSTED) -o name)"
+	KUBECONFIG=$(KIND_KUBECONFIG) $(KUBEWAIT) -r managedcluster/$(MANAGED_CLUSTER_NAME_HOSTED) -n open-cluster-management -m 60
+	KUBECONFIG=$(KIND_KUBECONFIG) kubectl patch managedcluster $(MANAGED_CLUSTER_NAME_HOSTED) -p='{"spec":{"hubAcceptsClient":true}}' --type=merge
+
+REGISTRATION_OPERATOR = $(PWD)/.go/registration-operator
+$(REGISTRATION_OPERATOR):
+	@mkdir -p .go
+	git clone --depth 1 https://github.com/open-cluster-management-io/registration-operator.git .go/registration-operator
+
+.PHONY: kind-deploy-registration-operator-managed-hosted
+kind-deploy-registration-operator-managed-hosted: $(REGISTRATION_OPERATOR) $(KIND_KUBECONFIG) ## Deploy the ocm registration operator to the kind cluster in hosted mode.
+	cd $(REGISTRATION_OPERATOR) && KUBECONFIG=$(HUB_KUBECONFIG) MANAGED_CLUSTER_NAME=$(MANAGED_CLUSTER_NAME_HOSTED) HUB_KUBECONFIG=$(HUB_KUBECONFIG_INTERNAL) HOSTED_CLUSTER_MANAGER_NAME=$(HUB_CLUSTER_NAME) EXTERNAL_MANAGED_KUBECONFIG=$(KIND_KUBECONFIG_INTERNAL) make deploy-spoke-hosted
+
+.PHONY: kind-deploy-registration-operator-managed
+kind-deploy-registration-operator-managed: $(REGISTRATION_OPERATOR) $(KIND_KUBECONFIG) ## Deploy the ocm registration operator to the kind cluster.
+	cd $(REGISTRATION_OPERATOR) && KUBECONFIG=$(KIND_KUBECONFIG) MANAGED_CLUSTER_NAME=$(MANAGED_CLUSTER_NAME_HOSTED) HUB_KUBECONFIG=$(HUB_KUBECONFIG_INTERNAL) make deploy-spoke
+
+OCM_PREP_TARGETS := kind-deploy-registration-operator-hub kind-deploy-registration-operator-managed kind-approve-cluster
+.PHONY: kind-prep-ocm
+kind-prep-ocm: $(OCM_PREP_TARGETS) ## Install OCM registration pieces and connect the clusters
+
+.PHONY: kind-deploy-registration-operator-hub
+kind-deploy-registration-operator-hub: $(REGISTRATION_OPERATOR) $(KIND_KUBECONFIG) ## Deploy the ocm registration operator to the kind cluster.
+	cd $(REGISTRATION_OPERATOR) && KUBECONFIG=$(KIND_KUBECONFIG) make deploy-hub
+	@printf "\n*** Pausing and waiting to let everything deploy ***\n\n"
+	KUBECONFIG=$(KIND_KUBECONFIG) $(KUBEWAIT) -r deploy/cluster-manager -n open-cluster-management -c condition=Available -m 90
+	KUBECONFIG=$(KIND_KUBECONFIG) $(KUBEWAIT) -r deploy/cluster-manager-placement-controller -n open-cluster-management-hub -c condition=Available -m 90
+	@echo installing Policy CRD on hub
+	KUBECONFIG=$(KIND_KUBECONFIG) kubectl apply -f https://raw.githubusercontent.com/open-cluster-management-io/governance-policy-propagator/main/deploy/crds/policy.open-cluster-management.io_policies.yaml
+
+$(KIND_KUBECONFIG):
+	@echo "creating cluster"
+	kind create cluster --name $(KIND_NAME) $(KIND_ARGS)
+	kind get kubeconfig --name $(KIND_NAME) > $(KIND_KUBECONFIG)
+	kind get kubeconfig --name $(KIND_NAME) --internal > $(KIND_KUBECONFIG_INTERNAL)
+	KUBECONFIG=$(KIND_KUBECONFIG) kubectl apply -f https://raw.githubusercontent.com/prometheus-operator/prometheus-operator/v0.57.0/example/prometheus-operator-crd-full/monitoring.coreos.com_servicemonitors.yaml
+
+.PHONY: kind-bootstrap-delete-clusters
+kind-bootstrap-delete-clusters: ## Delete clusters created from a bootstrap target.
+	RUN_MODE="delete" ./build/manage-clusters.sh
+
+##@ Build
+
+.PHONY: build
+build: ## Build manager binary.
+	@build/common/scripts/gobuild.sh build/_output/bin/$(IMG) hosted/main.go
