@@ -349,3 +349,16 @@ integration-test:
 	else\
 		$(GINKGO) -v $(TEST_ARGS) --fail-fast --focus-file=$(TEST_FILE) test/integration;\
 	fi
+
+#hosted
+
+.PHONY: install-hosted
+install-hosted: clone-hosted
+	@cd ./governance-policy-addon-controller && KIND_VERSION=latest HOSTED_MODE=true ./build/manage-clusters.sh
+
+.PHONY: clone-hosted
+clone-hosted:
+	-git clone --depth=1 https://github.com/open-cluster-management-io/governance-policy-addon-controller.git
+
+delete-hosted:
+	@cd governance-policy-addon-controller && make kind-bootstrap-delete-clusters  
