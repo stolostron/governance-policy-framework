@@ -72,17 +72,14 @@ jobs:
         echo "::group::make setup hosted mode"
         make install-hosted
         echo "::endgroup::"
-        pwd
-        ls
-        cd ..
-        ls
-        pwd
         echo "::group::Saving kubeconfig paths for use in other steps"
+        echo "ls current"
+        ls
         echo "KUBECONFIG=$(pwd)/governance-policy-addon-controller/policy-addon-ctrl1.kubeconfig" >> $GITHUB_ENV
         echo "show my kubeconfig"
         echo "KUBECONFIG=$(pwd)/governance-policy-addon-controller/policy-addon-ctrl1.kubeconfig"
         export KUBECONFIG=${KUBECONFIG}
-        
+        ls governance-policy-addon-controller
         echo $KUBECONFIG
         kubectl get deployment -A
         kubectl get ns
