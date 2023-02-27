@@ -76,5 +76,7 @@ jobs:
         echo "::group::Saving kubeconfig paths for use in other steps"
         echo "KUBECONFIG=$(pwd)/governance-policy-addon-controller/policy-addon-ctrl1.kubeconfig" >> $GITHUB_ENV
         export KUBECONFIG=${KUBECONFIG}
+        echo $KUBECONFIG
         kubectl get deployment -A
+        kubectl get ns
         echo "::endgroup::"
