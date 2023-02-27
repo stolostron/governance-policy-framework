@@ -65,16 +65,8 @@ jobs:
       working-directory: framework
       run: |
         go mod verify
-        
-    - name: Verify format
-      if: ${{ github.event.repository.name == 'governance-policy-framework' }}
-      working-directory: framework
-      run: |
-        make fmt
-        git diff --exit-code
-        make lint
 
-    - name: Bootstrap the KinD Cluster
+    - name: Bootstrap the KinD Cluster for hosted mode
       working-directory: framework
       run: |
         echo "::group::make setup hosted mode"
