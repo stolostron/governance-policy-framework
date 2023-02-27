@@ -73,10 +73,10 @@ jobs:
         make install-hosted
         echo "::endgroup::"
         echo "::group::Saving kubeconfig paths for use in other steps"
-        echo "ls current"
         ls
         echo "KUBECONFIG=$(pwd)/governance-policy-addon-controller/policy-addon-ctrl1.kubeconfig" >> $GITHUB_ENV
         echo "show my kubeconfig"
+        KUBECONFIG=$(pwd)/governance-policy-addon-controller/policy-addon-ctrl1.kubeconfig
         echo "KUBECONFIG=$(pwd)/governance-policy-addon-controller/policy-addon-ctrl1.kubeconfig"
         export KUBECONFIG=${KUBECONFIG}
         ls governance-policy-addon-controller
