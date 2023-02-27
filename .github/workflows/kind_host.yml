@@ -3,10 +3,6 @@ name: Framework KinD hosted mode Workflow
 on:
   workflow_call:
     inputs:
-      hub_only_component:
-        required: false
-        type: string
-        default: 'false'
 
 env:
   RELEASE_BRANCH: ${{ github.event.pull_request.base.ref || github.ref_name }}
