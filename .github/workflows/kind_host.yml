@@ -1,0 +1,87 @@
+name: Framework KinD hosted mode Workflow
+
+on:
+  workflow_call:
+    inputs:
+      hub_only_component:
+        required: false
+        type: string
+        default: 'false'
+
+env:
+  RELEASE_BRANCH: ${{ github.event.pull_request.base.ref || github.ref_name }}
+
+defaults:
+  run:
+    shell: bash
+
+jobs:
+  tests:
+    name: Tests # Part of the check name, be careful when changing.
+
+    runs-on: ubuntu-latest
+    env:
+      REGISTRY: localhost:5000
+    strategy:
+      # Don't skip all tests if one fails - others may still have useful info
+      fail-fast: false
+
+    steps:
+    - name: Checkout Component Repository
+      # Checkout a specific component when called from another repository
+      if: ${{ github.event.repository.name != 'governance-policy-framework' }}
+      uses: actions/checkout@v3
+      with:
+        # `repository` is inferred as the "caller" repository 
+        path: component
+        # `ref` is inferred as the new commit in the "caller" repository
+
+    - name: Checkout Policy Framework
+      # Checkout a stable branch when called from another repository
+      if: ${{ github.event.repository.name != 'governance-policy-framework' }}
+      uses: actions/checkout@v3
+      with:
+        repository: stolostron/governance-policy-framework
+        path: framework
+        ref: ${{ env.RELEASE_BRANCH }} # like main or release-*
+
+    - name: Checkout Policy Framework
+      # Checkout like "usual" when called from this repository
+      if: ${{ github.event.repository.name == 'governance-policy-framework' }}
+      uses: actions/checkout@v3
+      with:
+        # `repository` is inferred as the "caller" repository 
+        path: framework
+        # `ref` is inferred as the new commit
+
+    - name: Set up Go
+      uses: actions/setup-go@v3
+      with:
+        go-version-file: framework/go.mod
+
+    - name: Verify modules
+      if: ${{ github.event.repository.name == 'governance-policy-framework' }}
+      working-directory: framework
+      run: |
+        go mod verify
+        
+    - name: Verify format
+      if: ${{ github.event.repository.name == 'governance-policy-framework' }}
+      working-directory: framework
+      run: |
+        make fmt
+        git diff --exit-code
+        make lint
+
+    - name: Bootstrap the KinD Cluster
+      working-directory: framework
+      run: |
+        echo "::group::make setup hosted mode"
+        make install-hosted
+        echo "::endgroup::"
+
+        echo "::group::Saving kubeconfig paths for use in other steps"
+        echo "KUBECONFIG=$(pwd)/governance-policy-addon-controller/policy-addon-ctrl1.kubeconfig" >> $GITHUB_ENV
+        export KUBECONFIG=${KUBECONFIG}
+        kubectl get deployment -A
+        echo "::endgroup::"
