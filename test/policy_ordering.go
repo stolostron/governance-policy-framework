@@ -60,7 +60,7 @@ func PolicyOrdering(labels ...string) bool {
 	}
 
 	Describe("GRC: [P1][Sev1][policy-grc] Test policy ordering", Ordered, Label(labels...), func() {
-		Describe("Ordering via a dependency on a Policy", func() {
+		Describe("Ordering via a dependency on a Policy", Ordered, func() {
 			BeforeAll(func() {
 				By("Creating the initial policy to use as a dependency")
 				DoCreatePolicyTest(initialPolicyYaml, GvrConfigurationPolicy)
@@ -83,7 +83,7 @@ func PolicyOrdering(labels ...string) bool {
 			})
 			AfterAll(cleanup)
 		})
-		Describe("Ordering via an extraDependency on a ConfigurationPolicy", func() {
+		Describe("Ordering via an extraDependency on a ConfigurationPolicy", Ordered, func() {
 			BeforeAll(func() {
 				By("Creating the initial policy to use as a dependency")
 				DoCreatePolicyTest(initialPolicyYaml, GvrConfigurationPolicy)
@@ -106,7 +106,7 @@ func PolicyOrdering(labels ...string) bool {
 			})
 			AfterAll(cleanup)
 		})
-		Describe("IgnorePending should allow policies to be compliant when one template is pending", func() {
+		Describe("IgnorePending should allow policies to be compliant when one template is pending", Ordered, func() {
 			BeforeAll(func() {
 				By("Creating the initial policy to use as a dependency")
 				DoCreatePolicyTest(initialPolicyYaml, GvrConfigurationPolicy)
@@ -126,7 +126,7 @@ func PolicyOrdering(labels ...string) bool {
 			})
 			AfterAll(cleanup)
 		})
-		Describe("Ordering via a dependency on a PolicySet", func() {
+		Describe("Ordering via a dependency on a PolicySet", Ordered, func() {
 			It("Should create policyset with noncompliant status", func() {
 				By("Creating the initial policy set to use as a dependency")
 				_, err := OcHub("apply", "-f", testPolicySetYaml, "-n", UserNamespace)
@@ -142,15 +142,15 @@ func PolicyOrdering(labels ...string) bool {
 					ClientHubDynamic, GvrPlacementRule, testPolicySetName+"-plr", UserNamespace,
 					true, DefaultTimeoutSeconds,
 				)
-				plr.Object["status"] = utils.GeneratePlrStatus(ClusterNamespace)
+				plr.Object["status"] = utils.GeneratePlrStatus(ClusterNamespaceOnHub)
 				_, err = ClientHubDynamic.Resource(GvrPlacementRule).Namespace(UserNamespace).UpdateStatus(
 					context.TODO(), plr, metav1.UpdateOptions{},
 				)
 				Expect(err).To(BeNil())
 
-				By("Checking " + testPolicyName + " on managed cluster in ns " + ClusterNamespace)
+				By("Checking " + testPolicyName + " on managed cluster in ns " + ClusterNamespaceOnHub)
 				managedplc := utils.GetWithTimeout(
-					ClientHubDynamic, GvrPolicy, UserNamespace+"."+testPolicyName, ClusterNamespace, true,
+					ClientHubDynamic, GvrPolicy, UserNamespace+"."+testPolicyName, ClusterNamespaceOnHub, true,
 					DefaultTimeoutSeconds,
 				)
 				Expect(managedplc).NotTo(BeNil())
@@ -199,7 +199,6 @@ func PolicyOrdering(labels ...string) bool {
 					"pod-dne", "--ignore-not-found",
 				)
 				Expect(err).To(BeNil())
-
 				DoRootComplianceTest(plcWithDepOnSetName, policiesv1.Pending)
 			})
 			AfterAll(cleanup)

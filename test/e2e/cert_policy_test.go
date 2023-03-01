@@ -177,7 +177,7 @@ var _ = Describe("Test cert policy", func() {
 			Expect(err).To(BeNil())
 			common.DoRootComplianceTest(certPolicyName, policiesv1.Compliant)
 		})
-		It("the messages from histry should match", func() {
+		It("the messages from history should match", func() {
 			By("the policy should have matched history after all these test")
 			common.DoHistoryUpdatedTest(certPolicyName,
 				"Compliant",
@@ -223,12 +223,24 @@ var _ = Describe("Test cert policy", func() {
 			)
 			Expect(err).To(BeNil())
 
-			_, err = common.OcManaged(
-				"delete", "events", "-n", "managed",
-				"--all",
+			_, err = common.OcHosting(
+				"delete", "events", "-n", common.ClusterNamespace,
+				"--field-selector=involvedObject.name="+certPolicyName,
 				"--ignore-not-found",
 			)
 			Expect(err).To(BeNil())
+			_, err = common.OcHosting(
+				"delete", "events", "-n", common.ClusterNamespace,
+				"--field-selector=involvedObject.name="+common.UserNamespace+"."+certPolicyName,
+				"--ignore-not-found",
+			)
+			Expect(err).To(BeNil())
+			_, err = common.OcHub(
+				"delete", "events", "-n", common.ClusterNamespaceOnHub,
+				"--field-selector=involvedObject.name="+common.UserNamespace+"."+certPolicyName,
+				"--ignore-not-found",
+			)
+			ExpectWithOffset(1, err).To(BeNil())
 		})
 	})
 })

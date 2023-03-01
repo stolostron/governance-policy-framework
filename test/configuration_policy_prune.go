@@ -8,8 +8,10 @@ import (
 
 	. "github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
+	"github.com/stolostron/governance-policy-framework/test/common"
 	. "github.com/stolostron/governance-policy-framework/test/common"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
+	"k8s.io/client-go/dynamic"
 	policiesv1 "open-cluster-management.io/governance-policy-propagator/api/v1"
 	"open-cluster-management.io/governance-policy-propagator/test/utils"
 )
@@ -29,7 +31,7 @@ func ConfigPruneBehavior(labels ...string) bool {
 			Expect(err).To(BeNil())
 
 			Eventually(func(g Gomega) {
-				outManaged, err := OcManaged(
+				outManaged, err := OcHosting(
 					"get", "configurationpolicies", "-A",
 				)
 				GinkgoWriter.Printf("cleanPolicy OcManaged configurationpolicy output: %v\n", outManaged)
@@ -37,14 +39,14 @@ func ConfigPruneBehavior(labels ...string) bool {
 				g.Expect(err).To(BeNil())
 			}, DefaultTimeoutSeconds, 1).Should(Succeed())
 
-			outManaged, err := OcManaged(
+			outManaged, err := OcHosting(
 				"delete", "events", "-n", ClusterNamespace,
 				"--field-selector=involvedObject.name="+UserNamespace+"."+policyName,
 				"--ignore-not-found",
 			)
 			GinkgoWriter.Printf("cleanPolicy OcManaged policy event output: %v\n", outManaged)
 			Expect(err).To(BeNil())
-			outManaged, err = OcManaged(
+			outManaged, err = OcHosting(
 				"delete", "events", "-n", ClusterNamespace,
 				"--field-selector=involvedObject.name="+policyName,
 				"--ignore-not-found",
@@ -57,13 +59,21 @@ func ConfigPruneBehavior(labels ...string) bool {
 	pruneTestCreatedByPolicy := func(policyName, policyYaml string, cmShouldBeDeleted bool) {
 		clientManagedDynamic := NewKubeClientDynamic("", KubeconfigManaged, "")
 
+		var clientHostingDynamic dynamic.Interface
+
+		if common.IsHosted {
+			clientHostingDynamic = NewKubeClientDynamic("", KubeconfigHub, "")
+		} else {
+			clientHostingDynamic = NewKubeClientDynamic("", KubeconfigManaged, "")
+		}
+
 		DoCreatePolicyTest(policyYaml, GvrConfigurationPolicy)
 
 		DoRootComplianceTest(policyName, policiesv1.Compliant)
 
 		By("Checking if the status of ConfigurationPolicy " + policyName + " is Compliant")
 		Eventually(func() string {
-			cfgPol := utils.GetWithTimeout(clientManagedDynamic, GvrConfigurationPolicy,
+			cfgPol := utils.GetWithTimeout(clientHostingDynamic, GvrConfigurationPolicy,
 				policyName, ClusterNamespace, true, DefaultTimeoutSeconds)
 
 			compliant, _, _ := unstructured.NestedString(cfgPol.Object, "status", "compliant")
@@ -74,7 +84,7 @@ func ConfigPruneBehavior(labels ...string) bool {
 		if cmShouldBeDeleted {
 			By("Checking that the ConfigurationPolicy has a finalizer")
 			Eventually(func() []string {
-				cfgPol := utils.GetWithTimeout(clientManagedDynamic, GvrConfigurationPolicy,
+				cfgPol := utils.GetWithTimeout(clientHostingDynamic, GvrConfigurationPolicy,
 					policyName, ClusterNamespace, true, DefaultTimeoutSeconds)
 
 				return cfgPol.GetFinalizers()
@@ -93,7 +103,7 @@ func ConfigPruneBehavior(labels ...string) bool {
 
 		By("Checking that the ConfigurationPolicy identified that it created the object")
 		Eventually(func(g Gomega) interface{} {
-			cfgPol := utils.GetWithTimeout(clientManagedDynamic, GvrConfigurationPolicy,
+			cfgPol := utils.GetWithTimeout(clientHostingDynamic, GvrConfigurationPolicy,
 				policyName, ClusterNamespace, true, DefaultTimeoutSeconds)
 
 			relObj, _, err := unstructured.NestedSlice(cfgPol.Object, "status", "relatedObjects")
@@ -124,13 +134,21 @@ func ConfigPruneBehavior(labels ...string) bool {
 		clientManagedDynamic := NewKubeClientDynamic("", KubeconfigManaged, "")
 		clientHubDynamic := NewKubeClientDynamic("", KubeconfigHub, "")
 
+		var clientHostingDynamic dynamic.Interface
+
+		if common.IsHosted {
+			clientHostingDynamic = NewKubeClientDynamic("", KubeconfigHub, "")
+		} else {
+			clientHostingDynamic = NewKubeClientDynamic("", KubeconfigManaged, "")
+		}
+
 		DoCreatePolicyTest(policyYaml, GvrConfigurationPolicy)
 
 		DoRootComplianceTest(policyName, policiesv1.Compliant)
 
 		By("Checking if the status of ConfigurationPolicy " + policyName + " is Compliant")
 		Eventually(func() string {
-			cfgPol := utils.GetWithTimeout(clientManagedDynamic, GvrConfigurationPolicy,
+			cfgPol := utils.GetWithTimeout(clientHostingDynamic, GvrConfigurationPolicy,
 				policyName, ClusterNamespace, true, DefaultTimeoutSeconds)
 
 			compliant, _, _ := unstructured.NestedString(cfgPol.Object, "status", "compliant")
@@ -140,7 +158,7 @@ func ConfigPruneBehavior(labels ...string) bool {
 
 		By("Checking that the ConfigurationPolicy has a finalizer")
 		Eventually(func() []string {
-			cfgPol := utils.GetWithTimeout(clientManagedDynamic, GvrConfigurationPolicy,
+			cfgPol := utils.GetWithTimeout(clientHostingDynamic, GvrConfigurationPolicy,
 				policyName, ClusterNamespace, true, DefaultTimeoutSeconds)
 
 			return cfgPol.GetFinalizers()
@@ -192,7 +210,7 @@ func ConfigPruneBehavior(labels ...string) bool {
 
 		By("Checking that the ConfigurationPolicy is still on the cluster")
 		Consistently(func() interface{} {
-			return utils.GetWithTimeout(clientManagedDynamic, GvrConfigurationPolicy, policyName,
+			return utils.GetWithTimeout(clientHostingDynamic, GvrConfigurationPolicy, policyName,
 				ClusterNamespace, true, DefaultTimeoutSeconds)
 		}, 30, 5).ShouldNot(BeNil())
 
@@ -214,7 +232,7 @@ func ConfigPruneBehavior(labels ...string) bool {
 
 		By("Checking that the ConfigurationPolicy is now cleaned up")
 		utils.GetWithTimeout(
-			clientManagedDynamic,
+			clientHostingDynamic,
 			GvrConfigurationPolicy,
 			policyName,
 			ClusterNamespace,
@@ -226,13 +244,21 @@ func ConfigPruneBehavior(labels ...string) bool {
 	pruneTestInformPolicy := func(policyName, policyYaml string, cmShouldBeDeleted bool) {
 		clientManagedDynamic := NewKubeClientDynamic("", KubeconfigManaged, "")
 
+		var clientHostingDynamic dynamic.Interface
+
+		if common.IsHosted {
+			clientHostingDynamic = NewKubeClientDynamic("", KubeconfigHub, "")
+		} else {
+			clientHostingDynamic = NewKubeClientDynamic("", KubeconfigManaged, "")
+		}
+
 		DoCreatePolicyTest(policyYaml, GvrConfigurationPolicy)
 
 		DoRootComplianceTest(policyName, policiesv1.Compliant)
 
 		By("Checking if the status of ConfigurationPolicy " + policyName + " is Compliant")
 		Eventually(func() string {
-			cfgPol := utils.GetWithTimeout(clientManagedDynamic, GvrConfigurationPolicy,
+			cfgPol := utils.GetWithTimeout(clientHostingDynamic, GvrConfigurationPolicy,
 				policyName, ClusterNamespace, true, DefaultTimeoutSeconds)
 
 			compliant, _, _ := unstructured.NestedString(cfgPol.Object, "status", "compliant")
@@ -243,7 +269,7 @@ func ConfigPruneBehavior(labels ...string) bool {
 		if cmShouldBeDeleted {
 			By("Checking that the ConfigurationPolicy has a finalizer")
 			Eventually(func() []string {
-				cfgPol := utils.GetWithTimeout(clientManagedDynamic, GvrConfigurationPolicy,
+				cfgPol := utils.GetWithTimeout(clientHostingDynamic, GvrConfigurationPolicy,
 					policyName, ClusterNamespace, true, DefaultTimeoutSeconds)
 
 				return cfgPol.GetFinalizers()
@@ -272,7 +298,7 @@ func ConfigPruneBehavior(labels ...string) bool {
 		By("Wait for configpolicy to update to inform")
 		Eventually(func() interface{} {
 			configpol := utils.GetWithTimeout(
-				clientManagedDynamic,
+				clientHostingDynamic,
 				GvrConfigurationPolicy,
 				policyName,
 				ClusterNamespace,
@@ -303,6 +329,14 @@ func ConfigPruneBehavior(labels ...string) bool {
 
 	pruneTestEditedByPolicy := func(policyName, policyYaml string, cmShouldBeDeleted bool) {
 		clientManagedDynamic := NewKubeClientDynamic("", KubeconfigManaged, "")
+
+		var clientHostingDynamic dynamic.Interface
+
+		if common.IsHosted {
+			clientHostingDynamic = NewKubeClientDynamic("", KubeconfigHub, "")
+		} else {
+			clientHostingDynamic = NewKubeClientDynamic("", KubeconfigManaged, "")
+		}
 
 		By("Creating the configmap before the policy")
 
@@ -336,7 +370,7 @@ func ConfigPruneBehavior(labels ...string) bool {
 
 		By("Checking if the status of ConfigurationPolicy " + policyName + " is Compliant")
 		Eventually(func() string {
-			cfgPol := utils.GetWithTimeout(clientManagedDynamic, GvrConfigurationPolicy,
+			cfgPol := utils.GetWithTimeout(clientHostingDynamic, GvrConfigurationPolicy,
 				policyName, ClusterNamespace, true, DefaultTimeoutSeconds)
 
 			compliant, _, _ := unstructured.NestedString(cfgPol.Object, "status", "compliant")
@@ -347,7 +381,7 @@ func ConfigPruneBehavior(labels ...string) bool {
 		if cmShouldBeDeleted {
 			By("Checking that the ConfigurationPolicy has a finalizer")
 			Eventually(func() []string {
-				cfgPol := utils.GetWithTimeout(clientManagedDynamic, GvrConfigurationPolicy,
+				cfgPol := utils.GetWithTimeout(clientHostingDynamic, GvrConfigurationPolicy,
 					policyName, ClusterNamespace, true, DefaultTimeoutSeconds)
 
 				return cfgPol.GetFinalizers()

@@ -23,7 +23,7 @@ import (
 // GetComplianceState returns a function usable by ginkgo.Eventually that retrieves the
 // compliance state of the input policy in the globally configured managed cluster.
 func GetComplianceState(policyName string) func(Gomega) interface{} {
-	return GetClusterComplianceState(policyName, ClusterNamespace)
+	return GetClusterComplianceState(policyName, ClusterNamespaceOnHub)
 }
 
 // GetClusterComplianceState returns a function usable by ginkgo.Eventually that retrieves the
@@ -60,7 +60,7 @@ func PatchPlacementRule(namespace, name string) error {
 		`-p=[{
 			"op": "replace",
 			"path": "/spec/clusterSelector",
-			"value":{"matchExpressions":[{"key": "name", "operator": "In", "values": ["`+ClusterNamespace+`"]}]}
+			"value":{"matchExpressions":[{"key": "name", "operator": "In", "values": ["`+ClusterNamespaceOnHub+`"]}]}
 		}]`,
 	)
 
@@ -91,11 +91,11 @@ func DoCreatePolicyTest(policyFile string, templateGVRs ...schema.GroupVersionRe
 
 	if ManuallyPatchDecisions {
 		plrName := policyName + "-plr"
-		By("Patching " + plrName + " with decision of cluster " + ClusterNamespace)
+		By("Patching " + plrName + " with decision of cluster " + UserNamespace)
 		plr := utils.GetWithTimeout(
 			ClientHubDynamic, GvrPlacementRule, plrName, UserNamespace, true, DefaultTimeoutSeconds,
 		)
-		plr.Object["status"] = utils.GeneratePlrStatus(ClusterNamespace)
+		plr.Object["status"] = utils.GeneratePlrStatus(ClusterNamespaceOnHub)
 		_, err := ClientHubDynamic.Resource(GvrPlacementRule).Namespace(UserNamespace).UpdateStatus(
 			context.TODO(),
 			plr,
@@ -107,7 +107,7 @@ func DoCreatePolicyTest(policyFile string, templateGVRs ...schema.GroupVersionRe
 	managedPolicyName := UserNamespace + "." + policyName
 	By("Checking " + managedPolicyName + " on managed cluster in ns " + ClusterNamespace)
 	mplc := utils.GetWithTimeout(
-		ClientManagedDynamic, GvrPolicy, managedPolicyName, ClusterNamespace, true, DefaultTimeoutSeconds,
+		ClientHostingDynamic, GvrPolicy, managedPolicyName, ClusterNamespace, true, DefaultTimeoutSeconds,
 	)
 	ExpectWithOffset(1, mplc).NotTo(BeNil())
 
@@ -116,7 +116,7 @@ func DoCreatePolicyTest(policyFile string, templateGVRs ...schema.GroupVersionRe
 		By("Checking that the policy template " + typedName + " is present on the managed cluster")
 
 		tmplPlc := utils.GetWithTimeout(
-			ClientManagedDynamic, tmplGVR, policyName, ClusterNamespace, true, DefaultTimeoutSeconds,
+			ClientHostingDynamic, tmplGVR, policyName, ClusterNamespace, true, DefaultTimeoutSeconds,
 		)
 		ExpectWithOffset(1, tmplPlc).NotTo(BeNil())
 	}
@@ -171,7 +171,7 @@ func DoRootComplianceTest(policyName string, compliance policiesv1.ComplianceSta
 func GetHistoryMessages(policyName string, templateIdx int) ([]interface{}, bool, error) {
 	empty := make([]interface{}, 0)
 	replicatedPolicyName := UserNamespace + "." + policyName
-	policyInterface := ClientManagedDynamic.Resource(GvrPolicy).Namespace(ClusterNamespace)
+	policyInterface := ClientHostingDynamic.Resource(GvrPolicy).Namespace(ClusterNamespace)
 
 	policy, err := policyInterface.Get(context.TODO(), replicatedPolicyName, metav1.GetOptions{})
 	if err != nil {
@@ -221,6 +221,7 @@ func DoHistoryUpdatedTest(policyName string, messages ...string) {
 		messages = messages[:10]
 	}
 
+	By("Getting policy history, check latest message")
 	Eventually(func(g Gomega) {
 		history, _, err := GetHistoryMessages(policyName, 0)
 		g.Expect(err).Should(BeNil())
@@ -234,7 +235,8 @@ func DoHistoryUpdatedTest(policyName string, messages ...string) {
 			fmt.Println(fmt.Sprint(i) + ": " + m)
 		}
 		By("Check history length is same")
-		g.Expect(len(history)).Should(Equal(lenMessage))
+		g.Expect(history).Should(HaveLen(lenMessage))
+
 		By("Check history message same")
 		g.Expect(strings.Join(historyMsgs, "")).Should(Equal(strings.Join(messages, "")))
 	}, DefaultTimeoutSeconds, 1).Should(Succeed())
@@ -274,7 +276,7 @@ func setRemediationAction(
 		g.ExpectWithOffset(1, err).To(BeNil())
 	}, DefaultTimeoutSeconds, 1).Should(Succeed())
 
-	managedPolicyClient := ClientManagedDynamic.Resource(GvrPolicy).Namespace(ClusterNamespace)
+	managedPolicyClient := ClientHostingDynamic.Resource(GvrPolicy).Namespace(ClusterNamespace)
 
 	By("Checking that remediationAction = " + remediationAction + " on replicated policy")
 	EventuallyWithOffset(1, func(g Gomega) {
@@ -291,7 +293,7 @@ func setRemediationAction(
 		typedName := tmplGVR.String() + "/" + policyName
 		By("Checking that remediationAction = " + remediationAction + " on policy template " + typedName)
 
-		templateClient := ClientManagedDynamic.Resource(tmplGVR).Namespace(ClusterNamespace)
+		templateClient := ClientHostingDynamic.Resource(tmplGVR).Namespace(ClusterNamespace)
 
 		EventuallyWithOffset(1, func(g Gomega) {
 			template, err := templateClient.Get(ctx, policyName, metav1.GetOptions{})
