@@ -15,6 +15,7 @@ jobs:
     name: Framework KinD hosted mode Workflow
     uses: ./.github/workflows/kind_host.yml
   
-  # kind-tests:
-  #   name: Framework KinD # Part of the check name, be careful when changing.
-  #   uses: ./.github/workflows/kind.yml
+  kind-tests:
+    name: Framework KinD # Part of the check name, be careful when changing.
+    uses: ./.github/workflows/kind.yml
+
