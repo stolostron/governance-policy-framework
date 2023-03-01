@@ -23,6 +23,7 @@ import (
 var (
 	userNamespace         string
 	clusterNamespace      string
+	clusterNamespaceOnHub string
 	kubeconfigHub         string
 	kubeconfigManaged     string
 	defaultTimeoutSeconds int
@@ -30,6 +31,8 @@ var (
 	clientHubDynamic      dynamic.Interface
 	clientManaged         kubernetes.Interface
 	clientManagedDynamic  dynamic.Interface
+	clientHosting         kubernetes.Interface
+	clientHostingDynamic  dynamic.Interface
 )
 
 func TestE2e(t *testing.T) {
@@ -51,18 +54,21 @@ var _ = test.PolicyOrdering()
 
 var _ = BeforeSuite(func() {
 	By("Setup hub and managed client")
-	common.InitInterfaces(common.KubeconfigHub, common.KubeconfigManaged)
+
+	common.InitInterfaces(common.KubeconfigHub, common.KubeconfigManaged, common.IsHosted)
 
 	kubeconfigHub = common.KubeconfigHub
 	kubeconfigManaged = common.KubeconfigManaged
 	userNamespace = common.UserNamespace
 	clusterNamespace = common.ClusterNamespace
 	defaultTimeoutSeconds = common.DefaultTimeoutSeconds
-
+	clusterNamespaceOnHub = common.ClusterNamespaceOnHub
 	clientHub = common.ClientHub
 	clientHubDynamic = common.ClientHubDynamic
 	clientManaged = common.ClientManaged
 	clientManagedDynamic = common.ClientManagedDynamic
+	clientHosting = common.ClientHosting
+	clientHostingDynamic = common.ClientHostingDynamic
 
 	By("Create Namespace if needed")
 	namespaces := clientHub.CoreV1().Namespaces()

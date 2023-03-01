@@ -40,15 +40,15 @@ var _ = Describe("Test policy set", func() {
 				clientHubDynamic, common.GvrPlacementRule, testPolicySetName+"-plr", userNamespace,
 				true, defaultTimeoutSeconds,
 			)
-			plr.Object["status"] = utils.GeneratePlrStatus(clusterNamespace)
+			plr.Object["status"] = utils.GeneratePlrStatus(clusterNamespaceOnHub)
 			_, err = clientHubDynamic.Resource(common.GvrPlacementRule).Namespace(userNamespace).UpdateStatus(
 				context.TODO(), plr, metav1.UpdateOptions{},
 			)
 			Expect(err).To(BeNil())
 
-			By("Checking " + testPolicyName + " on managed cluster in ns " + clusterNamespace)
+			By("Checking " + testPolicyName + " on managed cluster in ns " + clusterNamespaceOnHub)
 			managedplc := utils.GetWithTimeout(
-				clientHubDynamic, common.GvrPolicy, userNamespace+"."+testPolicyName, clusterNamespace, true,
+				clientHubDynamic, common.GvrPolicy, userNamespace+"."+testPolicyName, clusterNamespaceOnHub, true,
 				defaultTimeoutSeconds,
 			)
 			Expect(managedplc).NotTo(BeNil())

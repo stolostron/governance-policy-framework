@@ -61,7 +61,7 @@ var _ = Describe("Test Hub Template Encryption", Ordered, func() {
 		It("Should use encryption in the replicated policy", func() {
 			By("Verifying the replicated policy")
 			managedplc := utils.GetWithTimeout(
-				clientManagedDynamic,
+				clientHostingDynamic,
 				common.GvrPolicy,
 				userNamespace+"."+policyName,
 				clusterNamespace,
@@ -145,7 +145,7 @@ var _ = Describe("Test Hub Template Encryption", Ordered, func() {
 		})
 
 		It("Verifies that the key can be rotated", func() {
-			encryptionSecret, err := clientHub.CoreV1().Secrets(clusterNamespace).Get(
+			encryptionSecret, err := clientHub.CoreV1().Secrets(clusterNamespaceOnHub).Get(
 				ctx, "policy-encryption-key", metav1.GetOptions{},
 			)
 			Expect(err).To(BeNil())
@@ -153,13 +153,14 @@ var _ = Describe("Test Hub Template Encryption", Ordered, func() {
 
 			// Trigger a key rotation
 			encryptionSecret.Annotations[lastRotatedAnnotation] = ""
-			_, err = clientHub.CoreV1().Secrets(clusterNamespace).Update(ctx, encryptionSecret, metav1.UpdateOptions{})
+			_, err = clientHub.CoreV1().Secrets(clusterNamespaceOnHub).
+				Update(ctx, encryptionSecret, metav1.UpdateOptions{})
 			Expect(err).To(BeNil())
 
 			// Wait until the "last-rotated" annotation is set to indicate the key has been rotated
 			Eventually(
 				func() interface{} {
-					encryptionSecret, err = clientHub.CoreV1().Secrets(clusterNamespace).Get(
+					encryptionSecret, err = clientHub.CoreV1().Secrets(clusterNamespaceOnHub).Get(
 						ctx, "policy-encryption-key", metav1.GetOptions{},
 					)
 					Expect(err).To(BeNil())
@@ -177,7 +178,7 @@ var _ = Describe("Test Hub Template Encryption", Ordered, func() {
 			// Wait until the "trigger-update" annotation has been set on the policy
 			expectedTriggerUpdate := fmt.Sprintf(
 				"rotate-key-%s-%s",
-				clusterNamespace,
+				clusterNamespaceOnHub,
 				encryptionSecret.Annotations[lastRotatedAnnotation],
 			)
 

@@ -33,14 +33,18 @@ var (
 	KubeconfigManaged      string
 	UserNamespace          string
 	ClusterNamespace       string
+	ClusterNamespaceOnHub  string
 	DefaultTimeoutSeconds  int
 	ManuallyPatchDecisions bool
 	K8sClient              string
+	IsHosted               bool
 
 	ClientHub            kubernetes.Interface
 	ClientHubDynamic     dynamic.Interface
 	ClientManaged        kubernetes.Interface
 	ClientManagedDynamic dynamic.Interface
+	ClientHosting        kubernetes.Interface
+	ClientHostingDynamic dynamic.Interface
 )
 
 const MaxTimeoutSeconds = 900 // 15 minutes
@@ -58,8 +62,14 @@ func InitFlags(flagset *flag.FlagSet) {
 		&KubeconfigManaged, "kubeconfig_managed", "../../kubeconfig_managed",
 		"Location of the kubeconfig to use; defaults to KUBECONFIG if not set",
 	)
+
+	flagset.BoolVar(
+		&IsHosted, "is_hosted", false,
+		"Whether is hosted mode or not",
+	)
 	flagset.StringVar(&UserNamespace, "user_namespace", "policy-test", "ns on hub to create root policy")
 	flagset.StringVar(&ClusterNamespace, "cluster_namespace", "local-cluster", "cluster ns name")
+	flagset.StringVar(&ClusterNamespaceOnHub, "cluster_namespace_on_hub", "", "cluster ns name on hub")
 	flagset.IntVar(&DefaultTimeoutSeconds, "timeout_seconds", 30, "Timeout seconds for assertion")
 	flagset.BoolVar(
 		&ManuallyPatchDecisions, "patch_decisions", true,
@@ -75,7 +85,19 @@ func InitFlags(flagset *flag.FlagSet) {
 
 // Initializes the Hub and Managed Clients. Should be called after InitFlags,
 // and before any tests using common functions are run.
-func InitInterfaces(hubConfig, managedConfig string) {
+func InitInterfaces(hubConfig, managedConfig string, isHosted bool) {
+	if isHosted {
+		ClientHosting = NewKubeClient("", hubConfig, "")
+		ClientHostingDynamic = NewKubeClientDynamic("", hubConfig, "")
+	} else {
+		ClientHosting = NewKubeClient("", managedConfig, "")
+		ClientHostingDynamic = NewKubeClientDynamic("", managedConfig, "")
+	}
+
+	if ClusterNamespaceOnHub == "" {
+		ClusterNamespaceOnHub = ClusterNamespace
+	}
+
 	ClientHub = NewKubeClient("", hubConfig, "")
 	ClientHubDynamic = NewKubeClientDynamic("", hubConfig, "")
 	ClientManaged = NewKubeClient("", managedConfig, "")
@@ -199,6 +221,16 @@ func OcHub(args ...string) (string, error) {
 // content will be returned in the error.
 func OcManaged(args ...string) (string, error) {
 	args = append([]string{"--kubeconfig=" + KubeconfigManaged}, args...)
+
+	return oc(args...)
+}
+
+func OcHosting(args ...string) (string, error) {
+	if IsHosted {
+		args = append([]string{"--kubeconfig=" + KubeconfigHub}, args...)
+	} else {
+		args = append([]string{"--kubeconfig=" + KubeconfigManaged}, args...)
+	}
 
 	return oc(args...)
 }

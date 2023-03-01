@@ -233,13 +233,23 @@ install-resources:
 e2e-dependencies:
 
 K8SCLIENT ?= oc
+GINKGO = $(LOCAL_BIN)/ginkgo
+IS_HOSTED ?= false
+MANAGED_CLUSTER_NAMESPACE ?= managed
+
 .PHONY: e2e-test
 e2e-test:
 	@if [ -z "$(TEST_FILE)" ]; then\
-		$(GINKGO) -v --no-color $(TEST_ARGS) --fail-fast test/e2e -- -cluster_namespace=$(MANAGED_CLUSTER_NAME) -k8s_client=$(K8SCLIENT) ;\
+		$(GINKGO) -v --no-color $(TEST_ARGS) --fail-fast test/e2e -- -cluster_namespace=$(MANAGED_CLUSTER_NAMESPACE) -k8s_client=$(K8SCLIENT) -is_hosted=$(IS_HOSTED) -cluster_namespace_on_hub=$(CLUSTER_NAMESPACE_ON_HUB);\
 	else\
-		$(GINKGO) -v --no-color $(TEST_ARGS) --fail-fast --focus-file=$(TEST_FILE) test/e2e -- -cluster_namespace=$(MANAGED_CLUSTER_NAME) -k8s_client=$(K8SCLIENT) ;\
+		$(GINKGO) -v --no-color $(TEST_ARGS) --fail-fast --focus-file=$(TEST_FILE) test/e2e -- -cluster_namespace=$(MANAGED_CLUSTER_NAMESPACE) -k8s_client=$(K8SCLIENT) -is_hosted=$(IS_HOSTED) -cluster_namespace_on_hub=$(CLUSTER_NAMESPACE_ON_HUB);\
 	fi
+
+.PHONY: e2e-test-hosted
+e2e-test-hosted: CLUSTER_NAMESPACE_ON_HUB=cluster2 
+e2e-test-hosted: IS_HOSTED=true 
+e2e-test-hosted: MANAGED_CLUSTER_NAMESPACE=cluster2-hosted
+e2e-test-hosted: e2e-test
 
 .PHONY: e2e-debug
 e2e-debug: e2e-debug-hub e2e-debug-managed
@@ -309,3 +319,42 @@ integration-test:
 	else\
 		$(GINKGO) -v $(TEST_ARGS) --fail-fast --focus-file=$(TEST_FILE) test/integration;\
 	fi
+
+#hosted
+ADDON_CONTROLLER = $(PWD)/governance-policy-addon-controller
+
+.PHONY: kind-bootstrap-hosted
+kind-bootstrap-hosted: kind-install-hosted install-crds install-resources kind-deploy-cert-manager setup-managedcluster
+
+.PHONY: kind-install-hosted
+kind-install-hosted: $(ADDON_CONTROLLER)
+	@cd ./governance-policy-addon-controller && KIND_VERSION=$(KIND_VERSION) HOSTED_MODE=true ./build/manage-clusters.sh
+	@cp ./governance-policy-addon-controller/policy-addon-ctrl1.kubeconfig ./kubeconfig_$(HUB_CLUSTER_NAME)
+	@cp ./governance-policy-addon-controller/policy-addon-ctrl1.kubeconfig-internal ./kubeconfig_$(HUB_CLUSTER_NAME)_internal
+	@cp ./governance-policy-addon-controller/policy-addon-ctrl2.kubeconfig ./kubeconfig_$(MANAGED_CLUSTER_NAME)
+	@cp ./governance-policy-addon-controller/policy-addon-ctrl2.kubeconfig-internal ./kubeconfig_$(MANAGED_CLUSTER_NAME)_internal
+	@echo installing policy-propagator on hub
+	-kubectl create ns $(KIND_HUB_NAMESPACE) --kubeconfig=$(PWD)/kubeconfig_$(HUB_CLUSTER_NAME)
+	kubectl apply -f https://raw.githubusercontent.com/stolostron/governance-policy-propagator/$(RELEASE_BRANCH)/deploy/operator.yaml -n $(KIND_HUB_NAMESPACE) --kubeconfig=$(PWD)/kubeconfig_$(HUB_CLUSTER_NAME)
+
+$(ADDON_CONTROLLER):
+	git clone --depth=1 -b $(RELEASE_BRANCH) https://github.com/stolostron/governance-policy-addon-controller.git
+
+.PHONY: setup-managedcluster
+setup-managedcluster: MANAGED_CLUSTER_NAMESPACE=cluster2-hosted
+setup-managedcluster: 
+	-kubectl create ns $(MANAGED_CLUSTER_NAMESPACE) --kubeconfig=kubeconfig_$(HUB_CLUSTER_NAME)
+	-kubectl -n $(MANAGED_CLUSTER_NAMESPACE) create secret generic config-policy-controller-managed-kubeconfig --from-file=kubeconfig=$(PWD)/kubeconfig_managed_internal --kubeconfig=kubeconfig_$(HUB_CLUSTER_NAME)
+	-kubectl -n $(MANAGED_CLUSTER_NAMESPACE) create secret generic cert-policy-controller-managed-kubeconfig --from-file=kubeconfig=$(PWD)/kubeconfig_managed_internal --kubeconfig=kubeconfig_$(HUB_CLUSTER_NAME)
+	-kubectl -n $(MANAGED_CLUSTER_NAMESPACE) create secret generic iam-policy-controller-managed-kubeconfig --from-file=kubeconfig=$(PWD)/kubeconfig_managed_internal --kubeconfig=kubeconfig_$(HUB_CLUSTER_NAME)
+	-sed 's/imagetag/$(VERSION_TAG)/g' test/resources/hosted_mode/managed-cluster-addon.yaml | kubectl apply -f- --kubeconfig=kubeconfig_$(HUB_CLUSTER_NAME) -n cluster2
+
+kind-delete-hosted: $(ADDON_CONTROLLER)
+	@cd governance-policy-addon-controller && make kind-bootstrap-delete-clusters 
+	@rm kubeconfig_hub kubeconfig_managed kubeconfig_hub_internal kubeconfig_managed_internal
+
+.PHONY: 
+kind-deploy-cert-manager:
+	@echo installing cert-manager on managed
+	kubectl apply -f https://github.com/jetstack/cert-manager/releases/download/v1.5.5/cert-manager.yaml --kubeconfig=$(PWD)/kubeconfig_$(MANAGED_CLUSTER_NAME)
+

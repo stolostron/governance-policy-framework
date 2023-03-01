@@ -20,21 +20,21 @@ import (
 func configPolicyTestCleanUp(roleName, rolePolicyName, rolePolicyYAML string) {
 	By("Deleting the role, policy, and events on managed cluster")
 	common.DoCleanupPolicy(rolePolicyYAML, common.GvrConfigurationPolicy)
-	_, err := common.OcManaged(
-		"delete", "events", "-n", "managed",
+	_, err := common.OcHosting(
+		"delete", "events", "-n", common.ClusterNamespace,
 		"--field-selector=involvedObject.name="+common.UserNamespace+"."+rolePolicyName,
+		"--ignore-not-found",
+	)
+	ExpectWithOffset(1, err).To(BeNil())
+	_, err = common.OcHosting(
+		"delete", "events", "-n", common.ClusterNamespace,
+		"--field-selector=involvedObject.name="+rolePolicyName,
 		"--ignore-not-found",
 	)
 	ExpectWithOffset(1, err).To(BeNil())
 	_, err = common.OcHub(
-		"delete", "events", "-n", "managed",
+		"delete", "events", "-n", common.ClusterNamespaceOnHub,
 		"--field-selector=involvedObject.name="+common.UserNamespace+"."+rolePolicyName,
-		"--ignore-not-found",
-	)
-	ExpectWithOffset(1, err).To(BeNil())
-	_, err = common.OcManaged(
-		"delete", "events", "-n", "managed",
-		"--field-selector=involvedObject.name="+rolePolicyName,
 		"--ignore-not-found",
 	)
 	ExpectWithOffset(1, err).To(BeNil())
