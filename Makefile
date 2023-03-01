@@ -352,13 +352,24 @@ integration-test:
 
 #hosted
 
+.PHONY: bootstrap-hosted
+bootstrap-hosted: clone-hosted install-hosted copy-config install-crds install-resources kind-deploy-policy-framework kind-deploy-policy-controllers
+
 .PHONY: install-hosted
-install-hosted: clone-hosted
+install-hosted: 
 	@cd ./governance-policy-addon-controller && KIND_VERSION=latest HOSTED_MODE=true ./build/manage-clusters.sh
+
+.PHONY: 
+copy-config:
+	@cp ./governance-policy-addon-controller/policy-addon-ctrl1.kubeconfig ./kubeconfig_hub
+	@cp ./governance-policy-addon-controller/policy-addon-ctrl1.kubeconfig-internal ./kubeconfig_hub_internal
+	@cp ./governance-policy-addon-controller/policy-addon-ctrl2.kubeconfig ./kubeconfig_managed
+	@cp ./governance-policy-addon-controller/policy-addon-ctrl2.kubeconfig-internal ./kubeconfig_managed_internal
 
 .PHONY: clone-hosted
 clone-hosted:
 	-git clone --depth=1 https://github.com/open-cluster-management-io/governance-policy-addon-controller.git
 
 delete-hosted:
-	@cd governance-policy-addon-controller && make kind-bootstrap-delete-clusters  
+	@cd governance-policy-addon-controller && make kind-bootstrap-delete-clusters 
+	@rm kubeconfig_hub kubeconfig_managed kubeconfig_hub_internal kubeconfig_managed_internal 

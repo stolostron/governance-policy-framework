@@ -18,7 +18,7 @@ defaults:
 
 jobs:
   tests:
-    name: Tests # Part of the check name, be careful when changing.
+    name: Hosted mode Tests # Part of the check name, be careful when changing.
 
     runs-on: ubuntu-latest
     env:
@@ -26,6 +26,13 @@ jobs:
     strategy:
       # Don't skip all tests if one fails - others may still have useful info
       fail-fast: false
+      matrix:
+        # Run tests against a new version of kubernetes
+        # KinD tags are listed at https://hub.docker.com/r/kindest/node/tags
+        kind:
+          - 'latest'
+        deployOnHub:
+          - 'false'
 
     steps:
     - name: Checkout Component Repository
@@ -69,18 +76,96 @@ jobs:
     - name: Bootstrap the KinD Cluster for hosted mode
       working-directory: framework
       run: |
+        echo "::group::make e2e-dependencies"
+        make e2e-dependencies
+        echo "::endgroup::"
+
         echo "::group::make setup hosted mode"
-        make install-hosted
+        make bootstrap-hosted
         echo "::endgroup::"
         echo "::group::Saving kubeconfig paths for use in other steps"
+    
+        echo "MANAGED_KUBECONFIG=$(pwd)/governance-policy-addon-controller/policy-addon-ctrl2.kubeconfig" >> $GITHUB_ENV
+        echo "HUB_KUBECONFIG=$(pwd)/governance-policy-addon-controller/policy-addon-ctrl1.kubeconfig" >> $GITHUB_ENV
+        echo "HUB_INTERNAL_KUBECONFIG=$(pwd)/governance-policy-addon-controller/policy-addon-ctrl1.kubeconfig-internal" >> $GITHUB_ENV
+        cp $(pwd)/governance-policy-addon-controller/policy-addon-ctrl1.kubeconfig $(pwd)/kubeconfig_hub
+        cp $(pwd)/governance-policy-addon-controller/policy-addon-ctrl2.kubeconfig $(pwd)/kubeconfig_managed
         ls
-        echo "KUBECONFIG=$(pwd)/governance-policy-addon-controller/policy-addon-ctrl1.kubeconfig" >> $GITHUB_ENV
-        echo "show my kubeconfig"
+
+        echo "Check clusters are successful"
         KUBECONFIG=$(pwd)/governance-policy-addon-controller/policy-addon-ctrl1.kubeconfig
-        echo "KUBECONFIG=$(pwd)/governance-policy-addon-controller/policy-addon-ctrl1.kubeconfig"
         export KUBECONFIG=${KUBECONFIG}
-        ls governance-policy-addon-controller
-        echo $KUBECONFIG
         kubectl get deployment -A
         kubectl get ns
         echo "::endgroup::"
+    
+        echo "::group::test for patch step"
+        export MANAGED_CONFIG=$(pwd)/governance-policy-addon-controller/policy-addon-ctrl2.kubeconfig
+        export HUB_CONFIG=$(pwd)/governance-policy-addon-controller/policy-addon-ctrl1.kubeconfig
+        export HUB_CONFIG_INTERNAL=$(pwd)/governance-policy-addon-controller/policy-addon-ctrl1.kubeconfig-internal
+        echo " MANAGED_CONFIG: $MANAGED_CONFIG"
+        echo "::endgroup::"
+
+    - name: Patch Component Image
+      if: ${{ github.event.repository.name != 'governance-policy-framework' }}
+      working-directory: component
+      env:
+        deployOnHub: ${{ matrix.deployOnHub }}
+        HUB_ONLY: ${{ inputs.hub_only_component }}
+        WATCH_NAMESPACE: managed
+      run: |
+        export MANAGED_CONFIG=$(pwd)/governance-policy-addon-controller/policy-addon-ctrl2.kubeconfig
+        export HUB_CONFIG=$(pwd)/governance-policy-addon-controller/policy-addon-ctrl1.kubeconfig
+        export HUB_CONFIG_INTERNAL=$(pwd)/governance-policy-addon-controller/policy-addon-ctrl1.kubeconfig-internal
+
+        if [[ "${deployOnHub}" == "true" ]] || [[ "${HUB_ONLY}" == "true" ]]; then
+          echo "Using KIND_NAME=hub and the hub config as the default kubeconfig"
+          export KIND_NAME=hub
+          export KUBECONFIG=${HUB_KUBECONFIG}
+        else
+          echo "Using KIND_NAME=managed and the managed config as the default kubeconfig"
+          export KIND_NAME=managed
+          export KUBECONFIG=${MANAGED_KUBECONFIG}
+        fi
+
+        echo "::group::make build-images"
+        make build-images
+        echo "::endgroup::"
+
+        echo "::group::make kind-deploy-controller-dev"
+        make kind-deploy-controller-dev
+        echo "::endgroup::"
+
+    - name: Run e2e tests
+      working-directory: framework
+      env:
+        TEST_ARGS: --json-report=report.json --junit-report=report.xml --output-dir=test-output
+      run: |
+        MANAGED_CLUSTER_NAME=cluster2 make e2e-test
+
+    - name: Debug
+      if: ${{ failure() }}
+      working-directory: framework
+      run: |
+        make e2e-debug-kind
+        tar -czvf e2e-debug.tar.gz test-output/debug
+    
+    - name: Upload Debug Artifacts
+      if: ${{ failure() }}
+      uses: actions/upload-artifact@v3
+      with:
+        name: fw-kind-debug-${{ matrix.kind }}-${{ matrix.deployOnHub }}
+        path: framework/e2e-debug.tar.gz
+
+    - name: Upload Test Reports
+      uses: actions/upload-artifact@v3
+      with:
+        name: fw-kind-report-${{ matrix.kind }}-${{ matrix.deployOnHub }}
+        path: |
+          framework/test-output/report.xml
+          framework/test-output/report.json
+
+    - name: Clean up for next  
+      working-directory: framework
+      run:
+        make delete-hosted
