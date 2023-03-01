@@ -141,7 +141,7 @@ jobs:
       env:
         TEST_ARGS: --json-report=report.json --junit-report=report.xml --output-dir=test-output
       run: |
-        MANAGED_CLUSTER_NAME=cluster2 make e2e-test
+        make e2e-test
 
     - name: Debug
       if: ${{ failure() }}
