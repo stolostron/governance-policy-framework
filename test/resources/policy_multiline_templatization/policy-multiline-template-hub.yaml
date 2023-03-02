@@ -16,6 +16,7 @@ spec:
           severity: low
           object-templates-raw: |
             {{hub range (lookup "v1" "ConfigMap" "policy-test" "").items hub}}
+            {{hub- if .metadata.name | contains "templatization-config" hub}}
               - complianceType: musthave
                 objectDefinition:
                   apiVersion: v1
@@ -25,6 +26,7 @@ spec:
                     namespace: policy-test
                   data:
                     extraData: exists!
+            {{hub- end hub}}
             {{hub end hub}}
 ---
 apiVersion: policy.open-cluster-management.io/v1
