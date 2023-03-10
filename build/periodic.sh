@@ -4,7 +4,7 @@
 
 COMPONENT_ORG=stolostron
 DEFAULT_BRANCH=${DEFAULT_BRANCH:-"main"}
-CHECK_RELEASES="2.4 2.5 2.6 2.7 2.8"
+CHECK_RELEASES="2.5 2.6 2.7 2.8"
 # This list can include all postsubmit jobs for all repos--if a job doesn't exist it's filtered to empty and skipped
 CHECK_JOBS=${CHECK_JOBS:-"publish publish-test images latest-image-mirror latest-test-image-mirror"}
 UTIL_REPOS="policy-grc-squad pipeline multiclusterhub-operator"
@@ -22,11 +22,11 @@ cloneRepos() {
 		REPOS=$(cat policy-grc-squad/main-branch-sync/repo.txt)
 		# Manually append deprecated repos
 		REPOS="${REPOS}
-			stolostron/grc-ui
-			stolostron/grc-ui-api
 			stolostron/governance-policy-spec-sync
 			stolostron/governance-policy-status-sync
-			stolostron/governance-policy-template-sync"
+			stolostron/governance-policy-template-sync
+			stolostron/policy-collection
+			stolostron/policy-generator-plugin"
 		for repo in $REPOS; do
 			echo "Cloning $repo ...."
 			git clone --quiet https://github.com/$repo.git $repo || exit 1
