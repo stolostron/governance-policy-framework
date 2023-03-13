@@ -30,12 +30,6 @@ MANAGED_CLUSTER_NAME ?= managed
 HUB_CLUSTER_NAME ?= hub
 KIND_VERSION ?= latest
 
-ifneq ($(KIND_VERSION), latest)
-	KIND_ARGS = --image kindest/node:$(KIND_VERSION)
-else
-	KIND_ARGS =
-endif
-
 # Fetch OLM version
 OLM_VERSION ?= v0.21.2
 
@@ -50,13 +44,6 @@ DEBUG_DIR ?= test-output/debug
 TEST_FILE ?=
 TEST_ARGS ?=
 
-# go-get-tool will 'go install' any package $1 and install it to LOCAL_BIN.
-define go-get-tool
-@set -e ;\
-echo "Checking installation of $(1)" ;\
-GOBIN=$(LOCAL_BIN) go install $(1)
-endef
-
 include build/common/Makefile.common.mk
 
 ############################################################
@@ -66,48 +53,28 @@ include build/common/Makefile.common.mk
 .PHONY: clean
 clean::
 	-rm bin/*
-	-rm kubeconfig_$(MANAGED_CLUSTER_NAME)
-	-rm kubeconfig_$(HUB_CLUSTER_NAME)
-	-rm kubeconfig_$(HUB_CLUSTER_NAME)_internal
+	-rm kubeconfig_*
 	-rm -r test-output/
 	-rm -r vendor/
-
-############################################################
-# format section
-############################################################
-
-.PHONY: fmt-dependencies
-fmt-dependencies:
-	$(call go-get-tool,github.com/daixiang0/gci@v0.6.0)
-	$(call go-get-tool,mvdan.cc/gofumpt@v0.3.1)
-
-# All available format: format-go format-protos format-python
-# Default value will run all formats, override these make target with your requirements:
-#    eg: fmt: format-go format-protos
-.PHONY: fmt
-fmt: fmt-dependencies
-	find . -not \( -path "./.go" -prune \) -name "*.go" | xargs gofmt -s -w
-	find . -not \( -path "./.go" -prune \) -name "*.go" | xargs gofumpt -l -w
 
 ############################################################
 # lint section
 ############################################################
 
-.PHONY: lint-dependencies
-lint-dependencies:
-	$(call go-get-tool,github.com/golangci/golangci-lint/cmd/golangci-lint@v1.46.2)
-
 .PHONY: lint
-lint: lint-dependencies lint-all
+lint:
+
+.PHONY: fmt
+fmt:
 
 ############################################################
 # e2e test section
 ############################################################
 .PHONY: kind-bootstrap-cluster
-kind-bootstrap-cluster: kind-create-cluster install-crds install-resources kind-deploy-policy-framework kind-deploy-policy-controllers
+kind-bootstrap-cluster: kind-create-clusters install-crds install-resources kind-deploy-policy-framework kind-deploy-policy-controllers
 
 .PHONY: kind-bootstrap-cluster-dev
-kind-bootstrap-cluster-dev: kind-create-cluster install-crds install-resources
+kind-bootstrap-cluster-dev: kind-create-clusters install-crds install-resources
 
 .PHONY: kind-deploy-policy-controllers
 kind-deploy-policy-controllers: kind-deploy-cert-policy-controller kind-deploy-config-policy-controller kind-deploy-iam-policy-controller kind-deploy-olm
@@ -118,10 +85,7 @@ kind-policy-framework-hub-setup:
 	kind get kubeconfig --name $(HUB_CLUSTER_NAME) --internal > $(PWD)/kubeconfig_$(HUB_CLUSTER_NAME)_internal
 
 .PHONY: kustomize
-KUSTOMIZE = $(LOCAL_BIN)/kustomize
-.PHONY: kustomize
-kustomize: ## Download kustomize locally if necessary.
-	$(call go-get-tool,sigs.k8s.io/kustomize/kustomize/v4@v4.5.7)
+kustomize:
 
 .PHONY: deploy-policy-framework-hub-crd-operator
 deploy-policy-framework-hub-crd-operator:
@@ -213,8 +177,8 @@ kind-deploy-olm:
 	chmod +x install.sh
 	./install.sh $(OLM_VERSION)
 
-.PHONY: kind-create-cluster
-kind-create-cluster:
+.PHONY: kind-create-clusters
+kind-create-clusters:
 	@echo "creating cluster hub"
 	kind create cluster --name $(HUB_CLUSTER_NAME) $(KIND_ARGS)
 	kind get kubeconfig --name $(HUB_CLUSTER_NAME) > $(PWD)/kubeconfig_$(HUB_CLUSTER_NAME)
@@ -263,10 +227,8 @@ install-resources:
 
 .PHONY: e2e-dependencies
 e2e-dependencies:
-	$(call go-get-tool,github.com/onsi/ginkgo/v2/ginkgo@$(shell awk '/github.com\/onsi\/ginkgo\/v2/ {print $$2}' go.mod))
 
 K8SCLIENT ?= oc
-GINKGO = $(LOCAL_BIN)/ginkgo
 .PHONY: e2e-test
 e2e-test:
 	@if [ -z "$(TEST_FILE)" ]; then\
