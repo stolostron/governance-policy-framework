@@ -12,5 +12,5 @@ bin/
 vendor/
 
 # Log files from build/periodic.sh
-errors.log
+*-errors.log
 install.sh
