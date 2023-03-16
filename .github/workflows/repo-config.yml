@@ -1,0 +1,58 @@
+name: Code Health Check
+
+on:
+  schedule:
+    - cron: "0 6 * * *"
+
+defaults:
+  run:
+    shell: bash
+
+jobs:
+  checks:
+    name: Code Health Checks
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout Policy Framework
+        uses: actions/checkout@v3
+        with:
+          # `repository` is inferred as the "caller" repository
+          path: framework
+          # `ref` is inferred as the new commit
+
+      - name: CI Check
+        id: ci_check
+        working-directory: framework
+        continue-on-error: true
+        env:
+          GITHUB_USER: ${{ secrets.WORKFLOW_USER }}
+          GITHUB_TOKEN: ${{ secrets.WORKFLOW_TOKEN }}
+          SKIP_CLEANUP: "true"
+        run: |
+          ./build/periodic.sh
+          echo "CI_CHECK=$(cat summary-ci-errors.log)" >> ${GITHUB_OUTPUT}
+
+      - name: Codebase Check
+        id: codebase_check
+        working-directory: framework
+        continue-on-error: true
+        env:
+          SKIP_CLONING: "true"
+        run: |
+          [[ -d "./stolostron/" ]] && ./build/codebase-check.sh
+          echo "CODEBASE_CHECK=$(cat summary-codebase-errors.log)" >> ${GITHUB_OUTPUT}
+
+      - name: Send result to Slack
+        id: slack
+        uses: slackapi/slack-github-action@v1.23.0
+        env:
+          SLACK_WEBHOOK_URL: ${{ secrets.CODE_HEALTH_SLACK_WEBHOOK }}
+        with:
+          payload: |
+            {
+              "ci_check": "${{ steps.ci_check.outputs.CI_CHECK }}",
+              "codebase_check": "${{ steps.codebase_check.CODEBASE_CHECK }}",
+              "emoji": "${{ github.action_status == 'success' && 'white_check_mark' || 'warning' }}",
+              "result": "${{ github.action_status }}",
+              "url": "${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}"
+            }

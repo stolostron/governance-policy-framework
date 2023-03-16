@@ -2,37 +2,12 @@
 
 # Validate the pipeline is up to date and that no failed prow jobs exist
 
-COMPONENT_ORG=stolostron
-DEFAULT_BRANCH=${DEFAULT_BRANCH:-"main"}
+DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" >/dev/null 2>&1 && pwd )"
+source ${DIR}/common.sh
+
 CHECK_RELEASES="2.5 2.6 2.7 2.8"
 # This list can include all postsubmit jobs for all repos--if a job doesn't exist it's filtered to empty and skipped
 CHECK_JOBS=${CHECK_JOBS:-"publish publish-test images latest-image-mirror latest-test-image-mirror"}
-UTIL_REPOS="policy-grc-squad pipeline multiclusterhub-operator"
-
-# Clone the repositories needed for this script to work
-cloneRepos() {
-	for prereqrepo in ${UTIL_REPOS}; do
-		if [ ! -d ${prereqrepo} ]; then
-			echo "Cloning ${prereqrepo} ..."
-			git clone --quiet https://${GITHUB_USER}:${GITHUB_TOKEN}@github.com/${COMPONENT_ORG}/${prereqrepo}.git || exit 1
-		fi
-	done
-	if [ ! -d "${COMPONENT_ORG}" ]; then
-		# Collect repos from https://github.com/stolostron/policy-grc-squad/blob/master/main-branch-sync/repo.txt
-		REPOS=$(cat policy-grc-squad/main-branch-sync/repo.txt)
-		# Manually append deprecated repos
-		REPOS="${REPOS}
-			stolostron/governance-policy-spec-sync
-			stolostron/governance-policy-status-sync
-			stolostron/governance-policy-template-sync
-			stolostron/policy-collection
-			stolostron/policy-generator-plugin"
-		for repo in $REPOS; do
-			echo "Cloning $repo ...."
-			git clone --quiet https://github.com/$repo.git $repo || exit 1
-		done
-	fi
-}
 
 # return URL of open sync issues (uses authenticated API to prevent rate limiting)
 getSyncIssues() {
@@ -111,73 +86,11 @@ checkProwJob() {
 	return $rcode
 }
 
-# Get the diff of CRDs across RHACM
-crdDiff() {
-	if [ "$1" = "$DEFAULT_BRANCH" ]; then
-		BRANCH="$1"
-	else
-		BRANCH="release-$1"
-	fi
-	propagator_path="stolostron/governance-policy-propagator/deploy/crds"
-	mch_path="multiclusterhub-operator/pkg/templates/crds/grc"
-	mch_repo="multiclusterhub-operator"
-
-	# Check out the target release branch in the repos
-	git -C stolostron/governance-policy-propagator/ checkout --quiet $BRANCH
-	git -C $mch_repo/ checkout --quiet $BRANCH
-
-	echo "Checking that all CRDs are present in the MultiClusterHub GRC chart for $BRANCH ..."
-	PROPAGATOR_CRD_FILES=$(ls -p -1 $propagator_path | grep -v /)
-	CRD_LIST=$(diff <( echo "${PROPAGATOR_CRD_FILES}" ) <( ls -p -1 ${mch_path} | sed 's/_crd//' | grep -v OWNERS))
-	if [[ -n "${CRD_LIST}" ]]; then
-		echo "****"
-		echo "ERROR: CRDs are not synced to $mch_repo for $BRANCH" | tee -a ${ERROR_FILE}
-		echo "${CRD_LIST}" | sed 's/^/   /' | tee -a ${ERROR_FILE}
-		echo "***"
-		return 1
-	fi
-
-	rcode=0
-	for crd_file in ${PROPAGATOR_CRD_FILES}; do
-		CRD_DIFF="$(diff ${propagator_path}/${crd_file} ${mch_path}/${crd_file})"
-		if [[ -n "${CRD_DIFF}" ]]; then
-			echo "****"
-			echo "ERROR: CRD $crd_file is not synced to $mch_repo for $BRANCH" | tee -a ${ERROR_FILE}
-			echo "${CRD_DIFF}" | sed 's/^/   /' | tee -a ${ERROR_FILE}
-			echo "***"
-			rcode=1
-		fi
-	done
-	
-	return $rcode
-}
-
-crdSyncCheck() {
-	echo "Checking the CRD sync GitHub Action in governance-policy-addon-controller ..."
-	WORKFLOW_JSON=$(curl -s https://api.github.com/repos/stolostron/governance-policy-addon-controller/actions/workflows/crd-sync.yml/runs)
-	WORKFLOW_CONCLUSION=$(echo "$WORKFLOW_JSON" | jq -r '.workflow_runs[0].conclusion')
-	WORKFLOW_URL=$(echo "$WORKFLOW_JSON" | jq -r '.workflow_runs[0].html_url')
-	if [[ "${WORKFLOW_CONCLUSION}" != "success" ]]; then
-		echo "WORKFLOW_CONCLUSION=${WORKFLOW_CONCLUSION}"
-		echo "****"
-		echo "ERROR: CRD sync action is failing in governance-policy-addon-controller" | tee -a ${ERROR_FILE}
-		echo "   Link: ${WORKFLOW_URL}" | tee -a ${ERROR_FILE}
-		echo "***"
-		return 1
-	fi
-}
-
-cleanup() {
-	for repo_dir in ${UTIL_REPOS}; do
-		rm -rf ${repo_dir}
-	done
-	rm -rf "$COMPONENT_ORG"
-}
-
 rc=0
 
-ARTIFACT_DIR=${ARTIFACT_DIR:-$(pwd)}
-ERROR_FILE="${ARTIFACT_DIR}/errors.log"
+ARTIFACT_DIR=${ARTIFACT_DIR:-${PWD}}
+ERROR_FILE_NAME="ci-errors.log"
+ERROR_FILE="${ARTIFACT_DIR}/${ERROR_FILE_NAME}"
 
 # Clean up error file if it exists
 if [ -f ${ERROR_FILE} ]; then
@@ -185,8 +98,8 @@ if [ -f ${ERROR_FILE} ]; then
 fi
 
 # Limit repositories to our repositories that create images which means they have prow jobs
-
 cloneRepos
+
 REPOS=`ls "$COMPONENT_ORG"`
 for repo in $REPOS; do
 	# Special handling if repo name differs from image name or repo has more than one image
@@ -265,31 +178,20 @@ for repo in $REPOS; do
 	done
 done
 
-# Check CRDs for default branch and latest release
-for release in $DEFAULT_BRANCH ${CHECK_RELEASES##* }; do
-	crdDiff "$release"
-	if [ $? -eq 1 ]; then
-		rc=1
-	fi
-done
-
-crdSyncCheck
-if [ $? -eq 1 ]; then
-	rc=1
-fi
-
 cleanup
 
+SUMMARY_FILE="${ARTIFACT_DIR}/summary-${ERROR_FILE_NAME}"
+
 echo ""
-echo "****"
-echo "PROW STATUS REPORT:"
-echo "***"
+echo "****" | tee -a ${SUMMARY_FILE}
+echo "CI STATUS REPORT" | tee -a ${SUMMARY_FILE}
+echo "***" | tee -a ${SUMMARY_FILE}
 if [ -f ${ERROR_FILE} ]; then
 	# Print the error log to stdout with duplicate lines removed
-	awk '!a[$0]++' ${ERROR_FILE}
+	awk '!a[$0]++' ${ERROR_FILE} | tee -a ${SUMMARY_FILE}
 else
-	echo "All checks PASSED!"
+	echo "All checks PASSED!" | tee -a ${SUMMARY_FILE}
 fi
-echo "***"
+echo "***" | tee -a ${SUMMARY_FILE}
 
-exit $rc
+exit ${rc}
