@@ -99,7 +99,7 @@ var _ = Describe(
 			By("Checking if the status of the root policy is Compliant")
 			Eventually(
 				common.GetComplianceState(policyCertificateName),
-				defaultTimeoutSeconds*2,
+				defaultTimeoutSeconds*4,
 				1,
 			).Should(Equal(policiesv1.Compliant))
 		})

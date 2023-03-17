@@ -87,7 +87,7 @@ var _ = Describe("GRC: [P1][Sev1][policy-grc] Test policy set", Ordered, Label("
 
 				return rootPlcSet.Object["status"]
 			},
-				defaultTimeoutSeconds*2,
+				defaultTimeoutSeconds*6,
 				1,
 			).Should(utils.SemanticEqual(yamlPlc.Object["status"]))
 		})

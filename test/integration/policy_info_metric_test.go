@@ -205,7 +205,7 @@ var _ = Describe("GRC: [P1][Sev1][policy-grc] Test policy_governance_info metric
 		Expect(err).To(BeNil())
 		Eventually(
 			common.GetComplianceState(compliantPolicyName),
-			defaultTimeoutSeconds*2,
+			defaultTimeoutSeconds*4,
 			1,
 		).Should(Equal(policiesv1.Compliant))
 

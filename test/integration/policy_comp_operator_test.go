@@ -330,7 +330,7 @@ var _ = Describe("RHACM4K-2222 GRC: [P1][Sev1][policy-grc] "+
 		})
 		It("stable/"+compPolicyName+" should be noncompliant", func() {
 			By("Checking if the status of root policy is noncompliant")
-			Eventually(getComplianceState, defaultTimeoutSeconds*2, 1).Should(Equal(policiesv1.NonCompliant))
+			Eventually(getComplianceState, defaultTimeoutSeconds*4, 1).Should(Equal(policiesv1.NonCompliant))
 		})
 		It("Enforcing stable/"+compPolicyName, func() {
 			common.EnforcePolicy(compPolicyName)

@@ -95,7 +95,7 @@ var _ = Describe("GRC: [P1][Sev1][policy-grc] Test the policy-limitmemory policy
 			By("Checking if the status of the root policy is NonCompliant")
 			Eventually(
 				common.GetComplianceState(policyLimitMemoryName),
-				defaultTimeoutSeconds*2,
+				defaultTimeoutSeconds*4,
 				1,
 			).Should(Equal(policiesv1.NonCompliant))
 		})

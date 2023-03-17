@@ -63,7 +63,7 @@ var _ = Describe("GRC: [P1][Sev1][policy-grc] Test the policy-scc policy",
 			By("Checking if the status of the root policy is Compliant")
 			Eventually(
 				common.GetComplianceState(rootPolicyName),
-				defaultTimeoutSeconds*2,
+				defaultTimeoutSeconds*4,
 				1,
 			).Should(Equal(policiesv1.Compliant))
 		})

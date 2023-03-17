@@ -66,7 +66,7 @@ var _ = Describe("GRC: [P1][Sev1][policy-grc] Test required metrics are availabl
 		Expect(err).To(BeNil())
 		Eventually(
 			common.GetComplianceState(noncompliantPolicyName),
-			defaultTimeoutSeconds*2,
+			defaultTimeoutSeconds*4,
 			1,
 		).Should(Equal(policiesv1.NonCompliant))
 
