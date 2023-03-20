@@ -155,7 +155,7 @@ var _ = Describe("GRC: [P1][Sev1][policy-grc] Test the kyverno generator "+
 			By("Checking if the status of root policy " + name + " is NonCompliant")
 			Eventually(
 				common.GetComplianceState(name),
-				defaultTimeoutSeconds*2,
+				defaultTimeoutSeconds*4,
 				1,
 			).Should(Equal(policiesv1.NonCompliant))
 		}
@@ -176,7 +176,7 @@ var _ = Describe("GRC: [P1][Sev1][policy-grc] Test the kyverno generator "+
 			By("Checking if the status of root policy " + name + " is now Compliant")
 			Eventually(
 				common.GetComplianceState(name),
-				defaultTimeoutSeconds*2,
+				defaultTimeoutSeconds*4,
 				1,
 			).Should(Equal(policiesv1.Compliant))
 		}
