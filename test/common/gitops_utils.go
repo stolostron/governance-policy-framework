@@ -18,20 +18,18 @@ import (
 	"k8s.io/apimachinery/pkg/types"
 )
 
-// GitOpsUserSetup configures a new user to use for the GitOps tests.
-// It returns the OCPUser instance, which contains a path to the created kubeconfig file.
-func GitOpsUserSetup() OCPUser {
+// GitOpsUserSetup configures a new user to use for the GitOps tests. It updates the provided
+// OCPUser instance, which contains a path to the created kubeconfig file.
+func GitOpsUserSetup(ocpUser *OCPUser) {
 	const subAdminBinding = "open-cluster-management:subscription-admin"
 	const clustersetRoleName = "grc-e2e-clusterset-role"
 
-	ocpUser := OCPUser{
-		ClusterRoles: []types.NamespacedName{
-			{Name: "open-cluster-management:admin:local-cluster"},
-			{Name: clustersetRoleName},
-		},
-		ClusterRoleBindings: []string{subAdminBinding},
-		Username:            "grc-e2e-subadmin-user",
+	ocpUser.ClusterRoles = []types.NamespacedName{
+		{Name: "open-cluster-management:admin:local-cluster"},
+		{Name: clustersetRoleName},
 	}
+	ocpUser.ClusterRoleBindings = []string{subAdminBinding}
+	ocpUser.Username = "grc-e2e-subadmin-user"
 
 	gitopsTestNamespaces := []string{
 		"grc-e2e-policy-generator",
@@ -103,7 +101,7 @@ func GitOpsUserSetup() OCPUser {
 	}
 
 	By("Cleaning up any existing subscription-admin user config")
-	GitOpsCleanup(ocpUser)
+	GitOpsCleanup(*ocpUser)
 
 	for _, ns := range gitopsTestNamespaces {
 		CleanupHubNamespace(ns)
@@ -123,7 +121,7 @@ func GitOpsUserSetup() OCPUser {
 	ocpUser.Password, err = GenerateInsecurePassword()
 	ExpectWithOffset(1, err).Should(BeNil())
 
-	err = CreateOCPUser(ClientHub, ClientHubDynamic, ocpUser)
+	err = CreateOCPUser(ClientHub, ClientHubDynamic, *ocpUser)
 	ExpectWithOffset(1, err).Should(BeNil())
 
 	// Get a kubeconfig logged in as the subscription and local-cluster administrator OpenShift
@@ -148,8 +146,6 @@ func GitOpsUserSetup() OCPUser {
 		fiveMinutes,
 		10,
 	).Should(BeNil())
-
-	return ocpUser
 }
 
 // GitOpsCleanup will remove any test data/configuration on the OpenShift cluster that was added/updated
