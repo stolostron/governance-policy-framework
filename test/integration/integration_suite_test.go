@@ -89,7 +89,7 @@ var _ = BeforeSuite(func() {
 	Expect(namespaces.Get(context.TODO(), userNamespace, metav1.GetOptions{})).NotTo(BeNil())
 
 	By("Setting up GitOps user")
-	gitopsUser = common.GitOpsUserSetup()
+	common.GitOpsUserSetup(&gitopsUser)
 })
 
 var _ = AfterSuite(func() {
