@@ -5,12 +5,14 @@ package integration
 
 import (
 	"context"
+	"fmt"
 
 	. "github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
 	corev1 "k8s.io/api/core/v1"
 	k8serrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/client-go/kubernetes"
 	policiesv1 "open-cluster-management.io/governance-policy-propagator/api/v1"
 
 	"github.com/stolostron/governance-policy-framework/test/common"
@@ -34,30 +36,27 @@ var _ = Describe(
 
 		ctx := context.TODO()
 
-		It("The ConfigMaps should be created on the Hub", func() {
-			configMap := &corev1.ConfigMap{
-				ObjectMeta: metav1.ObjectMeta{
-					Name: configMapName1,
-				},
-				Data: map[string]string{
-					"name": "testvalue1",
-				},
+		It("The ConfigMaps should be created on the Hub and Managed clusters", func() {
+			for cluster, client := range map[string]kubernetes.Interface{
+				"hub":     clientHub,
+				"managed": clientManaged,
+			} {
+				for name, data := range map[string]string{
+					configMapName1: "testvalue1",
+					configMapName2: "testvalue2",
+				} {
+					By(fmt.Sprintf("Creating ConfigMap %s/%s on the %s cluster", userNamespace, name, cluster))
+					configMap := &corev1.ConfigMap{
+						ObjectMeta: metav1.ObjectMeta{Name: name},
+						Data:       map[string]string{"name": data},
+					}
+
+					_, err := client.CoreV1().ConfigMaps(userNamespace).Create(ctx, configMap, metav1.CreateOptions{})
+					if !k8serrors.IsAlreadyExists(err) {
+						Expect(err).To(BeNil())
+					}
+				}
 			}
-
-			_, err := clientHub.CoreV1().ConfigMaps(userNamespace).Create(ctx, configMap, metav1.CreateOptions{})
-			Expect(err).To(BeNil())
-
-			configMap2 := &corev1.ConfigMap{
-				ObjectMeta: metav1.ObjectMeta{
-					Name: configMapName2,
-				},
-				Data: map[string]string{
-					"name": "testvalue2",
-				},
-			}
-
-			_, err = clientHub.CoreV1().ConfigMaps(userNamespace).Create(ctx, configMap2, metav1.CreateOptions{})
-			Expect(err).To(BeNil())
 		})
 
 		It(policyHubName+" should be created on the Hub", func() {
@@ -68,43 +67,36 @@ var _ = Describe(
 			common.DoRootComplianceTest(policyHubName, policiesv1.Compliant)
 		})
 
-		It("The ConfigMaps on the hub cluster should be patched with the correct data", func() {
-			By("Checking the edited configMaps")
-			Eventually(
-				func() string {
-					configMap, err := clientHub.CoreV1().ConfigMaps(userNamespace).Get(
-						ctx, configMapName1, metav1.GetOptions{},
-					)
-					if err != nil {
-						return ""
-					}
+		It("The ConfigMaps on should be patched with the correct data", func() {
+			for cluster, client := range map[string]kubernetes.Interface{
+				"hub":     clientHub,
+				"managed": clientManaged,
+			} {
+				for _, name := range []string{
+					configMapName1, configMapName2,
+				} {
+					By(fmt.Sprintf("Checking edited ConfigMap %s/%s on the %s cluster", userNamespace, name, cluster))
+					Eventually(
+						func() string {
+							configMap, err := client.CoreV1().ConfigMaps(userNamespace).Get(
+								ctx, name, metav1.GetOptions{},
+							)
+							if err != nil {
+								return ""
+							}
 
-					return configMap.Data["extraData"]
-				},
-				defaultTimeoutSeconds*2,
-				1,
-			).Should(Equal("exists!"))
-			Eventually(
-				func() string {
-					configMap, err := clientHub.CoreV1().ConfigMaps(userNamespace).Get(
-						ctx, configMapName2, metav1.GetOptions{},
-					)
-					if err != nil {
-						return ""
-					}
-
-					return configMap.Data["extraData"]
-				},
-				defaultTimeoutSeconds*2,
-				1,
-			).Should(Equal("exists!"))
+							return configMap.Data["extraData"]
+						},
+						defaultTimeoutSeconds*2,
+						1,
+					).Should(Equal("exists!"))
+				}
+			}
 		})
 
 		It("Creates a config namespace to copy configMaps into", func() {
-			Expect(clientHub.CoreV1().Namespaces().Create(context.TODO(), &corev1.Namespace{
-				ObjectMeta: metav1.ObjectMeta{
-					Name: configNamespace,
-				},
+			Expect(clientManaged.CoreV1().Namespaces().Create(context.TODO(), &corev1.Namespace{
+				ObjectMeta: metav1.ObjectMeta{Name: configNamespace},
 			}, metav1.CreateOptions{})).NotTo(BeNil())
 		})
 
@@ -117,35 +109,28 @@ var _ = Describe(
 		})
 
 		It("The ConfigMaps should be copied to the new namespace with the correct data", func() {
-			By("Checking the copied configMaps")
-			Eventually(
-				func() string {
-					configMap, err := clientHub.CoreV1().ConfigMaps(configNamespace).Get(
-						ctx, configMapName1+"-copy", metav1.GetOptions{},
-					)
-					if err != nil {
-						return ""
-					}
+			for cluster, client := range map[string]kubernetes.Interface{
+				"hub":     clientHub,
+				"managed": clientManaged,
+			} {
+				for _, name := range []string{
+					configMapName1, configMapName2,
+				} {
+					By(fmt.Sprintf("Checking copied ConfigMap %s/%s on the %s cluster", configNamespace, name, cluster))
+					Eventually(
+						func() string {
+							configMap, err := client.CoreV1().ConfigMaps(configNamespace).Get(
+								ctx, name+"-copy", metav1.GetOptions{},
+							)
+							if err != nil {
+								return ""
+							}
 
-					return configMap.Data["extraData"]
-				},
-				defaultTimeoutSeconds*2,
-				1,
-			).Should(Equal("exists!"))
-			Eventually(
-				func() string {
-					configMap, err := clientHub.CoreV1().ConfigMaps(configNamespace).Get(
-						ctx, configMapName2+"-copy", metav1.GetOptions{},
-					)
-					if err != nil {
-						return ""
-					}
-
-					return configMap.Data["extraData"]
-				},
-				defaultTimeoutSeconds*2,
-				1,
-			).Should(Equal("exists!"))
+							return configMap.Data["extraData"]
+						}, defaultTimeoutSeconds*2, 1,
+					).Should(Equal("exists!"))
+				}
+			}
 		})
 
 		AfterAll(func() {
@@ -153,25 +138,22 @@ var _ = Describe(
 			common.DoCleanupPolicy(policyHubYAML, common.GvrConfigurationPolicy)
 			common.DoCleanupPolicy(policyNoHubYAML, common.GvrConfigurationPolicy)
 
-			for _, name := range []string{configMapName1, configMapName2} {
-				err := clientHub.CoreV1().ConfigMaps(userNamespace).Delete(ctx, name, metav1.DeleteOptions{})
-				if !k8serrors.IsNotFound(err) {
-					Expect(err).To(BeNil())
+			for _, client := range []kubernetes.Interface{clientHub, clientManaged} {
+				for _, name := range []string{configMapName1, configMapName2} {
+					err := client.CoreV1().ConfigMaps(userNamespace).Delete(ctx, name, metav1.DeleteOptions{})
+					if !k8serrors.IsNotFound(err) {
+						Expect(err).To(BeNil())
+					}
+
+					err = client.CoreV1().ConfigMaps(configNamespace).Delete(ctx, name+"-copy", metav1.DeleteOptions{})
+					if !k8serrors.IsNotFound(err) {
+						Expect(err).To(BeNil())
+					}
 				}
 			}
 
-			for _, name := range []string{configMapName1, configMapName2} {
-				err := clientHub.CoreV1().ConfigMaps(configNamespace).Delete(ctx, name+"-copy", metav1.DeleteOptions{})
-				if !k8serrors.IsNotFound(err) {
-					Expect(err).To(BeNil())
-				}
-			}
-
-			By("Delete Config Namespace if needed")
-			_, err := common.OcHub(
-				"delete", "namespace", configNamespace,
-				"--ignore-not-found",
-			)
+			By("Delete Namespace " + configNamespace)
+			_, err := common.OcHub("delete", "namespace", configNamespace, "--ignore-not-found")
 			Expect(err).To(BeNil())
 		})
 	})
