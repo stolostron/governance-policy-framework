@@ -99,51 +99,7 @@ func complianceScanTest(scanPolicyName string, scanPolicyURL string, scanName st
 			}, common.MaxTimeoutSeconds, 1).Should(Equal("RUNNING"))
 		})
 		It("Informing stable/"+scanPolicyName+"", func() {
-			Eventually(func() interface{} {
-				By("Patching remediationAction = inform on root policy")
-				rootPlc := utils.GetWithTimeout(
-					clientHubDynamic,
-					common.GvrPolicy,
-					scanPolicyName,
-					userNamespace,
-					true,
-					defaultTimeoutSeconds,
-				)
-				Expect(rootPlc).NotTo(BeNil())
-
-				rootPlc.Object["spec"].(map[string]interface{})["remediationAction"] = "inform"
-				_, err := clientHubDynamic.Resource(common.GvrPolicy).Namespace(userNamespace).Update(
-					context.TODO(),
-					rootPlc,
-					metav1.UpdateOptions{},
-				)
-				Expect(err).To(BeNil())
-
-				By("Checking if remediationAction is inform for root policy")
-				rootPlc = utils.GetWithTimeout(
-					clientHubDynamic,
-					common.GvrPolicy,
-					scanPolicyName,
-					userNamespace,
-					true,
-					defaultTimeoutSeconds,
-				)
-
-				return rootPlc.Object["spec"].(map[string]interface{})["remediationAction"]
-			}, defaultTimeoutSeconds, 1).Should(Equal("inform"))
-			By("Checking if remediationAction is inform for replicated policy")
-			Eventually(func() interface{} {
-				managedPlc := utils.GetWithTimeout(
-					clientManagedDynamic,
-					common.GvrPolicy,
-					userNamespace+"."+scanPolicyName,
-					clusterNamespace,
-					true,
-					defaultTimeoutSeconds,
-				)
-
-				return managedPlc.Object["spec"].(map[string]interface{})["remediationAction"]
-			}, defaultTimeoutSeconds, 1).Should(Equal("inform"))
+			common.InformPolicy(scanPolicyName)
 		})
 	})
 	Describe("verify the stable/"+scanPolicyName+" has completed its scan", Ordered, func() {
@@ -431,48 +387,7 @@ var _ = Describe("RHACM4K-2222 GRC: [P1][Sev1][policy-grc] "+
 			Eventually(getComplianceState, defaultTimeoutSeconds*4, 1).Should(Equal(policiesv1.Compliant))
 		})
 		It("Informing stable/"+compPolicyName, func() {
-			Eventually(func() interface{} {
-				By("Patching remediationAction = inform on root policy")
-				rootPlc := utils.GetWithTimeout(
-					clientHubDynamic,
-					common.GvrPolicy,
-					compPolicyName,
-					userNamespace,
-					true,
-					defaultTimeoutSeconds,
-				)
-				rootPlc.Object["spec"].(map[string]interface{})["remediationAction"] = "inform"
-				_, err := clientHubDynamic.Resource(common.GvrPolicy).Namespace(userNamespace).Update(
-					context.TODO(),
-					rootPlc,
-					metav1.UpdateOptions{},
-				)
-				Expect(err).To(BeNil())
-				By("Checking if remediationAction is inform for root policy")
-				rootPlc = utils.GetWithTimeout(
-					clientHubDynamic,
-					common.GvrPolicy,
-					compPolicyName,
-					userNamespace,
-					true,
-					defaultTimeoutSeconds,
-				)
-
-				return rootPlc.Object["spec"].(map[string]interface{})["remediationAction"]
-			}, defaultTimeoutSeconds, 1).Should(Equal("inform"))
-			By("Checking if remediationAction is inform for replicated policy")
-			Eventually(func() interface{} {
-				managedPlc := utils.GetWithTimeout(
-					clientManagedDynamic,
-					common.GvrPolicy,
-					userNamespace+"."+compPolicyName,
-					clusterNamespace,
-					true,
-					defaultTimeoutSeconds,
-				)
-
-				return managedPlc.Object["spec"].(map[string]interface{})["remediationAction"]
-			}, defaultTimeoutSeconds, 1).Should(Equal("inform"))
+			common.InformPolicy(compPolicyName)
 		})
 	})
 	Describe("Test stable/"+compE8ScanPolicyName, Ordered, func() {
