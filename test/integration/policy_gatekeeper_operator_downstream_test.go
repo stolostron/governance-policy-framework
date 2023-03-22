@@ -234,49 +234,7 @@ var _ = Describe("RHACM4K-3055", Ordered, Label("policy-collection", "stable", "
 			).Should(Equal(policiesv1.Compliant))
 		})
 		It("Informing stable/policy-gatekeeper-operator", func() {
-			Eventually(func() interface{} {
-				By("Patching remediationAction = inform on root policy")
-				rootPlc := utils.GetWithTimeout(
-					clientHubDynamic,
-					common.GvrPolicy,
-					gatekeeperPolicyName,
-					userNamespace,
-					true,
-					defaultTimeoutSeconds,
-				)
-				rootPlc.Object["spec"].(map[string]interface{})["remediationAction"] = "inform"
-				_, err := clientHubDynamic.Resource(common.GvrPolicy).Namespace(userNamespace).Update(
-					context.TODO(),
-					rootPlc,
-					metav1.UpdateOptions{},
-				)
-				Expect(err).To(BeNil())
-
-				By("Checking if remediationAction is inform for root policy")
-				rootPlc = utils.GetWithTimeout(
-					clientHubDynamic,
-					common.GvrPolicy,
-					gatekeeperPolicyName,
-					userNamespace,
-					true,
-					defaultTimeoutSeconds,
-				)
-
-				return rootPlc.Object["spec"].(map[string]interface{})["remediationAction"]
-			}, defaultTimeoutSeconds, 1).Should(Equal("inform"))
-			By("Checking if remediationAction is inform for replicated policy")
-			Eventually(func() interface{} {
-				managedPlc := utils.GetWithTimeout(
-					clientManagedDynamic,
-					common.GvrPolicy,
-					userNamespace+"."+gatekeeperPolicyName,
-					clusterNamespace,
-					true,
-					defaultTimeoutSeconds,
-				)
-
-				return managedPlc.Object["spec"].(map[string]interface{})["remediationAction"]
-			}, defaultTimeoutSeconds, 1).Should(Equal("inform"))
+			common.InformPolicy(gatekeeperPolicyName)
 		})
 	})
 
