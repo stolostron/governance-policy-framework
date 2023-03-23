@@ -5,6 +5,7 @@ package common
 import (
 	"context"
 	"errors"
+	"fmt"
 	"path/filepath"
 	"strings"
 
@@ -219,10 +220,12 @@ func DoHistoryUpdatedTest(policyName string, messages ...string) {
 		g.Expect(err).Should(BeNil())
 		lenMessage := len(messages)
 		historyMsgs := []string{}
-		for _, h := range history {
+		fmt.Println("Returned policy history:")
+		for i, h := range history {
 			historyItem, _ := h.(map[string]interface{})
 			m, _, _ := unstructured.NestedString(historyItem, "message")
 			historyMsgs = append(historyMsgs, m)
+			fmt.Println(fmt.Sprint(i) + ": " + m)
 		}
 		By("Check history length is same")
 		g.Expect(len(history)).Should(Equal(lenMessage))
