@@ -6,6 +6,8 @@ package e2e
 import (
 	"context"
 
+	"k8s.io/klog"
+
 	. "github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -136,19 +138,25 @@ var _ = Describe("Test configuration policy", Ordered, func() {
 		})
 		It("should recreate the role if manually deleted", func() {
 			By("Deleting the role in default namespace on managed cluster")
-			_, err := common.OcManaged(
+			klog.Info("deleting role")
+			del, err := common.OcManaged(
 				"delete", "role", "-n", "default", roleName,
 				"--ignore-not-found",
 			)
+			klog.Info(del)
 			Expect(err).To(BeNil())
 
 			By("Checking if the role has been recreated")
+			klog.Info("checking for role")
 			Eventually(func() interface{} {
 				role, _ := clientManagedDynamic.Resource(common.GvrRole).Namespace("default").Get(
 					context.TODO(),
 					roleName,
 					metav1.GetOptions{},
 				)
+				if role != nil {
+					klog.Info(role)
+				}
 
 				return role
 			}, defaultTimeoutSeconds, 1).ShouldNot(BeNil())
@@ -157,11 +165,13 @@ var _ = Describe("Test configuration policy", Ordered, func() {
 		})
 		It("the policy should not be patched after manually creating a role that has more rules", func() {
 			By("Creating the mismatch role in default namespace on managed cluster")
-			_, err := common.OcManaged(
+			mismatch, err := common.OcManaged(
 				"apply", "-f",
 				"../resources/configuration_policy/role-policy-e2e-more.yaml",
 				"-n", "default",
 			)
+			klog.Info("patch more")
+			klog.Info(mismatch)
 			Expect(err).To(BeNil())
 			By("Checking if the role is not patched to match in 30s")
 			yamlRole := utils.ParseYaml("../resources/configuration_policy/role-policy-e2e-more.yaml")
@@ -174,6 +184,7 @@ var _ = Describe("Test configuration policy", Ordered, func() {
 					true,
 					defaultTimeoutSeconds,
 				)
+				klog.Info(managedRole)
 
 				return managedRole.Object["rules"]
 			}, 30, 1).Should(utils.SemanticEqual(yamlRole.Object["rules"]))
@@ -182,11 +193,13 @@ var _ = Describe("Test configuration policy", Ordered, func() {
 		})
 		It("the policy should be patched after manually creating a role that has less rules", func() {
 			By("Creating the mismatch role in default namespace on managed cluster")
-			_, err := common.OcManaged(
+			mismatch, err := common.OcManaged(
 				"apply", "-f",
 				"../resources/configuration_policy/role-policy-e2e-less.yaml",
 				"-n", "default",
 			)
+			klog.Info("patch less")
+			klog.Info(mismatch)
 			Expect(err).To(BeNil())
 			By("Checking if the role has been patched to match")
 			yamlRole := utils.ParseYaml("../resources/configuration_policy/role-policy-e2e.yaml")
@@ -199,6 +212,7 @@ var _ = Describe("Test configuration policy", Ordered, func() {
 					true,
 					defaultTimeoutSeconds,
 				)
+				klog.Info(managedRole)
 
 				return managedRole.Object["rules"]
 			}, defaultTimeoutSeconds, 1).Should(utils.SemanticEqual(yamlRole.Object["rules"]))
