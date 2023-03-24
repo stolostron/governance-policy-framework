@@ -41,7 +41,7 @@ if [[ "${TARGET_BRANCH}" ]] && [[ "${TARGET_BRANCH}" != "main" ]]; then
   VERSION_TAG="${VERSION_TAG}-${PULL_BASE_REF#*-}"
 fi
 
-$DIR/patch-cluster-prow.sh
+VERSION_TAG="${VERSION_TAG}" $DIR/patch-cluster-prow.sh
 cp ${HUB_KUBE} $DIR/../kubeconfig_hub
 cp ${MANAGED_KUBE} $DIR/../kubeconfig_managed
 
