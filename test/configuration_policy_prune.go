@@ -45,6 +45,16 @@ func ConfigPruneBehavior(labels ...string) bool {
 
 		DoRootComplianceTest(policyName, policiesv1.Compliant)
 
+		if cmShouldBeDeleted {
+			By("Checking that the ConfigurationPolicy has a finalizer")
+			Eventually(func() []string {
+				cfgPol := utils.GetWithTimeout(clientManagedDynamic, GvrConfigurationPolicy,
+					policyName, ClusterNamespace, true, DefaultTimeoutSeconds)
+
+				return cfgPol.GetFinalizers()
+			}, 30, 5).ShouldNot(BeEmpty())
+		}
+
 		By("Checking that the configmap was created")
 		utils.GetWithTimeout(
 			clientManagedDynamic,
@@ -75,6 +85,14 @@ func ConfigPruneBehavior(labels ...string) bool {
 		DoCreatePolicyTest(policyYaml, GvrConfigurationPolicy)
 
 		DoRootComplianceTest(policyName, policiesv1.Compliant)
+
+		By("Checking that the ConfigurationPolicy has a finalizer")
+		Eventually(func() []string {
+			cfgPol := utils.GetWithTimeout(clientManagedDynamic, GvrConfigurationPolicy,
+				policyName, ClusterNamespace, true, DefaultTimeoutSeconds)
+
+			return cfgPol.GetFinalizers()
+		}, 30, 5).ShouldNot(BeEmpty())
 
 		By("Checking that the configmap was created")
 		utils.GetWithTimeout(
@@ -160,6 +178,16 @@ func ConfigPruneBehavior(labels ...string) bool {
 
 		DoRootComplianceTest(policyName, policiesv1.Compliant)
 
+		if cmShouldBeDeleted {
+			By("Checking that the ConfigurationPolicy has a finalizer")
+			Eventually(func() []string {
+				cfgPol := utils.GetWithTimeout(clientManagedDynamic, GvrConfigurationPolicy,
+					policyName, ClusterNamespace, true, DefaultTimeoutSeconds)
+
+				return cfgPol.GetFinalizers()
+			}, 30, 5).ShouldNot(BeEmpty())
+		}
+
 		By("Checking that the configmap was created")
 		utils.GetWithTimeout(
 			clientManagedDynamic,
@@ -243,6 +271,16 @@ func ConfigPruneBehavior(labels ...string) bool {
 		DoCreatePolicyTest(policyYaml, GvrConfigurationPolicy)
 
 		DoRootComplianceTest(policyName, policiesv1.Compliant)
+
+		if cmShouldBeDeleted {
+			By("Checking that the ConfigurationPolicy has a finalizer")
+			Eventually(func() []string {
+				cfgPol := utils.GetWithTimeout(clientManagedDynamic, GvrConfigurationPolicy,
+					policyName, ClusterNamespace, true, DefaultTimeoutSeconds)
+
+				return cfgPol.GetFinalizers()
+			}, 30, 5).ShouldNot(BeEmpty())
+		}
 
 		By("Checking the configmap's data was updated")
 		Eventually(func(g Gomega) {
