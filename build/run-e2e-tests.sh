@@ -35,7 +35,7 @@ make e2e-dependencies
 
 echo "* Creating Kind cluster(s)..."
 export MANAGED_CLUSTER_NAME=managed
-make kind-create-cluster
+make kind-create-clusters
 
 ./build/wait_for.sh pod -n kube-system
 ./build/wait_for.sh pod -l k8s-app=kube-dns -n kube-system
