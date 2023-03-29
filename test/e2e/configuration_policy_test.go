@@ -17,16 +17,51 @@ import (
 	"github.com/stolostron/governance-policy-framework/test/common"
 )
 
-var _ = Describe("Test configuration policy", Ordered, func() {
+func configPolicyTestCleanUp(roleName, rolePolicyName, rolePolicyYAML string) {
+	By("Deleting the role, policy, and events on managed cluster")
+	common.DoCleanupPolicy(rolePolicyYAML, common.GvrConfigurationPolicy)
+	_, err := common.OcManaged(
+		"delete", "events", "-n", "managed",
+		"--field-selector=involvedObject.name="+common.UserNamespace+"."+rolePolicyName,
+		"--ignore-not-found",
+	)
+	ExpectWithOffset(1, err).To(BeNil())
+	_, err = common.OcHub(
+		"delete", "events", "-n", "managed",
+		"--field-selector=involvedObject.name="+common.UserNamespace+"."+rolePolicyName,
+		"--ignore-not-found",
+	)
+	ExpectWithOffset(1, err).To(BeNil())
+	_, err = common.OcManaged(
+		"delete", "events", "-n", "managed",
+		"--field-selector=involvedObject.name="+rolePolicyName,
+		"--ignore-not-found",
+	)
+	ExpectWithOffset(1, err).To(BeNil())
+	_, err = common.OcManaged(
+		"delete", "role", "-n", "default", roleName,
+		"--ignore-not-found",
+	)
+	ExpectWithOffset(1, err).To(BeNil())
+}
+
+var _ = Describe("Test configuration policy inform", Ordered, func() {
 	const roleName string = "role-policy-e2e"
+
 	Describe("Test object musthave inform", Ordered, func() {
 		const rolePolicyName string = "role-policy-musthave"
 		const rolePolicyYaml string = "../resources/configuration_policy/role-policy-musthave.yaml"
+		expectedStatusMsgs := []string{}
 		It("should be created on managed cluster", func() {
 			common.DoCreatePolicyTest(rolePolicyYaml, common.GvrConfigurationPolicy)
 		})
 		It("the policy should be noncompliant", func() {
 			common.DoRootComplianceTest(rolePolicyName, policiesv1.NonCompliant)
+			expectedStatusMsgs = append(
+				[]string{"NonCompliant; violation - roles not found: [role-policy-e2e] in namespace default missing"},
+				expectedStatusMsgs...,
+			)
+			common.DoHistoryUpdatedTest(rolePolicyName, expectedStatusMsgs...)
 		})
 		It("the policy should be compliant after manually creating the role that matches", func() {
 			By("Creating the role in default namespace on managed cluster")
@@ -37,6 +72,14 @@ var _ = Describe("Test configuration policy", Ordered, func() {
 			)
 			Expect(err).To(BeNil())
 			common.DoRootComplianceTest(rolePolicyName, policiesv1.Compliant)
+			expectedStatusMsgs = append(
+				[]string{
+					"Compliant; notification - roles [role-policy-e2e] in namespace default found as specified, " +
+						"therefore this Object template is compliant",
+				},
+				expectedStatusMsgs...,
+			)
+			common.DoHistoryUpdatedTest(rolePolicyName, expectedStatusMsgs...)
 		})
 		It("the policy should be noncompliant after removing the role", func() {
 			By("Deleting the role in default namespace on managed cluster")
@@ -47,6 +90,11 @@ var _ = Describe("Test configuration policy", Ordered, func() {
 			)
 			Expect(err).To(BeNil())
 			common.DoRootComplianceTest(rolePolicyName, policiesv1.NonCompliant)
+			expectedStatusMsgs = append(
+				[]string{"NonCompliant; violation - roles not found: [role-policy-e2e] in namespace default missing"},
+				expectedStatusMsgs...,
+			)
+			common.DoHistoryUpdatedTest(rolePolicyName, expectedStatusMsgs...)
 		})
 		It("the policy should be compliant after manually creating a role that more", func() {
 			By("Creating the role in default namespace on managed cluster")
@@ -57,6 +105,14 @@ var _ = Describe("Test configuration policy", Ordered, func() {
 			)
 			Expect(err).To(BeNil())
 			common.DoRootComplianceTest(rolePolicyName, policiesv1.Compliant)
+			expectedStatusMsgs = append(
+				[]string{
+					"Compliant; notification - roles [role-policy-e2e] in namespace default found as specified, " +
+						"therefore this Object template is compliant",
+				},
+				expectedStatusMsgs...,
+			)
+			common.DoHistoryUpdatedTest(rolePolicyName, expectedStatusMsgs...)
 		})
 		It("the policy should be noncompliant after manually creating a role that has less rule", func() {
 			By("Creating the mismatch role in default namespace on managed cluster")
@@ -67,6 +123,14 @@ var _ = Describe("Test configuration policy", Ordered, func() {
 			)
 			Expect(err).To(BeNil())
 			common.DoRootComplianceTest(rolePolicyName, policiesv1.NonCompliant)
+			expectedStatusMsgs = append(
+				[]string{
+					"NonCompliant; violation - roles not found: [role-policy-e2e] in namespace " +
+						"default found but not as specified",
+				},
+				expectedStatusMsgs...,
+			)
+			common.DoHistoryUpdatedTest(rolePolicyName, expectedStatusMsgs...)
 		})
 		It("the policy should be compliant after manually creating the role that matches", func() {
 			By("Creating the role in default namespace on managed cluster")
@@ -77,6 +141,14 @@ var _ = Describe("Test configuration policy", Ordered, func() {
 			)
 			Expect(err).To(BeNil())
 			common.DoRootComplianceTest(rolePolicyName, policiesv1.Compliant)
+			expectedStatusMsgs = append(
+				[]string{
+					"Compliant; notification - roles [role-policy-e2e] in namespace default found " +
+						"as specified, therefore this Object template is compliant",
+				},
+				expectedStatusMsgs...,
+			)
+			common.DoHistoryUpdatedTest(rolePolicyName, expectedStatusMsgs...)
 		})
 		It("the policy should be noncompliant after removing the role", func() {
 			By("Deleting the role in default namespace on managed cluster")
@@ -88,53 +160,249 @@ var _ = Describe("Test configuration policy", Ordered, func() {
 			Expect(err).To(BeNil())
 
 			common.DoRootComplianceTest(rolePolicyName, policiesv1.NonCompliant)
-		})
-
-		It("the messages from histry should match", func() {
-			By("the policy should have matched history after all these test")
-			common.DoHistoryUpdatedTest(rolePolicyName,
-				"NonCompliant; violation - roles not found: [role-policy-e2e] in namespace default missing",
-				"Compliant; notification - roles [role-policy-e2e] in namespace default found "+
-					"as specified, therefore this Object template is compliant",
-				"NonCompliant; violation - roles not found: [role-policy-e2e] in namespace "+
-					"default found but not as specified",
-				"Compliant; notification - roles [role-policy-e2e] in namespace default found as specified, "+
-					"therefore this Object template is compliant",
-				"NonCompliant; violation - roles not found: [role-policy-e2e] in namespace default missing",
-				"Compliant; notification - roles [role-policy-e2e] in namespace default found as specified, "+
-					"therefore this Object template is compliant",
-				"NonCompliant; violation - roles not found: [role-policy-e2e] in "+
-					"namespace default missing",
+			expectedStatusMsgs = append(
+				[]string{"NonCompliant; violation - roles not found: [role-policy-e2e] in namespace default missing"},
+				expectedStatusMsgs...,
 			)
+			common.DoHistoryUpdatedTest(rolePolicyName, expectedStatusMsgs...)
 		})
 		AfterAll(func() {
-			By("Deleting the role, policy, and events on managed cluster")
-			common.DoCleanupPolicy(rolePolicyYaml, common.GvrConfigurationPolicy)
+			configPolicyTestCleanUp(roleName, rolePolicyName, rolePolicyYaml)
+		})
+	})
+
+	Describe("Test object mustnothave inform", Ordered, func() {
+		const rolePolicyName string = "role-policy-mustnothave"
+		const rolePolicyYaml string = "../resources/configuration_policy/role-policy-mustnothave.yaml"
+		expectedStatusMsgs := []string{}
+		It("should be created on managed cluster", func() {
+			common.DoCreatePolicyTest(rolePolicyYaml, common.GvrConfigurationPolicy)
+		})
+		It("the policy should be compliant", func() {
+			common.DoRootComplianceTest(rolePolicyName, policiesv1.Compliant)
+			expectedStatusMsgs = append(
+				[]string{
+					"Compliant; notification - roles [role-policy-e2e] in namespace default missing " +
+						"as expected, therefore this Object template is compliant",
+				},
+				expectedStatusMsgs...,
+			)
+			common.DoHistoryUpdatedTest(rolePolicyName, expectedStatusMsgs...)
+		})
+		It("the policy should be noncompliant after manually creating the role on managed cluster", func() {
+			By("Creating the role in default namespace on managed cluster")
 			_, err := common.OcManaged(
-				"delete", "events", "-n", "managed",
-				"--field-selector=involvedObject.name="+common.UserNamespace+"."+rolePolicyName,
-				"--ignore-not-found",
+				"apply", "-f",
+				"../resources/configuration_policy/role-policy-e2e.yaml",
+				"-n", "default",
 			)
 			Expect(err).To(BeNil())
-			_, err = common.OcManaged(
+			common.DoRootComplianceTest(rolePolicyName, policiesv1.NonCompliant)
+			expectedStatusMsgs = append(
+				[]string{"NonCompliant; violation - roles found: [role-policy-e2e] in namespace default"},
+				expectedStatusMsgs...,
+			)
+			common.DoHistoryUpdatedTest(rolePolicyName, expectedStatusMsgs...)
+		})
+		It("the policy should be compliant after removing the role", func() {
+			By("Deleting the role in default namespace on managed cluster")
+			_, err := common.OcManaged(
 				"delete", "role", "-n", "default", roleName,
 				"--ignore-not-found",
 			)
 			Expect(err).To(BeNil())
+			common.DoRootComplianceTest(rolePolicyName, policiesv1.Compliant)
+			expectedStatusMsgs = append(
+				[]string{
+					"Compliant; notification - roles [role-policy-e2e] in namespace default missing " +
+						"as expected, therefore this Object template is compliant",
+				},
+				expectedStatusMsgs...,
+			)
+			common.DoHistoryUpdatedTest(rolePolicyName, expectedStatusMsgs...)
+		})
+		AfterAll(func() {
+			configPolicyTestCleanUp(roleName, rolePolicyName, rolePolicyYaml)
 		})
 	})
-	Describe("Test object musthave enforce", Ordered, func() {
-		const rolePolicyName string = "role-policy-musthave"
-		const rolePolicyYaml string = "../resources/configuration_policy/role-policy-musthave.yaml"
+
+	Describe("Test object mustonlyhave inform", Ordered, func() {
+		const rolePolicyName string = "role-policy-mustonlyhave"
+		const rolePolicyYaml string = "../resources/configuration_policy/role-policy-mustonlyhave.yaml"
+		expectedStatusMsgs := []string{}
 		It("should be created on managed cluster", func() {
 			common.DoCreatePolicyTest(rolePolicyYaml, common.GvrConfigurationPolicy)
 		})
 		It("the policy should be noncompliant", func() {
 			common.DoRootComplianceTest(rolePolicyName, policiesv1.NonCompliant)
+			expectedStatusMsgs = append(
+				[]string{"NonCompliant; violation - roles not found: [role-policy-e2e] in namespace default missing"},
+				expectedStatusMsgs...,
+			)
+			common.DoHistoryUpdatedTest(rolePolicyName, expectedStatusMsgs...)
+		})
+		It("the policy should be compliant if manually created", func() {
+			By("Creating the role in default namespace on managed cluster")
+			_, err := common.OcManaged(
+				"apply",
+				"-f",
+				"../resources/configuration_policy/role-policy-e2e.yaml",
+				"-n",
+				"default",
+			)
+			Expect(err).To(BeNil())
+			common.DoRootComplianceTest(rolePolicyName, policiesv1.Compliant)
+			expectedStatusMsgs = append(
+				[]string{
+					"Compliant; notification - roles [role-policy-e2e] in namespace default " +
+						"found as specified, therefore this Object template is compliant",
+				},
+				expectedStatusMsgs...,
+			)
+			common.DoHistoryUpdatedTest(rolePolicyName, expectedStatusMsgs...)
+		})
+		It("the role should be noncompliant if mismatch", func() {
+			By("Creating a role with different rules")
+			_, err := common.OcManaged(
+				"apply",
+				"-f",
+				"../resources/configuration_policy/role-policy-e2e-mismatch.yaml",
+				"-n",
+				"default",
+			)
+			Expect(err).To(BeNil())
+			common.DoRootComplianceTest(rolePolicyName, policiesv1.NonCompliant)
+			expectedStatusMsgs = append(
+				[]string{
+					"NonCompliant; violation - roles not found: [role-policy-e2e] in " +
+						"namespace default found but not as specified",
+				},
+				expectedStatusMsgs...,
+			)
+			common.DoHistoryUpdatedTest(rolePolicyName, expectedStatusMsgs...)
+		})
+		It("the policy should be compliant if matches", func() {
+			By("Creating the role in default namespace on managed cluster")
+			_, err := common.OcManaged(
+				"apply",
+				"-f",
+				"../resources/configuration_policy/role-policy-e2e.yaml",
+				"-n",
+				"default",
+			)
+			Expect(err).To(BeNil())
+			common.DoRootComplianceTest(rolePolicyName, policiesv1.Compliant)
+			expectedStatusMsgs = append(
+				[]string{
+					"Compliant; notification - roles [role-policy-e2e] in namespace default " +
+						"found as specified, therefore this Object template is compliant",
+				},
+				expectedStatusMsgs...,
+			)
+			common.DoHistoryUpdatedTest(rolePolicyName, expectedStatusMsgs...)
+		})
+		It("the policy should be noncompliant if has less rules", func() {
+			By("Creating the role in default namespace on managed cluster")
+			_, err := common.OcManaged(
+				"apply",
+				"-f",
+				"../resources/configuration_policy/role-policy-e2e-less.yaml",
+				"-n",
+				"default",
+			)
+			Expect(err).To(BeNil())
+			common.DoRootComplianceTest(rolePolicyName, policiesv1.NonCompliant)
+			expectedStatusMsgs = append(
+				[]string{
+					"NonCompliant; violation - roles not found: [role-policy-e2e] in " +
+						"namespace default found but not as specified",
+				},
+				expectedStatusMsgs...,
+			)
+			common.DoHistoryUpdatedTest(rolePolicyName, expectedStatusMsgs...)
+		})
+		It("the policy should be compliant if matches", func() {
+			By("Creating the role in default namespace on managed cluster")
+			_, err := common.OcManaged(
+				"apply",
+				"-f",
+				"../resources/configuration_policy/role-policy-e2e.yaml",
+				"-n",
+				"default",
+			)
+			Expect(err).To(BeNil())
+			common.DoRootComplianceTest(rolePolicyName, policiesv1.Compliant)
+			expectedStatusMsgs = append(
+				[]string{
+					"Compliant; notification - roles [role-policy-e2e] in namespace default " +
+						"found as specified, therefore this Object template is compliant",
+				},
+				expectedStatusMsgs...,
+			)
+			common.DoHistoryUpdatedTest(rolePolicyName, expectedStatusMsgs...)
+		})
+		It("the policy should be noncompliant if has more rules", func() {
+			By("Creating the role in default namespace on managed cluster")
+			_, err := common.OcManaged(
+				"apply",
+				"-f",
+				"../resources/configuration_policy/role-policy-e2e-more.yaml",
+				"-n",
+				"default",
+			)
+			Expect(err).To(BeNil())
+			common.DoRootComplianceTest(rolePolicyName, policiesv1.NonCompliant)
+			expectedStatusMsgs = append(
+				[]string{
+					"NonCompliant; violation - roles not found: [role-policy-e2e] in " +
+						"namespace default found but not as specified",
+				},
+				expectedStatusMsgs...,
+			)
+			common.DoHistoryUpdatedTest(rolePolicyName, expectedStatusMsgs...)
+		})
+		AfterAll(func() {
+			configPolicyTestCleanUp(roleName, rolePolicyName, rolePolicyYaml)
+		})
+	})
+})
+
+var _ = Describe("Test configuration policy enforce", Ordered, func() {
+	const roleName string = "role-policy-e2e"
+
+	Describe("Test object musthave enforce", Ordered, func() {
+		const rolePolicyName string = "role-policy-musthave"
+		const rolePolicyYaml string = "../resources/configuration_policy/role-policy-musthave.yaml"
+		expectedStatusMsgs := []string{}
+		It("should be created on managed cluster", func() {
+			common.DoCreatePolicyTest(rolePolicyYaml, common.GvrConfigurationPolicy)
+		})
+		It("the policy should be noncompliant", func() {
+			common.DoRootComplianceTest(rolePolicyName, policiesv1.NonCompliant)
+			expectedStatusMsgs = append(
+				[]string{
+					"NonCompliant; violation - roles not found: [role-policy-e2e] in " +
+						"namespace default missing",
+				},
+				expectedStatusMsgs...,
+			)
+			common.DoHistoryUpdatedTest(rolePolicyName, expectedStatusMsgs...)
 		})
 		It("the policy should be compliant after enforcing it", func() {
 			common.EnforcePolicy(rolePolicyName, common.GvrConfigurationPolicy)
 			common.DoRootComplianceTest(rolePolicyName, policiesv1.Compliant)
+			expectedStatusMsgs = append(
+				[]string{
+					"Compliant; notification - roles [role-policy-e2e] in namespace default " +
+						"found as specified, therefore this Object template is compliant",
+					"Compliant; notification - roles [role-policy-e2e] in namespace default " +
+						"was missing, and was created successfully",
+					"NonCompliant; violation - No instances of `roles` found as specified " +
+						"in namespaces: default",
+				},
+				expectedStatusMsgs...,
+			)
+			common.DoHistoryUpdatedTest(rolePolicyName, expectedStatusMsgs...)
 		})
 		It("should recreate the role if manually deleted", func() {
 			By("Deleting the role in default namespace on managed cluster")
@@ -162,6 +430,19 @@ var _ = Describe("Test configuration policy", Ordered, func() {
 			}, defaultTimeoutSeconds, 1).ShouldNot(BeNil())
 
 			common.DoRootComplianceTest(rolePolicyName, policiesv1.Compliant)
+
+			expectedStatusMsgs = append(
+				[]string{
+					"Compliant; notification - roles [role-policy-e2e] in namespace default " +
+						"found as specified, therefore this Object template is compliant",
+					"Compliant; notification - roles [role-policy-e2e] in namespace default " +
+						"was missing, and was created successfully",
+					"NonCompliant; violation - No instances of `roles` found as specified " +
+						"in namespaces: default",
+				},
+				expectedStatusMsgs...,
+			)
+			common.DoHistoryUpdatedTest(rolePolicyName, expectedStatusMsgs...)
 		})
 		It("the policy should not be patched after manually creating a role that has more rules", func() {
 			By("Creating the mismatch role in default namespace on managed cluster")
@@ -190,6 +471,7 @@ var _ = Describe("Test configuration policy", Ordered, func() {
 			}, 30, 1).Should(utils.SemanticEqual(yamlRole.Object["rules"]))
 
 			common.DoRootComplianceTest(rolePolicyName, policiesv1.Compliant)
+			common.DoHistoryUpdatedTest(rolePolicyName, expectedStatusMsgs...)
 		})
 		It("the policy should be patched after manually creating a role that has less rules", func() {
 			By("Creating the mismatch role in default namespace on managed cluster")
@@ -218,52 +500,39 @@ var _ = Describe("Test configuration policy", Ordered, func() {
 			}, defaultTimeoutSeconds, 1).Should(utils.SemanticEqual(yamlRole.Object["rules"]))
 
 			common.DoRootComplianceTest(rolePolicyName, policiesv1.Compliant)
-		})
-		It("the messages from histry should match", func() {
-			By("the policy should have matched history after all these test")
-			common.DoHistoryUpdatedTest(rolePolicyName,
-				"Compliant; notification - roles [role-policy-e2e] in namespace default "+
-					"found as specified, therefore this Object template is compliant",
-				"Compliant; notification - roles [role-policy-e2e] in namespace default was updated successfully",
-				"NonCompliant; violation - No instances of `roles` found as specified in namespaces: default",
-				"Compliant; notification - roles [role-policy-e2e] in namespace default "+
-					"found as specified, therefore this Object template is compliant",
-				"Compliant; notification - roles [role-policy-e2e] in namespace default "+
-					"was missing, and was created successfully",
-				"NonCompliant; violation - No instances of `roles` found as specified "+
-					"in namespaces: default",
-				"Compliant; notification - roles [role-policy-e2e] in namespace default "+
-					"was missing, and was created successfully",
-				"NonCompliant; violation - No instances of `roles` found as specified "+
-					"in namespaces: default",
-				"NonCompliant; violation - roles not found: [role-policy-e2e] in "+
-					"namespace default missing",
+			expectedStatusMsgs = append(
+				[]string{
+					"Compliant; notification - roles [role-policy-e2e] in namespace default " +
+						"found as specified, therefore this Object template is compliant",
+					"Compliant; notification - roles [role-policy-e2e] in namespace default was updated successfully",
+					"NonCompliant; violation - No instances of `roles` found as specified in namespaces: default",
+				},
+				expectedStatusMsgs...,
 			)
+			common.DoHistoryUpdatedTest(rolePolicyName, expectedStatusMsgs...)
 		})
 		AfterAll(func() {
-			By("Deleting the role, policy, and events on managed cluster")
-			common.DoCleanupPolicy(rolePolicyYaml, common.GvrConfigurationPolicy)
-			_, err := common.OcManaged(
-				"delete", "events", "-n", "managed",
-				"--field-selector=involvedObject.name="+common.UserNamespace+"."+rolePolicyName,
-				"--ignore-not-found",
-			)
-			Expect(err).To(BeNil())
-			_, err = common.OcManaged(
-				"delete", "role", "-n", "default", roleName,
-				"--ignore-not-found",
-			)
-			Expect(err).To(BeNil())
+			configPolicyTestCleanUp(roleName, rolePolicyName, rolePolicyYaml)
 		})
 	})
-	Describe("Test object mustnothave inform", func() {
+
+	Describe("Test object mustnothave enforce", Ordered, func() {
 		const rolePolicyName string = "role-policy-mustnothave"
 		const rolePolicyYaml string = "../resources/configuration_policy/role-policy-mustnothave.yaml"
+		expectedStatusMsgs := []string{}
 		It("should be created on managed cluster", func() {
 			common.DoCreatePolicyTest(rolePolicyYaml, common.GvrConfigurationPolicy)
 		})
 		It("the policy should be compliant", func() {
 			common.DoRootComplianceTest(rolePolicyName, policiesv1.Compliant)
+			expectedStatusMsgs = append(
+				[]string{
+					"Compliant; notification - roles [role-policy-e2e] in namespace default missing " +
+						"as expected, therefore this Object template is compliant",
+				},
+				expectedStatusMsgs...,
+			)
+			common.DoHistoryUpdatedTest(rolePolicyName, expectedStatusMsgs...)
 		})
 		It("the policy should be noncompliant after manually creating the role on managed cluster", func() {
 			By("Creating the role in default namespace on managed cluster")
@@ -274,64 +543,25 @@ var _ = Describe("Test configuration policy", Ordered, func() {
 			)
 			Expect(err).To(BeNil())
 			common.DoRootComplianceTest(rolePolicyName, policiesv1.NonCompliant)
-		})
-		It("the policy should be compliant after removing the role", func() {
-			By("Deleting the role in default namespace on managed cluster")
-			_, err := common.OcManaged(
-				"delete", "role", "-n", "default", roleName,
-				"--ignore-not-found",
+			expectedStatusMsgs = append(
+				[]string{"NonCompliant; violation - roles found: [role-policy-e2e] in namespace default"},
+				expectedStatusMsgs...,
 			)
-			Expect(err).To(BeNil())
-			common.DoRootComplianceTest(rolePolicyName, policiesv1.Compliant)
-		})
-		It("the messages from histry should match", func() {
-			By("the policy should have matched history after all these test")
-			common.DoHistoryUpdatedTest(rolePolicyName,
-				"Compliant; notification - roles [role-policy-e2e] in namespace default missing "+
-					"as expected, therefore this Object template is compliant",
-				"NonCompliant; violation - roles found: [role-policy-e2e] in namespace default",
-				"Compliant; notification - roles [role-policy-e2e] in namespace default missing "+
-					"as expected, therefore this Object template is compliant",
-			)
-		})
-		AfterAll(func() {
-			By("Deleting the role, policy, and events on managed cluster")
-			common.DoCleanupPolicy(rolePolicyYaml, common.GvrConfigurationPolicy)
-			_, err := common.OcManaged(
-				"delete", "events", "-n", "managed",
-				"--field-selector=involvedObject.name="+common.UserNamespace+"."+rolePolicyName,
-				"--ignore-not-found",
-			)
-			Expect(err).To(BeNil())
-			_, err = common.OcManaged(
-				"delete", "role", "-n", "default", roleName,
-				"--ignore-not-found",
-			)
-			Expect(err).To(BeNil())
-		})
-	})
-	Describe("Test object mustnothave enforce", func() {
-		const rolePolicyName string = "role-policy-mustnothave"
-		const rolePolicyYaml string = "../resources/configuration_policy/role-policy-mustnothave.yaml"
-		It("should be created on managed cluster", func() {
-			common.DoCreatePolicyTest(rolePolicyYaml, common.GvrConfigurationPolicy)
-		})
-		It("the policy should be compliant", func() {
-			common.DoRootComplianceTest(rolePolicyName, policiesv1.Compliant)
-		})
-		It("the policy should be noncompliant after manually creating the role on managed cluster", func() {
-			By("Creating the role in default namespace on managed cluster")
-			_, err := common.OcManaged(
-				"apply", "-f",
-				"../resources/configuration_policy/role-policy-e2e.yaml",
-				"-n", "default",
-			)
-			Expect(err).To(BeNil())
-			common.DoRootComplianceTest(rolePolicyName, policiesv1.NonCompliant)
+			common.DoHistoryUpdatedTest(rolePolicyName, expectedStatusMsgs...)
 		})
 		It("the policy should be compliant after enforcing it", func() {
 			common.EnforcePolicy(rolePolicyName, common.GvrConfigurationPolicy)
 			common.DoRootComplianceTest(rolePolicyName, policiesv1.Compliant)
+			expectedStatusMsgs = append(
+				[]string{
+					"Compliant; notification - roles [role-policy-e2e] in namespace default missing " +
+						"as expected, therefore this Object template is compliant",
+					"Compliant; notification - roles [role-policy-e2e] in namespace default existed, " +
+						"and was deleted successfully",
+				},
+				expectedStatusMsgs...,
+			)
+			common.DoHistoryUpdatedTest(rolePolicyName, expectedStatusMsgs...)
 		})
 		It("the policy should remove the role on managed cluster if manually created", func() {
 			By("Creating the role in default namespace on managed cluster")
@@ -353,159 +583,48 @@ var _ = Describe("Test configuration policy", Ordered, func() {
 			}, defaultTimeoutSeconds, 1).Should(BeNil())
 
 			common.DoRootComplianceTest(rolePolicyName, policiesv1.Compliant)
-		})
-		It("the messages from histry should match", func() {
-			By("the policy should have matched history after all these test")
-			common.DoHistoryUpdatedTest(rolePolicyName,
-				"Compliant; notification - roles [role-policy-e2e] in namespace default missing "+
-					"as expected, therefore this Object template is compliant",
-				"Compliant; notification - roles [role-policy-e2e] in namespace default existed, "+
-					"and was deleted successfully",
-				"NonCompliant; violation - roles found: [role-policy-e2e] in namespace default",
-				"Compliant; notification - roles [role-policy-e2e] in namespace default missing "+
-					"as expected, therefore this Object template is compliant",
+			expectedStatusMsgs = append(
+				[]string{
+					"Compliant; notification - roles [role-policy-e2e] in namespace default missing " +
+						"as expected, therefore this Object template is compliant",
+					"Compliant; notification - roles [role-policy-e2e] in namespace default existed, " +
+						"and was deleted successfully",
+				},
+				expectedStatusMsgs...,
 			)
+			common.DoHistoryUpdatedTest(rolePolicyName, expectedStatusMsgs...)
 		})
 		AfterAll(func() {
-			By("Deleting the role, policy, and events on managed cluster")
-			common.DoCleanupPolicy(rolePolicyYaml, common.GvrConfigurationPolicy)
-			_, err := common.OcManaged(
-				"delete", "events", "-n", "managed",
-				"--field-selector=involvedObject.name="+common.UserNamespace+"."+rolePolicyName,
-				"--ignore-not-found",
-			)
-			Expect(err).To(BeNil())
-			_, err = common.OcManaged(
-				"delete", "role", "-n", "default", roleName,
-				"--ignore-not-found",
-			)
-			Expect(err).To(BeNil())
+			configPolicyTestCleanUp(roleName, rolePolicyName, rolePolicyYaml)
 		})
 	})
-	Describe("Test object mustonlyhave inform", func() {
+
+	Describe("Test object mustonlyhave enforce", Ordered, func() {
 		const rolePolicyName string = "role-policy-mustonlyhave"
 		const rolePolicyYaml string = "../resources/configuration_policy/role-policy-mustonlyhave.yaml"
+		expectedStatusMsgs := []string{}
 		It("should be created on managed cluster", func() {
 			common.DoCreatePolicyTest(rolePolicyYaml, common.GvrConfigurationPolicy)
-		})
-		It("the policy should be noncompliant", func() {
-			common.DoRootComplianceTest(rolePolicyName, policiesv1.NonCompliant)
-		})
-		It("the policy should be compliant if manually created", func() {
-			By("Creating the role in default namespace on managed cluster")
-			_, err := common.OcManaged(
-				"apply",
-				"-f",
-				"../resources/configuration_policy/role-policy-e2e.yaml",
-				"-n",
-				"default",
+			expectedStatusMsgs = append(
+				[]string{"NonCompliant; violation - roles not found: [role-policy-e2e] in namespace default missing"},
+				expectedStatusMsgs...,
 			)
-			Expect(err).To(BeNil())
-			common.DoRootComplianceTest(rolePolicyName, policiesv1.Compliant)
-		})
-		It("the role should be noncompliant if mismatch", func() {
-			By("Creating a role with different rules")
-			_, err := common.OcManaged(
-				"apply",
-				"-f",
-				"../resources/configuration_policy/role-policy-e2e-mismatch.yaml",
-				"-n",
-				"default",
-			)
-			Expect(err).To(BeNil())
-			common.DoRootComplianceTest(rolePolicyName, policiesv1.NonCompliant)
-		})
-		It("the policy should be compliant if matches", func() {
-			By("Creating the role in default namespace on managed cluster")
-			_, err := common.OcManaged(
-				"apply",
-				"-f",
-				"../resources/configuration_policy/role-policy-e2e.yaml",
-				"-n",
-				"default",
-			)
-			Expect(err).To(BeNil())
-			common.DoRootComplianceTest(rolePolicyName, policiesv1.Compliant)
-		})
-		It("the policy should be noncompliant if has less rules", func() {
-			By("Creating the role in default namespace on managed cluster")
-			_, err := common.OcManaged(
-				"apply",
-				"-f",
-				"../resources/configuration_policy/role-policy-e2e-less.yaml",
-				"-n",
-				"default",
-			)
-			Expect(err).To(BeNil())
-			common.DoRootComplianceTest(rolePolicyName, policiesv1.NonCompliant)
-		})
-		It("the policy should be compliant if matches", func() {
-			By("Creating the role in default namespace on managed cluster")
-			_, err := common.OcManaged(
-				"apply",
-				"-f",
-				"../resources/configuration_policy/role-policy-e2e.yaml",
-				"-n",
-				"default",
-			)
-			Expect(err).To(BeNil())
-			common.DoRootComplianceTest(rolePolicyName, policiesv1.Compliant)
-		})
-		It("the policy should be noncompliant if has more rules", func() {
-			By("Creating the role in default namespace on managed cluster")
-			_, err := common.OcManaged(
-				"apply",
-				"-f",
-				"../resources/configuration_policy/role-policy-e2e-more.yaml",
-				"-n",
-				"default",
-			)
-			Expect(err).To(BeNil())
-			common.DoRootComplianceTest(rolePolicyName, policiesv1.NonCompliant)
-		})
-		It("the messages from histry should match", func() {
-			By("the policy should have matched history after all these test")
-			common.DoHistoryUpdatedTest(rolePolicyName,
-				"NonCompliant; violation - roles not found: [role-policy-e2e] in "+
-					"namespace default found but not as specified",
-				"Compliant; notification - roles [role-policy-e2e] in namespace default "+
-					"found as specified, therefore this Object template is compliant",
-				"NonCompliant; violation - roles not found: [role-policy-e2e] in "+
-					"namespace default found but not as specified",
-				"Compliant; notification - roles [role-policy-e2e] in namespace default "+
-					"found as specified, therefore this Object template is compliant",
-				"NonCompliant; violation - roles not found: [role-policy-e2e] in "+
-					"namespace default found but not as specified",
-				"Compliant; notification - roles [role-policy-e2e] in namespace default "+
-					"found as specified, therefore this Object template is compliant",
-				"NonCompliant; violation - roles not found: [role-policy-e2e] in namespace default missing",
-			)
-		})
-		AfterAll(func() {
-			By("Deleting the role, policy, and events on managed cluster")
-			common.DoCleanupPolicy(rolePolicyYaml, common.GvrConfigurationPolicy)
-			_, err := common.OcManaged(
-				"delete", "events", "-n", "managed",
-				"--field-selector=involvedObject.name="+common.UserNamespace+"."+rolePolicyName,
-				"--ignore-not-found",
-			)
-			Expect(err).To(BeNil())
-			_, err = common.OcManaged(
-				"delete", "role", "-n", "default", roleName,
-				"--ignore-not-found",
-			)
-			Expect(err).To(BeNil())
-		})
-	})
-	Describe("Test object mustonlyhave enforce", func() {
-		const rolePolicyName string = "role-policy-mustonlyhave"
-		const rolePolicyYaml string = "../resources/configuration_policy/role-policy-mustonlyhave.yaml"
-		It("should be created on managed cluster", func() {
-			common.DoCreatePolicyTest(rolePolicyYaml, common.GvrConfigurationPolicy)
+			common.DoHistoryUpdatedTest(rolePolicyName, expectedStatusMsgs...)
 		})
 		It("the policy should be compliant after enforcing it", func() {
 			common.EnforcePolicy(rolePolicyName, common.GvrConfigurationPolicy)
 			common.DoRootComplianceTest(rolePolicyName, policiesv1.Compliant)
+			expectedStatusMsgs = append(
+				[]string{
+					"Compliant; notification - roles [role-policy-e2e] in namespace default " +
+						"found as specified, therefore this Object template is compliant",
+					"Compliant; notification - roles [role-policy-e2e] in " +
+						"namespace default was missing, and was created successfully",
+					"NonCompliant; violation - No instances of `roles` found as specified in namespaces: default",
+				},
+				expectedStatusMsgs...,
+			)
+			common.DoHistoryUpdatedTest(rolePolicyName, expectedStatusMsgs...)
 		})
 		It("the role should be created by policy", func() {
 			By("Checking if the role has been created")
@@ -539,6 +658,17 @@ var _ = Describe("Test configuration policy", Ordered, func() {
 			}, defaultTimeoutSeconds, 1).ShouldNot(BeNil())
 
 			common.DoRootComplianceTest(rolePolicyName, policiesv1.Compliant)
+			expectedStatusMsgs = append(
+				[]string{
+					"Compliant; notification - roles [role-policy-e2e] in namespace default " +
+						"found as specified, therefore this Object template is compliant",
+					"Compliant; notification - roles [role-policy-e2e] in namespace default " +
+						"was missing, and was created successfully",
+					"NonCompliant; violation - No instances of `roles` found as specified in namespaces: default",
+				},
+				expectedStatusMsgs...,
+			)
+			common.DoHistoryUpdatedTest(rolePolicyName, expectedStatusMsgs...)
 		})
 		It("the role should be patched if has less rules", func() {
 			By("Creating a role with less rules")
@@ -563,6 +693,16 @@ var _ = Describe("Test configuration policy", Ordered, func() {
 			}, defaultTimeoutSeconds, 1).Should(utils.SemanticEqual(yamlRole.Object["rules"]))
 
 			common.DoRootComplianceTest(rolePolicyName, policiesv1.Compliant)
+			expectedStatusMsgs = append(
+				[]string{
+					"Compliant; notification - roles [role-policy-e2e] in namespace default " +
+						"found as specified, therefore this Object template is compliant",
+					"Compliant; notification - roles [role-policy-e2e] in namespace default was updated successfully",
+					"NonCompliant; violation - No instances of `roles` found as specified in namespaces: default",
+				},
+				expectedStatusMsgs...,
+			)
+			common.DoHistoryUpdatedTest(rolePolicyName, expectedStatusMsgs...)
 		})
 		It("the role should be patched if has more rules", func() {
 			By("Creating a role with more rules")
@@ -590,6 +730,17 @@ var _ = Describe("Test configuration policy", Ordered, func() {
 			}, defaultTimeoutSeconds, 1).Should(utils.SemanticEqual(yamlRole.Object["rules"]))
 
 			common.DoRootComplianceTest(rolePolicyName, policiesv1.Compliant)
+			expectedStatusMsgs = append(
+				[]string{
+					"Compliant; notification - roles [role-policy-e2e] in namespace default " +
+						"found as specified, therefore this Object template is compliant",
+					"Compliant; notification - roles [role-policy-e2e] in namespace default was updated successfully",
+					"NonCompliant; violation - No instances of `roles` " +
+						"found as specified in namespaces: default",
+				},
+				expectedStatusMsgs...,
+			)
+			common.DoHistoryUpdatedTest(rolePolicyName, expectedStatusMsgs...)
 		})
 		It("the role should be patched if mismatch", func() {
 			By("Creating a role with different rules")
@@ -615,52 +766,20 @@ var _ = Describe("Test configuration policy", Ordered, func() {
 			}, defaultTimeoutSeconds, 1).Should(utils.SemanticEqual(yamlRole.Object["rules"]))
 
 			common.DoRootComplianceTest(rolePolicyName, policiesv1.Compliant)
-		})
-		It("the messages from histry should match when policy is mustonlyhave enforce", func() {
-			By("the policy should have matched history after all these test")
-			common.DoHistoryUpdatedTest(rolePolicyName,
-				"Compliant; notification - roles [role-policy-e2e] in namespace default "+
-					"found as specified, therefore this Object template is compliant",
-				"Compliant; notification - roles [role-policy-e2e] in "+
-					"namespace default was updated successfully",
-				"NonCompliant; violation - No instances of `roles` "+
-					"found as specified in namespaces: default",
-				"Compliant; notification - roles [role-policy-e2e] "+
-					"in namespace default was updated successfully",
-				"NonCompliant; violation - No instances of `roles` "+
-					"found as specified in namespaces: default",
-				"Compliant; notification - roles [role-policy-e2e] "+
-					"in namespace default was updated successfully",
-				"NonCompliant; violation - No instances of `roles` "+
-					"found as specified in namespaces: default",
-				"Compliant; notification - roles [role-policy-e2e] in namespace default "+
-					"was missing, and was created successfully",
-				"NonCompliant; violation - No instances of `roles` "+
-					"found as specified in namespaces: default",
-				"Compliant; notification - roles [role-policy-e2e] in "+
-					"namespace default was missing, and was created successfully",
+			expectedStatusMsgs = append(
+				[]string{
+					"Compliant; notification - roles [role-policy-e2e] in namespace default " +
+						"found as specified, therefore this Object template is compliant",
+					"Compliant; notification - roles [role-policy-e2e] in namespace default was updated successfully",
+					"NonCompliant; violation - No instances of `roles` " +
+						"found as specified in namespaces: default",
+				},
+				expectedStatusMsgs...,
 			)
+			common.DoHistoryUpdatedTest(rolePolicyName, expectedStatusMsgs...)
 		})
 		AfterAll(func() {
-			By("Deleting the role, policy, and events on managed cluster")
-			common.DoCleanupPolicy(rolePolicyYaml, common.GvrConfigurationPolicy)
-			_, err := common.OcManaged(
-				"delete", "events", "-n", "managed",
-				"--all",
-				"--ignore-not-found",
-			)
-			Expect(err).To(BeNil())
-			_, err = common.OcHub(
-				"delete", "events", "-n", "managed",
-				"--all",
-				"--ignore-not-found",
-			)
-			Expect(err).To(BeNil())
-			_, err = common.OcManaged(
-				"delete", "role", "-n", "default", roleName,
-				"--ignore-not-found",
-			)
-			Expect(err).To(BeNil())
+			configPolicyTestCleanUp(roleName, rolePolicyName, rolePolicyYaml)
 		})
 	})
 })

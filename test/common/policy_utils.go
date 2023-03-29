@@ -215,6 +215,12 @@ func GetLatestStatusMessage(policyName string, templateIdx int) func() string {
 
 func DoHistoryUpdatedTest(policyName string, messages ...string) {
 	By("Getting policy history")
+
+	// There is a limit of 10 messages in the Policy status, so if more are passed in, just truncate it.
+	if len(messages) > 10 {
+		messages = messages[:10]
+	}
+
 	Eventually(func(g Gomega) {
 		history, _, err := GetHistoryMessages(policyName, 0)
 		g.Expect(err).Should(BeNil())
