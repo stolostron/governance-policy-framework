@@ -35,7 +35,7 @@ func ConfigPruneBehavior(labels ...string) bool {
 				GinkgoWriter.Printf("cleanPolicy OcManaged configurationpolicy output: %v\n", outManaged)
 				g.Expect(outManaged).To(BeEmpty())
 				g.Expect(err).To(BeNil())
-			}).Should(Succeed())
+			}, DefaultTimeoutSeconds, 1).Should(Succeed())
 
 			outManaged, err := OcManaged(
 				"delete", "events", "-n", ClusterNamespace,
@@ -69,7 +69,7 @@ func ConfigPruneBehavior(labels ...string) bool {
 			compliant, _, _ := unstructured.NestedString(cfgPol.Object, "status", "compliant")
 
 			return compliant
-		}).Should(Equal(string(policiesv1.Compliant)))
+		}, DefaultTimeoutSeconds, 1).Should(Equal(string(policiesv1.Compliant)))
 
 		if cmShouldBeDeleted {
 			By("Checking that the ConfigurationPolicy has a finalizer")
