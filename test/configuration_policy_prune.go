@@ -28,12 +28,28 @@ func ConfigPruneBehavior(labels ...string) bool {
 			GinkgoWriter.Printf("cleanPolicy OcHub output: %v\n", outHub)
 			Expect(err).To(BeNil())
 
+			Eventually(func(g Gomega) {
+				outManaged, err := OcManaged(
+					"get", "configurationpolicies", "-A",
+				)
+				GinkgoWriter.Printf("cleanPolicy OcManaged configurationpolicy output: %v\n", outManaged)
+				g.Expect(outManaged).To(BeEmpty())
+				g.Expect(err).To(BeNil())
+			}).Should(Succeed())
+
 			outManaged, err := OcManaged(
 				"delete", "events", "-n", ClusterNamespace,
 				"--field-selector=involvedObject.name="+UserNamespace+"."+policyName,
 				"--ignore-not-found",
 			)
-			GinkgoWriter.Printf("cleanPolicy OcManaged output: %v\n", outManaged)
+			GinkgoWriter.Printf("cleanPolicy OcManaged policy event output: %v\n", outManaged)
+			Expect(err).To(BeNil())
+			outManaged, err = OcManaged(
+				"delete", "events", "-n", ClusterNamespace,
+				"--field-selector=involvedObject.name="+policyName,
+				"--ignore-not-found",
+			)
+			GinkgoWriter.Printf("cleanPolicy OcManaged configurationpolicy event output: %v\n", outManaged)
 			Expect(err).To(BeNil())
 		}
 	}
@@ -44,6 +60,16 @@ func ConfigPruneBehavior(labels ...string) bool {
 		DoCreatePolicyTest(policyYaml, GvrConfigurationPolicy)
 
 		DoRootComplianceTest(policyName, policiesv1.Compliant)
+
+		By("Checking if the status of ConfigurationPolicy " + policyName + " is Compliant")
+		Eventually(func() string {
+			cfgPol := utils.GetWithTimeout(clientManagedDynamic, GvrConfigurationPolicy,
+				policyName, ClusterNamespace, true, DefaultTimeoutSeconds)
+
+			compliant, _, _ := unstructured.NestedString(cfgPol.Object, "status", "compliant")
+
+			return compliant
+		}).Should(Equal(string(policiesv1.Compliant)))
 
 		if cmShouldBeDeleted {
 			By("Checking that the ConfigurationPolicy has a finalizer")
@@ -85,6 +111,16 @@ func ConfigPruneBehavior(labels ...string) bool {
 		DoCreatePolicyTest(policyYaml, GvrConfigurationPolicy)
 
 		DoRootComplianceTest(policyName, policiesv1.Compliant)
+
+		By("Checking if the status of ConfigurationPolicy " + policyName + " is Compliant")
+		Eventually(func() string {
+			cfgPol := utils.GetWithTimeout(clientManagedDynamic, GvrConfigurationPolicy,
+				policyName, ClusterNamespace, true, DefaultTimeoutSeconds)
+
+			compliant, _, _ := unstructured.NestedString(cfgPol.Object, "status", "compliant")
+
+			return compliant
+		}, DefaultTimeoutSeconds, 1).Should(Equal(string(policiesv1.Compliant)))
 
 		By("Checking that the ConfigurationPolicy has a finalizer")
 		Eventually(func() []string {
@@ -177,6 +213,16 @@ func ConfigPruneBehavior(labels ...string) bool {
 		DoCreatePolicyTest(policyYaml, GvrConfigurationPolicy)
 
 		DoRootComplianceTest(policyName, policiesv1.Compliant)
+
+		By("Checking if the status of ConfigurationPolicy " + policyName + " is Compliant")
+		Eventually(func() string {
+			cfgPol := utils.GetWithTimeout(clientManagedDynamic, GvrConfigurationPolicy,
+				policyName, ClusterNamespace, true, DefaultTimeoutSeconds)
+
+			compliant, _, _ := unstructured.NestedString(cfgPol.Object, "status", "compliant")
+
+			return compliant
+		}, DefaultTimeoutSeconds, 1).Should(Equal(string(policiesv1.Compliant)))
 
 		if cmShouldBeDeleted {
 			By("Checking that the ConfigurationPolicy has a finalizer")
@@ -272,6 +318,16 @@ func ConfigPruneBehavior(labels ...string) bool {
 
 		DoRootComplianceTest(policyName, policiesv1.Compliant)
 
+		By("Checking if the status of ConfigurationPolicy " + policyName + " is Compliant")
+		Eventually(func() string {
+			cfgPol := utils.GetWithTimeout(clientManagedDynamic, GvrConfigurationPolicy,
+				policyName, ClusterNamespace, true, DefaultTimeoutSeconds)
+
+			compliant, _, _ := unstructured.NestedString(cfgPol.Object, "status", "compliant")
+
+			return compliant
+		}, DefaultTimeoutSeconds, 1).Should(Equal(string(policiesv1.Compliant)))
+
 		if cmShouldBeDeleted {
 			By("Checking that the ConfigurationPolicy has a finalizer")
 			Eventually(func() []string {
@@ -317,9 +373,13 @@ func ConfigPruneBehavior(labels ...string) bool {
 	Describe("GRC: [P1][Sev1][policy-grc] "+
 		"Test configuration policy pruning", Ordered, Label(labels...), func() {
 		cleanConfigMap := func() {
+			By("Removing any finalizers from the configmap")
+			_, _ = OcManaged("patch", "configmap", pruneConfigMapName, "-n", "default",
+				"--type=json", "-p", `[{"op":"remove", "path":"/metadata/finalizers"}]`)
+
 			_, err := OcManaged(
 				"delete", "-f", pruneConfigMapYaml,
-				"--ignore-not-found",
+				"--ignore-not-found", "--timeout=30s",
 			)
 			Expect(err).To(BeNil())
 		}
