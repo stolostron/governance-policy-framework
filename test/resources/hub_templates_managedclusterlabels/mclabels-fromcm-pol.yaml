@@ -1,0 +1,52 @@
+apiVersion: policy.open-cluster-management.io/v1
+kind: Policy
+metadata:
+  name: mclabels-fromcm-pol
+spec:
+  remediationAction: enforce
+  disabled: false
+  policy-templates:
+    - objectDefinition:
+        apiVersion: policy.open-cluster-management.io/v1
+        kind: ConfigurationPolicy
+        metadata:
+          name: mclabels-fromcm-pol
+        spec:
+          remediationAction: enforce
+          pruneObjectBehavior: DeleteIfCreated
+          severity: medium
+          object-templates:
+            - complianceType: musthave
+              objectDefinition:
+                apiVersion: v1
+                kind: ConfigMap
+                metadata:
+                  name: mclabels-fromcm-created
+                  namespace: default
+                data:
+                  testvalue: '{{hub fromConfigMap "" "mclabels-fromcm-test-cm" .ManagedClusterLabels.vendor hub}}'
+---
+apiVersion: policy.open-cluster-management.io/v1
+kind: PlacementBinding
+metadata:
+  name: mclabels-fromcm-pol-pb
+placementRef:
+  apiGroup: apps.open-cluster-management.io
+  kind: PlacementRule
+  name: mclabels-fromcm-pol-plr
+subjects:
+- apiGroup: policy.open-cluster-management.io
+  kind: Policy
+  name: mclabels-fromcm-pol
+---
+apiVersion: apps.open-cluster-management.io/v1
+kind: PlacementRule
+metadata:
+  name: mclabels-fromcm-pol-plr
+spec:
+  clusterConditions:
+  - status: "True"
+    type: ManagedClusterConditionAvailable
+  clusterSelector:
+    matchExpressions:
+      []

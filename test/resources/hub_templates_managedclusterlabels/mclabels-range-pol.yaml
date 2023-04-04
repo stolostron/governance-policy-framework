@@ -1,0 +1,54 @@
+apiVersion: policy.open-cluster-management.io/v1
+kind: Policy
+metadata:
+  name: mclabels-range-pol
+spec:
+  remediationAction: enforce
+  disabled: false
+  policy-templates:
+    - objectDefinition:
+        apiVersion: policy.open-cluster-management.io/v1
+        kind: ConfigurationPolicy
+        metadata:
+          name: mclabels-range-pol
+        spec:
+          remediationAction: enforce
+          pruneObjectBehavior: DeleteIfCreated
+          severity: medium
+          object-templates-raw: |
+            - complianceType: musthave
+              objectDefinition:
+                apiVersion: v1
+                kind: ConfigMap
+                metadata:
+                  name: mclabels-range-created
+                  namespace: default
+                data:
+                  {{hub range $rkey, $rval := .ManagedClusterLabels -hub}}
+                  "{{hub $rkey | replace "/" "_" hub}}": "{{hub $rval hub}}"
+                  {{hub end hub}}
+---
+apiVersion: policy.open-cluster-management.io/v1
+kind: PlacementBinding
+metadata:
+  name: mclabels-range-pol-pb
+placementRef:
+  apiGroup: apps.open-cluster-management.io
+  kind: PlacementRule
+  name: mclabels-range-pol-plr
+subjects:
+- apiGroup: policy.open-cluster-management.io
+  kind: Policy
+  name: mclabels-range-pol
+---
+apiVersion: apps.open-cluster-management.io/v1
+kind: PlacementRule
+metadata:
+  name: mclabels-range-pol-plr
+spec:
+  clusterConditions:
+  - status: "True"
+    type: ManagedClusterConditionAvailable
+  clusterSelector:
+    matchExpressions:
+      []
