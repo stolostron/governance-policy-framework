@@ -100,7 +100,7 @@ func ConfigPruneBehavior(labels ...string) bool {
 			pruneConfigMapName,
 			"default",
 			!cmShouldBeDeleted,
-			DefaultTimeoutSeconds,
+			DefaultTimeoutSeconds*2,
 		)
 	}
 
