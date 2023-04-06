@@ -91,6 +91,22 @@ func ConfigPruneBehavior(labels ...string) bool {
 			DefaultTimeoutSeconds,
 		)
 
+		By("Checking that the ConfigurationPolicy identified that it created the object")
+		Eventually(func(g Gomega) interface{} {
+			cfgPol := utils.GetWithTimeout(clientManagedDynamic, GvrConfigurationPolicy,
+				policyName, ClusterNamespace, true, DefaultTimeoutSeconds)
+
+			relObj, _, err := unstructured.NestedSlice(cfgPol.Object, "status", "relatedObjects")
+			g.Expect(err).ToNot(HaveOccurred())
+			g.Expect(relObj).ToNot(HaveLen(0))
+
+			createdByPolicy, _, err := unstructured.NestedBool(
+				relObj[0].(map[string]interface{}), "properties", "createdByPolicy")
+			g.Expect(err).ToNot(HaveOccurred())
+
+			return createdByPolicy
+		}, DefaultTimeoutSeconds, 5).Should(Equal(true), "createdByPolicy should be true")
+
 		DoCleanupPolicy(policyYaml, GvrConfigurationPolicy)
 
 		By("Checking if the configmap was deleted")
@@ -100,7 +116,7 @@ func ConfigPruneBehavior(labels ...string) bool {
 			pruneConfigMapName,
 			"default",
 			!cmShouldBeDeleted,
-			DefaultTimeoutSeconds*2,
+			DefaultTimeoutSeconds,
 		)
 	}
 
@@ -290,7 +306,7 @@ func ConfigPruneBehavior(labels ...string) bool {
 
 		By("Creating the configmap before the policy")
 
-		_, err := OcManaged("apply", "-f", pruneConfigMapYaml)
+		_, err := OcManaged("apply", "-f", pruneConfigMapYaml, "-n", "default")
 		Expect(err).To(BeNil())
 		By("Checking the configmap's initial data")
 
@@ -376,6 +392,8 @@ func ConfigPruneBehavior(labels ...string) bool {
 			By("Removing any finalizers from the configmap")
 			_, _ = OcManaged("patch", "configmap", pruneConfigMapName, "-n", "default",
 				"--type=json", "-p", `[{"op":"remove", "path":"/metadata/finalizers"}]`)
+
+			By("Deleting the configmap")
 
 			_, err := OcManaged(
 				"delete", "-f", pruneConfigMapYaml,
