@@ -78,7 +78,7 @@ func PolicyOrdering(labels ...string) bool {
 				DoRootComplianceTest(policyWithDepName, policiesv1.NonCompliant)
 			})
 			It("Should become pending again when the initial policy is deleted", func() {
-				DoCleanupPolicy(initialPolicyYaml)
+				DoCleanupPolicy(initialPolicyYaml, GvrConfigurationPolicy)
 				DoRootComplianceTest(policyWithDepName, policiesv1.Pending)
 			})
 			AfterAll(cleanup)
@@ -101,7 +101,7 @@ func PolicyOrdering(labels ...string) bool {
 				DoRootComplianceTest(policyWithExtraDepName, policiesv1.NonCompliant)
 			})
 			It("Should become pending again when the initial policy is deleted", func() {
-				DoCleanupPolicy(initialPolicyYaml)
+				DoCleanupPolicy(initialPolicyYaml, GvrConfigurationPolicy)
 				DoRootComplianceTest(policyWithExtraDepName, policiesv1.Pending)
 			})
 			AfterAll(cleanup)
