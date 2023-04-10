@@ -8,7 +8,11 @@ deployOnHub ?= false
 RELEASE_BRANCH ?= main
 OCM_API_COMMIT ?= $(shell awk '/open-cluster-management.io\/api/ {print $$2}' go.mod)
 DOCKER_URI ?= quay.io/stolostron
-VERSION_TAG ?= latest-2.8
+ifneq ($(RELEASE_BRANCH), main)
+  VERSION_TAG ?= latest-$(subst release-,,$(RELEASE_BRANCH))
+else
+  VERSION_TAG ?= latest
+endif
 
 # GITHUB_USER containing '@' char must be escaped with '%40'
 GITHUB_USER := $(shell echo $(GITHUB_USER) | sed 's/@/%40/g')
