@@ -48,7 +48,7 @@ make install-resources
 
 make kind-deploy-policy-framework
 
-./build/wait_for.sh pod -l name=governance-policy-framework-addon -n open-cluster-management-agent-addon
+./build/wait_for.sh pod -l app=governance-policy-framework-addon -n open-cluster-management-agent-addon
 
 make kind-deploy-policy-controllers
 
