@@ -24,6 +24,7 @@ var _ = Describe(
 	Ordered,
 	Label("policy-collection", "stable"),
 	func() {
+		createdUserNamespace := false
 		const (
 			policyHubName   = "policy-multiline-template-hub"
 			policyHubYAML   = "../resources/policy_multiline_templatization/policy-multiline-template-hub.yaml"
@@ -41,6 +42,21 @@ var _ = Describe(
 				"hub":     clientHub,
 				"managed": clientManaged,
 			} {
+				for _, nsName := range []string{userNamespace, configNamespace} {
+					By(fmt.Sprintf("Create namespace %s on the %s cluster", nsName, cluster))
+					namespace := &corev1.Namespace{
+						ObjectMeta: metav1.ObjectMeta{Name: nsName},
+					}
+
+					_, err := client.CoreV1().Namespaces().Create(context.TODO(), namespace, metav1.CreateOptions{})
+					if !k8serrors.IsAlreadyExists(err) {
+						if nsName == userNamespace && cluster == "managed" {
+							createdUserNamespace = true
+						}
+						Expect(err).To(BeNil())
+					}
+				}
+
 				for name, data := range map[string]string{
 					configMapName1: "testvalue1",
 					configMapName2: "testvalue2",
@@ -94,12 +110,6 @@ var _ = Describe(
 			}
 		})
 
-		It("Creates a config namespace to copy configMaps into", func() {
-			Expect(clientManaged.CoreV1().Namespaces().Create(context.TODO(), &corev1.Namespace{
-				ObjectMeta: metav1.ObjectMeta{Name: configNamespace},
-			}, metav1.CreateOptions{})).NotTo(BeNil())
-		})
-
 		It(policyNoHubName+" should be created on the Hub", func() {
 			common.DoCreatePolicyTest(policyNoHubYAML, common.GvrConfigurationPolicy)
 		})
@@ -134,26 +144,40 @@ var _ = Describe(
 		})
 
 		AfterAll(func() {
-			By("Delete policies and config maps")
+			By("Deleting policies")
 			common.DoCleanupPolicy(policyHubYAML, common.GvrConfigurationPolicy)
 			common.DoCleanupPolicy(policyNoHubYAML, common.GvrConfigurationPolicy)
 
-			for _, client := range []kubernetes.Interface{clientHub, clientManaged} {
-				for _, name := range []string{configMapName1, configMapName2} {
-					err := client.CoreV1().ConfigMaps(userNamespace).Delete(ctx, name, metav1.DeleteOptions{})
+			for cluster, client := range map[string]kubernetes.Interface{"hub": clientHub, "managed": clientManaged} {
+				for _, nsName := range []string{userNamespace, configNamespace} {
+					cleanupNeeded := true
+					// Skip cleanup if the userNamespace already existed (i.e. it's a self-managed hub) or it is the hub
+					if nsName == userNamespace && (cluster == "managed" && !createdUserNamespace || cluster == "hub") {
+						cleanupNeeded = false
+					}
+					if cleanupNeeded {
+						By(fmt.Sprintf("Deleting Namespace %s from the %s cluster", nsName, cluster))
+						err := client.CoreV1().Namespaces().Delete(ctx, nsName, metav1.DeleteOptions{})
+						if !k8serrors.IsNotFound(err) {
+							Expect(err).To(BeNil())
+						}
+					}
+				}
+
+				for _, cmName := range []string{configMapName1, configMapName2} {
+					By(fmt.Sprintf("Deleting ConfigMap %s from the %s cluster", cmName, cluster))
+					err := client.CoreV1().ConfigMaps(userNamespace).Delete(ctx, cmName, metav1.DeleteOptions{})
 					if !k8serrors.IsNotFound(err) {
 						Expect(err).To(BeNil())
 					}
 
-					err = client.CoreV1().ConfigMaps(configNamespace).Delete(ctx, name+"-copy", metav1.DeleteOptions{})
+					By(fmt.Sprintf("Deleting ConfigMap %s from the %s cluster", cmName, cluster))
+					err = client.CoreV1().ConfigMaps(configNamespace).Delete(
+						ctx, cmName+"-copy", metav1.DeleteOptions{})
 					if !k8serrors.IsNotFound(err) {
 						Expect(err).To(BeNil())
 					}
 				}
 			}
-
-			By("Delete Namespace " + configNamespace)
-			_, err := common.OcHub("delete", "namespace", configNamespace, "--ignore-not-found")
-			Expect(err).To(BeNil())
 		})
 	})
