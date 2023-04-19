@@ -30,7 +30,19 @@ jobs:
           SKIP_CLEANUP: "true"
         run: |
           ./build/periodic.sh
-          echo "CI_CHECK=$(cat summary-ci-errors.log)" >> ${GITHUB_OUTPUT}
+          echo "CI_EXIT_CODE=$?" >> ${GITHUB_ENV}
+
+          # Output results to the action summary
+          echo "## CI Check :$([[ ${{ env.CI_EXIT_CODE }} == 0 ]] && echo 'white_check_mark' || echo 'warning'):" >> ${GITHUB_STEP_SUMMARY}
+          echo "" >> ${GITHUB_STEP_SUMMARY}
+          echo "<details><summary>See more</summary>" >> ${GITHUB_STEP_SUMMARY}
+          echo "" >> ${GITHUB_STEP_SUMMARY}
+          echo "\`\`\`" >> ${GITHUB_STEP_SUMMARY}
+          cat summary-ci-errors.log >> ${GITHUB_STEP_SUMMARY}
+          echo "\`\`\`" >> ${GITHUB_STEP_SUMMARY}
+          echo "" >> ${GITHUB_STEP_SUMMARY}
+          echo "</details>" >> ${GITHUB_STEP_SUMMARY}
+          echo "" >> ${GITHUB_STEP_SUMMARY}
 
       - name: Codebase Check
         id: codebase_check
@@ -40,19 +52,50 @@ jobs:
           SKIP_CLONING: "true"
         run: |
           [[ -d "./stolostron/" ]] && ./build/codebase-check.sh
-          echo "CODEBASE_CHECK=$(cat summary-codebase-errors.log)" >> ${GITHUB_OUTPUT}
+          echo "CODEBASE_EXIT_CODE=$?" >> ${GITHUB_ENV}
+
+          # Output results to the action summary
+          echo "## Codebase Check :$([[ ${{ env.CODEBASE_EXIT_CODE }} == 0 ]] && echo 'white_check_mark' || echo 'warning'):" >> ${GITHUB_STEP_SUMMARY}
+          echo "" >> ${GITHUB_STEP_SUMMARY}
+          echo "<details><summary>See more</summary>" >> ${GITHUB_STEP_SUMMARY}
+          echo "" >> ${GITHUB_STEP_SUMMARY}
+          echo "\`\`\`" >> ${GITHUB_STEP_SUMMARY}
+          cat summary-codebase-errors.log >> ${GITHUB_STEP_SUMMARY}
+          echo "\`\`\`" >> ${GITHUB_STEP_SUMMARY}
+          echo "" >> ${GITHUB_STEP_SUMMARY}
+          echo "</details>" >> ${GITHUB_STEP_SUMMARY}
 
       - name: Send result to Slack
         id: slack
         uses: slackapi/slack-github-action@v1.23.0
+        if: ${{ always() }}
         env:
+          SLACK_WEBHOOK_TYPE: INCOMING_WEBHOOK
           SLACK_WEBHOOK_URL: ${{ secrets.CODE_HEALTH_SLACK_WEBHOOK }}
         with:
           payload: |
             {
-              "ci_check": "${{ steps.ci_check.outputs.CI_CHECK }}",
-              "codebase_check": "${{ steps.codebase_check.CODEBASE_CHECK }}",
-              "emoji": "${{ github.action_status == 'success' && 'white_check_mark' || 'warning' }}",
-              "result": "${{ github.action_status }}",
-              "url": "${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}"
+              "blocks": [
+                {
+                  "type": "section",
+                  "text": {
+                    "type": "mrkdwn",
+                    "text": ":${{ github.action_status == 'success' && 'white_check_mark' || 'warning' }}: Codebase health check ${{ github.action_status }}: <${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}|View workflow run> :${{ github.action_status == 'success' && 'white_check_mark' || 'warning' }}:",
+                  },
+                },
+                {
+                  "type": "section",
+                  "text": {
+                    "type": "mrkdwn",
+                    "text": "- :${{ env.CI_EXIT_CODE == 0 && 'white_check_mark' || 'warning' }}: CI check",
+                  },
+                },
+                {
+                  "type": "section",
+                  "text": {
+                    "type": "mrkdwn",
+                    "text": "- :${{ env.CODEBASE_EXIT_CODE == 0 && 'white_check_mark' || 'warning' }}: Codebase check",
+                  },
+                },
+              ]
             }
