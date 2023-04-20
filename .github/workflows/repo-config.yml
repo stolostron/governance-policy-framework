@@ -32,18 +32,6 @@ jobs:
           ./build/periodic.sh
           echo "CI_EXIT_CODE=$?" >> ${GITHUB_ENV}
 
-          # Output results to the action summary
-          echo "## CI Check :$([[ ${{ env.CI_EXIT_CODE }} == 0 ]] && echo 'white_check_mark' || echo 'warning'):" >> ${GITHUB_STEP_SUMMARY}
-          echo "" >> ${GITHUB_STEP_SUMMARY}
-          echo "<details><summary>See more</summary>" >> ${GITHUB_STEP_SUMMARY}
-          echo "" >> ${GITHUB_STEP_SUMMARY}
-          echo "\`\`\`" >> ${GITHUB_STEP_SUMMARY}
-          cat summary-ci-errors.log >> ${GITHUB_STEP_SUMMARY}
-          echo "\`\`\`" >> ${GITHUB_STEP_SUMMARY}
-          echo "" >> ${GITHUB_STEP_SUMMARY}
-          echo "</details>" >> ${GITHUB_STEP_SUMMARY}
-          echo "" >> ${GITHUB_STEP_SUMMARY}
-
       - name: Codebase Check
         id: codebase_check
         working-directory: framework
@@ -54,8 +42,22 @@ jobs:
           [[ -d "./stolostron/" ]] && ./build/codebase-check.sh
           echo "CODEBASE_EXIT_CODE=$?" >> ${GITHUB_ENV}
 
-          # Output results to the action summary
-          echo "## Codebase Check :$([[ ${{ env.CODEBASE_EXIT_CODE }} == 0 ]] && echo 'white_check_mark' || echo 'warning'):" >> ${GITHUB_STEP_SUMMARY}
+      - name: Post results to action summary
+        id: results
+        if: ${{ always() }}
+        run: |
+          echo "## CI Check :$([[ "${{ env.CI_EXIT_CODE }}" == 0 ]] && echo 'white_check_mark' || echo 'warning'):" >> ${GITHUB_STEP_SUMMARY}
+          echo "" >> ${GITHUB_STEP_SUMMARY}
+          echo "<details><summary>See more</summary>" >> ${GITHUB_STEP_SUMMARY}
+          echo "" >> ${GITHUB_STEP_SUMMARY}
+          echo "\`\`\`" >> ${GITHUB_STEP_SUMMARY}
+          cat summary-ci-errors.log >> ${GITHUB_STEP_SUMMARY}
+          echo "\`\`\`" >> ${GITHUB_STEP_SUMMARY}
+          echo "" >> ${GITHUB_STEP_SUMMARY}
+          echo "</details>" >> ${GITHUB_STEP_SUMMARY}
+          echo "" >> ${GITHUB_STEP_SUMMARY}
+
+          echo "## Codebase Check :$([[ "${{ env.CODEBASE_EXIT_CODE }}" == 0 ]] && echo 'white_check_mark' || echo 'warning'):" >> ${GITHUB_STEP_SUMMARY}
           echo "" >> ${GITHUB_STEP_SUMMARY}
           echo "<details><summary>See more</summary>" >> ${GITHUB_STEP_SUMMARY}
           echo "" >> ${GITHUB_STEP_SUMMARY}
@@ -80,22 +82,22 @@ jobs:
                   "type": "section",
                   "text": {
                     "type": "mrkdwn",
-                    "text": ":${{ github.action_status == 'success' && 'white_check_mark' || 'warning' }}: Codebase health check ${{ github.action_status }}: <${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}|View workflow run> :${{ github.action_status == 'success' && 'white_check_mark' || 'warning' }}:",
-                  },
+                    "text": ":${{ github.action_status == 'success' && 'white_check_mark' || 'warning' }}: Codebase health check ${{ github.action_status }}: <${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}|View workflow run> :${{ github.action_status == 'success' && 'white_check_mark' || 'warning' }}:"
+                  }
                 },
                 {
                   "type": "section",
                   "text": {
                     "type": "mrkdwn",
-                    "text": "- :${{ env.CI_EXIT_CODE == 0 && 'white_check_mark' || 'warning' }}: CI check",
-                  },
+                    "text": "- :${{ env.CI_EXIT_CODE == 0 && 'white_check_mark' || 'warning' }}: CI check"
+                  }
                 },
                 {
                   "type": "section",
                   "text": {
                     "type": "mrkdwn",
-                    "text": "- :${{ env.CODEBASE_EXIT_CODE == 0 && 'white_check_mark' || 'warning' }}: Codebase check",
-                  },
-                },
+                    "text": "- :${{ env.CODEBASE_EXIT_CODE == 0 && 'white_check_mark' || 'warning' }}: Codebase check"
+                  }
+                }
               ]
             }
