@@ -26,8 +26,7 @@ cloneRepos() {
 			stolostron/governance-policy-spec-sync
 			stolostron/governance-policy-status-sync
 			stolostron/governance-policy-template-sync
-			stolostron/policy-collection
-			stolostron/policy-generator-plugin"
+			stolostron/policy-collection"
 		for repo in $REPOS; do
 			echo "Cloning $repo ...."
 			git clone --quiet https://github.com/$repo.git $repo || exit 1
