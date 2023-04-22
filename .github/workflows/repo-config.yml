@@ -29,8 +29,10 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.WORKFLOW_TOKEN }}
           SKIP_CLEANUP: "true"
         run: |
-          ./build/periodic.sh
-          echo "CI_EXIT_CODE=$?" >> ${GITHUB_ENV}
+          EXIT_CODE=0
+          ./build/periodic.sh || EXIT_CODE=$?
+          echo "CI_EXIT_CODE=${EXIT_CODE}" >> ${GITHUB_ENV}
+          exit ${EXIT_CODE}
 
       - name: Codebase Check
         id: codebase_check
@@ -39,13 +41,18 @@ jobs:
         env:
           SKIP_CLONING: "true"
         run: |
-          [[ -d "./stolostron/" ]] && ./build/codebase-check.sh
-          echo "CODEBASE_EXIT_CODE=$?" >> ${GITHUB_ENV}
+          EXIT_CODE=0
+          [[ -d "./stolostron/" ]] && ./build/codebase-check.sh  || EXIT_CODE=$?
+          echo "CODEBASE_EXIT_CODE=${EXIT_CODE}" >> ${GITHUB_ENV}
+          exit ${EXIT_CODE}
 
       - name: Post results to action summary
         id: results
+        working-directory: framework
         if: ${{ always() }}
         run: |
+          echo "ACTION_RESULT=$([[ ${CI_EXIT_CODE} == 0 ]] && [[ ${CODEBASE_EXIT_CODE} == 0 ]] && echo 0 || echo 1)"
+
           echo "## CI Check :$([[ "${{ env.CI_EXIT_CODE }}" == 0 ]] && echo 'white_check_mark' || echo 'warning'):" >> ${GITHUB_STEP_SUMMARY}
           echo "" >> ${GITHUB_STEP_SUMMARY}
           echo "<details><summary>See more</summary>" >> ${GITHUB_STEP_SUMMARY}
@@ -82,21 +89,7 @@ jobs:
                   "type": "section",
                   "text": {
                     "type": "mrkdwn",
-                    "text": ":${{ github.action_status == 'success' && 'white_check_mark' || 'warning' }}: Codebase health check ${{ github.action_status }}: <${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}|View workflow run> :${{ github.action_status == 'success' && 'white_check_mark' || 'warning' }}:"
-                  }
-                },
-                {
-                  "type": "section",
-                  "text": {
-                    "type": "mrkdwn",
-                    "text": "- :${{ env.CI_EXIT_CODE == 0 && 'white_check_mark' || 'warning' }}: CI check"
-                  }
-                },
-                {
-                  "type": "section",
-                  "text": {
-                    "type": "mrkdwn",
-                    "text": "- :${{ env.CODEBASE_EXIT_CODE == 0 && 'white_check_mark' || 'warning' }}: Codebase check"
+                    "text": ":${{ env.ACTION_RESULT == 0 && 'white_check_mark' || 'warning' }}: Codebase health check ${{ env.ACTION_RESULT == 0 && 'succeeded' || 'failed' }}: <${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}|View workflow run> :${{ env.ACTION_RESULT == 0 && 'white_check_mark' || 'warning' }}:\n• :${{ env.CI_EXIT_CODE == 0 && 'white_check_mark' || 'warning' }}: CI check\n• :${{ env.CODEBASE_EXIT_CODE == 0 && 'white_check_mark' || 'warning' }}: Codebase check"
                   }
                 }
               ]
