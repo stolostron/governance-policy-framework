@@ -1,0 +1,4 @@
+stolostron/console,frontend/src/routes/Governance
+stolostron/console,frontend/src/wizards/Governance
+stolostron/multiclusterhub-operator,pkg/templates/crds/grc
+stolostron/multiclusterhub-operator,pkg/templates/charts/toggle/grc
