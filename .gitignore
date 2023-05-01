@@ -16,3 +16,5 @@ vendor/
 install.sh
 
 governance-policy-addon-controller/
+build/**/stolostron/
+build/**/open-cluster-management-io/

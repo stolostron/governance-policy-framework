@@ -2,7 +2,7 @@
 
 COMPONENT_ORG=stolostron
 DEFAULT_BRANCH=${DEFAULT_BRANCH:-"main"}
-UTIL_REPOS="policy-grc-squad pipeline multiclusterhub-operator"
+UTIL_REPOS="pipeline multiclusterhub-operator"
 SKIP_CLONING="${SKIP_CLONING:-"false"}"
 SKIP_CLEANUP="${SKIP_CLEANUP:-"false"}"
 
@@ -19,8 +19,8 @@ cloneRepos() {
 		fi
 	done
 	if [ ! -d "${COMPONENT_ORG}" ]; then
-		# Collect repos from https://github.com/stolostron/policy-grc-squad/blob/master/main-branch-sync/repo.txt
-		REPOS=$(cat policy-grc-squad/main-branch-sync/repo.txt)
+		# Collect repos from main-branch-sync/repo.txt
+		REPOS=$(cat ./main-branch-sync/repo.txt)
 		# Manually append deprecated repos
 		REPOS="${REPOS}
 			stolostron/governance-policy-spec-sync
