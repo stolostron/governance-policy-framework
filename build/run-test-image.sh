@@ -15,8 +15,15 @@ else
   echo "* Using GINKGO_LABEL_FILTER=${GINKGO_LABEL_FILTER}"
 fi
 
+if [[ -z ${OCM_NAMESPACE} ]]; then
+  echo "* OCM_NAMESPACE not set, using open-cluster-management"
+  OCM_NAMESPACE="open-cluster-management"
+else
+  echo "* Using OCM_NAMESPACE=${OCM_NAMESPACE}"
+fi
+
 # Run test suite with reporting
-CGO_ENABLED=0 ./bin/ginkgo -v ${GINKGO_FAIL_FAST} ${GINKGO_LABEL_FILTER} --junit-report=integration.xml --output-dir=test-output test/integration -- -cluster_namespace=$MANAGED_CLUSTER_NAME || EXIT_CODE=$?
+CGO_ENABLED=0 ./bin/ginkgo -v ${GINKGO_FAIL_FAST} ${GINKGO_LABEL_FILTER} --junit-report=integration.xml --output-dir=test-output test/integration -- -cluster_namespace=$MANAGED_CLUSTER_NAME -ocm_namespace=$OCM_NAMESPACE || EXIT_CODE=$?
 
 # Remove Gingko phases from report to prevent corrupting bracketed metadata
 if [ -f test-output/integration.xml ]; then
