@@ -34,6 +34,7 @@ const (
 var (
 	userNamespace         string
 	clusterNamespace      string
+	ocmNS                 string
 	kubeconfigHub         string
 	kubeconfigManaged     string
 	defaultTimeoutSeconds int
@@ -65,6 +66,7 @@ var _ = BeforeSuite(func() {
 	kubeconfigManaged = common.KubeconfigManaged
 	userNamespace = common.UserNamespace
 	clusterNamespace = common.ClusterNamespace
+	ocmNS = common.OCMNamespace
 	defaultTimeoutSeconds = common.DefaultTimeoutSeconds
 
 	clientHub = common.ClientHub

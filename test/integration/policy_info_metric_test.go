@@ -19,7 +19,6 @@ import (
 var _ = Describe("GRC: [P1][Sev1][policy-grc] Test policy_governance_info metric", Ordered, Label("BVT"), func() {
 	const (
 		propagatorMetricsSelector = "component=ocm-policy-propagator"
-		ocmNS                     = "open-cluster-management"
 		metricName                = "policy_governance_info"
 		metricsAccName            = "grc-framework-sa-metrics"
 		metricsTokenYaml          = "../resources/policy_info_metric/metrics_token.yaml"

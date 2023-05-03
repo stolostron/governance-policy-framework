@@ -22,7 +22,6 @@ import (
 
 var _ = Describe("GRC: [P1][Sev1][policy-grc] Test policyreport_info metric", Ordered, Label("BVT"), func() {
 	const (
-		ocmNS                        = "open-cluster-management"
 		saName                       = "grc-framework-sa"
 		roleBindingName              = "grc-framework-role-binding"
 		saTokenName                  = "grc-framework-sa-token-manual"
