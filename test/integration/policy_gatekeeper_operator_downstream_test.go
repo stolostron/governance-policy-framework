@@ -31,7 +31,7 @@ var _ = Describe("RHACM4K-3055", Ordered, Label("policy-collection", "stable", "
 				"-n", userNamespace,
 				"--kubeconfig="+kubeconfigHub,
 			)
-			Expect(err).To(BeNil())
+			Expect(err).ToNot(HaveOccurred())
 			By("Patching Policy Gatekeeper CR template with namespaceSelector " +
 				"to kubernetes.io/metadata.name=" + userNamespace)
 			_, err = utils.KubectlWithOutput(
@@ -44,10 +44,10 @@ var _ = Describe("RHACM4K-3055", Ordered, Label("policy-collection", "stable", "
 					"\"values\":[\"true\"]}]}}]",
 				"--kubeconfig="+kubeconfigHub,
 			)
-			Expect(err).To(BeNil())
+			Expect(err).ToNot(HaveOccurred())
 			By("Patching placement rule")
 			err = common.PatchPlacementRule(userNamespace, "placement-"+gatekeeperPolicyName)
-			Expect(err).To(BeNil())
+			Expect(err).ToNot(HaveOccurred())
 			By("Checking policy-gatekeeper-operator on hub cluster in ns " + userNamespace)
 			rootPlc := utils.GetWithTimeout(
 				clientHubDynamic,
@@ -101,7 +101,7 @@ var _ = Describe("RHACM4K-3055", Ordered, Label("policy-collection", "stable", "
 						"--kubeconfig="+kubeconfigManaged,
 						"--ignore-not-found",
 					)
-					Expect(err).To(BeNil())
+					Expect(err).ToNot(HaveOccurred())
 				}
 				i++
 				podList, err := clientManaged.CoreV1().Pods("openshift-operators").List(
@@ -111,7 +111,7 @@ var _ = Describe("RHACM4K-3055", Ordered, Label("policy-collection", "stable", "
 							"gatekeeper-operator-controller-manager)",
 					},
 				)
-				g.Expect(err).To(BeNil())
+				g.Expect(err).ToNot(HaveOccurred())
 
 				return len(podList.Items)
 			}, defaultTimeoutSeconds*12, 1).Should(Equal(1))
@@ -124,7 +124,7 @@ var _ = Describe("RHACM4K-3055", Ordered, Label("policy-collection", "stable", "
 							"(controller-manager, gatekeeper-operator-controller-manager)",
 					},
 				)
-				g.Expect(err).To(BeNil())
+				g.Expect(err).ToNot(HaveOccurred())
 				for _, item := range podList.Items {
 					if strings.HasPrefix(item.ObjectMeta.Name, "gatekeeper-operator-controller") {
 						// Log the pod status message if there may be a problem starting the pod
@@ -167,9 +167,9 @@ var _ = Describe("RHACM4K-3055", Ordered, Label("policy-collection", "stable", "
 				"gatekeeper-validating-webhook-configuration",
 				metav1.GetOptions{},
 			)
-			Expect(err).To(BeNil())
-			Expect(len(webhook.Webhooks[0].NamespaceSelector.MatchExpressions)).To(Equal(1))
-			Expect(len(webhook.Webhooks[1].NamespaceSelector.MatchExpressions)).To(Equal(1))
+			Expect(err).ToNot(HaveOccurred())
+			Expect(webhook.Webhooks[0].NamespaceSelector.MatchExpressions).To(HaveLen(1))
+			Expect(webhook.Webhooks[1].NamespaceSelector.MatchExpressions).To(HaveLen(1))
 			Expect(webhook.Webhooks[0].NamespaceSelector.MatchExpressions[0]).NotTo(BeNil())
 			Expect(webhook.Webhooks[1].NamespaceSelector.MatchExpressions[0]).NotTo(BeNil())
 		})
@@ -182,7 +182,7 @@ var _ = Describe("RHACM4K-3055", Ordered, Label("policy-collection", "stable", "
 						LabelSelector: "control-plane=audit-controller",
 					},
 				)
-				g.Expect(err).To(BeNil())
+				g.Expect(err).ToNot(HaveOccurred())
 
 				return len(podList.Items)
 			}, defaultTimeoutSeconds*2, 1).Should(Equal(1))
@@ -194,7 +194,7 @@ var _ = Describe("RHACM4K-3055", Ordered, Label("policy-collection", "stable", "
 						LabelSelector: "control-plane=audit-controller",
 					},
 				)
-				g.Expect(err).To(BeNil())
+				g.Expect(err).ToNot(HaveOccurred())
 
 				return string(podList.Items[0].Status.Phase)
 			}, defaultTimeoutSeconds*4, 1).Should(Equal("Running"))
@@ -208,7 +208,7 @@ var _ = Describe("RHACM4K-3055", Ordered, Label("policy-collection", "stable", "
 						LabelSelector: "control-plane=controller-manager",
 					},
 				)
-				g.Expect(err).To(BeNil())
+				g.Expect(err).ToNot(HaveOccurred())
 
 				return len(podList.Items)
 			}, defaultTimeoutSeconds*2, 1).Should(Equal(2))
@@ -220,7 +220,7 @@ var _ = Describe("RHACM4K-3055", Ordered, Label("policy-collection", "stable", "
 						LabelSelector: "control-plane=controller-manager",
 					},
 				)
-				g.Expect(err).To(BeNil())
+				g.Expect(err).ToNot(HaveOccurred())
 
 				return string(podList.Items[0].Status.Phase) + "/" + string(podList.Items[1].Status.Phase)
 			}, defaultTimeoutSeconds*4, 1).Should(Equal("Running/Running"))
@@ -256,7 +256,7 @@ var _ = Describe("RHACM4K-3055", Ordered, Label("policy-collection", "stable", "
 			"--kubeconfig="+kubeconfigHub,
 			"--ignore-not-found",
 		)
-		Expect(err).To(BeNil())
+		Expect(err).ToNot(HaveOccurred())
 
 		Eventually(func() interface{} {
 			managedPlc := utils.GetWithTimeout(
@@ -279,7 +279,7 @@ var _ = Describe("RHACM4K-3055", Ordered, Label("policy-collection", "stable", "
 			"--kubeconfig="+kubeconfigManaged,
 			"--ignore-not-found",
 		)
-		Expect(err).To(BeNil())
+		Expect(err).ToNot(HaveOccurred())
 
 		Eventually(func() interface{} {
 			out, _ := utils.KubectlWithOutput(
@@ -301,7 +301,7 @@ var _ = Describe("RHACM4K-3055", Ordered, Label("policy-collection", "stable", "
 			"--kubeconfig="+kubeconfigManaged,
 			"--ignore-not-found",
 		)
-		Expect(err).To(BeNil())
+		Expect(err).ToNot(HaveOccurred())
 
 		csvName, _ := utils.KubectlWithOutput(
 			"get", "-n", "openshift-operators", "csv", "-o",
@@ -318,7 +318,7 @@ var _ = Describe("RHACM4K-3055", Ordered, Label("policy-collection", "stable", "
 			"--kubeconfig="+kubeconfigManaged,
 			"--ignore-not-found",
 		)
-		Expect(err).To(BeNil())
+		Expect(err).ToNot(HaveOccurred())
 
 		_, err = utils.KubectlWithOutput(
 			"delete",
@@ -327,7 +327,7 @@ var _ = Describe("RHACM4K-3055", Ordered, Label("policy-collection", "stable", "
 			"--kubeconfig="+kubeconfigManaged,
 			"--ignore-not-found",
 		)
-		Expect(err).To(BeNil())
+		Expect(err).ToNot(HaveOccurred())
 
 		out, _ := utils.KubectlWithOutput(
 			"delete",
@@ -349,6 +349,6 @@ var _ = Describe("RHACM4K-3055", Ordered, Label("policy-collection", "stable", "
 			"--kubeconfig="+kubeconfigManaged,
 			"--ignore-not-found",
 		)
-		Expect(err).To(BeNil())
+		Expect(err).ToNot(HaveOccurred())
 	})
 })

@@ -6,18 +6,19 @@ package e2e
 import (
 	"context"
 
-	"k8s.io/klog"
-
 	. "github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/klog"
 	policiesv1 "open-cluster-management.io/governance-policy-propagator/api/v1"
 	"open-cluster-management.io/governance-policy-propagator/test/utils"
 
 	"github.com/stolostron/governance-policy-framework/test/common"
 )
 
-func configPolicyTestCleanUp(roleName, rolePolicyName, rolePolicyYAML string) {
+func configPolicyTestCleanUp(rolePolicyName, rolePolicyYAML string) {
+	const roleName string = "role-policy-e2e"
+
 	By("Deleting the role, policy, and events on managed cluster")
 	common.DoCleanupPolicy(rolePolicyYAML, common.GvrConfigurationPolicy)
 	_, err := common.OcHosting(
@@ -25,24 +26,24 @@ func configPolicyTestCleanUp(roleName, rolePolicyName, rolePolicyYAML string) {
 		"--field-selector=involvedObject.name="+common.UserNamespace+"."+rolePolicyName,
 		"--ignore-not-found",
 	)
-	ExpectWithOffset(1, err).To(BeNil())
+	ExpectWithOffset(1, err).ToNot(HaveOccurred())
 	_, err = common.OcHosting(
 		"delete", "events", "-n", common.ClusterNamespace,
 		"--field-selector=involvedObject.name="+rolePolicyName,
 		"--ignore-not-found",
 	)
-	ExpectWithOffset(1, err).To(BeNil())
+	ExpectWithOffset(1, err).ToNot(HaveOccurred())
 	_, err = common.OcHub(
 		"delete", "events", "-n", common.ClusterNamespaceOnHub,
 		"--field-selector=involvedObject.name="+common.UserNamespace+"."+rolePolicyName,
 		"--ignore-not-found",
 	)
-	ExpectWithOffset(1, err).To(BeNil())
+	ExpectWithOffset(1, err).ToNot(HaveOccurred())
 	_, err = common.OcManaged(
 		"delete", "role", "-n", "default", roleName,
 		"--ignore-not-found",
 	)
-	ExpectWithOffset(1, err).To(BeNil())
+	ExpectWithOffset(1, err).ToNot(HaveOccurred())
 }
 
 var _ = Describe("Test configuration policy inform", Ordered, func() {
@@ -70,7 +71,7 @@ var _ = Describe("Test configuration policy inform", Ordered, func() {
 				"../resources/configuration_policy/role-policy-e2e.yaml",
 				"-n", "default",
 			)
-			Expect(err).To(BeNil())
+			Expect(err).ToNot(HaveOccurred())
 			common.DoRootComplianceTest(rolePolicyName, policiesv1.Compliant)
 			expectedStatusMsgs = append(
 				[]string{
@@ -88,7 +89,7 @@ var _ = Describe("Test configuration policy inform", Ordered, func() {
 				"../resources/configuration_policy/role-policy-e2e.yaml",
 				"-n", "default", "--ignore-not-found",
 			)
-			Expect(err).To(BeNil())
+			Expect(err).ToNot(HaveOccurred())
 			common.DoRootComplianceTest(rolePolicyName, policiesv1.NonCompliant)
 			expectedStatusMsgs = append(
 				[]string{"NonCompliant; violation - roles not found: [role-policy-e2e] in namespace default missing"},
@@ -103,7 +104,7 @@ var _ = Describe("Test configuration policy inform", Ordered, func() {
 				"../resources/configuration_policy/role-policy-e2e-more.yaml",
 				"-n", "default",
 			)
-			Expect(err).To(BeNil())
+			Expect(err).ToNot(HaveOccurred())
 			common.DoRootComplianceTest(rolePolicyName, policiesv1.Compliant)
 			expectedStatusMsgs = append(
 				[]string{
@@ -121,7 +122,7 @@ var _ = Describe("Test configuration policy inform", Ordered, func() {
 				"../resources/configuration_policy/role-policy-e2e-less.yaml",
 				"-n", "default",
 			)
-			Expect(err).To(BeNil())
+			Expect(err).ToNot(HaveOccurred())
 			common.DoRootComplianceTest(rolePolicyName, policiesv1.NonCompliant)
 			expectedStatusMsgs = append(
 				[]string{
@@ -139,7 +140,7 @@ var _ = Describe("Test configuration policy inform", Ordered, func() {
 				"../resources/configuration_policy/role-policy-e2e.yaml",
 				"-n", "default",
 			)
-			Expect(err).To(BeNil())
+			Expect(err).ToNot(HaveOccurred())
 			common.DoRootComplianceTest(rolePolicyName, policiesv1.Compliant)
 			expectedStatusMsgs = append(
 				[]string{
@@ -157,7 +158,7 @@ var _ = Describe("Test configuration policy inform", Ordered, func() {
 				"../resources/configuration_policy/role-policy-e2e.yaml",
 				"-n", "default", "--ignore-not-found",
 			)
-			Expect(err).To(BeNil())
+			Expect(err).ToNot(HaveOccurred())
 
 			common.DoRootComplianceTest(rolePolicyName, policiesv1.NonCompliant)
 			expectedStatusMsgs = append(
@@ -167,7 +168,7 @@ var _ = Describe("Test configuration policy inform", Ordered, func() {
 			common.DoHistoryUpdatedTest(rolePolicyName, expectedStatusMsgs...)
 		})
 		AfterAll(func() {
-			configPolicyTestCleanUp(roleName, rolePolicyName, rolePolicyYaml)
+			configPolicyTestCleanUp(rolePolicyName, rolePolicyYaml)
 		})
 	})
 
@@ -196,7 +197,7 @@ var _ = Describe("Test configuration policy inform", Ordered, func() {
 				"../resources/configuration_policy/role-policy-e2e.yaml",
 				"-n", "default",
 			)
-			Expect(err).To(BeNil())
+			Expect(err).ToNot(HaveOccurred())
 			common.DoRootComplianceTest(rolePolicyName, policiesv1.NonCompliant)
 			expectedStatusMsgs = append(
 				[]string{"NonCompliant; violation - roles found: [role-policy-e2e] in namespace default"},
@@ -210,7 +211,7 @@ var _ = Describe("Test configuration policy inform", Ordered, func() {
 				"delete", "role", "-n", "default", roleName,
 				"--ignore-not-found",
 			)
-			Expect(err).To(BeNil())
+			Expect(err).ToNot(HaveOccurred())
 			common.DoRootComplianceTest(rolePolicyName, policiesv1.Compliant)
 			expectedStatusMsgs = append(
 				[]string{
@@ -222,7 +223,7 @@ var _ = Describe("Test configuration policy inform", Ordered, func() {
 			common.DoHistoryUpdatedTest(rolePolicyName, expectedStatusMsgs...)
 		})
 		AfterAll(func() {
-			configPolicyTestCleanUp(roleName, rolePolicyName, rolePolicyYaml)
+			configPolicyTestCleanUp(rolePolicyName, rolePolicyYaml)
 		})
 	})
 
@@ -250,7 +251,7 @@ var _ = Describe("Test configuration policy inform", Ordered, func() {
 				"-n",
 				"default",
 			)
-			Expect(err).To(BeNil())
+			Expect(err).ToNot(HaveOccurred())
 			common.DoRootComplianceTest(rolePolicyName, policiesv1.Compliant)
 			expectedStatusMsgs = append(
 				[]string{
@@ -270,7 +271,7 @@ var _ = Describe("Test configuration policy inform", Ordered, func() {
 				"-n",
 				"default",
 			)
-			Expect(err).To(BeNil())
+			Expect(err).ToNot(HaveOccurred())
 			common.DoRootComplianceTest(rolePolicyName, policiesv1.NonCompliant)
 			expectedStatusMsgs = append(
 				[]string{
@@ -290,7 +291,7 @@ var _ = Describe("Test configuration policy inform", Ordered, func() {
 				"-n",
 				"default",
 			)
-			Expect(err).To(BeNil())
+			Expect(err).ToNot(HaveOccurred())
 			common.DoRootComplianceTest(rolePolicyName, policiesv1.Compliant)
 			expectedStatusMsgs = append(
 				[]string{
@@ -310,7 +311,7 @@ var _ = Describe("Test configuration policy inform", Ordered, func() {
 				"-n",
 				"default",
 			)
-			Expect(err).To(BeNil())
+			Expect(err).ToNot(HaveOccurred())
 			common.DoRootComplianceTest(rolePolicyName, policiesv1.NonCompliant)
 			expectedStatusMsgs = append(
 				[]string{
@@ -330,7 +331,7 @@ var _ = Describe("Test configuration policy inform", Ordered, func() {
 				"-n",
 				"default",
 			)
-			Expect(err).To(BeNil())
+			Expect(err).ToNot(HaveOccurred())
 			common.DoRootComplianceTest(rolePolicyName, policiesv1.Compliant)
 			expectedStatusMsgs = append(
 				[]string{
@@ -350,7 +351,7 @@ var _ = Describe("Test configuration policy inform", Ordered, func() {
 				"-n",
 				"default",
 			)
-			Expect(err).To(BeNil())
+			Expect(err).ToNot(HaveOccurred())
 			common.DoRootComplianceTest(rolePolicyName, policiesv1.NonCompliant)
 			expectedStatusMsgs = append(
 				[]string{
@@ -362,7 +363,7 @@ var _ = Describe("Test configuration policy inform", Ordered, func() {
 			common.DoHistoryUpdatedTest(rolePolicyName, expectedStatusMsgs...)
 		})
 		AfterAll(func() {
-			configPolicyTestCleanUp(roleName, rolePolicyName, rolePolicyYaml)
+			configPolicyTestCleanUp(rolePolicyName, rolePolicyYaml)
 		})
 	})
 })
@@ -412,7 +413,7 @@ var _ = Describe("Test configuration policy enforce", Ordered, func() {
 				"--ignore-not-found",
 			)
 			klog.Info(del)
-			Expect(err).To(BeNil())
+			Expect(err).ToNot(HaveOccurred())
 
 			By("Checking if the role has been recreated")
 			klog.Info("checking for role")
@@ -453,7 +454,7 @@ var _ = Describe("Test configuration policy enforce", Ordered, func() {
 			)
 			klog.Info("patch more")
 			klog.Info(mismatch)
-			Expect(err).To(BeNil())
+			Expect(err).ToNot(HaveOccurred())
 			By("Checking if the role is not patched to match in 30s")
 			yamlRole := utils.ParseYaml("../resources/configuration_policy/role-policy-e2e-more.yaml")
 			Consistently(func() interface{} {
@@ -482,7 +483,7 @@ var _ = Describe("Test configuration policy enforce", Ordered, func() {
 			)
 			klog.Info("patch less")
 			klog.Info(mismatch)
-			Expect(err).To(BeNil())
+			Expect(err).ToNot(HaveOccurred())
 			By("Checking if the role has been patched to match")
 			yamlRole := utils.ParseYaml("../resources/configuration_policy/role-policy-e2e.yaml")
 			Eventually(func() interface{} {
@@ -512,7 +513,7 @@ var _ = Describe("Test configuration policy enforce", Ordered, func() {
 			common.DoHistoryUpdatedTest(rolePolicyName, expectedStatusMsgs...)
 		})
 		AfterAll(func() {
-			configPolicyTestCleanUp(roleName, rolePolicyName, rolePolicyYaml)
+			configPolicyTestCleanUp(rolePolicyName, rolePolicyYaml)
 		})
 	})
 
@@ -541,7 +542,7 @@ var _ = Describe("Test configuration policy enforce", Ordered, func() {
 				"../resources/configuration_policy/role-policy-e2e.yaml",
 				"-n", "default",
 			)
-			Expect(err).To(BeNil())
+			Expect(err).ToNot(HaveOccurred())
 			common.DoRootComplianceTest(rolePolicyName, policiesv1.NonCompliant)
 			expectedStatusMsgs = append(
 				[]string{"NonCompliant; violation - roles found: [role-policy-e2e] in namespace default"},
@@ -570,7 +571,7 @@ var _ = Describe("Test configuration policy enforce", Ordered, func() {
 				"../resources/configuration_policy/role-policy-e2e.yaml",
 				"-n", "default",
 			)
-			Expect(err).To(BeNil())
+			Expect(err).ToNot(HaveOccurred())
 			By("Checking if the role has been deleted")
 			Eventually(func() interface{} {
 				role, _ := clientManagedDynamic.Resource(common.GvrRole).Namespace("default").Get(
@@ -595,7 +596,7 @@ var _ = Describe("Test configuration policy enforce", Ordered, func() {
 			common.DoHistoryUpdatedTest(rolePolicyName, expectedStatusMsgs...)
 		})
 		AfterAll(func() {
-			configPolicyTestCleanUp(roleName, rolePolicyName, rolePolicyYaml)
+			configPolicyTestCleanUp(rolePolicyName, rolePolicyYaml)
 		})
 	})
 
@@ -644,7 +645,7 @@ var _ = Describe("Test configuration policy enforce", Ordered, func() {
 				"delete", "role", "-n", "default", roleName,
 				"--ignore-not-found",
 			)
-			Expect(err).To(BeNil())
+			Expect(err).ToNot(HaveOccurred())
 
 			By("Checking if the role has been recreated")
 			Eventually(func() interface{} {
@@ -677,7 +678,7 @@ var _ = Describe("Test configuration policy enforce", Ordered, func() {
 				"../resources/configuration_policy/role-policy-e2e-less.yaml",
 				"-n", "default",
 			)
-			Expect(err).To(BeNil())
+			Expect(err).ToNot(HaveOccurred())
 			By("Checking if the role has been patched to match by config policy")
 			yamlRole := utils.ParseYaml("../resources/configuration_policy/role-policy-e2e.yaml")
 			Eventually(func() interface{} {
@@ -713,7 +714,7 @@ var _ = Describe("Test configuration policy enforce", Ordered, func() {
 				"-n",
 				"default",
 			)
-			Expect(err).To(BeNil())
+			Expect(err).ToNot(HaveOccurred())
 			By("Checking if the role has been patched to match by config policy")
 			yamlRole := utils.ParseYaml("../resources/configuration_policy/role-policy-e2e.yaml")
 			Eventually(func() interface{} {
@@ -749,7 +750,7 @@ var _ = Describe("Test configuration policy enforce", Ordered, func() {
 				"-f",
 				"../resources/configuration_policy/role-policy-e2e-mismatch.yaml", "-n", "default",
 			)
-			Expect(err).To(BeNil())
+			Expect(err).ToNot(HaveOccurred())
 			By("Checking if the role has been patched to match by config policy")
 			yamlRole := utils.ParseYaml("../resources/configuration_policy/role-policy-e2e.yaml")
 			Eventually(func() interface{} {
@@ -779,7 +780,7 @@ var _ = Describe("Test configuration policy enforce", Ordered, func() {
 			common.DoHistoryUpdatedTest(rolePolicyName, expectedStatusMsgs...)
 		})
 		AfterAll(func() {
-			configPolicyTestCleanUp(roleName, rolePolicyName, rolePolicyYaml)
+			configPolicyTestCleanUp(rolePolicyName, rolePolicyYaml)
 		})
 	})
 })

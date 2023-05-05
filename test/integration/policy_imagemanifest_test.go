@@ -29,17 +29,17 @@ var _ = Describe("GRC: [P1][Sev1][policy-grc] Test "+
 		_, err := utils.KubectlWithOutput(
 			"apply", "-f", "../resources/image-vulnerabilities/vulnerable-pod.yaml", "--kubeconfig="+kubeconfigHub,
 		)
-		Expect(err).To(BeNil())
+		Expect(err).ToNot(HaveOccurred())
 
 		By("Creating the policy on the Hub")
 		_, err = utils.KubectlWithOutput(
 			"apply", "-f", policyIMVURL, "-n", userNamespace, "--kubeconfig="+kubeconfigHub,
 		)
-		Expect(err).To(BeNil())
+		Expect(err).ToNot(HaveOccurred())
 
 		By("Patching placement rule")
 		err = common.PatchPlacementRule(userNamespace, "placement-"+policyIMVName)
-		Expect(err).To(BeNil())
+		Expect(err).ToNot(HaveOccurred())
 
 		By("Checking that " + policyIMVName + " exists on the Hub cluster")
 		rootPolicy := utils.GetWithTimeout(
@@ -79,7 +79,7 @@ var _ = Describe("GRC: [P1][Sev1][policy-grc] Test "+
 			[]byte(`[{"op": "replace", "path": "/spec/remediationAction", "value": "enforce"}]`),
 			metav1.PatchOptions{},
 		)
-		Expect(err).To(BeNil())
+		Expect(err).ToNot(HaveOccurred())
 	})
 
 	It("The subscription should exist", func() {
@@ -195,7 +195,7 @@ var _ = Describe("GRC: [P1][Sev1][policy-grc] Test "+
 			userNamespace, "--kubeconfig="+kubeconfigHub,
 			"--ignore-not-found",
 		)
-		Expect(err).To(BeNil())
+		Expect(err).ToNot(HaveOccurred())
 
 		_, err = utils.KubectlWithOutput(
 			"delete", "subscriptions.operators.coreos.com",
@@ -203,7 +203,7 @@ var _ = Describe("GRC: [P1][Sev1][policy-grc] Test "+
 			"--kubeconfig="+kubeconfigManaged,
 			"--ignore-not-found",
 		)
-		Expect(err).To(BeNil())
+		Expect(err).ToNot(HaveOccurred())
 
 		csvName, err := utils.KubectlWithOutput(
 			"get", "clusterserviceversions",
@@ -212,14 +212,14 @@ var _ = Describe("GRC: [P1][Sev1][policy-grc] Test "+
 			"jsonpath={.items[?(@.spec.displayName==\"Red Hat Quay Container Security Operator\")].metadata.name}",
 			"--kubeconfig="+kubeconfigManaged,
 		)
-		Expect(err).To(BeNil())
+		Expect(err).ToNot(HaveOccurred())
 
 		_, err = utils.KubectlWithOutput(
 			"delete", "csv", csvName, "-n",
 			operatorNS, "--kubeconfig="+kubeconfigManaged,
 			"--ignore-not-found",
 		)
-		Expect(err).To(BeNil())
+		Expect(err).ToNot(HaveOccurred())
 
 		_, err = utils.KubectlWithOutput(
 			"delete", "crd",
@@ -227,13 +227,13 @@ var _ = Describe("GRC: [P1][Sev1][policy-grc] Test "+
 			"--kubeconfig="+kubeconfigManaged,
 			"--ignore-not-found",
 		)
-		Expect(err).To(BeNil())
+		Expect(err).ToNot(HaveOccurred())
 
 		_, err = utils.KubectlWithOutput(
 			"delete", "deployment", "-n", "default",
 			"nginx-deployment", "--kubeconfig="+kubeconfigHub,
 			"--ignore-not-found",
 		)
-		Expect(err).To(BeNil())
+		Expect(err).ToNot(HaveOccurred())
 	})
 })

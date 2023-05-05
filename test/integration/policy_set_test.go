@@ -33,7 +33,7 @@ var _ = Describe("GRC: [P1][Sev1][policy-grc] Test policy set", Ordered, Label("
 				"-n", userNamespace,
 				"--kubeconfig="+kubeconfigHub)
 			By("Creating " + testPolicySetYaml + " result is " + output)
-			Expect(err).To(BeNil())
+			Expect(err).ToNot(HaveOccurred())
 
 			By("Checking that the root policy was created")
 			rootPolicyRsrc := clientHubDynamic.Resource(testcommon.GvrPolicy)
@@ -52,13 +52,13 @@ var _ = Describe("GRC: [P1][Sev1][policy-grc] Test policy set", Ordered, Label("
 			).Should(BeNil())
 
 			templates, found, err := unstructured.NestedSlice(rootPolicy.Object, "spec", "policy-templates")
-			Expect(err).Should(BeNil())
+			Expect(err).ShouldNot(HaveOccurred())
 			Expect(found).Should(BeTrue())
-			Expect(len(templates)).Should(Equal(1))
+			Expect(templates).Should(HaveLen(1))
 
 			By("Patching placement rule " + testPolicySetName + "-plr")
 			err = testcommon.PatchPlacementRule(userNamespace, testPolicySetName+"-plr")
-			Expect(err).To(BeNil())
+			Expect(err).ToNot(HaveOccurred())
 
 			By("Checking " + testPolicyName + " on managed cluster in ns " + clusterNamespace)
 			policyRsrc := clientHubDynamic.Resource(testcommon.GvrPolicy)
@@ -83,7 +83,7 @@ var _ = Describe("GRC: [P1][Sev1][policy-grc] Test policy set", Ordered, Label("
 				rootPlcSet, err := policySetRsrc.Namespace(userNamespace).Get(
 					context.TODO(), testPolicySetName, metav1.GetOptions{},
 				)
-				g.Expect(err).To(BeNil())
+				g.Expect(err).ToNot(HaveOccurred())
 
 				return rootPlcSet.Object["status"]
 			},
@@ -99,7 +99,7 @@ var _ = Describe("GRC: [P1][Sev1][policy-grc] Test policy set", Ordered, Label("
 				"-n", userNamespace,
 				"--kubeconfig="+kubeconfigHub)
 			By("Creating " + testPolicySetPatchYaml + " result is " + output)
-			Expect(err).To(BeNil())
+			Expect(err).ToNot(HaveOccurred())
 
 			By("Checking the status of policy set")
 			yamlPlc := utils.ParseYaml("../resources/policy_set/statuscheck-2.yaml")
@@ -109,7 +109,7 @@ var _ = Describe("GRC: [P1][Sev1][policy-grc] Test policy set", Ordered, Label("
 				rootPlcSet, err := policySetRsrc.Namespace(userNamespace).Get(
 					context.TODO(), testPolicySetName, metav1.GetOptions{},
 				)
-				g.Expect(err).To(BeNil())
+				g.Expect(err).ToNot(HaveOccurred())
 
 				return rootPlcSet.Object["status"]
 			},
@@ -123,7 +123,7 @@ var _ = Describe("GRC: [P1][Sev1][policy-grc] Test policy set", Ordered, Label("
 				"-n", userNamespace,
 				"--kubeconfig="+kubeconfigHub)
 			By("Creating " + testUndoPolicySetPatchYaml + " result is " + output)
-			Expect(err).To(BeNil())
+			Expect(err).ToNot(HaveOccurred())
 		})
 
 		It("Should update to compliant if all its child policy violations have been remediated", func() {
@@ -137,7 +137,7 @@ var _ = Describe("GRC: [P1][Sev1][policy-grc] Test policy set", Ordered, Label("
 				rootPlcSet, err := policySetRsrc.Namespace(userNamespace).Get(
 					context.TODO(), testPolicySetName, metav1.GetOptions{},
 				)
-				g.Expect(err).To(BeNil())
+				g.Expect(err).ToNot(HaveOccurred())
 
 				return rootPlcSet.Object["status"]
 			},
@@ -153,7 +153,7 @@ var _ = Describe("GRC: [P1][Sev1][policy-grc] Test policy set", Ordered, Label("
 				"-n", userNamespace,
 				"--kubeconfig="+kubeconfigHub)
 			By("Creating " + testedDisablePolicyYaml + " result is " + output)
-			Expect(err).To(BeNil())
+			Expect(err).ToNot(HaveOccurred())
 
 			plcRsrc := clientHubDynamic.Resource(testcommon.GvrPolicy)
 			Eventually(
@@ -177,7 +177,7 @@ var _ = Describe("GRC: [P1][Sev1][policy-grc] Test policy set", Ordered, Label("
 				rootPlcSet, err := policySetRsrc.Namespace(userNamespace).Get(
 					context.TODO(), testPolicySetName, metav1.GetOptions{},
 				)
-				g.Expect(err).To(BeNil())
+				g.Expect(err).ToNot(HaveOccurred())
 
 				return rootPlcSet.Object["status"]
 			},
@@ -194,7 +194,7 @@ var _ = Describe("GRC: [P1][Sev1][policy-grc] Test policy set", Ordered, Label("
 				"--ignore-not-found",
 			)
 			By("Deleting " + testPolicySetYaml + " result is " + output)
-			Expect(err).To(BeNil())
+			Expect(err).ToNot(HaveOccurred())
 		})
 	})
 })

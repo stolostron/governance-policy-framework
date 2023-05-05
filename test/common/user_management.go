@@ -4,6 +4,7 @@ package common
 
 import (
 	"context"
+	cryptoRand "crypto/rand"
 	"encoding/hex"
 	"fmt"
 	"math/rand"
@@ -51,7 +52,7 @@ func GenerateInsecurePassword() (string, error) {
 	pwSize := rand.Intn(15) + 15
 
 	bytes := make([]byte, pwSize)
-	if _, err := rand.Read(bytes); err != nil {
+	if _, err := cryptoRand.Read(bytes); err != nil {
 		return "", err
 	}
 
@@ -214,7 +215,7 @@ func addHtPasswd(dynamicClient dynamic.Interface, secretName string) error {
 			}
 
 			if name, _, _ := unstructured.NestedString(idp, "name"); name == secretName {
-				// An identity provider of the same name already exists, so assume it it is correct.
+				// An identity provider of the same name already exists, so assume it is correct.
 				return nil
 			}
 		}
@@ -522,7 +523,7 @@ func deleteHtPasswd(dynamicClient dynamic.Interface, authName string, user OCPUs
 		}
 
 		if name, _, _ := unstructured.NestedString(idp, "name"); name == authName {
-			// An identity provider of the same name already exists, so assume it it is the one
+			// An identity provider of the same name already exists, so assume it is the one
 			// we are looking for.
 			idpIndex = i
 

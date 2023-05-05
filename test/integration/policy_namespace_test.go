@@ -31,11 +31,11 @@ var _ = Describe("GRC: [P1][Sev1][policy-grc] Test the policy-namespace policy",
 			_, err := utils.KubectlWithOutput(
 				"apply", "-f", policyNamespaceURL, "-n", userNamespace, "--kubeconfig="+kubeconfigHub,
 			)
-			Expect(err).To(BeNil())
+			Expect(err).ToNot(HaveOccurred())
 
 			By("Patching placement rule")
 			err = common.PatchPlacementRule(userNamespace, "placement-"+policyNamespaceName)
-			Expect(err).To(BeNil())
+			Expect(err).ToNot(HaveOccurred())
 
 			By("Checking that " + policyNamespaceName + " exists on the Hub cluster")
 			rootPolicy := utils.GetWithTimeout(
@@ -80,7 +80,7 @@ var _ = Describe("GRC: [P1][Sev1][policy-grc] Test the policy-namespace policy",
 				[]byte(`[{"op": "replace", "path": "/spec/remediationAction", "value": "enforce"}]`),
 				metav1.PatchOptions{},
 			)
-			Expect(err).To(BeNil())
+			Expect(err).ToNot(HaveOccurred())
 		})
 
 		It("stable/"+policyNamespaceName+" should be Compliant", func() {
@@ -115,7 +115,7 @@ var _ = Describe("GRC: [P1][Sev1][policy-grc] Test the policy-namespace policy",
 				userNamespace, "--kubeconfig="+kubeconfigHub,
 				"--ignore-not-found",
 			)
-			Expect(err).To(BeNil())
+			Expect(err).ToNot(HaveOccurred())
 
 			err = clientManaged.CoreV1().Namespaces().Delete(context.TODO(), "prod", metav1.DeleteOptions{})
 			if !k8serrors.IsNotFound(err) {
@@ -124,7 +124,7 @@ var _ = Describe("GRC: [P1][Sev1][policy-grc] Test the policy-namespace policy",
 				if ok {
 					Expect(exitError.Stderr).To(BeNil())
 				} else {
-					Expect(err).To(BeNil())
+					Expect(err).ToNot(HaveOccurred())
 				}
 			}
 		})

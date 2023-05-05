@@ -44,11 +44,11 @@ var _ = Describe("Test Hub Template Encryption", Ordered, func() {
 		It("Should be created on the managed cluster", func() {
 			By("Creating the " + secretName + " Secret")
 			_, err := common.OcHub("apply", "-f", secretYAML, "-n", userNamespace)
-			Expect(err).To(BeNil())
+			Expect(err).ToNot(HaveOccurred())
 
 			By("Creating the " + configMapName + " ConfigMap")
 			_, err = common.OcHub("apply", "-f", configMapYAML, "-n", userNamespace)
-			Expect(err).To(BeNil())
+			Expect(err).ToNot(HaveOccurred())
 
 			common.DoCreatePolicyTest(policyYAML, common.GvrConfigurationPolicy)
 		})
@@ -72,8 +72,8 @@ var _ = Describe("Test Hub Template Encryption", Ordered, func() {
 
 			plcTemplates, ok, err := unstructured.NestedSlice(managedplc.Object, "spec", "policy-templates")
 			Expect(ok).To(BeTrue())
-			Expect(err).To(BeNil())
-			Expect(len(plcTemplates)).To(Equal(1))
+			Expect(err).ToNot(HaveOccurred())
+			Expect(plcTemplates).To(HaveLen(1))
 
 			plcTemplate, ok := plcTemplates[0].(map[string]interface{})
 			Expect(ok).To(BeTrue())
@@ -82,15 +82,15 @@ var _ = Describe("Test Hub Template Encryption", Ordered, func() {
 				plcTemplate, "objectDefinition", "spec", "object-templates",
 			)
 			Expect(ok).To(BeTrue())
-			Expect(err).To(BeNil())
-			Expect(len(objectTemplates)).To(Equal(2))
+			Expect(err).ToNot(HaveOccurred())
+			Expect(objectTemplates).To(HaveLen(2))
 
 			secretTemplate, ok := objectTemplates[0].(map[string]interface{})
 			Expect(ok).To(BeTrue())
 
 			city, ok, err := unstructured.NestedString(secretTemplate, "objectDefinition", "data", "city")
 			Expect(ok).To(BeTrue())
-			Expect(err).To(BeNil())
+			Expect(err).ToNot(HaveOccurred())
 
 			// Verify that the value is encrypted
 			Expect(strings.Contains(city, "$ocm_encrypted:")).To(BeTrue())
@@ -100,7 +100,7 @@ var _ = Describe("Test Hub Template Encryption", Ordered, func() {
 
 			state, ok, err := unstructured.NestedString(secretTemplate, "objectDefinition", "data", "state")
 			Expect(ok).To(BeTrue())
-			Expect(err).To(BeNil())
+			Expect(err).ToNot(HaveOccurred())
 
 			// Verify that the value is encrypted
 			Expect(strings.Contains(state, "$ocm_encrypted:")).To(BeTrue())
@@ -113,7 +113,7 @@ var _ = Describe("Test Hub Template Encryption", Ordered, func() {
 
 			cert, ok, err := unstructured.NestedString(configMapTemplate, "objectDefinition", "data", "cert")
 			Expect(ok).To(BeTrue())
-			Expect(err).To(BeNil())
+			Expect(err).ToNot(HaveOccurred())
 
 			// Verify that the value is encrypted
 			Expect(strings.Contains(cert, "$ocm_encrypted:")).To(BeTrue())
@@ -126,7 +126,7 @@ var _ = Describe("Test Hub Template Encryption", Ordered, func() {
 			secret, err := clientManaged.CoreV1().Secrets("default").Get(
 				ctx, secretCopyName, metav1.GetOptions{},
 			)
-			Expect(err).To(BeNil())
+			Expect(err).ToNot(HaveOccurred())
 			Expect(string(secret.Data["city"])).To(Equal("Raleigh"))
 			Expect(string(secret.Data["state"])).To(Equal("North Carolina"))
 
@@ -134,28 +134,28 @@ var _ = Describe("Test Hub Template Encryption", Ordered, func() {
 			configMap, err := clientManaged.CoreV1().ConfigMaps("default").Get(
 				ctx, configMapCopyName, metav1.GetOptions{},
 			)
-			Expect(err).To(BeNil())
+			Expect(err).ToNot(HaveOccurred())
 
 			// Verify that the certificate can be parsed
 			block, _ := pem.Decode([]byte(configMap.Data["cert"]))
 			Expect(block).ToNot(BeNil())
 
 			_, err = x509.ParseCertificate(block.Bytes)
-			Expect(err).To(BeNil())
+			Expect(err).ToNot(HaveOccurred())
 		})
 
 		It("Verifies that the key can be rotated", func() {
 			encryptionSecret, err := clientHub.CoreV1().Secrets(clusterNamespaceOnHub).Get(
 				ctx, "policy-encryption-key", metav1.GetOptions{},
 			)
-			Expect(err).To(BeNil())
+			Expect(err).ToNot(HaveOccurred())
 			originalKey := encryptionSecret.Data["key"]
 
 			// Trigger a key rotation
 			encryptionSecret.Annotations[lastRotatedAnnotation] = ""
 			_, err = clientHub.CoreV1().Secrets(clusterNamespaceOnHub).
 				Update(ctx, encryptionSecret, metav1.UpdateOptions{})
-			Expect(err).To(BeNil())
+			Expect(err).ToNot(HaveOccurred())
 
 			// Wait until the "last-rotated" annotation is set to indicate the key has been rotated
 			Eventually(
@@ -163,7 +163,7 @@ var _ = Describe("Test Hub Template Encryption", Ordered, func() {
 					encryptionSecret, err = clientHub.CoreV1().Secrets(clusterNamespaceOnHub).Get(
 						ctx, "policy-encryption-key", metav1.GetOptions{},
 					)
-					Expect(err).To(BeNil())
+					Expect(err).ToNot(HaveOccurred())
 
 					return encryptionSecret.Annotations[lastRotatedAnnotation]
 				},
@@ -210,7 +210,7 @@ var _ = Describe("Test Hub Template Encryption", Ordered, func() {
 				if ok {
 					Expect(exitError.Stderr).To(BeNil())
 				} else {
-					Expect(err).To(BeNil())
+					Expect(err).ToNot(HaveOccurred())
 				}
 			}
 
@@ -221,7 +221,7 @@ var _ = Describe("Test Hub Template Encryption", Ordered, func() {
 				if ok {
 					Expect(exitError.Stderr).To(BeNil())
 				} else {
-					Expect(err).To(BeNil())
+					Expect(err).ToNot(HaveOccurred())
 				}
 			}
 
@@ -232,7 +232,7 @@ var _ = Describe("Test Hub Template Encryption", Ordered, func() {
 				if ok {
 					Expect(exitError.Stderr).To(BeNil())
 				} else {
-					Expect(err).To(BeNil())
+					Expect(err).ToNot(HaveOccurred())
 				}
 			}
 
@@ -243,7 +243,7 @@ var _ = Describe("Test Hub Template Encryption", Ordered, func() {
 				if ok {
 					Expect(exitError.Stderr).To(BeNil())
 				} else {
-					Expect(err).To(BeNil())
+					Expect(err).ToNot(HaveOccurred())
 				}
 			}
 
@@ -254,7 +254,7 @@ var _ = Describe("Test Hub Template Encryption", Ordered, func() {
 				if ok {
 					Expect(exitError.Stderr).To(BeNil())
 				} else {
-					Expect(err).To(BeNil())
+					Expect(err).ToNot(HaveOccurred())
 				}
 			}
 		})

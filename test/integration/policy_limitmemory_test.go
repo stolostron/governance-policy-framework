@@ -34,7 +34,7 @@ var _ = Describe("GRC: [P1][Sev1][policy-grc] Test the policy-limitmemory policy
 			_, err := utils.KubectlWithOutput(
 				"apply", "-f", policyLimitMemoryURL, "-n", userNamespace, "--kubeconfig="+kubeconfigHub,
 			)
-			Expect(err).To(BeNil())
+			Expect(err).ToNot(HaveOccurred())
 
 			By("Creating the " + policyLimitMemoryNSName + " namespace on the managed cluster")
 			namespace := &corev1.Namespace{
@@ -48,7 +48,7 @@ var _ = Describe("GRC: [P1][Sev1][policy-grc] Test the policy-limitmemory policy
 				namespace,
 				metav1.CreateOptions{},
 			)
-			Expect(err).To(BeNil())
+			Expect(err).ToNot(HaveOccurred())
 
 			By("Patching the namespaceSelector to use the " + policyLimitMemoryNSName + " namespace")
 			_, err = clientHubDynamic.Resource(common.GvrPolicy).Namespace(userNamespace).Patch(
@@ -60,11 +60,11 @@ var _ = Describe("GRC: [P1][Sev1][policy-grc] Test the policy-limitmemory policy
 					policyLimitMemoryNSName+`"]}]`),
 				metav1.PatchOptions{},
 			)
-			Expect(err).To(BeNil())
+			Expect(err).ToNot(HaveOccurred())
 
 			By("Patching placement rule")
 			err = common.PatchPlacementRule(userNamespace, "placement-"+policyLimitMemoryName)
-			Expect(err).To(BeNil())
+			Expect(err).ToNot(HaveOccurred())
 
 			By("Checking that " + policyLimitMemoryName + " exists on the Hub cluster")
 			rootPolicy := utils.GetWithTimeout(
@@ -109,7 +109,7 @@ var _ = Describe("GRC: [P1][Sev1][policy-grc] Test the policy-limitmemory policy
 				[]byte(`[{"op": "replace", "path": "/spec/remediationAction", "value": "enforce"}]`),
 				metav1.PatchOptions{},
 			)
-			Expect(err).To(BeNil())
+			Expect(err).ToNot(HaveOccurred())
 		})
 
 		It("stable/"+policyLimitMemoryName+" should be Compliant", func() {
@@ -142,7 +142,7 @@ var _ = Describe("GRC: [P1][Sev1][policy-grc] Test the policy-limitmemory policy
 				userNamespace, "--kubeconfig="+kubeconfigHub,
 				"--ignore-not-found",
 			)
-			Expect(err).To(BeNil())
+			Expect(err).ToNot(HaveOccurred())
 
 			err = clientManaged.CoreV1().Namespaces().Delete(
 				context.TODO(), policyLimitMemoryNSName, metav1.DeleteOptions{},
@@ -153,7 +153,7 @@ var _ = Describe("GRC: [P1][Sev1][policy-grc] Test the policy-limitmemory policy
 				if ok {
 					Expect(exitError.Stderr).To(BeNil())
 				} else {
-					Expect(err).To(BeNil())
+					Expect(err).ToNot(HaveOccurred())
 				}
 			}
 		})
