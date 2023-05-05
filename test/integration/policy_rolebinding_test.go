@@ -33,7 +33,7 @@ var _ = Describe("GRC: [P1][Sev1][policy-grc] Test the policy-rolebinding policy
 			_, err := utils.KubectlWithOutput(
 				"apply", "-f", policyRoleBindingURL, "-n", userNamespace, "--kubeconfig="+kubeconfigHub,
 			)
-			Expect(err).To(BeNil())
+			Expect(err).ToNot(HaveOccurred())
 
 			By("Creating the " + policyRoleBindingNSName + " namespace on the managed cluster")
 			namespace := &corev1.Namespace{ObjectMeta: metav1.ObjectMeta{
@@ -41,7 +41,7 @@ var _ = Describe("GRC: [P1][Sev1][policy-grc] Test the policy-rolebinding policy
 				Labels: map[string]string{"e2e": "true"},
 			}}
 			_, err = clientManaged.CoreV1().Namespaces().Create(context.TODO(), namespace, metav1.CreateOptions{})
-			Expect(err).To(BeNil())
+			Expect(err).ToNot(HaveOccurred())
 
 			By("Patching the namespaceSelector to use the " + policyRoleBindingNSName + " namespace")
 			_, err = clientHubDynamic.Resource(common.GvrPolicy).Namespace(userNamespace).Patch(
@@ -53,11 +53,11 @@ var _ = Describe("GRC: [P1][Sev1][policy-grc] Test the policy-rolebinding policy
 					policyRoleBindingNSName+`"]}]`),
 				metav1.PatchOptions{},
 			)
-			Expect(err).To(BeNil())
+			Expect(err).ToNot(HaveOccurred())
 
 			By("Patching placement rule")
 			err = common.PatchPlacementRule(userNamespace, "placement-"+policyRoleBindingName)
-			Expect(err).To(BeNil())
+			Expect(err).ToNot(HaveOccurred())
 
 			By("Checking that " + policyRoleBindingName + " exists on the Hub cluster")
 			rootPolicy := utils.GetWithTimeout(
@@ -97,7 +97,7 @@ var _ = Describe("GRC: [P1][Sev1][policy-grc] Test the policy-rolebinding policy
 				[]byte(`[{"op": "replace", "path": "/spec/remediationAction", "value": "enforce"}]`),
 				metav1.PatchOptions{},
 			)
-			Expect(err).To(BeNil())
+			Expect(err).ToNot(HaveOccurred())
 		})
 
 		It("stable/"+policyRoleBindingName+" should be Compliant", func() {
@@ -134,7 +134,7 @@ var _ = Describe("GRC: [P1][Sev1][policy-grc] Test the policy-rolebinding policy
 				"--kubeconfig="+kubeconfigHub,
 				"--ignore-not-found",
 			)
-			Expect(err).To(BeNil())
+			Expect(err).ToNot(HaveOccurred())
 
 			err = clientManaged.CoreV1().Namespaces().Delete(
 				context.TODO(),
@@ -147,7 +147,7 @@ var _ = Describe("GRC: [P1][Sev1][policy-grc] Test the policy-rolebinding policy
 				if ok {
 					Expect(exitError.Stderr).To(BeNil())
 				} else {
-					Expect(err).To(BeNil())
+					Expect(err).ToNot(HaveOccurred())
 				}
 			}
 		})

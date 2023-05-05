@@ -34,7 +34,7 @@ var _ = Describe("GRC: [P1][Sev1][policy-grc] Test the policy-pod policy",
 			_, err := utils.KubectlWithOutput(
 				"apply", "-f", policyPodURL, "-n", userNamespace, "--kubeconfig="+kubeconfigHub,
 			)
-			Expect(err).To(BeNil())
+			Expect(err).ToNot(HaveOccurred())
 
 			By("Creating the " + policyPodNSName + " namespace on the managed cluster")
 			namespace := &corev1.Namespace{
@@ -48,7 +48,7 @@ var _ = Describe("GRC: [P1][Sev1][policy-grc] Test the policy-pod policy",
 				namespace,
 				metav1.CreateOptions{},
 			)
-			Expect(err).To(BeNil())
+			Expect(err).ToNot(HaveOccurred())
 
 			By("Patching the namespaceSelector to use the " + policyPodNSName + " namespace")
 			_, err = clientHubDynamic.Resource(common.GvrPolicy).Namespace(userNamespace).Patch(
@@ -60,11 +60,11 @@ var _ = Describe("GRC: [P1][Sev1][policy-grc] Test the policy-pod policy",
 					policyPodNSName+`"]}]`),
 				metav1.PatchOptions{},
 			)
-			Expect(err).To(BeNil())
+			Expect(err).ToNot(HaveOccurred())
 
 			By("Patching placement rule")
 			err = common.PatchPlacementRule(userNamespace, "placement-"+policyPodName)
-			Expect(err).To(BeNil())
+			Expect(err).ToNot(HaveOccurred())
 
 			By("Checking that " + policyPodName + " exists on the Hub cluster")
 			rootPolicy := utils.GetWithTimeout(
@@ -104,7 +104,7 @@ var _ = Describe("GRC: [P1][Sev1][policy-grc] Test the policy-pod policy",
 				[]byte(`[{"op": "replace", "path": "/spec/remediationAction", "value": "enforce"}]`),
 				metav1.PatchOptions{},
 			)
-			Expect(err).To(BeNil())
+			Expect(err).ToNot(HaveOccurred())
 		})
 
 		It("stable/"+policyPodName+" should be Compliant", func() {
@@ -136,7 +136,7 @@ var _ = Describe("GRC: [P1][Sev1][policy-grc] Test the policy-pod policy",
 				"delete", "-f", policyPodURL, "-n", userNamespace,
 				"--kubeconfig="+kubeconfigHub, "--ignore-not-found",
 			)
-			Expect(err).To(BeNil())
+			Expect(err).ToNot(HaveOccurred())
 
 			err = clientManaged.CoreV1().Namespaces().Delete(
 				context.TODO(), policyPodNSName, metav1.DeleteOptions{},
@@ -147,7 +147,7 @@ var _ = Describe("GRC: [P1][Sev1][policy-grc] Test the policy-pod policy",
 				if ok {
 					Expect(exitError.Stderr).To(BeNil())
 				} else {
-					Expect(err).To(BeNil())
+					Expect(err).ToNot(HaveOccurred())
 				}
 			}
 		})

@@ -35,7 +35,7 @@ HUB_CLUSTER_NAME ?= hub
 KIND_VERSION ?= latest
 
 # Fetch OLM version
-OLM_VERSION ?= v0.21.2
+OLM_VERSION ?= v0.24.0
 
 # Debugging configuration
 KIND_COMPONENTS := config-policy-controller cert-policy-controller iam-policy-controller governance-policy-framework-addon

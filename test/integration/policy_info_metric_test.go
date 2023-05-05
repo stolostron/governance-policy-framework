@@ -49,8 +49,8 @@ var _ = Describe("GRC: [P1][Sev1][policy-grc] Test policy_governance_info metric
 				LabelSelector: propagatorMetricsSelector,
 			},
 		)
-		Expect(err).To(BeNil())
-		Expect(len(svcList.Items)).To(Equal(1))
+		Expect(err).ToNot(HaveOccurred())
+		Expect(svcList.Items).To(HaveLen(1))
 		metricsSvc := svcList.Items[0]
 
 		By("Checking for an existing metrics route")
@@ -80,7 +80,7 @@ var _ = Describe("GRC: [P1][Sev1][policy-grc] Test policy_governance_info metric
 				ocmNS,
 				`--overrides={"spec":{"tls":{"termination":"reencrypt"}}}`,
 			)
-			Expect(err).To(BeNil())
+			Expect(err).ToNot(HaveOccurred())
 
 			Eventually(func() interface{} {
 				var err error
@@ -104,10 +104,10 @@ var _ = Describe("GRC: [P1][Sev1][policy-grc] Test policy_governance_info metric
 	})
 	It("Sets up a ServiceAccount without permissions for metrics", func() {
 		_, err := common.OcHub("create", "serviceaccount", noMetricsAccName, "-n", userNamespace)
-		Expect(err).To(BeNil())
+		Expect(err).ToNot(HaveOccurred())
 
 		_, err = common.OcHub("apply", "-f", noMetricsTokenYaml, "-n", userNamespace)
-		Expect(err).To(BeNil())
+		Expect(err).ToNot(HaveOccurred())
 
 		var encodedtoken string
 
@@ -118,27 +118,27 @@ var _ = Describe("GRC: [P1][Sev1][policy-grc] Test policy_governance_info metric
 				"-n", userNamespace, "-o", "jsonpath={.data.token}")
 
 			g.Expect(err).NotTo(HaveOccurred())
-			g.Expect(len(encodedtoken)).To(BeNumerically(">", 0))
+			g.Expect(encodedtoken).ToNot(BeEmpty())
 		}, defaultTimeoutSeconds, 1).Should(Succeed())
 
 		decodedToken, err := base64.StdEncoding.DecodeString(encodedtoken)
-		Expect(err).To(BeNil())
+		Expect(err).ToNot(HaveOccurred())
 
 		noMetricsToken = string(decodedToken)
 	})
 	It("Sets up a ServiceAccount with specific permission for metrics", func() {
 		_, err := common.OcHub("create", "serviceaccount", metricsAccName, "-n", userNamespace)
-		Expect(err).To(BeNil())
+		Expect(err).ToNot(HaveOccurred())
 
 		_, err = common.OcHub("apply", "-f", metricsRoleYaml, "-n", userNamespace)
-		Expect(err).To(BeNil())
+		Expect(err).ToNot(HaveOccurred())
 
 		_, err = common.OcHub("create", "clusterrolebinding", roleBindingName,
 			"--clusterrole="+metricsRoleName, "--serviceaccount="+userNamespace+":"+metricsAccName)
-		Expect(err).To(BeNil())
+		Expect(err).ToNot(HaveOccurred())
 
 		_, err = common.OcHub("apply", "-f", metricsTokenYaml, "-n", userNamespace)
-		Expect(err).To(BeNil())
+		Expect(err).ToNot(HaveOccurred())
 
 		var encodedtoken string
 
@@ -149,11 +149,11 @@ var _ = Describe("GRC: [P1][Sev1][policy-grc] Test policy_governance_info metric
 				"-n", userNamespace, "-o", "jsonpath={.data.token}")
 
 			g.Expect(err).NotTo(HaveOccurred())
-			g.Expect(len(encodedtoken)).To(BeNumerically(">", 0))
+			g.Expect(encodedtoken).ToNot(BeEmpty())
 		}, defaultTimeoutSeconds, 1).Should(Succeed())
 
 		decodedToken, err := base64.StdEncoding.DecodeString(encodedtoken)
-		Expect(err).To(BeNil())
+		Expect(err).ToNot(HaveOccurred())
 
 		metricsToken = string(decodedToken)
 	})
@@ -183,7 +183,7 @@ var _ = Describe("GRC: [P1][Sev1][policy-grc] Test policy_governance_info metric
 	It("Checks that endpoint has a HELP comment for the metric", func() {
 		By("Creating a policy")
 		_, err := common.OcHub("apply", "-f", compliantPolicyYaml, "-n", userNamespace)
-		Expect(err).To(BeNil())
+		Expect(err).ToNot(HaveOccurred())
 		// Don't need to check compliance - just need to guarantee there is a policy in the cluster
 
 		Eventually(func() interface{} {
@@ -201,7 +201,7 @@ var _ = Describe("GRC: [P1][Sev1][policy-grc] Test policy_governance_info metric
 	It("Checks that a compliant policy reports a metric of 0", func() {
 		By("Creating a compliant policy")
 		_, err := common.OcHub("apply", "-f", compliantPolicyYaml, "-n", userNamespace)
-		Expect(err).To(BeNil())
+		Expect(err).ToNot(HaveOccurred())
 		Eventually(
 			common.GetComplianceState(compliantPolicyName),
 			defaultTimeoutSeconds*2,
@@ -225,7 +225,7 @@ var _ = Describe("GRC: [P1][Sev1][policy-grc] Test policy_governance_info metric
 	It("Checks that a noncompliant policy reports a metric of 1", func() {
 		By("Creating a noncompliant policy")
 		_, err := common.OcHub("apply", "-f", noncompliantPolicyYaml, "-n", userNamespace)
-		Expect(err).To(BeNil())
+		Expect(err).ToNot(HaveOccurred())
 		Eventually(
 			common.GetComplianceState(noncompliantPolicyName),
 			defaultTimeoutSeconds*2,
@@ -248,24 +248,24 @@ var _ = Describe("GRC: [P1][Sev1][policy-grc] Test policy_governance_info metric
 	})
 	AfterAll(func() {
 		_, err := common.OcHub("delete", "-f", compliantPolicyYaml, "-n", userNamespace, "--ignore-not-found")
-		Expect(err).To(BeNil())
+		Expect(err).ToNot(HaveOccurred())
 		_, err = common.OcHub("delete", "-f", noncompliantPolicyYaml, "-n", userNamespace, "--ignore-not-found")
-		Expect(err).To(BeNil())
+		Expect(err).ToNot(HaveOccurred())
 		_, err = common.OcHub("delete", "route", "-n", ocmNS, "-l", propagatorMetricsSelector, "--ignore-not-found")
-		Expect(err).To(BeNil())
+		Expect(err).ToNot(HaveOccurred())
 		_, err = common.OcHub("delete", "clusterrole", metricsRoleName, "--ignore-not-found")
-		Expect(err).To(BeNil())
+		Expect(err).ToNot(HaveOccurred())
 		_, err = common.OcHub("delete", "clusterrolebinding", roleBindingName, "--ignore-not-found")
-		Expect(err).To(BeNil())
+		Expect(err).ToNot(HaveOccurred())
 		_, err = common.OcHub("delete", "serviceaccount", metricsAccName, "-n", userNamespace, "--ignore-not-found")
-		Expect(err).To(BeNil())
+		Expect(err).ToNot(HaveOccurred())
 		_, err = common.OcHub("delete", "serviceaccount", noMetricsAccName, "-n", userNamespace, "--ignore-not-found")
-		Expect(err).To(BeNil())
+		Expect(err).ToNot(HaveOccurred())
 		_, err = common.OcHub("delete", "secret", metricsTokenName, "-n", userNamespace, "--ignore-not-found")
-		Expect(err).To(BeNil())
+		Expect(err).ToNot(HaveOccurred())
 		_, err = common.OcHub("delete", "secret", noMetricsTokenName, "-n", userNamespace, "--ignore-not-found")
-		Expect(err).To(BeNil())
+		Expect(err).ToNot(HaveOccurred())
 		_, err = common.OcHub("delete", "namespace", "policy-metric-test-compliant", "--ignore-not-found")
-		Expect(err).To(BeNil())
+		Expect(err).ToNot(HaveOccurred())
 	})
 })

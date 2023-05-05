@@ -25,7 +25,7 @@ var _ = Describe("GRC: [P1][Sev1][policy-grc] Test .ManagedClusterLabels in hub 
 		BeforeAll(func() {
 			By("Creating a configmap on the hub to use in the test")
 			_, err := common.OcHub("apply", "-f="+hubConfigmapYAML, "-n="+userNamespace)
-			Expect(err).To(BeNil())
+			Expect(err).ToNot(HaveOccurred())
 		})
 
 		It(policyName+" should be created on the Hub", func() {
@@ -39,21 +39,21 @@ var _ = Describe("GRC: [P1][Sev1][policy-grc] Test .ManagedClusterLabels in hub 
 		It("Checks that the configmap was created correctly on the managed cluster", func() {
 			value, err := common.OcManaged("get", "configmap", createdConfigmapName, "-n=default",
 				"-o=jsonpath={.data.testvalue}")
-			Expect(err).To(BeNil())
+			Expect(err).ToNot(HaveOccurred())
 			Expect(value).To(MatchRegexp("Test Success"))
 		})
 
 		AfterAll(func() {
 			By("Removing the configmap from the hub")
 			_, err := common.OcHub("delete", "-f="+hubConfigmapYAML, "-n="+userNamespace, "--ignore-not-found")
-			Expect(err).To(BeNil())
+			Expect(err).ToNot(HaveOccurred())
 
 			By("Removing the policy")
 			common.DoCleanupPolicy(policyYAML, common.GvrConfigurationPolicy)
 
 			By("Removing the configmap from the managed cluster")
 			_, err = common.OcManaged("delete", "configmap", createdConfigmapName, "-n=default", "--ignore-not-found")
-			Expect(err).To(BeNil())
+			Expect(err).ToNot(HaveOccurred())
 
 			By("Removing policy events from the managed cluster")
 			_, err = common.OcManaged(
@@ -61,7 +61,7 @@ var _ = Describe("GRC: [P1][Sev1][policy-grc] Test .ManagedClusterLabels in hub 
 				"--field-selector=involvedObject.name="+common.UserNamespace+"."+policyName,
 				"--ignore-not-found",
 			)
-			Expect(err).To(BeNil())
+			Expect(err).ToNot(HaveOccurred())
 		})
 	})
 
@@ -83,7 +83,7 @@ var _ = Describe("GRC: [P1][Sev1][policy-grc] Test .ManagedClusterLabels in hub 
 		It("Checks that the configmap was created correctly on the managed cluster", func() {
 			value, err := common.OcManaged("get", "configmap", createdConfigmapName, "-n=default",
 				"-o=jsonpath={.data}")
-			Expect(err).To(BeNil())
+			Expect(err).ToNot(HaveOccurred())
 			Expect(value).To(And( // An arbitrary selection of keys that it should have
 				MatchRegexp("vendor"),
 				MatchRegexp("openshiftVersion"),
@@ -98,7 +98,7 @@ var _ = Describe("GRC: [P1][Sev1][policy-grc] Test .ManagedClusterLabels in hub 
 
 			By("Removing the configmap from the managed cluster")
 			_, err := common.OcManaged("delete", "configmap", createdConfigmapName, "-n=default", "--ignore-not-found")
-			Expect(err).To(BeNil())
+			Expect(err).ToNot(HaveOccurred())
 
 			By("Removing policy events from the managed cluster")
 			_, err = common.OcManaged(
@@ -106,7 +106,7 @@ var _ = Describe("GRC: [P1][Sev1][policy-grc] Test .ManagedClusterLabels in hub 
 				"--field-selector=involvedObject.name="+common.UserNamespace+"."+policyName,
 				"--ignore-not-found",
 			)
-			Expect(err).To(BeNil())
+			Expect(err).ToNot(HaveOccurred())
 		})
 	})
 })

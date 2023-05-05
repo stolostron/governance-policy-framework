@@ -45,7 +45,7 @@ var _ = Describe("GRC: [P1][Sev1][policy-grc] Test the kyverno generator "+
 			"apply", "-f", kyvernoInstallURL, "-n",
 			userNamespace, "--kubeconfig="+kubeconfigHub,
 		)
-		Expect(err).To(BeNil())
+		Expect(err).ToNot(HaveOccurred())
 
 		By("Checking if the status of the root policy is NonCompliant")
 		Eventually(
@@ -68,7 +68,7 @@ var _ = Describe("GRC: [P1][Sev1][policy-grc] Test the kyverno generator "+
 				clusterNamespace+`"]}]}}]`,
 			"--kubeconfig="+kubeconfigHub,
 		)
-		Expect(err).To(BeNil())
+		Expect(err).ToNot(HaveOccurred())
 
 		By("Patching remediationAction = enforce on the root policy")
 		_, err = clientHubDynamic.Resource(common.GvrPolicy).Namespace(userNamespace).Patch(
@@ -78,7 +78,7 @@ var _ = Describe("GRC: [P1][Sev1][policy-grc] Test the kyverno generator "+
 			[]byte(`[{"op": "replace", "path": "/spec/remediationAction", "value": "enforce"}]`),
 			metav1.PatchOptions{},
 		)
-		Expect(err).To(BeNil())
+		Expect(err).ToNot(HaveOccurred())
 
 		By("Checking if the status of the root policy is Compliant")
 		Eventually(
@@ -117,11 +117,11 @@ var _ = Describe("GRC: [P1][Sev1][policy-grc] Test the kyverno generator "+
 			_, err := utils.KubectlWithOutput(
 				"apply", "-f", url, "-n", userNamespace, "--kubeconfig="+kubeconfigHub,
 			)
-			Expect(err).To(BeNil())
+			Expect(err).ToNot(HaveOccurred())
 
 			By("Patching " + name + " placement rule")
 			err = common.PatchPlacementRule(userNamespace, "placement-"+name)
-			Expect(err).To(BeNil())
+			Expect(err).ToNot(HaveOccurred())
 		}
 	})
 
@@ -132,7 +132,7 @@ var _ = Describe("GRC: [P1][Sev1][policy-grc] Test the kyverno generator "+
 			"../resources/kyverno-generate/sync-secret.yaml",
 			"--kubeconfig="+kubeconfigManaged,
 		)
-		Expect(err).To(BeNil())
+		Expect(err).ToNot(HaveOccurred())
 	})
 
 	It("Validate policy propagation to managed cluster", func() {
@@ -171,7 +171,7 @@ var _ = Describe("GRC: [P1][Sev1][policy-grc] Test the kyverno generator "+
 				[]byte(`[{"op": "replace", "path": "/spec/remediationAction", "value": "enforce"}]`),
 				metav1.PatchOptions{},
 			)
-			Expect(err).To(BeNil())
+			Expect(err).ToNot(HaveOccurred())
 
 			By("Checking if the status of root policy " + name + " is now Compliant")
 			Eventually(
@@ -189,7 +189,7 @@ var _ = Describe("GRC: [P1][Sev1][policy-grc] Test the kyverno generator "+
 			"../resources/kyverno-generate/namespace.yaml",
 			"--kubeconfig="+kubeconfigManaged,
 		)
-		Expect(err).To(BeNil())
+		Expect(err).ToNot(HaveOccurred())
 	})
 
 	It("Kyverno generate policies should create resources in the new namespace", func() {
@@ -273,7 +273,7 @@ var _ = Describe("GRC: [P1][Sev1][policy-grc] Test the kyverno generator "+
 					userNamespace, "--kubeconfig="+kubeconfigHub,
 					"--ignore-not-found",
 				)
-				g.Expect(err).To(BeNil())
+				g.Expect(err).ToNot(HaveOccurred())
 			}
 
 			// remove the kyverno install policy
@@ -282,7 +282,7 @@ var _ = Describe("GRC: [P1][Sev1][policy-grc] Test the kyverno generator "+
 				"-n", userNamespace, "--kubeconfig="+kubeconfigHub,
 				"--ignore-not-found",
 			)
-			g.Expect(err).To(BeNil())
+			g.Expect(err).ToNot(HaveOccurred())
 
 			// delete the subscription
 			_, err = utils.KubectlWithOutput(
@@ -291,7 +291,7 @@ var _ = Describe("GRC: [P1][Sev1][policy-grc] Test the kyverno generator "+
 				"--kubeconfig="+kubeconfigHub,
 				"--ignore-not-found",
 			)
-			g.Expect(err).To(BeNil())
+			g.Expect(err).ToNot(HaveOccurred())
 
 			// make sure kyverno mutating webhooks are removed
 			_, err = utils.KubectlWithOutput(
@@ -302,7 +302,7 @@ var _ = Describe("GRC: [P1][Sev1][policy-grc] Test the kyverno generator "+
 				"--kubeconfig="+kubeconfigManaged,
 				"--ignore-not-found",
 			)
-			Expect(err).To(BeNil())
+			Expect(err).ToNot(HaveOccurred())
 
 			// make sure kyverno validating webhooks are removed
 			_, err = utils.KubectlWithOutput(
@@ -313,7 +313,7 @@ var _ = Describe("GRC: [P1][Sev1][policy-grc] Test the kyverno generator "+
 				"--kubeconfig="+kubeconfigManaged,
 				"--ignore-not-found",
 			)
-			g.Expect(err).To(BeNil())
+			g.Expect(err).ToNot(HaveOccurred())
 
 			// delete the channel namespace
 			_, err = utils.KubectlWithOutput(
@@ -323,7 +323,7 @@ var _ = Describe("GRC: [P1][Sev1][policy-grc] Test the kyverno generator "+
 				"--ignore-not-found",
 				"--timeout=10s",
 			)
-			g.Expect(err).To(BeNil())
+			g.Expect(err).ToNot(HaveOccurred())
 
 			// delete the namespace created to test the generators
 			_, err = utils.KubectlWithOutput(
@@ -332,7 +332,7 @@ var _ = Describe("GRC: [P1][Sev1][policy-grc] Test the kyverno generator "+
 				"--ignore-not-found",
 				"--timeout=10s",
 			)
-			g.Expect(err).To(BeNil())
+			g.Expect(err).ToNot(HaveOccurred())
 
 			// delete the kyverno namespace
 			_, err = utils.KubectlWithOutput(
@@ -342,7 +342,7 @@ var _ = Describe("GRC: [P1][Sev1][policy-grc] Test the kyverno generator "+
 				"--ignore-not-found",
 				"--timeout=10s",
 			)
-			g.Expect(err).To(BeNil())
+			g.Expect(err).ToNot(HaveOccurred())
 
 			// ensure the PolicyReport CRD remains on the cluster
 			_, _ = utils.KubectlWithOutput(
@@ -354,7 +354,7 @@ var _ = Describe("GRC: [P1][Sev1][policy-grc] Test the kyverno generator "+
 				"delete", "secret", "-n", "default", "regcred",
 				"--kubeconfig="+kubeconfigManaged, "--ignore-not-found",
 			)
-			g.Expect(err).To(BeNil())
+			g.Expect(err).ToNot(HaveOccurred())
 		}, defaultTimeoutSeconds*2).Should(Succeed())
 	})
 })

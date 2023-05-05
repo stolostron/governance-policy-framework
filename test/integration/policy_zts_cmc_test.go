@@ -31,7 +31,7 @@ var _ = Describe("GRC: [P1][Sev1][policy-grc] Test "+
 		_, err := utils.KubectlWithOutput(
 			"apply", "-f", policyURL, "-n", userNamespace, "--kubeconfig="+kubeconfigHub,
 		)
-		Expect(err).To(BeNil())
+		Expect(err).ToNot(HaveOccurred())
 
 		By("Patching the namespaceSelector to use the " + deploymentNS + " namespace")
 		_, err = clientHubDynamic.Resource(common.GvrPolicy).Namespace(userNamespace).Patch(
@@ -42,11 +42,11 @@ var _ = Describe("GRC: [P1][Sev1][policy-grc] Test "+
 				`spec/namespaceSelector/include", "value": ["`+deploymentNS+`"]}]`),
 			metav1.PatchOptions{},
 		)
-		Expect(err).To(BeNil())
+		Expect(err).ToNot(HaveOccurred())
 
 		By("Patching placement rule")
 		err = common.PatchPlacementRule(userNamespace, "placement-"+policyName)
-		Expect(err).To(BeNil())
+		Expect(err).ToNot(HaveOccurred())
 
 		By("Checking that " + policyName + " exists on the Hub cluster")
 		rootPolicy := utils.GetWithTimeout(
@@ -86,7 +86,7 @@ var _ = Describe("GRC: [P1][Sev1][policy-grc] Test "+
 			[]byte(`[{"op": "replace", "path": "/spec/remediationAction", "value": "enforce"}]`),
 			metav1.PatchOptions{},
 		)
-		Expect(err).To(BeNil())
+		Expect(err).ToNot(HaveOccurred())
 	})
 
 	It("the "+deploymentName+" deployment should exist in namespace "+deploymentNS, func() {
@@ -115,13 +115,13 @@ var _ = Describe("GRC: [P1][Sev1][policy-grc] Test "+
 			"delete", "-f", policyURL, "-n", userNamespace,
 			"--kubeconfig="+kubeconfigHub, "--ignore-not-found",
 		)
-		Expect(err).To(BeNil())
+		Expect(err).ToNot(HaveOccurred())
 
 		_, err = utils.KubectlWithOutput(
 			"delete", "deployment", "-n", deploymentNS,
 			deploymentName, "--kubeconfig="+kubeconfigManaged,
 			"--ignore-not-found",
 		)
-		Expect(err).To(BeNil())
+		Expect(err).ToNot(HaveOccurred())
 	})
 })

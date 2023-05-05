@@ -39,7 +39,7 @@ controller-gen: ## Download controller-gen locally if necessary.
 
 .PHONY: kustomize
 kustomize: ## Download kustomize locally if necessary.
-	$(call go-get-tool,sigs.k8s.io/kustomize/kustomize/v4@v4.5.4)
+	$(call go-get-tool,sigs.k8s.io/kustomize/kustomize/v5@v5.0.1)
 
 ############################################################
 #  Lint
@@ -53,7 +53,7 @@ lint: lint-dependencies lint-yaml lint-go
 
 .PHONY: lint-dependencies
 lint-dependencies:
-	$(call go-get-tool,github.com/golangci/golangci-lint/cmd/golangci-lint@v1.46.2)
+	$(call go-get-tool,github.com/golangci/golangci-lint/cmd/golangci-lint@v1.52.2)
 
 .PHONY: lint-yaml
 lint-yaml:
@@ -68,20 +68,22 @@ lint-go:
 .PHONY: fmt-dependencies
 fmt-dependencies:
 	$(call go-get-tool,github.com/daixiang0/gci@v0.10.1)
-	$(call go-get-tool,mvdan.cc/gofumpt@v0.4.0)
+	$(call go-get-tool,mvdan.cc/gofumpt@v0.5.0)
 
 .PHONY: fmt
 fmt: fmt-dependencies
 	find . -not \( -path "./.go" -prune \) -name "*.go" | xargs gofmt -s -w
 	find . -not \( -path "./.go" -prune \) -name "*.go" | xargs gofumpt -l -w
+	find . -not \( -path "./.go" -prune \) -name "*.go" | xargs gci write -s standard -s default -s "prefix($(shell cat go.mod | head -1 | cut -d " " -f 2))"
 
 ############################################################
 #  Unit Test
 ############################################################
-KUBEBUILDER = $(LOCAL_BIN)/kubebuilder
-KBVERSION = 3.9.1
-K8S_VERSION = 1.26.1
 GOSEC = $(LOCAL_BIN)/gosec
+KUBEBUILDER = $(LOCAL_BIN)/kubebuilder
+ENVTEST = $(LOCAL_BIN)/setup-envtest
+KBVERSION = 3.12.0
+ENVTEST_K8S_VERSION = 1.26.x
 
 .PHONY: kubebuilder
 kubebuilder:
@@ -91,13 +93,9 @@ kubebuilder:
 		chmod +x $(KUBEBUILDER); \
 	fi
 
-.PHONY: kubebuilder-dependencies
-kubebuilder-dependencies: $(LOCAL_BIN)
-	@if [ ! -f $(LOCAL_BIN)/etcd ] || [ ! -f $(LOCAL_BIN)/kube-apiserver ] || [ ! -f $(LOCAL_BIN)/kubectl ] || \
-	[ "$$($(KUBEBUILDER) version 2>/dev/null | grep -o KubeBuilderVersion:\"[0-9]*\.[0-9]\.[0-9]*\")" != "KubeBuilderVersion:\"$(KBVERSION)\"" ]; then \
-		echo "Installing envtest Kubebuilder assets"; \
-		curl -L "https://go.kubebuilder.io/test-tools/$(K8S_VERSION)/$(GOOS)/$(GOARCH)" | tar xz --strip-components=2 -C $(LOCAL_BIN); \
-	fi
+.PHONY: envtest
+envtest:
+	$(call go-get-tool,sigs.k8s.io/controller-runtime/tools/setup-envtest@latest)
 
 .PHONY: gosec
 gosec:

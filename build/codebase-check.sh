@@ -3,10 +3,33 @@
 DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" >/dev/null 2>&1 && pwd )"
 source ${DIR}/common.sh
 
+# Compare the .ci-operator.yaml file across the repos
+CI_OPERATOR_FILE=".ci-operator.yaml"
+CI_OP_PATH="${DIR}/../${CI_OPERATOR_FILE}"
+
+ciopDiff() {
+  repo="${1}"
+
+	REPO_CI_OP_PATH="${COMPONENT_ORG}/${repo}/${CI_OPERATOR_FILE}"
+	if [[ ! -f ${REPO_CI_OP_PATH} ]]; then
+		echo "WARN: ${CI_OPERATOR_FILE} not found: ${REPO_CI_OP_PATH}"
+		return 0
+	fi
+
+	CI_OP_DIFF=$(diff ${CI_OP_PATH} ${REPO_CI_OP_PATH})
+	if [[ -n "${CI_OP_DIFF}" ]]; then
+		echo "****"
+		echo "ERROR: ${CI_OPERATOR_FILE} is not synced to $repo" | tee -a ${ERROR_FILE}
+		echo "${CI_OP_DIFF}" | sed 's/^/   /' | tee -a ${ERROR_FILE}
+		echo "***"
+		return 1
+	fi
+}
+
+# Compare the common Makefile across the repos
 COMMON_MAKEFILE_NAME=Makefile.common.mk
 COMMON_MAKEFILE_PATH=${DIR}/common/${COMMON_MAKEFILE_NAME}
 
-# Compare the common Makefile across the repos
 makefileDiff() {
   repo="${1}"
 
@@ -139,6 +162,12 @@ for repo in ${REPOS}; do
 
 	# Verify select packages are at the same version
 	packageVersioning "${repo}"
+	if [ $? -eq 1 ]; then
+		rc=1
+	fi
+
+	# Verify .ci-operator.yaml file is up-to-date
+	ciopDiff "${repo}"
 	if [ $? -eq 1 ]; then
 		rc=1
 	fi
