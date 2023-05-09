@@ -177,9 +177,9 @@ kind-deploy-iam-policy-controller:
 kind-deploy-olm:
 	@echo installing OLM on managed
 	export KUBECONFIG=$(PWD)/kubeconfig_$(MANAGED_CLUSTER_NAME)
-	curl --fail -L https://github.com/operator-framework/operator-lifecycle-manager/releases/download/$(OLM_VERSION)/install.sh -o install.sh
-	chmod +x install.sh
-	./install.sh $(OLM_VERSION)
+	curl --fail -L https://github.com/operator-framework/operator-lifecycle-manager/releases/download/$(OLM_VERSION)/install.sh -o ./bin/install.sh
+	chmod +x ./bin/install.sh
+	./bin/install.sh $(OLM_VERSION)
 
 .PHONY: kind-create-clusters
 kind-create-clusters:

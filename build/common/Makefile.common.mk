@@ -103,7 +103,7 @@ gosec:
 
 .PHONY: gosec-scan
 gosec-scan: gosec
-	$(GOSEC) -fmt sonarqube -out gosec.json -no-fail -exclude-dir=.go ./...
+	$(GOSEC) -fmt sonarqube -out gosec.json -stdout -exclude-dir=.go -exclude-dir=test ./...
 
 ############################################################
 #  E2E Test
