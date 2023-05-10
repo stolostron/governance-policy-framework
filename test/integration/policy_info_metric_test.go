@@ -55,7 +55,7 @@ var _ = Describe("GRC: [P1][Sev1][policy-grc] Test policy_governance_info metric
 
 		By("Checking for an existing metrics route")
 		var routeList *unstructured.UnstructuredList
-		Eventually(func() interface{} {
+		Eventually(func(g Gomega) []unstructured.Unstructured {
 			var err error
 			routeList, err = clientHubDynamic.Resource(common.GvrRoute).Namespace(ocmNS).List(
 				context.TODO(),
@@ -63,12 +63,10 @@ var _ = Describe("GRC: [P1][Sev1][policy-grc] Test policy_governance_info metric
 					LabelSelector: propagatorMetricsSelector,
 				},
 			)
-			if err != nil {
-				return err
-			}
+			g.Expect(err).ToNot(HaveOccurred())
 
-			return len(routeList.Items)
-		}, defaultTimeoutSeconds, 1).Should(Or(Equal(0), Equal(1)))
+			return routeList.Items
+		}, defaultTimeoutSeconds, 1).Should(Or(HaveLen(0), HaveLen(1)))
 
 		if len(routeList.Items) == 0 {
 			By("Exposing the metrics service as a route")
@@ -82,7 +80,7 @@ var _ = Describe("GRC: [P1][Sev1][policy-grc] Test policy_governance_info metric
 			)
 			Expect(err).ToNot(HaveOccurred())
 
-			Eventually(func() interface{} {
+			Eventually(func(g Gomega) []unstructured.Unstructured {
 				var err error
 				routeList, err = clientHubDynamic.Resource(common.GvrRoute).Namespace(ocmNS).List(
 					context.TODO(),
@@ -90,12 +88,10 @@ var _ = Describe("GRC: [P1][Sev1][policy-grc] Test policy_governance_info metric
 						LabelSelector: propagatorMetricsSelector,
 					},
 				)
-				if err != nil {
-					return err
-				}
+				g.Expect(err).ToNot(HaveOccurred())
 
-				return len(routeList.Items)
-			}, defaultTimeoutSeconds, 1).Should(Equal(1))
+				return routeList.Items
+			}, defaultTimeoutSeconds, 1).Should(HaveLen(1))
 		}
 
 		routeHost := routeList.Items[0].Object["spec"].(map[string]interface{})["host"].(string)
