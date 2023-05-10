@@ -10,6 +10,8 @@ import (
 
 	. "github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
+	admissionv1 "k8s.io/api/admissionregistration/v1"
+	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	policiesv1 "open-cluster-management.io/governance-policy-propagator/api/v1"
 	"open-cluster-management.io/governance-policy-propagator/test/utils"
@@ -85,7 +87,7 @@ var _ = Describe("RHACM4K-3055", Ordered, Label("policy-collection", "stable", "
 		It("Gatekeeper operator pod should be running", func() {
 			By("Checking if pod gatekeeper-operator has been created")
 			i := 0
-			Eventually(func(g Gomega) interface{} {
+			Eventually(func(g Gomega) []corev1.Pod {
 				if i == 60*2 || i == 60*4 {
 					fmt.Println(
 						"gatekeeper operator pod still not created, "+
@@ -113,8 +115,8 @@ var _ = Describe("RHACM4K-3055", Ordered, Label("policy-collection", "stable", "
 				)
 				g.Expect(err).ToNot(HaveOccurred())
 
-				return len(podList.Items)
-			}, defaultTimeoutSeconds*12, 1).Should(Equal(1))
+				return podList.Items
+			}, defaultTimeoutSeconds*12, 1).Should(HaveLen(1))
 			By("Checking if pod gatekeeper-operator is running")
 			Eventually(func(g Gomega) interface{} {
 				podList, err := clientManaged.CoreV1().Pods("openshift-operators").List(
@@ -153,15 +155,15 @@ var _ = Describe("RHACM4K-3055", Ordered, Label("policy-collection", "stable", "
 				return out
 			}, defaultTimeoutSeconds*2, 1).Should(ContainSubstring("AGE\ngatekeeper-validating-webhook-configuration"))
 			By("Checking if validating webhook gatekeeper-validating-webhook-configuration contains MatchExpressions")
-			Eventually(func() interface{} {
+			Eventually(func() []admissionv1.ValidatingWebhook {
 				webhook, _ := clientManaged.AdmissionregistrationV1().ValidatingWebhookConfigurations().Get(
 					context.TODO(),
 					"gatekeeper-validating-webhook-configuration",
 					metav1.GetOptions{},
 				)
 
-				return len(webhook.Webhooks)
-			}, defaultTimeoutSeconds, 1).Should(Equal(2))
+				return webhook.Webhooks
+			}, defaultTimeoutSeconds, 1).Should(HaveLen(2))
 			webhook, err := clientManaged.AdmissionregistrationV1().ValidatingWebhookConfigurations().Get(
 				context.TODO(),
 				"gatekeeper-validating-webhook-configuration",
@@ -175,7 +177,7 @@ var _ = Describe("RHACM4K-3055", Ordered, Label("policy-collection", "stable", "
 		})
 		It("Gatekeeper audit pod should be running", func() {
 			By("Checking if pod gatekeeper-audit has been created")
-			Eventually(func(g Gomega) interface{} {
+			Eventually(func(g Gomega) []corev1.Pod {
 				podList, err := clientManaged.CoreV1().Pods("openshift-gatekeeper-system").List(
 					context.TODO(),
 					metav1.ListOptions{
@@ -184,8 +186,8 @@ var _ = Describe("RHACM4K-3055", Ordered, Label("policy-collection", "stable", "
 				)
 				g.Expect(err).ToNot(HaveOccurred())
 
-				return len(podList.Items)
-			}, defaultTimeoutSeconds*2, 1).Should(Equal(1))
+				return podList.Items
+			}, defaultTimeoutSeconds*2, 1).Should(HaveLen(1))
 			By("Checking if pod gatekeeper-audit is running")
 			Eventually(func(g Gomega) interface{} {
 				podList, err := clientManaged.CoreV1().Pods("openshift-gatekeeper-system").List(
@@ -201,7 +203,7 @@ var _ = Describe("RHACM4K-3055", Ordered, Label("policy-collection", "stable", "
 		})
 		It("Gatekeeper controller manager pods should be running", func() {
 			By("Checking if pod gatekeeper-controller-manager has been created")
-			Eventually(func(g Gomega) interface{} {
+			Eventually(func(g Gomega) []corev1.Pod {
 				podList, err := clientManaged.CoreV1().Pods("openshift-gatekeeper-system").List(
 					context.TODO(),
 					metav1.ListOptions{
@@ -210,8 +212,8 @@ var _ = Describe("RHACM4K-3055", Ordered, Label("policy-collection", "stable", "
 				)
 				g.Expect(err).ToNot(HaveOccurred())
 
-				return len(podList.Items)
-			}, defaultTimeoutSeconds*2, 1).Should(Equal(2))
+				return podList.Items
+			}, defaultTimeoutSeconds*2, 1).Should(HaveLen(2))
 			By("Checking if pod gatekeeper-controller-manager is running")
 			Eventually(func(g Gomega) interface{} {
 				podList, err := clientManaged.CoreV1().Pods("openshift-gatekeeper-system").List(
