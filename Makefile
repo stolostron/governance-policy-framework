@@ -262,9 +262,14 @@ e2e-debug-hub:
 	-kubectl get all -n $(MANAGED_CLUSTER_NAME) --kubeconfig=$(PWD)/kubeconfig_$(HUB_CLUSTER_NAME) > $(DEBUG_DIR)/hub_get_all_$(MANAGED_CLUSTER_NAME).log
 	-kubectl get leases -n $(KIND_HUB_NAMESPACE) --kubeconfig=$(PWD)/kubeconfig_$(HUB_CLUSTER_NAME) > $(DEBUG_DIR)/hub_get_leases_$(KIND_HUB_NAMESPACE).log
 	-kubectl describe pods -n $(KIND_HUB_NAMESPACE) --kubeconfig=$(PWD)/kubeconfig_$(HUB_CLUSTER_NAME) > $(DEBUG_DIR)/hub_describe_pods_$(KIND_HUB_NAMESPACE).log
+	-kubectl get managedclusteraddon -A -o yaml --kubeconfig=$(PWD)/kubeconfig_$(HUB_CLUSTER_NAME) > $(DEBUG_DIR)/hub_managedclusteraddon.yaml
 	-for POD in $$(kubectl get pods -n $(KIND_HUB_NAMESPACE) -l name=governance-policy-propagator -o name --kubeconfig=$(PWD)/kubeconfig_$(HUB_CLUSTER_NAME)); do \
 		PODNAME=$${POD##"pod/"}; \
 	  	kubectl logs $${PODNAME} -c governance-policy-propagator -n $(KIND_HUB_NAMESPACE) --kubeconfig=$(PWD)/kubeconfig_$(HUB_CLUSTER_NAME) > $(DEBUG_DIR)/hub_logs_$${PODNAME}.log; \
+	done
+	-for POD in $$(kubectl get pods -n governance-policy-addon-controller-system -l app=governance-policy-addon-controller -o name --kubeconfig=$(PWD)/kubeconfig_$(HUB_CLUSTER_NAME)); do \
+		PODNAME=$${POD##"pod/"}; \
+	  	kubectl logs $${PODNAME} -n $(KIND_HUB_NAMESPACE) --kubeconfig=$(PWD)/kubeconfig_$(HUB_CLUSTER_NAME) > $(DEBUG_DIR)/hub_logs_$${PODNAME}.log; \
 	done
 
 .PHONY: e2e-debug-managed
@@ -325,6 +330,9 @@ ADDON_CONTROLLER = $(PWD)/governance-policy-addon-controller
 
 .PHONY: kind-bootstrap-hosted
 kind-bootstrap-hosted: kind-install-hosted install-crds install-resources kind-deploy-cert-manager setup-managedcluster
+	@echo "Restarting propagator and addon-controller"
+	kubectl delete pod -l name=governance-policy-propagator -A --kubeconfig=./kubeconfig_$(HUB_CLUSTER_NAME)
+	kubectl delete pod -l app=governance-policy-addon-controller -A --kubeconfig=./kubeconfig_$(HUB_CLUSTER_NAME)
 
 .PHONY: kind-install-hosted
 kind-install-hosted: $(ADDON_CONTROLLER)
