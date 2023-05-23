@@ -56,7 +56,7 @@ function managed() {
     oc delete secret grcui-e2e-credential -n default --ignore-not-found
     oc delete LimitRange container-mem-limit-range -n default --ignore-not-found
     oc delete ns prod --ignore-not-found
-    oc delete psp restricted-psp --ignore-not-found
+    oc delete psp restricted-psp --ignore-not-found || true # the podsecuritypolicy API might not exist
     oc delete role deployments-role -n default --ignore-not-found
     oc delete rolebinding operatoruser-rolebinding -n default --ignore-not-found
     oc delete scc restricted-scc --ignore-not-found
