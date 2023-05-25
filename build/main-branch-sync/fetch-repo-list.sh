@@ -10,6 +10,11 @@
 #
 ########################
 
+if [[ -z "${GITHUB_TOKEN}" ]]; then
+  echo "error: Exporting GITHUB_TOKEN is required to fetch repos."
+  exit 1
+fi
+
 GITHUB_ORG=${GITHUB_ORG:-"open-cluster-management-io"}
 GITHUB_TEAM=${GITHUB_TEAM:-"sig-policy"}
 GITHUB_API_URL="https://api.github.com/orgs/${GITHUB_ORG}/teams/${GITHUB_TEAM}/repos?per_page=100"

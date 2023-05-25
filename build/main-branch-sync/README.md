@@ -1,13 +1,21 @@
 # Automation tools for policy-grc-squad
 
+## Releasing a new version upstream
+
+- **Prerequisites**:
+  - `jq` installed
+  - Write access to the repos
+
+1. Export the new `vX.Y.Z` version to be released to `NEW_RELEASE`.
+2. Run `upstream-release.sh`.
+
 ## Refreshing builds with a no-op PR
 
 - **Prerequisites**:
   - `yq` installed
-  - SSH access to GitHub
   - Write access to the repos
 
-1. Change to the `main-branch-sync/` directory.
+1. Update `repo.txt` to list the repos that require a refresh.
 2. Run the `refresh.sh` script. (It will update the "Date" comment in the README of each repo and
    push a new branch to the repo with the updates and provide a URL to open the PRs.)
 
@@ -40,8 +48,6 @@
   - Log in to the Collective cluster
   - Log in to GitHub with username `acm-grc-security`
 
-1. Change to the `main-branch-sync/` directory.
-2. Run the `rotate-secrets.sh` script. (It will prompt for the new GitHub and SonarCloud tokens,
+1. Run the `rotate-secrets.sh` script. (It will prompt for the new GitHub and SonarCloud tokens,
    regenerate the AWS token, rotate the Collective tokens, rotate the GitHub tokens, and provide
    manual steps to update tokens in Prow, Travis, and Bitwarden.)
-
