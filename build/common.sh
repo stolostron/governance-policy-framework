@@ -1,5 +1,7 @@
 #! /bin/bash
 
+DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" >/dev/null 2>&1 && pwd )"
+
 COMPONENT_ORG=stolostron
 DEFAULT_BRANCH=${DEFAULT_BRANCH:-"main"}
 UTIL_REPOS="pipeline multiclusterhub-operator"
@@ -15,12 +17,12 @@ cloneRepos() {
 	for prereqrepo in ${UTIL_REPOS}; do
 		if [ ! -d ${prereqrepo} ]; then
 			echo "Cloning ${prereqrepo} ..."
-			git clone --quiet https://${GITHUB_USER}:${GITHUB_TOKEN}@github.com/${COMPONENT_ORG}/${prereqrepo}.git || exit 1
+			git clone --quiet https://${GITHUB_USER}:${GITHUB_TOKEN}@github.com/${COMPONENT_ORG}/${prereqrepo}.git ${prereqrepo} || exit 1
 		fi
 	done
 	if [ ! -d "${COMPONENT_ORG}" ]; then
 		# Collect repos from main-branch-sync/repo.txt
-		REPOS=$(cat ./main-branch-sync/repo.txt)
+		REPOS=$(cat ${DIR}/main-branch-sync/repo.txt)
 		# Manually append deprecated repos
 		REPOS="${REPOS}
 			stolostron/governance-policy-spec-sync
@@ -29,7 +31,7 @@ cloneRepos() {
 			stolostron/policy-collection"
 		for repo in $REPOS; do
 			echo "Cloning $repo ...."
-			git clone --quiet https://github.com/$repo.git $repo || exit 1
+			git clone --quiet https://github.com/${repo}.git ${repo} || exit 1
 		done
 	fi
 }
@@ -42,5 +44,5 @@ cleanup() {
 	for repo_dir in ${UTIL_REPOS}; do
 		rm -rf ${repo_dir}
 	done
-	rm -rf "$COMPONENT_ORG"
+	rm -rf "${COMPONENT_ORG}"
 }

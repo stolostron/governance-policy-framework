@@ -81,25 +81,26 @@ packageVersioning() {
 
 # Get the diff of CRDs across RHACM
 crdDiff() {
-	if [ "$1" = "$DEFAULT_BRANCH" ]; then
-		BRANCH="$1"
+	if [ "${1}" = "$DEFAULT_BRANCH" ]; then
+		BRANCH="${1}"
 	else
-		BRANCH="release-$1"
+		BRANCH="release-${1}"
 	fi
-	propagator_path="${COMPONENT_ORG}/governance-policy-propagator/deploy/crds"
-	mch_path="multiclusterhub-operator/pkg/templates/crds/grc"
+	propagator_repo="governance-policy-propagator"
+	propagator_path="${COMPONENT_ORG}/${propagator_repo}/deploy/crds"
 	mch_repo="multiclusterhub-operator"
+	mch_path="${mch_repo}/pkg/templates/crds/grc"
 
 	# Check out the target release branch in the repos
-	git -C ${COMPONENT_ORG}/governance-policy-propagator/ checkout --quiet $BRANCH
-	git -C $mch_repo/ checkout --quiet $BRANCH
+	git -C ${COMPONENT_ORG}/${propagator_repo}/ checkout --quiet $BRANCH
+	git -C ${mch_repo}/ checkout --quiet $BRANCH
 
-	echo "Checking that all CRDs are present in the MultiClusterHub GRC chart for $BRANCH ..."
-	PROPAGATOR_CRD_FILES=$(ls -p -1 $propagator_path | grep -v /)
+	echo "Checking that all CRDs are present in the MultiClusterHub GRC chart for ${BRANCH} ..."
+	PROPAGATOR_CRD_FILES=$(ls -p -1 ${propagator_path} | grep -v /)
 	CRD_LIST=$(diff <( echo "${PROPAGATOR_CRD_FILES}" ) <( ls -p -1 ${mch_path} | sed 's/_crd//' | grep -v OWNERS))
 	if [[ -n "${CRD_LIST}" ]]; then
 		echo "****"
-		echo "ERROR: CRDs are not synced to $mch_repo for $BRANCH" | tee -a ${ERROR_FILE}
+		echo "ERROR: CRDs are not synced to ${mch_repo} for ${BRANCH}" | tee -a ${ERROR_FILE}
 		echo "${CRD_LIST}" | sed 's/^/   /' | tee -a ${ERROR_FILE}
 		echo "***"
 		return 1
@@ -124,8 +125,8 @@ crdDiff() {
 crdSyncCheck() {
 	echo "Checking the CRD sync GitHub Action in governance-policy-addon-controller ..."
 	WORKFLOW_JSON=$(curl -s https://api.github.com/repos/stolostron/governance-policy-addon-controller/actions/workflows/crd-sync.yml/runs)
-	WORKFLOW_CONCLUSION=$(echo "$WORKFLOW_JSON" | jq -r '.workflow_runs[0].conclusion')
-	WORKFLOW_URL=$(echo "$WORKFLOW_JSON" | jq -r '.workflow_runs[0].html_url')
+	WORKFLOW_CONCLUSION=$(echo "${WORKFLOW_JSON}" | jq -r '.workflow_runs[0].conclusion')
+	WORKFLOW_URL=$(echo "${WORKFLOW_JSON}" | jq -r '.workflow_runs[0].html_url')
 	if [[ "${WORKFLOW_CONCLUSION}" != "success" ]]; then
 		echo "WORKFLOW_CONCLUSION=${WORKFLOW_CONCLUSION}"
 		echo "****"
@@ -175,7 +176,7 @@ done
 
 # Check CRDs for default branch and latest release
 for release in $DEFAULT_BRANCH ${CHECK_RELEASES##* }; do
-	crdDiff "$release"
+	crdDiff "${release}"
 	if [ $? -eq 1 ]; then
 		rc=1
 	fi
