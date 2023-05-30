@@ -2,6 +2,8 @@
 
 set -e
 
+SCRIPT_DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" >/dev/null 2>&1 && pwd )"
+
 GITHUB_BOT_USER="acm-grc-security"
 AWS_BOT_USER="ocm-grc-aws-kind-bot"
 COLLECTIVE_NS="acm-grc-security"
@@ -13,6 +15,13 @@ for CLI in gh aws jq yq oc; do
     exit 1
   fi
 done
+
+# Verify the oc version
+MAJOR_OC=$(oc version -o json | jq -r '.clientVersion.gitVersion' | grep -o "[0-9]\+\.[0-9]\+" | sed 's/\.[0-9]*$//')
+MINOR_OC=$(oc version -o json | jq -r '.clientVersion.gitVersion' | grep -o "[0-9]\+\.[0-9]\+" | sed 's/^[0-9]*\.//')
+if (( ${MAJOR_OC} < 4 )) || (( ${MAJOR_OC} == 4 )) && (( ${MINOR_OC} < 11 )); then
+  echo "The openshift CLI must be at version 4.11 or later. Current version: $(oc version -o json | jq -r '.clientVersion.gitVersion')"
+fi
 
 # Verify AWS access
 AWS_LOGIN_USER=$(aws iam list-access-keys | jq -r '.AccessKeyMetadata[0].UserName')
@@ -72,8 +81,15 @@ COLLECTIVE_SECRET=$(oc create token ${SERVICE_ACCT_NAME} -n ${COLLECTIVE_NS} --d
 
 # Update SonarCloud tokens in GitHub repos
 echo "Setting SonarCloud token on GitHub repos..."
-for REPO in $(cat repo.txt && cat repo-extra.txt); do
+for REPO in $(cat ${SCRIPT_DIR}/repo.txt && cat ${SCRIPT_DIR}/repo-extra.txt); do
   gh secret set SONAR_TOKEN -b ${SONAR_TOKEN} --repo ${REPO}
+done
+
+# Update GitHub tokens for GitHub Actions
+echo "Setting GitHub token on GitHub repos..."
+for REPO in "stolostron/governance-policy-framework"; do
+  gh secret set WORKFLOW_USER -b ${GITHUB_BOT_USER} --repo ${REPO}
+  gh secret set WORKFLOW_TOKEN -b ${BUILDS_GH_TOKEN} --repo ${REPO}
 done
 
 while read -r -p "This script is going to print the new secrets to the screen. Is your screen secure? (Press 'y' to continue) " response; do
