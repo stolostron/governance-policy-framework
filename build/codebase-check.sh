@@ -58,7 +58,7 @@ packageVersioning() {
 	PACKAGES="^go 
 		github.com/onsi/ginkgo"
 
-	rc=0
+	rcode=0
 	for pkg in ${PACKAGES}; do
 		FRAMEWORK_VERSION="$(awk '/'${pkg//\//\\\/}'/ {print $2}' ${DIR}/../go.mod)"
 		REPO_VERSION="$(awk '/'${pkg//\//\\\/}'/ {print $2}' ${COMPONENT_ORG}/${repo}/go.mod)"
@@ -72,11 +72,11 @@ packageVersioning() {
 			echo "****"
 			echo "ERROR: ${pkg/^/} version ${REPO_VERSION} in $repo does not match ${FRAMEWORK_VERSION}" | tee -a ${ERROR_FILE}
 			echo "***"
-			rc=1
+			rcode=1
 		fi
 	done
 
-	return ${rc}
+	return ${rcode}
 }
 
 # Get the diff of CRDs across RHACM
