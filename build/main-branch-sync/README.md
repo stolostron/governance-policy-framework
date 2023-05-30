@@ -44,7 +44,7 @@
 ## Rotating CI secrets
 
 - **Prerequisites**:
-  - CLIs installed: `gh`, `aws`, `oc`, `jq`
+  - CLIs installed: `gh`, `aws`, `oc` >= v4.11, `jq`
   - Log in to the Collective cluster
   - Log in to GitHub with username `acm-grc-security`
 
