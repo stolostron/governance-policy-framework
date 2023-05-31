@@ -30,7 +30,12 @@ var _ = Describe("GRC: [P1][Sev1][policy-grc] Test the kyverno generator "+
 		policySecretsName: policySecretsURL,
 	}
 	const kyvernoNamespace = "kyverno"
-	const kyvernoDeployment = "kyverno"
+	kyvernoDeployments := []string{
+		"kyverno-admission-controller",
+		"kyverno-background-controller",
+		"kyverno-cleanup-controller",
+		"kyverno-reports-controller",
+	}
 	const testNamespace = "e2e-kyverno"
 	const kyvernoInstallURL = "https://raw.githubusercontent.com/stolostron/policy-collection" +
 		"/main/community/CM-Configuration-Management/policy-install-kyverno.yaml"
@@ -87,28 +92,30 @@ var _ = Describe("GRC: [P1][Sev1][policy-grc] Test the kyverno generator "+
 			1,
 		).Should(Equal(policiesv1.Compliant))
 
-		By("Checking that kyverno deployment exists on the managed cluster")
-		Eventually(
-			func() int64 {
-				pod := utils.GetWithTimeout(
-					clientManagedDynamic,
-					common.GvrDeployment,
-					kyvernoDeployment,
-					kyvernoNamespace,
-					true,
-					defaultTimeoutSeconds*6,
-				).Object
-				if status, ok := pod["status"]; ok {
-					if ready, ok := status.(map[string]interface{})["readyReplicas"]; ok {
-						return ready.(int64)
+		By("Checking that the kyverno deployments exist on the managed cluster")
+		for _, kyvernoDeployment := range kyvernoDeployments {
+			Eventually(
+				func() int64 {
+					pod := utils.GetWithTimeout(
+						clientManagedDynamic,
+						common.GvrDeployment,
+						kyvernoDeployment,
+						kyvernoNamespace,
+						true,
+						defaultTimeoutSeconds*6,
+					).Object
+					if status, ok := pod["status"]; ok {
+						if ready, ok := status.(map[string]interface{})["readyReplicas"]; ok {
+							return ready.(int64)
+						}
 					}
-				}
 
-				return int64(0)
-			},
-			common.MaxTimeoutSeconds,
-			1,
-		).Should(BeNumerically("==", int64(1)))
+					return int64(0)
+				},
+				common.MaxTimeoutSeconds,
+				1,
+			).Should(BeNumerically("==", int64(1)))
+		}
 	})
 
 	It("Create stable kyverno policies on the Hub", func() {
