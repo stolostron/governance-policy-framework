@@ -135,12 +135,6 @@ jobs:
         HUB_ONLY: ${{ inputs.hub_only_component }}
         HOSTED: ${{ matrix.hosted }}
       run: |
-        if [[ "$RELEASE_BRANCH" != "main" ]]; then
-          export TAG=latest-$(echo $RELEASE_BRANCH | cut -d'-' -f 2):
-        else
-          export TAG=latest
-        fi
-
         export MANAGED_CONFIG=${MANAGED_KUBECONFIG}
         export HUB_CONFIG=${HUB_KUBECONFIG}
         export HUB_CONFIG_INTERNAL=${HUB_INTERNAL_KUBECONFIG}
