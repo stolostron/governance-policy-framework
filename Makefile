@@ -9,7 +9,7 @@ RELEASE_BRANCH ?= main
 OCM_API_COMMIT ?= $(shell awk '/open-cluster-management.io\/api/ {print $$2}' go.mod)
 DOCKER_URI ?= quay.io/stolostron
 ifneq ($(RELEASE_BRANCH), main)
-  VERSION_TAG ?= latest-$(subst release-,,$(RELEASE_BRANCH))
+  VERSION_TAG ?= latest-2.9
 else
   VERSION_TAG ?= latest
 endif
