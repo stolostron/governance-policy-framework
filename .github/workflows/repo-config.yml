@@ -51,9 +51,17 @@ jobs:
         working-directory: framework
         if: ${{ always() }}
         run: |
+          SUCCESS_ICON="white_check_mark"
+          WARNING_ICON="warning"
+          FAILURE_ICON="no_entry"
+
           echo "ACTION_RESULT=$([[ "${{ env.CI_EXIT_CODE }}" == 0 ]] && [[ "${{ env.CODEBASE_EXIT_CODE }}" == 0 ]] && echo 0 || echo 1)" >> ${GITHUB_ENV}
 
-          echo "## :$([[ "${{ env.CI_EXIT_CODE }}" == 0 ]] && echo 'white_check_mark' || echo 'warning'): CI Check" >> ${GITHUB_STEP_SUMMARY}
+          CI_ICON=${SUCCESS_ICON}
+          if [[ "${{ env.CI_EXIT_CODE }}" == 1 ]]; then
+            CI_ICON=${FAILURE_ICON}
+          fi
+          echo "## :${CI_ICON}: CI Check" >> ${GITHUB_STEP_SUMMARY}
           echo "" >> ${GITHUB_STEP_SUMMARY}
           echo "<details><summary>See more</summary>" >> ${GITHUB_STEP_SUMMARY}
           echo "" >> ${GITHUB_STEP_SUMMARY}
@@ -64,7 +72,13 @@ jobs:
           echo "</details>" >> ${GITHUB_STEP_SUMMARY}
           echo "" >> ${GITHUB_STEP_SUMMARY}
 
-          echo "## :$([[ "${{ env.CODEBASE_EXIT_CODE }}" == 0 ]] && echo 'white_check_mark' || echo 'warning'): Codebase Check" >> ${GITHUB_STEP_SUMMARY}
+          CODEBASE_ICON=${SUCCESS_ICON}
+          if [[ "${{ env.CODEBASE_EXIT_CODE }}" == 1 ]]; then
+            CODEBASE_ICON=${WARNING_ICON}
+          elif [[ "${{ env.CODEBASE_EXIT_CODE }}" == 2 ]]; then
+            CODEBASE_ICON=${FAILURE_ICON}
+          fi
+          echo "## :${CODEBASE_ICON}: Codebase Check" >> ${GITHUB_STEP_SUMMARY}
           echo "" >> ${GITHUB_STEP_SUMMARY}
           echo "<details><summary>See more</summary>" >> ${GITHUB_STEP_SUMMARY}
           echo "" >> ${GITHUB_STEP_SUMMARY}
