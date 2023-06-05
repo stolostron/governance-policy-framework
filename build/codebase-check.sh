@@ -178,13 +178,13 @@ done
 for release in $DEFAULT_BRANCH ${CHECK_RELEASES##* }; do
 	crdDiff "${release}"
 	if [ $? -eq 1 ]; then
-		rc=1
+		rc=2
 	fi
 done
 
 crdSyncCheck
 if [ $? -eq 1 ]; then
-	rc=1
+	rc=2
 fi
 
 cleanup
