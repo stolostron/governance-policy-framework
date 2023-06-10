@@ -61,6 +61,7 @@ jobs:
           if [[ "${{ env.CI_EXIT_CODE }}" == 1 ]]; then
             CI_ICON=${FAILURE_ICON}
           fi
+          echo "CI_ICON=${CI_ICON}" >> ${GITHUB_ENV}
           echo "## :${CI_ICON}: CI Check" >> ${GITHUB_STEP_SUMMARY}
           echo "" >> ${GITHUB_STEP_SUMMARY}
           echo "<details><summary>See more</summary>" >> ${GITHUB_STEP_SUMMARY}
@@ -78,6 +79,7 @@ jobs:
           elif [[ "${{ env.CODEBASE_EXIT_CODE }}" == 2 ]]; then
             CODEBASE_ICON=${FAILURE_ICON}
           fi
+          echo "CODEBASE_ICON=${CODEBASE_ICON}" >> ${GITHUB_ENV}
           echo "## :${CODEBASE_ICON}: Codebase Check" >> ${GITHUB_STEP_SUMMARY}
           echo "" >> ${GITHUB_STEP_SUMMARY}
           echo "<details><summary>See more</summary>" >> ${GITHUB_STEP_SUMMARY}
@@ -103,7 +105,7 @@ jobs:
                   "type": "section",
                   "text": {
                     "type": "mrkdwn",
-                    "text": "Codebase health check ${{ env.ACTION_RESULT == 0 && 'succeeded' || 'failed' }}: <${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}|View workflow run>:\n:${{ env.CI_EXIT_CODE == 0 && 'white_check_mark' || 'warning' }}: CI check\n:${{ env.CODEBASE_EXIT_CODE == 0 && 'white_check_mark' || 'warning' }}: Codebase check"
+                    "text": "Codebase health check ${{ env.ACTION_RESULT == 0 && 'succeeded' || 'failed' }}: <${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}|View workflow run>:\n:${{ env.CI_ICON }}: CI check\n:${{ env.CODEBASE_ICON }}: Codebase check"
                   }
                 }
               ]
