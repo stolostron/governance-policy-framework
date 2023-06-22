@@ -34,6 +34,7 @@ var (
 	ClusterNamespace       string
 	ClusterNamespaceOnHub  string
 	OCMNamespace           string
+	OCMAddOnNamespace      string
 	DefaultTimeoutSeconds  int
 	ManuallyPatchDecisions bool
 	K8sClient              string
@@ -71,6 +72,12 @@ func InitFlags(flagset *flag.FlagSet) {
 	flagset.StringVar(&ClusterNamespace, "cluster_namespace", "local-cluster", "cluster ns name")
 	flagset.StringVar(&ClusterNamespaceOnHub, "cluster_namespace_on_hub", "", "cluster ns name on hub")
 	flagset.StringVar(&OCMNamespace, "ocm_namespace", "open-cluster-management", "ns of ocm installation")
+	flagset.StringVar(
+		&OCMAddOnNamespace,
+		"ocm_addon_namespace",
+		"open-cluster-management-agent-addon",
+		"ns of ocm addon installations",
+	)
 	flagset.IntVar(&DefaultTimeoutSeconds, "timeout_seconds", 30, "Timeout seconds for assertion")
 	flagset.BoolVar(
 		&ManuallyPatchDecisions, "patch_decisions", true,
