@@ -352,5 +352,30 @@ var _ = Describe("RHACM4K-3055", Ordered, Label("policy-collection", "stable", "
 			"--ignore-not-found",
 		)
 		Expect(err).ToNot(HaveOccurred())
+
+		// Restart the governance-policy-framework addon after Gatekeeper is uninstalled to disable the Gatekeeper
+		// status controller. This would happen automatically, but it can take a while since it relies on the health
+		// endpoint.
+		_, err = utils.KubectlWithOutput(
+			"-n",
+			ocmAddonNS,
+			"rollout",
+			"restart",
+			"deployment/governance-policy-framework",
+			"--kubeconfig="+kubeconfigManaged,
+		)
+		Expect(err).ToNot(HaveOccurred())
+
+		// Wait for the restart to complete.
+		_, err = utils.KubectlWithOutput(
+			"-n",
+			ocmAddonNS,
+			"rollout",
+			"status",
+			"deployment/governance-policy-framework",
+			"--timeout=180s",
+			"--kubeconfig="+kubeconfigManaged,
+		)
+		Expect(err).ToNot(HaveOccurred())
 	})
 })

@@ -35,6 +35,7 @@ var (
 	userNamespace         string
 	clusterNamespace      string
 	ocmNS                 string
+	ocmAddonNS            string
 	kubeconfigHub         string
 	kubeconfigManaged     string
 	defaultTimeoutSeconds int
@@ -67,6 +68,7 @@ var _ = BeforeSuite(func() {
 	userNamespace = common.UserNamespace
 	clusterNamespace = common.ClusterNamespace
 	ocmNS = common.OCMNamespace
+	ocmAddonNS = common.OCMAddOnNamespace
 	defaultTimeoutSeconds = common.DefaultTimeoutSeconds
 
 	clientHub = common.ClientHub
@@ -125,7 +127,7 @@ func canCreateOpenshiftNamespaces() bool {
 		"create", "ns", "openshift-grc-test",
 		"--kubeconfig="+kubeconfigManaged,
 		"--dry-run=server",
-		"--as=system:serviceaccount:open-cluster-management-agent-addon:config-policy-controller-sa",
+		"--as=system:serviceaccount:"+ocmAddonNS+":config-policy-controller-sa",
 	)
 
 	if strings.Contains(out, "namespace/openshift-grc-test created") {
