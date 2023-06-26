@@ -1,9 +1,0 @@
-apiVersion: v1
-kind: Namespace
-metadata:
-  labels:
-    kubernetes.io/metadata.name: e2e-kyverno
-  name: e2e-kyverno
-spec:
-  finalizers:
-  - kubernetes
