@@ -59,7 +59,7 @@ var _ = Describe("Test configuration policy inform", Ordered, func() {
 		It("the policy should be noncompliant", func() {
 			common.DoRootComplianceTest(rolePolicyName, policiesv1.NonCompliant)
 			expectedStatusMsgs = append(
-				[]string{"NonCompliant; violation - roles not found: [role-policy-e2e] in namespace default missing"},
+				[]string{"NonCompliant; violation - roles [role-policy-e2e] not found in namespace default"},
 				expectedStatusMsgs...,
 			)
 			common.DoHistoryUpdatedTest(rolePolicyName, expectedStatusMsgs...)
@@ -74,10 +74,7 @@ var _ = Describe("Test configuration policy inform", Ordered, func() {
 			Expect(err).ToNot(HaveOccurred())
 			common.DoRootComplianceTest(rolePolicyName, policiesv1.Compliant)
 			expectedStatusMsgs = append(
-				[]string{
-					"Compliant; notification - roles [role-policy-e2e] in namespace default found as specified, " +
-						"therefore this Object template is compliant",
-				},
+				[]string{"Compliant; notification - roles [role-policy-e2e] found as specified in namespace default"},
 				expectedStatusMsgs...,
 			)
 			common.DoHistoryUpdatedTest(rolePolicyName, expectedStatusMsgs...)
@@ -92,7 +89,7 @@ var _ = Describe("Test configuration policy inform", Ordered, func() {
 			Expect(err).ToNot(HaveOccurred())
 			common.DoRootComplianceTest(rolePolicyName, policiesv1.NonCompliant)
 			expectedStatusMsgs = append(
-				[]string{"NonCompliant; violation - roles not found: [role-policy-e2e] in namespace default missing"},
+				[]string{"NonCompliant; violation - roles [role-policy-e2e] not found in namespace default"},
 				expectedStatusMsgs...,
 			)
 			common.DoHistoryUpdatedTest(rolePolicyName, expectedStatusMsgs...)
@@ -107,10 +104,7 @@ var _ = Describe("Test configuration policy inform", Ordered, func() {
 			Expect(err).ToNot(HaveOccurred())
 			common.DoRootComplianceTest(rolePolicyName, policiesv1.Compliant)
 			expectedStatusMsgs = append(
-				[]string{
-					"Compliant; notification - roles [role-policy-e2e] in namespace default found as specified, " +
-						"therefore this Object template is compliant",
-				},
+				[]string{"Compliant; notification - roles [role-policy-e2e] found as specified in namespace default"},
 				expectedStatusMsgs...,
 			)
 			common.DoHistoryUpdatedTest(rolePolicyName, expectedStatusMsgs...)
@@ -126,8 +120,7 @@ var _ = Describe("Test configuration policy inform", Ordered, func() {
 			common.DoRootComplianceTest(rolePolicyName, policiesv1.NonCompliant)
 			expectedStatusMsgs = append(
 				[]string{
-					"NonCompliant; violation - roles not found: [role-policy-e2e] in namespace " +
-						"default found but not as specified",
+					"NonCompliant; violation - roles [role-policy-e2e] found but not as specified in namespace default",
 				},
 				expectedStatusMsgs...,
 			)
@@ -143,10 +136,7 @@ var _ = Describe("Test configuration policy inform", Ordered, func() {
 			Expect(err).ToNot(HaveOccurred())
 			common.DoRootComplianceTest(rolePolicyName, policiesv1.Compliant)
 			expectedStatusMsgs = append(
-				[]string{
-					"Compliant; notification - roles [role-policy-e2e] in namespace default found " +
-						"as specified, therefore this Object template is compliant",
-				},
+				[]string{"Compliant; notification - roles [role-policy-e2e] found as specified in namespace default"},
 				expectedStatusMsgs...,
 			)
 			common.DoHistoryUpdatedTest(rolePolicyName, expectedStatusMsgs...)
@@ -162,7 +152,7 @@ var _ = Describe("Test configuration policy inform", Ordered, func() {
 
 			common.DoRootComplianceTest(rolePolicyName, policiesv1.NonCompliant)
 			expectedStatusMsgs = append(
-				[]string{"NonCompliant; violation - roles not found: [role-policy-e2e] in namespace default missing"},
+				[]string{"NonCompliant; violation - roles [role-policy-e2e] not found in namespace default"},
 				expectedStatusMsgs...,
 			)
 			common.DoHistoryUpdatedTest(rolePolicyName, expectedStatusMsgs...)
@@ -182,10 +172,7 @@ var _ = Describe("Test configuration policy inform", Ordered, func() {
 		It("the policy should be compliant", func() {
 			common.DoRootComplianceTest(rolePolicyName, policiesv1.Compliant)
 			expectedStatusMsgs = append(
-				[]string{
-					"Compliant; notification - roles [role-policy-e2e] in namespace default missing " +
-						"as expected, therefore this Object template is compliant",
-				},
+				[]string{"Compliant; notification - roles [role-policy-e2e] missing as expected in namespace default"},
 				expectedStatusMsgs...,
 			)
 			common.DoHistoryUpdatedTest(rolePolicyName, expectedStatusMsgs...)
@@ -200,7 +187,7 @@ var _ = Describe("Test configuration policy inform", Ordered, func() {
 			Expect(err).ToNot(HaveOccurred())
 			common.DoRootComplianceTest(rolePolicyName, policiesv1.NonCompliant)
 			expectedStatusMsgs = append(
-				[]string{"NonCompliant; violation - roles found: [role-policy-e2e] in namespace default"},
+				[]string{"NonCompliant; violation - roles [role-policy-e2e] found in namespace default"},
 				expectedStatusMsgs...,
 			)
 			common.DoHistoryUpdatedTest(rolePolicyName, expectedStatusMsgs...)
@@ -214,10 +201,7 @@ var _ = Describe("Test configuration policy inform", Ordered, func() {
 			Expect(err).ToNot(HaveOccurred())
 			common.DoRootComplianceTest(rolePolicyName, policiesv1.Compliant)
 			expectedStatusMsgs = append(
-				[]string{
-					"Compliant; notification - roles [role-policy-e2e] in namespace default missing " +
-						"as expected, therefore this Object template is compliant",
-				},
+				[]string{"Compliant; notification - roles [role-policy-e2e] missing as expected in namespace default"},
 				expectedStatusMsgs...,
 			)
 			common.DoHistoryUpdatedTest(rolePolicyName, expectedStatusMsgs...)
@@ -237,7 +221,7 @@ var _ = Describe("Test configuration policy inform", Ordered, func() {
 		It("the policy should be noncompliant", func() {
 			common.DoRootComplianceTest(rolePolicyName, policiesv1.NonCompliant)
 			expectedStatusMsgs = append(
-				[]string{"NonCompliant; violation - roles not found: [role-policy-e2e] in namespace default missing"},
+				[]string{"NonCompliant; violation - roles [role-policy-e2e] not found in namespace default"},
 				expectedStatusMsgs...,
 			)
 			common.DoHistoryUpdatedTest(rolePolicyName, expectedStatusMsgs...)
@@ -254,10 +238,7 @@ var _ = Describe("Test configuration policy inform", Ordered, func() {
 			Expect(err).ToNot(HaveOccurred())
 			common.DoRootComplianceTest(rolePolicyName, policiesv1.Compliant)
 			expectedStatusMsgs = append(
-				[]string{
-					"Compliant; notification - roles [role-policy-e2e] in namespace default " +
-						"found as specified, therefore this Object template is compliant",
-				},
+				[]string{"Compliant; notification - roles [role-policy-e2e] found as specified in namespace default"},
 				expectedStatusMsgs...,
 			)
 			common.DoHistoryUpdatedTest(rolePolicyName, expectedStatusMsgs...)
@@ -275,8 +256,7 @@ var _ = Describe("Test configuration policy inform", Ordered, func() {
 			common.DoRootComplianceTest(rolePolicyName, policiesv1.NonCompliant)
 			expectedStatusMsgs = append(
 				[]string{
-					"NonCompliant; violation - roles not found: [role-policy-e2e] in " +
-						"namespace default found but not as specified",
+					"NonCompliant; violation - roles [role-policy-e2e] found but not as specified in namespace default",
 				},
 				expectedStatusMsgs...,
 			)
@@ -294,10 +274,7 @@ var _ = Describe("Test configuration policy inform", Ordered, func() {
 			Expect(err).ToNot(HaveOccurred())
 			common.DoRootComplianceTest(rolePolicyName, policiesv1.Compliant)
 			expectedStatusMsgs = append(
-				[]string{
-					"Compliant; notification - roles [role-policy-e2e] in namespace default " +
-						"found as specified, therefore this Object template is compliant",
-				},
+				[]string{"Compliant; notification - roles [role-policy-e2e] found as specified in namespace default"},
 				expectedStatusMsgs...,
 			)
 			common.DoHistoryUpdatedTest(rolePolicyName, expectedStatusMsgs...)
@@ -315,8 +292,7 @@ var _ = Describe("Test configuration policy inform", Ordered, func() {
 			common.DoRootComplianceTest(rolePolicyName, policiesv1.NonCompliant)
 			expectedStatusMsgs = append(
 				[]string{
-					"NonCompliant; violation - roles not found: [role-policy-e2e] in " +
-						"namespace default found but not as specified",
+					"NonCompliant; violation - roles [role-policy-e2e] found but not as specified in namespace default",
 				},
 				expectedStatusMsgs...,
 			)
@@ -334,10 +310,7 @@ var _ = Describe("Test configuration policy inform", Ordered, func() {
 			Expect(err).ToNot(HaveOccurred())
 			common.DoRootComplianceTest(rolePolicyName, policiesv1.Compliant)
 			expectedStatusMsgs = append(
-				[]string{
-					"Compliant; notification - roles [role-policy-e2e] in namespace default " +
-						"found as specified, therefore this Object template is compliant",
-				},
+				[]string{"Compliant; notification - roles [role-policy-e2e] found as specified in namespace default"},
 				expectedStatusMsgs...,
 			)
 			common.DoHistoryUpdatedTest(rolePolicyName, expectedStatusMsgs...)
@@ -355,8 +328,7 @@ var _ = Describe("Test configuration policy inform", Ordered, func() {
 			common.DoRootComplianceTest(rolePolicyName, policiesv1.NonCompliant)
 			expectedStatusMsgs = append(
 				[]string{
-					"NonCompliant; violation - roles not found: [role-policy-e2e] in " +
-						"namespace default found but not as specified",
+					"NonCompliant; violation - roles [role-policy-e2e] found but not as specified in namespace default",
 				},
 				expectedStatusMsgs...,
 			)
@@ -381,10 +353,7 @@ var _ = Describe("Test configuration policy enforce", Ordered, func() {
 		It("the policy should be noncompliant", func() {
 			common.DoRootComplianceTest(rolePolicyName, policiesv1.NonCompliant)
 			expectedStatusMsgs = append(
-				[]string{
-					"NonCompliant; violation - roles not found: [role-policy-e2e] in " +
-						"namespace default missing",
-				},
+				[]string{"NonCompliant; violation - roles [role-policy-e2e] not found in namespace default"},
 				expectedStatusMsgs...,
 			)
 			common.DoHistoryUpdatedTest(rolePolicyName, expectedStatusMsgs...)
@@ -394,12 +363,8 @@ var _ = Describe("Test configuration policy enforce", Ordered, func() {
 			common.DoRootComplianceTest(rolePolicyName, policiesv1.Compliant)
 			expectedStatusMsgs = append(
 				[]string{
-					"Compliant; notification - roles [role-policy-e2e] in namespace default " +
-						"found as specified, therefore this Object template is compliant",
-					"Compliant; notification - roles [role-policy-e2e] in namespace default " +
-						"was missing, and was created successfully",
-					"NonCompliant; violation - No instances of `roles` found as specified " +
-						"in namespaces: default",
+					"Compliant; notification - roles [role-policy-e2e] found as specified in namespace default",
+					"Compliant; notification - roles [role-policy-e2e] was created successfully in namespace default",
 				},
 				expectedStatusMsgs...,
 			)
@@ -434,12 +399,9 @@ var _ = Describe("Test configuration policy enforce", Ordered, func() {
 
 			expectedStatusMsgs = append(
 				[]string{
-					"Compliant; notification - roles [role-policy-e2e] in namespace default " +
-						"found as specified, therefore this Object template is compliant",
-					"Compliant; notification - roles [role-policy-e2e] in namespace default " +
-						"was missing, and was created successfully",
-					"NonCompliant; violation - No instances of `roles` found as specified " +
-						"in namespaces: default",
+					"Compliant; notification - roles [role-policy-e2e] found as specified in namespace default",
+					"Compliant; notification - roles [role-policy-e2e] was created successfully in namespace default",
+					"NonCompliant; violation - roles [role-policy-e2e] not found in namespace default",
 				},
 				expectedStatusMsgs...,
 			)
@@ -503,10 +465,9 @@ var _ = Describe("Test configuration policy enforce", Ordered, func() {
 			common.DoRootComplianceTest(rolePolicyName, policiesv1.Compliant)
 			expectedStatusMsgs = append(
 				[]string{
-					"Compliant; notification - roles [role-policy-e2e] in namespace default " +
-						"found as specified, therefore this Object template is compliant",
-					"Compliant; notification - roles [role-policy-e2e] in namespace default was updated successfully",
-					"NonCompliant; violation - No instances of `roles` found as specified in namespaces: default",
+					"Compliant; notification - roles [role-policy-e2e] found as specified in namespace default",
+					"Compliant; notification - roles [role-policy-e2e] was updated successfully in namespace default",
+					"NonCompliant; violation - roles [role-policy-e2e] found but not as specified in namespace default",
 				},
 				expectedStatusMsgs...,
 			)
@@ -528,8 +489,7 @@ var _ = Describe("Test configuration policy enforce", Ordered, func() {
 			common.DoRootComplianceTest(rolePolicyName, policiesv1.Compliant)
 			expectedStatusMsgs = append(
 				[]string{
-					"Compliant; notification - roles [role-policy-e2e] in namespace default missing " +
-						"as expected, therefore this Object template is compliant",
+					"Compliant; notification - roles [role-policy-e2e] missing as expected in namespace default",
 				},
 				expectedStatusMsgs...,
 			)
@@ -545,7 +505,7 @@ var _ = Describe("Test configuration policy enforce", Ordered, func() {
 			Expect(err).ToNot(HaveOccurred())
 			common.DoRootComplianceTest(rolePolicyName, policiesv1.NonCompliant)
 			expectedStatusMsgs = append(
-				[]string{"NonCompliant; violation - roles found: [role-policy-e2e] in namespace default"},
+				[]string{"NonCompliant; violation - roles [role-policy-e2e] found in namespace default"},
 				expectedStatusMsgs...,
 			)
 			common.DoHistoryUpdatedTest(rolePolicyName, expectedStatusMsgs...)
@@ -555,10 +515,8 @@ var _ = Describe("Test configuration policy enforce", Ordered, func() {
 			common.DoRootComplianceTest(rolePolicyName, policiesv1.Compliant)
 			expectedStatusMsgs = append(
 				[]string{
-					"Compliant; notification - roles [role-policy-e2e] in namespace default missing " +
-						"as expected, therefore this Object template is compliant",
-					"Compliant; notification - roles [role-policy-e2e] in namespace default existed, " +
-						"and was deleted successfully",
+					"Compliant; notification - roles [role-policy-e2e] missing as expected in namespace default",
+					"Compliant; notification - roles [role-policy-e2e] was deleted successfully in namespace default",
 				},
 				expectedStatusMsgs...,
 			)
@@ -586,10 +544,8 @@ var _ = Describe("Test configuration policy enforce", Ordered, func() {
 			common.DoRootComplianceTest(rolePolicyName, policiesv1.Compliant)
 			expectedStatusMsgs = append(
 				[]string{
-					"Compliant; notification - roles [role-policy-e2e] in namespace default missing " +
-						"as expected, therefore this Object template is compliant",
-					"Compliant; notification - roles [role-policy-e2e] in namespace default existed, " +
-						"and was deleted successfully",
+					"Compliant; notification - roles [role-policy-e2e] missing as expected in namespace default",
+					"Compliant; notification - roles [role-policy-e2e] was deleted successfully in namespace default",
 				},
 				expectedStatusMsgs...,
 			)
@@ -607,7 +563,7 @@ var _ = Describe("Test configuration policy enforce", Ordered, func() {
 		It("should be created on managed cluster", func() {
 			common.DoCreatePolicyTest(rolePolicyYaml, common.GvrConfigurationPolicy)
 			expectedStatusMsgs = append(
-				[]string{"NonCompliant; violation - roles not found: [role-policy-e2e] in namespace default missing"},
+				[]string{"NonCompliant; violation - roles [role-policy-e2e] not found in namespace default"},
 				expectedStatusMsgs...,
 			)
 			common.DoHistoryUpdatedTest(rolePolicyName, expectedStatusMsgs...)
@@ -617,11 +573,8 @@ var _ = Describe("Test configuration policy enforce", Ordered, func() {
 			common.DoRootComplianceTest(rolePolicyName, policiesv1.Compliant)
 			expectedStatusMsgs = append(
 				[]string{
-					"Compliant; notification - roles [role-policy-e2e] in namespace default " +
-						"found as specified, therefore this Object template is compliant",
-					"Compliant; notification - roles [role-policy-e2e] in " +
-						"namespace default was missing, and was created successfully",
-					"NonCompliant; violation - No instances of `roles` found as specified in namespaces: default",
+					"Compliant; notification - roles [role-policy-e2e] found as specified in namespace default",
+					"Compliant; notification - roles [role-policy-e2e] was created successfully in namespace default",
 				},
 				expectedStatusMsgs...,
 			)
@@ -661,11 +614,9 @@ var _ = Describe("Test configuration policy enforce", Ordered, func() {
 			common.DoRootComplianceTest(rolePolicyName, policiesv1.Compliant)
 			expectedStatusMsgs = append(
 				[]string{
-					"Compliant; notification - roles [role-policy-e2e] in namespace default " +
-						"found as specified, therefore this Object template is compliant",
-					"Compliant; notification - roles [role-policy-e2e] in namespace default " +
-						"was missing, and was created successfully",
-					"NonCompliant; violation - No instances of `roles` found as specified in namespaces: default",
+					"Compliant; notification - roles [role-policy-e2e] found as specified in namespace default",
+					"Compliant; notification - roles [role-policy-e2e] was created successfully in namespace default",
+					"NonCompliant; violation - roles [role-policy-e2e] not found in namespace default",
 				},
 				expectedStatusMsgs...,
 			)
@@ -696,10 +647,9 @@ var _ = Describe("Test configuration policy enforce", Ordered, func() {
 			common.DoRootComplianceTest(rolePolicyName, policiesv1.Compliant)
 			expectedStatusMsgs = append(
 				[]string{
-					"Compliant; notification - roles [role-policy-e2e] in namespace default " +
-						"found as specified, therefore this Object template is compliant",
-					"Compliant; notification - roles [role-policy-e2e] in namespace default was updated successfully",
-					"NonCompliant; violation - No instances of `roles` found as specified in namespaces: default",
+					"Compliant; notification - roles [role-policy-e2e] found as specified in namespace default",
+					"Compliant; notification - roles [role-policy-e2e] was updated successfully in namespace default",
+					"NonCompliant; violation - roles [role-policy-e2e] found but not as specified in namespace default",
 				},
 				expectedStatusMsgs...,
 			)
@@ -733,11 +683,9 @@ var _ = Describe("Test configuration policy enforce", Ordered, func() {
 			common.DoRootComplianceTest(rolePolicyName, policiesv1.Compliant)
 			expectedStatusMsgs = append(
 				[]string{
-					"Compliant; notification - roles [role-policy-e2e] in namespace default " +
-						"found as specified, therefore this Object template is compliant",
-					"Compliant; notification - roles [role-policy-e2e] in namespace default was updated successfully",
-					"NonCompliant; violation - No instances of `roles` " +
-						"found as specified in namespaces: default",
+					"Compliant; notification - roles [role-policy-e2e] found as specified in namespace default",
+					"Compliant; notification - roles [role-policy-e2e] was updated successfully in namespace default",
+					"NonCompliant; violation - roles [role-policy-e2e] found but not as specified in namespace default",
 				},
 				expectedStatusMsgs...,
 			)
@@ -769,11 +717,9 @@ var _ = Describe("Test configuration policy enforce", Ordered, func() {
 			common.DoRootComplianceTest(rolePolicyName, policiesv1.Compliant)
 			expectedStatusMsgs = append(
 				[]string{
-					"Compliant; notification - roles [role-policy-e2e] in namespace default " +
-						"found as specified, therefore this Object template is compliant",
-					"Compliant; notification - roles [role-policy-e2e] in namespace default was updated successfully",
-					"NonCompliant; violation - No instances of `roles` " +
-						"found as specified in namespaces: default",
+					"Compliant; notification - roles [role-policy-e2e] found as specified in namespace default",
+					"Compliant; notification - roles [role-policy-e2e] was updated successfully in namespace default",
+					"NonCompliant; violation - roles [role-policy-e2e] found but not as specified in namespace default",
 				},
 				expectedStatusMsgs...,
 			)
