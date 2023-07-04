@@ -140,8 +140,12 @@ jobs:
         export HUB_CONFIG_INTERNAL=${HUB_INTERNAL_KUBECONFIG}
 
         if [[ "${HOSTED}" == "hosted" ]]; then
+          if [[ "${HUB_ONLY}" == "true" ]]; then
+            export KIND_NAMESPACE=open-cluster-management
+          else
+            export KIND_NAMESPACE=cluster2-hosted
+          fi
           export WATCH_NAMESPACE=cluster2-hosted
-          export KIND_NAMESPACE=cluster2-hosted
           export KIND_NAME=policy-addon-ctrl1
           export KUBECONFIG=${HUB_KUBECONFIG}
         elif [[ "${deployOnHub}" == "true" ]] || [[ "${HUB_ONLY}" == "true" ]]; then
