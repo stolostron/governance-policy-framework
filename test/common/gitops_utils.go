@@ -17,6 +17,12 @@ import (
 	"k8s.io/apimachinery/pkg/types"
 )
 
+var gitopsTestNamespaces = []string{
+	"grc-e2e-policy-generator",
+	"grc-e2e-remote-policy-generator",
+	"policies",
+}
+
 // GitOpsUserSetup configures a new user to use for the GitOps tests. It updates the provided
 // OCPUser instance, which contains a path to the created kubeconfig file.
 func GitOpsUserSetup(ocpUser *OCPUser) {
@@ -29,12 +35,6 @@ func GitOpsUserSetup(ocpUser *OCPUser) {
 	}
 	ocpUser.ClusterRoleBindings = []string{subAdminBinding}
 	ocpUser.Username = "grc-e2e-subadmin-user"
-
-	gitopsTestNamespaces := []string{
-		"grc-e2e-policy-generator",
-		"grc-e2e-remote-policy-generator",
-		"policies",
-	}
 
 	// Add additional cluster roles for each namespace
 	for _, ns := range gitopsTestNamespaces {
@@ -164,5 +164,9 @@ func GitOpsCleanup(user OCPUser) {
 	err = ClientHub.CoreV1().Secrets("openshift-config").Delete(context.TODO(), user.Username, metav1.DeleteOptions{})
 	if !k8serrors.IsNotFound(err) {
 		ExpectWithOffset(1, err).ShouldNot(HaveOccurred())
+	}
+
+	for _, ns := range gitopsTestNamespaces {
+		CleanupHubNamespace(ns)
 	}
 }
