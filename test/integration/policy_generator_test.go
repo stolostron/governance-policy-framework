@@ -119,8 +119,4 @@ var _ = Describe("GRC: [P1][Sev1][policy-grc] Test the Policy Generator "+
 			1,
 		).Should(BeNil())
 	})
-
-	AfterAll(func() {
-		common.CleanupHubNamespace(namespace)
-	})
 })
