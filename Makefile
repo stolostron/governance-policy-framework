@@ -341,7 +341,7 @@ integration-test:
 	fi
 
 #hosted
-ADDON_CONTROLLER = $(PWD)/governance-policy-addon-controller
+ADDON_CONTROLLER = $(PWD)/.go/governance-policy-addon-controller
 
 .PHONY: kind-bootstrap-hosted
 kind-bootstrap-hosted: kind-install-hosted install-crds install-resources kind-deploy-cert-manager setup-managedcluster
@@ -351,11 +351,11 @@ kind-bootstrap-hosted: kind-install-hosted install-crds install-resources kind-d
 
 .PHONY: kind-install-hosted
 kind-install-hosted: $(ADDON_CONTROLLER)
-	@cd ./governance-policy-addon-controller && KIND_VERSION=$(KIND_VERSION) HOSTED_MODE=true ./build/manage-clusters.sh
-	@cp ./governance-policy-addon-controller/policy-addon-ctrl1.kubeconfig ./kubeconfig_$(HUB_CLUSTER_NAME)
-	@cp ./governance-policy-addon-controller/policy-addon-ctrl1.kubeconfig-internal ./kubeconfig_$(HUB_CLUSTER_NAME)_internal
-	@cp ./governance-policy-addon-controller/policy-addon-ctrl2.kubeconfig ./kubeconfig_$(MANAGED_CLUSTER_NAME)
-	@cp ./governance-policy-addon-controller/policy-addon-ctrl2.kubeconfig-internal ./kubeconfig_$(MANAGED_CLUSTER_NAME)_internal
+	@cd $(ADDON_CONTROLLER) && KIND_VERSION=$(KIND_VERSION) HOSTED_MODE=true ./build/manage-clusters.sh
+	@cp $(ADDON_CONTROLLER)/policy-addon-ctrl1.kubeconfig ./kubeconfig_$(HUB_CLUSTER_NAME)
+	@cp $(ADDON_CONTROLLER)/policy-addon-ctrl1.kubeconfig-internal ./kubeconfig_$(HUB_CLUSTER_NAME)_internal
+	@cp $(ADDON_CONTROLLER)/policy-addon-ctrl2.kubeconfig ./kubeconfig_$(MANAGED_CLUSTER_NAME)
+	@cp $(ADDON_CONTROLLER)/policy-addon-ctrl2.kubeconfig-internal ./kubeconfig_$(MANAGED_CLUSTER_NAME)_internal
 	@echo installing policy-propagator on hub
 	-kubectl create ns $(KIND_HUB_NAMESPACE) --kubeconfig=$(PWD)/kubeconfig_$(HUB_CLUSTER_NAME)
 	kubectl apply -f https://raw.githubusercontent.com/stolostron/governance-policy-propagator/$(RELEASE_BRANCH)/deploy/operator.yaml -n $(KIND_HUB_NAMESPACE) --kubeconfig=$(PWD)/kubeconfig_$(HUB_CLUSTER_NAME)
@@ -363,7 +363,7 @@ kind-install-hosted: $(ADDON_CONTROLLER)
 	  -p "{\"spec\":{\"template\":{\"spec\":{\"containers\":[{\"name\":\"governance-policy-propagator\",\"image\":\"${DOCKER_URI}/governance-policy-propagator:${VERSION_TAG}\"}]}}}}"
 
 $(ADDON_CONTROLLER):
-	git clone --depth=1 -b $(RELEASE_BRANCH) https://github.com/stolostron/governance-policy-addon-controller.git
+	git clone --depth=1 -b $(RELEASE_BRANCH) https://github.com/stolostron/governance-policy-addon-controller.git $(ADDON_CONTROLLER)
 
 .PHONY: setup-managedcluster
 setup-managedcluster: MANAGED_CLUSTER_NAMESPACE=cluster2-hosted
@@ -375,7 +375,7 @@ setup-managedcluster:
 	-sed 's/imagetag/$(VERSION_TAG)/g' test/resources/hosted_mode/managed-cluster-addon.yaml | kubectl apply -f- --kubeconfig=kubeconfig_$(HUB_CLUSTER_NAME) -n cluster2
 
 kind-delete-hosted: $(ADDON_CONTROLLER)
-	@cd governance-policy-addon-controller && make kind-bootstrap-delete-clusters 
+	@cd $(ADDON_CONTROLLER) && make kind-bootstrap-delete-clusters 
 	@rm kubeconfig_hub kubeconfig_managed kubeconfig_hub_internal kubeconfig_managed_internal
 
 .PHONY: 
