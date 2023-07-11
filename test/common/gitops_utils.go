@@ -102,6 +102,19 @@ func GitOpsUserSetup(ocpUser *OCPUser) {
 	By("Cleaning up any existing subscription-admin user config")
 	GitOpsCleanup(*ocpUser)
 
+	// Wait for the oauth deployment to be completely ready in case an update was made that's still being processed
+	By("Waiting for the OCP oauth deployment to be ready")
+	EventuallyWithOffset(1, func(g Gomega) {
+		authDeployment, err := ClientHub.AppsV1().Deployments("openshift-authentication").Get(
+			context.TODO(), "oauth-openshift", metav1.GetOptions{},
+		)
+		g.Expect(err).ShouldNot(HaveOccurred())
+
+		availableReplicas := authDeployment.Status.AvailableReplicas
+		expectedReplicas := authDeployment.Status.Replicas
+		g.Expect(availableReplicas).Should(Equal(expectedReplicas))
+	}, DefaultTimeoutSeconds*6, 1).Should(Succeed())
+
 	for _, ns := range gitopsTestNamespaces {
 		CleanupHubNamespace(ns)
 	}
@@ -120,8 +133,31 @@ func GitOpsUserSetup(ocpUser *OCPUser) {
 	ocpUser.Password, err = GenerateInsecurePassword()
 	ExpectWithOffset(1, err).ShouldNot(HaveOccurred())
 
+	// Fetch the current generation of the auth deployment to monitor its update
+	authDeployment, err := ClientHub.AppsV1().Deployments("openshift-authentication").Get(
+		context.TODO(), "oauth-openshift", metav1.GetOptions{},
+	)
+	ExpectWithOffset(1, err).ShouldNot(HaveOccurred())
+
+	oldAuthGeneration := authDeployment.Status.ObservedGeneration
+
 	err = CreateOCPUser(ClientHub, ClientHubDynamic, *ocpUser)
 	ExpectWithOffset(1, err).ShouldNot(HaveOccurred())
+
+	// Wait for the oauth deployment to update with at least one ready Pod
+	By("Waiting for at least one OCP oauth pod to be ready")
+	EventuallyWithOffset(1, func(g Gomega) {
+		authDeployment, err := ClientHub.AppsV1().Deployments("openshift-authentication").Get(
+			context.TODO(), "oauth-openshift", metav1.GetOptions{},
+		)
+		g.Expect(err).ShouldNot(HaveOccurred())
+
+		newAuthGeneration := authDeployment.Status.ObservedGeneration
+		g.Expect(newAuthGeneration).Should(BeNumerically(">", oldAuthGeneration))
+
+		availableReplicas := authDeployment.Status.AvailableReplicas
+		g.Expect(availableReplicas).ShouldNot(BeZero())
+	}, DefaultTimeoutSeconds*6, 1).Should(Succeed())
 
 	// Get a kubeconfig logged in as the subscription and local-cluster administrator OpenShift
 	// user.
@@ -133,18 +169,22 @@ func GitOpsUserSetup(ocpUser *OCPUser) {
 	// identity provider (IDP).
 	const fiveMinutes = 5 * 60
 
+	By("Fetching kubeconfig for user " + ocpUser.Username)
 	EventuallyWithOffset(1,
 		func() error {
 			var err error
 			ocpUser.Kubeconfig, err = GetKubeConfig(
 				hubServerURL, ocpUser.Username, ocpUser.Password,
 			)
+			if err != nil {
+				GinkgoWriter.Println("Failed to login to cluster with user " + ocpUser.Username)
+			}
 
 			return err
 		},
 		fiveMinutes,
-		10,
-	).Should(BeNil())
+		20,
+	).ShouldNot(HaveOccurred())
 }
 
 // GitOpsCleanup will remove any test data/configuration on the OpenShift cluster that was added/updated
