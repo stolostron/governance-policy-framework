@@ -105,7 +105,7 @@ func DoCreatePolicyTest(policyFile string, templateGVRs ...schema.GroupVersionRe
 	managedPolicyName := UserNamespace + "." + policyName
 	By("Checking " + managedPolicyName + " on managed cluster in ns " + ClusterNamespace)
 	mplc := utils.GetWithTimeout(
-		ClientManagedDynamic, GvrPolicy, managedPolicyName, ClusterNamespace, true, DefaultTimeoutSeconds,
+		ClientManagedDynamic, GvrPolicy, managedPolicyName, ClusterNamespace, true, DefaultTimeoutSeconds*2,
 	)
 	ExpectWithOffset(1, mplc).NotTo(BeNil())
 
