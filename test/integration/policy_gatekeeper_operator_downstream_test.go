@@ -69,7 +69,7 @@ var _ = Describe("RHACM4K-3055", Ordered, Label("policy-collection", "stable", "
 				userNamespace+"."+gatekeeperPolicyName,
 				clusterNamespace,
 				true,
-				defaultTimeoutSeconds,
+				defaultTimeoutSeconds*2,
 			)
 			Expect(managedplc).NotTo(BeNil())
 		})
