@@ -40,7 +40,7 @@ OLM_VERSION ?= v0.24.0
 # Debugging configuration
 KIND_COMPONENTS := config-policy-controller cert-policy-controller iam-policy-controller governance-policy-framework-addon
 KIND_COMPONENT_SELECTOR := name
-ACM_COMPONENTS := cert-policy-controller klusterlet-addon-iampolicyctrl policy-config-policy policy-framework
+ACM_COMPONENTS := cert-policy-controller iam-policy-controller config-policy-controller governance-policy-framework
 ACM_COMPONENT_SELECTOR := app
 DEBUG_DIR ?= test-output/debug
 
@@ -256,6 +256,7 @@ e2e-debug: e2e-debug-hub e2e-debug-managed
 
 .PHONY: e2e-debug-hub
 e2e-debug-hub:
+	# Collecting hub cluster debug logs
 	mkdir -p $(DEBUG_DIR)
 	-kubectl get namespaces --kubeconfig=$(PWD)/kubeconfig_$(HUB_CLUSTER_NAME) > $(DEBUG_DIR)/hub_get_namespaces.log
 	-kubectl get all -n $(KIND_HUB_NAMESPACE) --kubeconfig=$(PWD)/kubeconfig_$(HUB_CLUSTER_NAME) > $(DEBUG_DIR)/hub_get_all_$(KIND_HUB_NAMESPACE).log
@@ -267,13 +268,14 @@ e2e-debug-hub:
 		PODNAME=$${POD##"pod/"}; \
 	  	kubectl logs $${PODNAME} -c governance-policy-propagator -n $(KIND_HUB_NAMESPACE) --kubeconfig=$(PWD)/kubeconfig_$(HUB_CLUSTER_NAME) > $(DEBUG_DIR)/hub_logs_$${PODNAME}.log; \
 	done
-	-for POD in $$(kubectl get pods -n governance-policy-addon-controller-system -l app=governance-policy-addon-controller -o name --kubeconfig=$(PWD)/kubeconfig_$(HUB_CLUSTER_NAME)); do \
+	-for POD in $$(kubectl get pods -n governance-policy-addon-controller-system -l name=governance-policy-addon-controller -o name --kubeconfig=$(PWD)/kubeconfig_$(HUB_CLUSTER_NAME)); do \
 		PODNAME=$${POD##"pod/"}; \
 	  	kubectl logs $${PODNAME} -n $(KIND_HUB_NAMESPACE) --kubeconfig=$(PWD)/kubeconfig_$(HUB_CLUSTER_NAME) > $(DEBUG_DIR)/hub_logs_$${PODNAME}.log; \
 	done
 
 .PHONY: e2e-debug-managed
 e2e-debug-managed:
+	# Collecting managed cluster debug logs
 	mkdir -p $(DEBUG_DIR)
 	-kubectl get namespaces --kubeconfig=$(PWD)/kubeconfig_$(MANAGED_CLUSTER_NAME) > $(DEBUG_DIR)/managed_get_namespaces.log
 	-kubectl get all -n $(KIND_MANAGED_NAMESPACE) --kubeconfig=$(PWD)/kubeconfig_$(MANAGED_CLUSTER_NAME) > $(DEBUG_DIR)/managed_get_all_$(KIND_MANAGED_NAMESPACE).log
@@ -294,15 +296,17 @@ e2e-debug-kind: e2e-debug
 
 .PHONY: e2e-debug-acm
 e2e-debug-acm: e2e-debug
-	-@for APP in $(ACM_COMPONENTS); do\
-		echo "* Collecting logs for:"; \
-		echo "ADDON: $${APP}"; \
-		for POD in $$(kubectl get pods -l $(ACM_COMPONENT_SELECTOR)=$${APP} -n $(KIND_MANAGED_NAMESPACE) -o name --kubeconfig=$(PWD)/kubeconfig_$(MANAGED_CLUSTER_NAME)); do \
-			PODNAME=$${POD##"pod/"}; \
-			echo "POD: $${PODNAME}"; \
-			for CONTAINER in $$(kubectl get pod $${PODNAME} -n $(KIND_MANAGED_NAMESPACE) -o jsonpath='{.spec.containers[*].name}'  --kubeconfig=$(PWD)/kubeconfig_$(MANAGED_CLUSTER_NAME)); do\
-	  			echo "CONTAINER: $${CONTAINER}"; \
-				kubectl logs $${PODNAME} -c $${CONTAINER} -n $(KIND_MANAGED_NAMESPACE) --kubeconfig=$(PWD)/kubeconfig_$(MANAGED_CLUSTER_NAME) > $(DEBUG_DIR)/managed_logs_$${PODNAME}_$${CONTAINER}.log; \
+	-@for CLUSTER in $(HUB_CLUSTER_NAME) $(MANAGED_CLUSTER_NAME); do \
+		echo "# Collecting ACM $${CLUSTER} cluster pod logs"; \
+		for APP in $(ACM_COMPONENTS); do \
+			echo "ADDON: $${APP}"; \
+			for POD in $$(kubectl get pods -l $(ACM_COMPONENT_SELECTOR)=$${APP} -n $(KIND_MANAGED_NAMESPACE) -o name --kubeconfig=$(PWD)/kubeconfig_$${CLUSTER}); do \
+				PODNAME=$${POD##"pod/"}; \
+				echo "* POD: $${PODNAME}"; \
+				for CONTAINER in $$(kubectl get pod $${PODNAME} -n $(KIND_MANAGED_NAMESPACE) -o jsonpath='{.spec.containers[*].name}'  --kubeconfig=$(PWD)/kubeconfig_$${CLUSTER}); do\
+						echo "  * CONTAINER: $${CONTAINER}"; \
+					kubectl logs $${PODNAME} -c $${CONTAINER} -n $(KIND_MANAGED_NAMESPACE) --kubeconfig=$(PWD)/kubeconfig_$${CLUSTER} > $(DEBUG_DIR)/$${CLUSTER}_logs_$${PODNAME}_$${CONTAINER}.log; \
+				done;\
 			done;\
 		done;\
 	done
