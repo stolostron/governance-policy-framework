@@ -18,7 +18,7 @@ View the following functions of the policy framework:
 
 ## Architecture
 
-![architecture](images/policy-framework-architecture-diagram.jpg)
+![architecture](images/policy-framework-architecture-diagram.png)
 
 The governance policy framework consists of following components:
 
