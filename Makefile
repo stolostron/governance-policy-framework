@@ -240,9 +240,9 @@ MANAGED_CLUSTER_NAMESPACE ?= managed
 .PHONY: e2e-test
 e2e-test:
 	@if [ -z "$(TEST_FILE)" ]; then\
-		$(GINKGO) -v --no-color $(TEST_ARGS) --fail-fast test/e2e -- -cluster_namespace=$(MANAGED_CLUSTER_NAMESPACE) -k8s_client=$(K8SCLIENT) -is_hosted=$(IS_HOSTED) -cluster_namespace_on_hub=$(CLUSTER_NAMESPACE_ON_HUB);\
+		$(GINKGO) -v $(TEST_ARGS) test/e2e -- -cluster_namespace=$(MANAGED_CLUSTER_NAMESPACE) -k8s_client=$(K8SCLIENT) -is_hosted=$(IS_HOSTED) -cluster_namespace_on_hub=$(CLUSTER_NAMESPACE_ON_HUB);\
 	else\
-		$(GINKGO) -v --no-color $(TEST_ARGS) --fail-fast --focus-file=$(TEST_FILE) test/e2e -- -cluster_namespace=$(MANAGED_CLUSTER_NAMESPACE) -k8s_client=$(K8SCLIENT) -is_hosted=$(IS_HOSTED) -cluster_namespace_on_hub=$(CLUSTER_NAMESPACE_ON_HUB);\
+		$(GINKGO) -v $(TEST_ARGS) --focus-file=$(TEST_FILE) test/e2e -- -cluster_namespace=$(MANAGED_CLUSTER_NAMESPACE) -k8s_client=$(K8SCLIENT) -is_hosted=$(IS_HOSTED) -cluster_namespace_on_hub=$(CLUSTER_NAMESPACE_ON_HUB);\
 	fi
 
 .PHONY: e2e-test-hosted
@@ -329,9 +329,9 @@ e2e-debug-dump:
 .PHONY: integration-test
 integration-test:
 	@if [ -z "$(TEST_FILE)" ]; then\
-		$(GINKGO) -v $(TEST_ARGS) --fail-fast test/integration;\
+		$(GINKGO) -v $(TEST_ARGS) test/integration;\
 	else\
-		$(GINKGO) -v $(TEST_ARGS) --fail-fast --focus-file=$(TEST_FILE) test/integration;\
+		$(GINKGO) -v $(TEST_ARGS) --focus-file=$(TEST_FILE) test/integration;\
 	fi
 
 #hosted

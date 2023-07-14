@@ -171,7 +171,7 @@ jobs:
     - name: Run e2e tests
       working-directory: framework
       env:
-        TEST_ARGS: --json-report=report.json --junit-report=report.xml --output-dir=test-output
+        TEST_ARGS: --fail-fast --json-report=report.json --junit-report=report.xml --output-dir=test-output
         HOSTED: ${{ matrix.hosted }}
       run: |
         if [[ "${HOSTED}" == "hosted" ]]; then
