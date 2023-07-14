@@ -313,12 +313,17 @@ e2e-debug-acm: e2e-debug
 
 .PHONY: e2e-debug-dump
 e2e-debug-dump:
-	@echo -e "* DEBUG LOG DUMP..."
-	@echo -e "\n=====\n"
-	@for FILE in $$(ls ./$(DEBUG_DIR)/*); do\
-			echo -e "* Log file: $${FILE}\n";\
+	@echo "* DEBUG LOG DUMP..."
+	@echo "====="
+	@for FILE in $$(ls ./$(DEBUG_DIR)/*_get_*.log); do\
+			echo "* Log file: $${FILE}";\
 			cat $${FILE};\
-			echo -e "\n=====\n";\
+			echo "=====";\
+	done
+	@for FILE in $$(ls ./$(DEBUG_DIR)/*_logs_*.log); do\
+			echo "* Log file: $${FILE}";\
+			tail -n 50 $${FILE};\
+			echo "=====";\
 	done
 
 .PHONY: integration-test
