@@ -47,6 +47,9 @@ DEBUG_DIR ?= test-output/debug
 # Test configuration
 TEST_FILE ?=
 TEST_ARGS ?=
+ifdef TEST_FILE
+	TEST_ARGS += --focus-file=$(TEST_FILE)
+endif
 
 include build/common/Makefile.common.mk
 
@@ -239,11 +242,7 @@ MANAGED_CLUSTER_NAMESPACE ?= managed
 
 .PHONY: e2e-test
 e2e-test:
-	@if [ -z "$(TEST_FILE)" ]; then\
-		$(GINKGO) -v $(TEST_ARGS) test/e2e -- -cluster_namespace=$(MANAGED_CLUSTER_NAMESPACE) -k8s_client=$(K8SCLIENT) -is_hosted=$(IS_HOSTED) -cluster_namespace_on_hub=$(CLUSTER_NAMESPACE_ON_HUB);\
-	else\
-		$(GINKGO) -v $(TEST_ARGS) --focus-file=$(TEST_FILE) test/e2e -- -cluster_namespace=$(MANAGED_CLUSTER_NAMESPACE) -k8s_client=$(K8SCLIENT) -is_hosted=$(IS_HOSTED) -cluster_namespace_on_hub=$(CLUSTER_NAMESPACE_ON_HUB);\
-	fi
+	$(GINKGO) -v $(TEST_ARGS) test/e2e -- -cluster_namespace=$(MANAGED_CLUSTER_NAMESPACE) -k8s_client=$(K8SCLIENT) -is_hosted=$(IS_HOSTED) -cluster_namespace_on_hub=$(CLUSTER_NAMESPACE_ON_HUB)
 
 .PHONY: e2e-test-hosted
 e2e-test-hosted: CLUSTER_NAMESPACE_ON_HUB=cluster2 
@@ -328,11 +327,7 @@ e2e-debug-dump:
 
 .PHONY: integration-test
 integration-test:
-	@if [ -z "$(TEST_FILE)" ]; then\
-		$(GINKGO) -v $(TEST_ARGS) test/integration;\
-	else\
-		$(GINKGO) -v $(TEST_ARGS) --focus-file=$(TEST_FILE) test/integration;\
-	fi
+	$(GINKGO) -v $(TEST_ARGS) test/integration
 
 #hosted
 ADDON_CONTROLLER = $(PWD)/.go/governance-policy-addon-controller
