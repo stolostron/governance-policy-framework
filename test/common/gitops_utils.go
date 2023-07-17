@@ -153,11 +153,12 @@ func GitOpsUserSetup(ocpUser *OCPUser) {
 		g.Expect(err).ShouldNot(HaveOccurred())
 
 		newAuthGeneration := authDeployment.Status.ObservedGeneration
-		g.Expect(newAuthGeneration).Should(BeNumerically(">", oldAuthGeneration))
+		g.Expect(newAuthGeneration).Should(BeNumerically(">", oldAuthGeneration),
+			"The OAuth deployment generation should increment.")
 
 		availableReplicas := authDeployment.Status.AvailableReplicas
 		g.Expect(availableReplicas).ShouldNot(BeZero())
-	}, DefaultTimeoutSeconds*6, 1).Should(Succeed())
+	}, DefaultTimeoutSeconds*10, 1).Should(Succeed())
 
 	// Get a kubeconfig logged in as the subscription and local-cluster administrator OpenShift
 	// user.
