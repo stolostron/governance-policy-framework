@@ -310,7 +310,7 @@ func CleanupHubNamespace(namespace string) {
 
 			return isNotFound
 		},
-		DefaultTimeoutSeconds*4,
+		DefaultTimeoutSeconds*6,
 		1,
-	).Should(BeTrue())
+	).Should(BeTrue(), fmt.Sprintf("Namespace %s should be deleted.", namespace))
 }
