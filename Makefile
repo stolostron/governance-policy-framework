@@ -13,6 +13,7 @@ ifneq ($(RELEASE_BRANCH), main)
 else
   VERSION_TAG ?= latest
 endif
+CERT_MANAGER_VERSION ?= v1.12.0
 
 # GITHUB_USER containing '@' char must be escaped with '%40'
 GITHUB_USER := $(shell echo $(GITHUB_USER) | sed 's/@/%40/g')
@@ -130,11 +131,21 @@ deploy-policy-framework-managed: kind-policy-framework-managed-setup deploy-poli
 .PHONY: deploy-community-policy-framework-managed
 deploy-community-policy-framework-managed: deploy-policy-framework-managed-crd-operator
 
-.PHONY: kind-deploy-policy-framework
-kind-deploy-policy-framework:
+.PHONY: kind-deploy-policy-propagator
+kind-deploy-policy-propagator:
 	@echo installing policy-propagator on hub
-	kubectl create ns $(KIND_HUB_NAMESPACE) --kubeconfig=$(PWD)/kubeconfig_$(HUB_CLUSTER_NAME)
+	-kubectl create ns $(KIND_HUB_NAMESPACE) --kubeconfig=$(PWD)/kubeconfig_$(HUB_CLUSTER_NAME)
+	kubectl apply -f https://github.com/cert-manager/cert-manager/releases/download/${CERT_MANAGER_VERSION}/cert-manager.yaml --kubeconfig=$(PWD)/kubeconfig_$(HUB_CLUSTER_NAME)
+	@echo "wait until cert-manager pods are up"
+	kubectl wait deployment -n cert-manager cert-manager --for condition=Available=True --timeout=180s --kubeconfig=$(PWD)/kubeconfig_$(HUB_CLUSTER_NAME)
+	kubectl wait --for=condition=Ready pod -l app.kubernetes.io/instance=cert-manager -n cert-manager --timeout=180s  --kubeconfig=$(PWD)/kubeconfig_$(HUB_CLUSTER_NAME)
+	curl https://raw.githubusercontent.com/stolostron/governance-policy-propagator/${RELEASE_BRANCH}/deploy/webhook.yaml | \
+		sed 's/namespace: open-cluster-management/namespace: $(KIND_HUB_NAMESPACE)/g' | \
+	 	kubectl apply -f - --kubeconfig=$(PWD)/kubeconfig_$(HUB_CLUSTER_NAME)
 	kubectl apply -f https://raw.githubusercontent.com/stolostron/governance-policy-propagator/$(RELEASE_BRANCH)/deploy/operator.yaml -n $(KIND_HUB_NAMESPACE) --kubeconfig=$(PWD)/kubeconfig_$(HUB_CLUSTER_NAME)
+
+.PHONY: kind-deploy-policy-framework
+kind-deploy-policy-framework: kind-deploy-policy-propagator
 	@echo creating secrets on managed
 	kubectl create ns $(KIND_MANAGED_NAMESPACE) --kubeconfig=$(PWD)/kubeconfig_$(MANAGED_CLUSTER_NAME)
 	kubectl create secret -n $(KIND_MANAGED_NAMESPACE) generic hub-kubeconfig --from-file=kubeconfig=$(PWD)/kubeconfig_$(HUB_CLUSTER_NAME)_internal --kubeconfig=$(PWD)/kubeconfig_$(MANAGED_CLUSTER_NAME)
@@ -155,7 +166,7 @@ kind-deploy-config-policy-controller:
 .PHONY: kind-deploy-cert-policy-controller
 kind-deploy-cert-policy-controller:
 	@echo installing cert-manager on managed
-	kubectl apply --validate=false -f https://github.com/cert-manager/cert-manager/releases/download/v1.12.0/cert-manager.yaml --kubeconfig=$(PWD)/kubeconfig_$(MANAGED_CLUSTER_NAME)
+	kubectl apply --validate=false -f https://github.com/cert-manager/cert-manager/releases/download/${CERT_MANAGER_VERSION}/cert-manager.yaml --kubeconfig=$(PWD)/kubeconfig_$(MANAGED_CLUSTER_NAME)
 	@echo installing cert-policy-controller on managed
 	kubectl apply -f https://raw.githubusercontent.com/stolostron/cert-policy-controller/$(RELEASE_BRANCH)/deploy/crds/policy.open-cluster-management.io_certificatepolicies.yaml --kubeconfig=$(PWD)/kubeconfig_$(MANAGED_CLUSTER_NAME)
 	kubectl apply -f https://raw.githubusercontent.com/stolostron/cert-policy-controller/$(RELEASE_BRANCH)/deploy/operator.yaml -n $(KIND_MANAGED_NAMESPACE) --kubeconfig=$(PWD)/kubeconfig_$(MANAGED_CLUSTER_NAME)
@@ -333,7 +344,7 @@ integration-test:
 ADDON_CONTROLLER = $(PWD)/.go/governance-policy-addon-controller
 
 .PHONY: kind-bootstrap-hosted
-kind-bootstrap-hosted: kind-install-hosted install-crds install-resources kind-deploy-cert-manager setup-managedcluster
+kind-bootstrap-hosted: kind-install-hosted kind-deploy-policy-propagator install-crds install-resources kind-deploy-cert-manager setup-managedcluster
 	@echo "Restarting propagator and addon-controller"
 	kubectl delete pod -l name=governance-policy-propagator -A --kubeconfig=./kubeconfig_$(HUB_CLUSTER_NAME)
 	kubectl delete pod -l app=governance-policy-addon-controller -A --kubeconfig=./kubeconfig_$(HUB_CLUSTER_NAME)
@@ -345,9 +356,6 @@ kind-install-hosted: $(ADDON_CONTROLLER)
 	@cp $(ADDON_CONTROLLER)/policy-addon-ctrl1.kubeconfig-internal ./kubeconfig_$(HUB_CLUSTER_NAME)_internal
 	@cp $(ADDON_CONTROLLER)/policy-addon-ctrl2.kubeconfig ./kubeconfig_$(MANAGED_CLUSTER_NAME)
 	@cp $(ADDON_CONTROLLER)/policy-addon-ctrl2.kubeconfig-internal ./kubeconfig_$(MANAGED_CLUSTER_NAME)_internal
-	@echo installing policy-propagator on hub
-	-kubectl create ns $(KIND_HUB_NAMESPACE) --kubeconfig=$(PWD)/kubeconfig_$(HUB_CLUSTER_NAME)
-	kubectl apply -f https://raw.githubusercontent.com/stolostron/governance-policy-propagator/$(RELEASE_BRANCH)/deploy/operator.yaml -n $(KIND_HUB_NAMESPACE) --kubeconfig=$(PWD)/kubeconfig_$(HUB_CLUSTER_NAME)
 
 $(ADDON_CONTROLLER):
 	git clone --depth=1 -b $(RELEASE_BRANCH) https://github.com/stolostron/governance-policy-addon-controller.git $(ADDON_CONTROLLER)
@@ -368,5 +376,5 @@ kind-delete-hosted: $(ADDON_CONTROLLER)
 .PHONY: 
 kind-deploy-cert-manager:
 	@echo installing cert-manager on managed
-	kubectl apply -f https://github.com/cert-manager/cert-manager/releases/download/v1.12.0/cert-manager.yaml --kubeconfig=$(PWD)/kubeconfig_$(MANAGED_CLUSTER_NAME)
+	kubectl apply -f https://github.com/cert-manager/cert-manager/releases/download/${CERT_MANAGER_VERSION}/cert-manager.yaml --kubeconfig=$(PWD)/kubeconfig_$(MANAGED_CLUSTER_NAME)
 
