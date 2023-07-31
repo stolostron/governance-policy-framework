@@ -47,7 +47,7 @@ var _ = Describe(
 				userNamespace,
 				"--kubeconfig="+kubeconfigHub,
 			)
-			Expect(err).To(BeNil())
+			Expect(err).ToNot(HaveOccurred())
 
 			By("Creating the " + policyCertificateNSName + " namespace on the managed cluster")
 			namespace := &corev1.Namespace{
@@ -58,7 +58,7 @@ var _ = Describe(
 			}
 
 			_, err = clientManaged.CoreV1().Namespaces().Create(context.TODO(), namespace, metav1.CreateOptions{})
-			Expect(err).To(BeNil())
+			Expect(err).ToNot(HaveOccurred())
 
 			By("Patching the namespaceSelector to use the " + policyCertificateNSName + " namespace")
 			_, err = clientHubDynamic.Resource(common.GvrPolicy).Namespace(userNamespace).Patch(
@@ -69,11 +69,11 @@ var _ = Describe(
 					`/spec/namespaceSelector/include", "value": ["`+policyCertificateNSName+`"]}]`),
 				metav1.PatchOptions{},
 			)
-			Expect(err).To(BeNil())
+			Expect(err).ToNot(HaveOccurred())
 
 			By("Patching placement rule")
 			err = common.PatchPlacementRule(userNamespace, "placement-"+policyCertificateName)
-			Expect(err).To(BeNil())
+			Expect(err).ToNot(HaveOccurred())
 
 			By("Checking that " + policyCertificateName + " exists on the Hub cluster")
 			rootPolicy := utils.GetWithTimeout(
@@ -107,7 +107,7 @@ var _ = Describe(
 		It("Make the policy NonCompliant", func() {
 			By("Creating a secret with an expired certificate")
 			key, err := rsa.GenerateKey(rand.Reader, 2048)
-			Expect(err).To(BeNil())
+			Expect(err).ToNot(HaveOccurred())
 
 			template := x509.Certificate{
 				SerialNumber: big.NewInt(1),
@@ -122,11 +122,11 @@ var _ = Describe(
 				BasicConstraintsValid: true,
 			}
 			derBytes, err := x509.CreateCertificate(rand.Reader, &template, &template, &key.PublicKey, key)
-			Expect(err).To(BeNil())
+			Expect(err).ToNot(HaveOccurred())
 
 			pemBytes := &bytes.Buffer{}
 			err = pem.Encode(pemBytes, &pem.Block{Type: "CERTIFICATE", Bytes: derBytes})
-			Expect(err).To(BeNil())
+			Expect(err).ToNot(HaveOccurred())
 
 			secret := corev1.Secret{
 				ObjectMeta: metav1.ObjectMeta{Name: expiredCertSecretName},
@@ -135,7 +135,7 @@ var _ = Describe(
 			_, err = clientManaged.CoreV1().Secrets(policyCertificateNSName).Create(
 				context.TODO(), &secret, metav1.CreateOptions{},
 			)
-			Expect(err).To(BeNil())
+			Expect(err).ToNot(HaveOccurred())
 		})
 
 		It("stable/"+policyCertificateName+" should be NonCompliant", func() {
@@ -153,11 +153,11 @@ var _ = Describe(
 				userNamespace, "--kubeconfig="+kubeconfigHub,
 				"--ignore-not-found",
 			)
-			Expect(err).To(BeNil())
+			Expect(err).ToNot(HaveOccurred())
 
 			err = clientManaged.CoreV1().Namespaces().Delete(
 				context.TODO(), policyCertificateNSName, metav1.DeleteOptions{},
 			)
-			Expect(err).To(BeNil())
+			Expect(err).ToNot(HaveOccurred())
 		})
 	})

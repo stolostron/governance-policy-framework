@@ -43,7 +43,7 @@ var _ = Describe("GRC: [P1][Sev1][policy-grc] Test the policy-psp policy",
 				userNamespace,
 				"--kubeconfig="+kubeconfigHub,
 			)
-			Expect(err).To(BeNil())
+			Expect(err).ToNot(HaveOccurred())
 
 			By("Checking " + rootPolicyName + " exists on the hub cluster in ns " + userNamespace)
 			rootPolicy := utils.GetWithTimeout(
@@ -60,7 +60,7 @@ var _ = Describe("GRC: [P1][Sev1][policy-grc] Test the policy-psp policy",
 		It("stable/"+rootPolicyName+" should be created on the managed cluster", func() {
 			By("Patching placement rule placement-" + rootPolicyName)
 			err := common.PatchPlacementRule(userNamespace, "placement-"+rootPolicyName)
-			Expect(err).To(BeNil())
+			Expect(err).ToNot(HaveOccurred())
 
 			By("Checking " + rootPolicyName + " on the managed cluster in ns " + clusterNamespace)
 			managedPolicy := utils.GetWithTimeout(
@@ -92,7 +92,7 @@ var _ = Describe("GRC: [P1][Sev1][policy-grc] Test the policy-psp policy",
 				[]byte(`[{"op": "replace", "path": "/spec/remediationAction", "value": "enforce"}]`),
 				metav1.PatchOptions{},
 			)
-			Expect(err).To(BeNil())
+			Expect(err).ToNot(HaveOccurred())
 		})
 
 		It("stable/"+rootPolicyName+" should be Compliant", func() {
@@ -130,7 +130,7 @@ var _ = Describe("GRC: [P1][Sev1][policy-grc] Test the policy-psp policy",
 				"--kubeconfig="+kubeconfigHub,
 				"--ignore-not-found",
 			)
-			Expect(err).To(BeNil())
+			Expect(err).ToNot(HaveOccurred())
 
 			By("Deleting the PodSecurityPolicy " + pspName + " on the managed cluster")
 			err = clientManaged.PolicyV1beta1().PodSecurityPolicies().Delete(
@@ -144,7 +144,7 @@ var _ = Describe("GRC: [P1][Sev1][policy-grc] Test the policy-psp policy",
 				if ok {
 					Expect(exitError.Stderr).To(BeNil())
 				} else {
-					Expect(err).To(BeNil())
+					Expect(err).ToNot(HaveOccurred())
 				}
 			}
 		})

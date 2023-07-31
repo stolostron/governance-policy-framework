@@ -24,7 +24,6 @@ import (
 	"k8s.io/client-go/rest"
 	"k8s.io/client-go/tools/clientcmd"
 	"k8s.io/klog"
-
 	"open-cluster-management.io/governance-policy-propagator/test/utils"
 )
 
@@ -254,7 +253,7 @@ func CleanupHubNamespace(namespace string) {
 
 	err := ClientHub.CoreV1().Namespaces().Delete(context.TODO(), namespace, metav1.DeleteOptions{})
 	if !k8serrors.IsNotFound(err) {
-		ExpectWithOffset(1, err).Should(BeNil())
+		ExpectWithOffset(1, err).ShouldNot(HaveOccurred())
 	}
 
 	// Wait for the namespace to be fully deleted before proceeding.

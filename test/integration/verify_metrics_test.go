@@ -13,10 +13,11 @@ import (
 
 	. "github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
-	"github.com/stolostron/governance-policy-framework/test/common"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	policiesv1 "open-cluster-management.io/governance-policy-propagator/api/v1"
+
+	"github.com/stolostron/governance-policy-framework/test/common"
 )
 
 var _ = Describe("GRC: [P1][Sev1][policy-grc] Test required metrics are available", Ordered, Label("BVT"), func() {
@@ -51,19 +52,19 @@ var _ = Describe("GRC: [P1][Sev1][policy-grc] Test required metrics are availabl
 
 	AfterEach(func() {
 		_, err := common.OcHub("delete", "-f", noncompliantPolicyYAML, "-n", userNamespace, "--ignore-not-found")
-		Expect(err).To(BeNil())
+		Expect(err).ToNot(HaveOccurred())
 		_, err = common.OcHub("delete", "secret", metricsTokenName, "-n", userNamespace, "--ignore-not-found")
-		Expect(err).To(BeNil())
+		Expect(err).ToNot(HaveOccurred())
 		_, err = common.OcHub("delete", "clusterrolebinding", roleBindingName, "--ignore-not-found")
-		Expect(err).To(BeNil())
+		Expect(err).ToNot(HaveOccurred())
 		_, err = common.OcHub("delete", "serviceaccount", metricsAccName, "-n", userNamespace, "--ignore-not-found")
-		Expect(err).To(BeNil())
+		Expect(err).ToNot(HaveOccurred())
 	})
 
 	It("Verifies all required metrics are available", func() {
 		By("Creating a noncompliant policy")
 		_, err := common.OcHub("apply", "-f", noncompliantPolicyYAML, "-n", userNamespace)
-		Expect(err).To(BeNil())
+		Expect(err).ToNot(HaveOccurred())
 		Eventually(
 			common.GetComplianceState(noncompliantPolicyName),
 			defaultTimeoutSeconds*2,
@@ -74,16 +75,16 @@ var _ = Describe("GRC: [P1][Sev1][policy-grc] Test required metrics are availabl
 		route, err := clientHubDynamic.Resource(common.GvrRoute).Namespace(monitoringNS).Get(
 			context.TODO(), prometheusRouteName, metav1.GetOptions{},
 		)
-		Expect(err).To(BeNil())
+		Expect(err).ToNot(HaveOccurred())
 
 		prometheusHost, _, _ := unstructured.NestedString(route.Object, "spec", "host")
-		Expect(prometheusHost).ToNot(HaveLen(0))
+		Expect(prometheusHost).ToNot(BeEmpty())
 
 		prometheusURL := "https://" + prometheusHost + "/api/v1/query"
 
 		By("Getting a token for a new service account")
 		_, err = common.OcHub("create", "serviceaccount", metricsAccName, "-n", userNamespace)
-		Expect(err).To(BeNil())
+		Expect(err).ToNot(HaveOccurred())
 
 		_, err = common.OcHub(
 			"create",
@@ -92,10 +93,10 @@ var _ = Describe("GRC: [P1][Sev1][policy-grc] Test required metrics are availabl
 			"--clusterrole=cluster-admin",
 			"--serviceaccount="+userNamespace+":"+metricsAccName,
 		)
-		Expect(err).To(BeNil())
+		Expect(err).ToNot(HaveOccurred())
 
 		_, err = common.OcHub("apply", "-f", metricsTokenYAML, "-n", userNamespace)
-		Expect(err).To(BeNil())
+		Expect(err).ToNot(HaveOccurred())
 
 		var encodedtoken string
 
@@ -107,11 +108,11 @@ var _ = Describe("GRC: [P1][Sev1][policy-grc] Test required metrics are availabl
 			)
 
 			g.Expect(err).NotTo(HaveOccurred())
-			g.Expect(encodedtoken).ToNot(HaveLen(0))
+			g.Expect(encodedtoken).ToNot(BeEmpty())
 		}, defaultTimeoutSeconds, 1).Should(Succeed())
 
 		decodedToken, err := base64.StdEncoding.DecodeString(encodedtoken)
-		Expect(err).To(BeNil())
+		Expect(err).ToNot(HaveOccurred())
 
 		transport := &http.Transport{
 			TLSClientConfig: &tls.Config{InsecureSkipVerify: true},
@@ -123,7 +124,7 @@ var _ = Describe("GRC: [P1][Sev1][policy-grc] Test required metrics are availabl
 			// Timeout after 60 seconds since this is double the Prometheus scrape time, so it should show up by then.
 			Eventually(func(g Gomega) {
 				req, err := http.NewRequest(http.MethodGet, prometheusURL, nil)
-				g.Expect(err).To(BeNil())
+				g.Expect(err).ToNot(HaveOccurred())
 
 				req.Header.Set("Authorization", "Bearer "+string(decodedToken))
 				req.Header.Set("Accept", "application/json")
@@ -133,14 +134,14 @@ var _ = Describe("GRC: [P1][Sev1][policy-grc] Test required metrics are availabl
 				req.URL.RawQuery = q.Encode()
 
 				res, err := httpClient.Do(req)
-				g.Expect(err).To(BeNil())
+				g.Expect(err).ToNot(HaveOccurred())
 
 				resBody, err := io.ReadAll(res.Body)
-				g.Expect(err).To(BeNil())
+				g.Expect(err).ToNot(HaveOccurred())
 
 				resJSON := map[string]interface{}{}
 				err = json.Unmarshal(resBody, &resJSON)
-				g.Expect(err).To(BeNil())
+				g.Expect(err).ToNot(HaveOccurred())
 				g.Expect(resJSON["status"]).To(Equal("success"))
 
 				data, ok := resJSON["data"].(map[string]interface{})
@@ -148,7 +149,7 @@ var _ = Describe("GRC: [P1][Sev1][policy-grc] Test required metrics are availabl
 
 				result, ok := data["result"].([]interface{})
 				g.Expect(ok).To(BeTrue())
-				g.Expect(result).ToNot(HaveLen(0))
+				g.Expect(result).ToNot(BeEmpty())
 			}, "60s", 1).Should(Succeed())
 		}
 	})

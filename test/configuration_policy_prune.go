@@ -8,10 +8,11 @@ import (
 
 	. "github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
-	. "github.com/stolostron/governance-policy-framework/test/common"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	policiesv1 "open-cluster-management.io/governance-policy-propagator/api/v1"
 	"open-cluster-management.io/governance-policy-propagator/test/utils"
+
+	. "github.com/stolostron/governance-policy-framework/test/common"
 )
 
 func ConfigPruneBehavior(labels ...string) bool {
@@ -79,7 +80,7 @@ func ConfigPruneBehavior(labels ...string) bool {
 			`[{"op":"add", "path":"/metadata/finalizers", `+
 				`"value":["test.open-cluster-management.io/prunetest"]}]`,
 		)
-		Expect(err).To(BeNil())
+		Expect(err).ToNot(HaveOccurred())
 
 		By("Deleting the root policy")
 
@@ -88,7 +89,7 @@ func ConfigPruneBehavior(labels ...string) bool {
 			"-n", UserNamespace,
 			"--ignore-not-found",
 		)
-		Expect(err).To(BeNil())
+		Expect(err).ToNot(HaveOccurred())
 
 		utils.GetWithTimeout(
 			clientHubDynamic,
@@ -112,7 +113,7 @@ func ConfigPruneBehavior(labels ...string) bool {
 
 		_, err = OcManaged("patch", "configmap", pruneConfigMapName, "-n", "default",
 			"--type=json", "-p", `[{"op":"remove", "path":"/metadata/finalizers"}]`)
-		Expect(err).To(BeNil())
+		Expect(err).ToNot(HaveOccurred())
 
 		By("Checking that the configmap is deleted")
 		utils.GetWithTimeout(
@@ -160,7 +161,7 @@ func ConfigPruneBehavior(labels ...string) bool {
 			"--type=json", "-p",
 			`[{"op":"replace", "path":"/spec/remediationAction", "value":"inform"}]`,
 		)
-		Expect(err).To(BeNil())
+		Expect(err).ToNot(HaveOccurred())
 		By("Wait for configpolicy to update to inform")
 		Eventually(func() interface{} {
 			configpol := utils.GetWithTimeout(
@@ -198,8 +199,8 @@ func ConfigPruneBehavior(labels ...string) bool {
 
 		By("Creating the configmap before the policy")
 
-		_, err := OcManaged("apply", "-f", pruneConfigMapYaml)
-		Expect(err).To(BeNil())
+		_, err := OcManaged("apply", "-f", pruneConfigMapYaml, "-n", "default")
+		Expect(err).ToNot(HaveOccurred())
 		By("Checking the configmap's initial data")
 
 		var initialValue string
@@ -215,11 +216,11 @@ func ConfigPruneBehavior(labels ...string) bool {
 			)
 			data, ok, err := unstructured.NestedMap(cm.Object, "data")
 			g.Expect(ok).To(BeTrue())
-			g.Expect(err).To(BeNil())
+			g.Expect(err).ToNot(HaveOccurred())
 
 			initialValue, ok = data["testvalue"].(string)
 			g.Expect(ok).To(BeTrue())
-			g.Expect(len(initialValue)).To(BeNumerically(">", 0))
+			g.Expect(initialValue).ToNot(BeEmpty())
 		}, DefaultTimeoutSeconds, 1).Should(Succeed())
 
 		DoCreatePolicyTest(policyYaml, GvrConfigurationPolicy)
@@ -238,7 +239,7 @@ func ConfigPruneBehavior(labels ...string) bool {
 			)
 			data, ok, err := unstructured.NestedMap(cm.Object, "data")
 			g.Expect(ok).To(BeTrue())
-			g.Expect(err).To(BeNil())
+			g.Expect(err).ToNot(HaveOccurred())
 
 			newValue, ok := data["testvalue"].(string)
 			g.Expect(ok).To(BeTrue())
@@ -265,7 +266,7 @@ func ConfigPruneBehavior(labels ...string) bool {
 				"delete", "-f", pruneConfigMapYaml,
 				"--ignore-not-found",
 			)
-			Expect(err).To(BeNil())
+			Expect(err).ToNot(HaveOccurred())
 		}
 		BeforeEach(cleanConfigMap)
 		AfterAll(cleanConfigMap)
@@ -276,7 +277,7 @@ func ConfigPruneBehavior(labels ...string) bool {
 					"delete", "-f", policyYaml,
 					"--ignore-not-found",
 				)
-				Expect(err).To(BeNil())
+				Expect(err).ToNot(HaveOccurred())
 				_, err = OcManaged(
 					"delete",
 					"events",
@@ -286,7 +287,7 @@ func ConfigPruneBehavior(labels ...string) bool {
 						UserNamespace+"."+policyName,
 					"--ignore-not-found",
 				)
-				Expect(err).To(BeNil())
+				Expect(err).ToNot(HaveOccurred())
 			}
 		}
 

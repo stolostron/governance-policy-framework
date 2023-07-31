@@ -10,7 +10,6 @@ import (
 
 	. "github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
-
 	corev1 "k8s.io/api/core/v1"
 	rbacv1 "k8s.io/api/rbac/v1"
 	k8serrors "k8s.io/apimachinery/pkg/api/errors"
@@ -114,20 +113,20 @@ func GitOpsUserSetup(ocpUser *OCPUser) {
 		_, err = ClientHub.CoreV1().Namespaces().Create(
 			context.TODO(), &nsObj, metav1.CreateOptions{},
 		)
-		ExpectWithOffset(1, err).Should(BeNil())
+		ExpectWithOffset(1, err).ShouldNot(HaveOccurred())
 	}
 
 	// Create the OpenShift user that can be used for logging in.
 	ocpUser.Password, err = GenerateInsecurePassword()
-	ExpectWithOffset(1, err).Should(BeNil())
+	ExpectWithOffset(1, err).ShouldNot(HaveOccurred())
 
 	err = CreateOCPUser(ClientHub, ClientHubDynamic, *ocpUser)
-	ExpectWithOffset(1, err).Should(BeNil())
+	ExpectWithOffset(1, err).ShouldNot(HaveOccurred())
 
 	// Get a kubeconfig logged in as the subscription and local-cluster administrator OpenShift
 	// user.
 	hubServerURL, err := OcHub("whoami", "--show-server=true")
-	ExpectWithOffset(1, err).Should(BeNil())
+	ExpectWithOffset(1, err).ShouldNot(HaveOccurred())
 
 	hubServerURL = strings.TrimSuffix(hubServerURL, "\n")
 	// Use eventually since it can take a while for OpenShift to configure itself with the new
@@ -156,15 +155,15 @@ func GitOpsCleanup(user OCPUser) {
 	// Delete kubeconfig file if it is specified
 	if user.Kubeconfig != "" {
 		err := os.Remove(user.Kubeconfig)
-		ExpectWithOffset(1, err).Should(BeNil())
+		ExpectWithOffset(1, err).ShouldNot(HaveOccurred())
 	}
 
 	err := CleanupOCPUser(ClientHub, ClientHubDynamic, user)
-	ExpectWithOffset(1, err).Should(BeNil())
+	ExpectWithOffset(1, err).ShouldNot(HaveOccurred())
 
 	err = ClientHub.CoreV1().Secrets("openshift-config").Delete(context.TODO(), user.Username, metav1.DeleteOptions{})
 	if !k8serrors.IsNotFound(err) {
-		ExpectWithOffset(1, err).Should(BeNil())
+		ExpectWithOffset(1, err).ShouldNot(HaveOccurred())
 	}
 
 	gitopsTestNamespaces := []string{
