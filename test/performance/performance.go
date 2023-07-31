@@ -18,12 +18,11 @@ import (
 	"time"
 
 	"github.com/google/uuid"
-	"github.com/spf13/pflag"
-	"k8s.io/klog"
-
 	"github.com/prometheus/client_golang/api"
 	v1 "github.com/prometheus/client_golang/api/prometheus/v1"
 	"github.com/prometheus/common/model"
+	"github.com/spf13/pflag"
+	"k8s.io/klog"
 )
 
 const performanceDir = "test/performance"

@@ -8,10 +8,11 @@ import (
 
 	. "github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
-	. "github.com/stolostron/governance-policy-framework/test/common"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	policiesv1 "open-cluster-management.io/governance-policy-propagator/api/v1"
 	"open-cluster-management.io/governance-policy-propagator/test/utils"
+
+	. "github.com/stolostron/governance-policy-framework/test/common"
 )
 
 func PolicyOrdering(labels ...string) bool {
@@ -49,14 +50,14 @@ func PolicyOrdering(labels ...string) bool {
 
 		for _, name := range configmapNames {
 			_, err := OcManaged("delete", "configmap", name, "-n=default", "--ignore-not-found")
-			Expect(err).To(BeNil())
+			Expect(err).ToNot(HaveOccurred())
 		}
 
 		_, err := OcHub(
 			"delete", "-f", testPolicySetYaml,
 			"-n", UserNamespace, "--ignore-not-found",
 		)
-		Expect(err).To(BeNil())
+		Expect(err).ToNot(HaveOccurred())
 	}
 
 	Describe("GRC: [P1][Sev1][policy-grc] Test policy ordering", Ordered, Label(labels...), func() {
@@ -130,7 +131,7 @@ func PolicyOrdering(labels ...string) bool {
 			It("Should create policyset with noncompliant status", func() {
 				By("Creating the initial policy set to use as a dependency")
 				_, err := OcHub("apply", "-f", testPolicySetYaml, "-n", UserNamespace)
-				Expect(err).To(BeNil())
+				Expect(err).ToNot(HaveOccurred())
 
 				rootPolicy := utils.GetWithTimeout(
 					ClientHubDynamic, GvrPolicy, testPolicyName, UserNamespace, true, DefaultTimeoutSeconds,
@@ -146,7 +147,7 @@ func PolicyOrdering(labels ...string) bool {
 				_, err = ClientHubDynamic.Resource(GvrPlacementRule).Namespace(UserNamespace).UpdateStatus(
 					context.TODO(), plr, metav1.UpdateOptions{},
 				)
-				Expect(err).To(BeNil())
+				Expect(err).ToNot(HaveOccurred())
 
 				By("Checking " + testPolicyName + " on managed cluster in ns " + ClusterNamespace)
 				managedplc := utils.GetWithTimeout(
@@ -191,15 +192,14 @@ func PolicyOrdering(labels ...string) bool {
 					"delete", "-f", testPolicySetYaml,
 					"-n", UserNamespace, "--ignore-not-found",
 				)
-				Expect(err).To(BeNil())
+				Expect(err).ToNot(HaveOccurred())
 
 				_, err = OcManaged(
 					"delete", "pod",
 					"-n", "default",
 					"pod-dne", "--ignore-not-found",
 				)
-				Expect(err).To(BeNil())
-
+				Expect(err).ToNot(HaveOccurred())
 				DoRootComplianceTest(plcWithDepOnSetName, policiesv1.Pending)
 			})
 			AfterAll(cleanup)

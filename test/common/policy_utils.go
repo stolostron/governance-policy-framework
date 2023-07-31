@@ -9,7 +9,6 @@ import (
 
 	. "github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
-
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"k8s.io/apimachinery/pkg/runtime"
@@ -33,7 +32,7 @@ func GetClusterComplianceState(policyName, clusterName string) func(Gomega) inte
 		)
 		var policy policiesv1.Policy
 		err := runtime.DefaultUnstructuredConverter.FromUnstructured(rootPlc.UnstructuredContent(), &policy)
-		g.ExpectWithOffset(1, err).To(BeNil())
+		g.ExpectWithOffset(1, err).ToNot(HaveOccurred())
 
 		for _, statusPerCluster := range policy.Status.Status {
 			if statusPerCluster.ClusterNamespace == clusterName {
@@ -81,7 +80,7 @@ func DoCreatePolicyTest(policyFile string, templateGVRs ...schema.GroupVersionRe
 
 	By("DoCreatePolicyTest creates " + policyFile + " on namespace " + UserNamespace)
 	output, err := OcHub("apply", "-f", policyFile, "-n", UserNamespace)
-	ExpectWithOffset(1, err).To(BeNil())
+	ExpectWithOffset(1, err).ToNot(HaveOccurred())
 	By("DoCreatePolicyTest OcHub apply output: " + output)
 
 	plc := utils.GetWithTimeout(ClientHubDynamic, GvrPolicy, policyName, UserNamespace, true, DefaultTimeoutSeconds)
@@ -99,7 +98,7 @@ func DoCreatePolicyTest(policyFile string, templateGVRs ...schema.GroupVersionRe
 			plr,
 			metav1.UpdateOptions{},
 		)
-		ExpectWithOffset(1, err).To(BeNil())
+		ExpectWithOffset(1, err).ToNot(HaveOccurred())
 	}
 
 	managedPolicyName := UserNamespace + "." + policyName
@@ -131,7 +130,7 @@ func DoCleanupPolicy(policyFile string, templateGVRs ...schema.GroupVersionResou
 		"delete", "-f", policyFile, "-n", UserNamespace,
 		"--ignore-not-found",
 	)
-	Expect(err).To(BeNil())
+	Expect(err).ToNot(HaveOccurred())
 
 	plc := utils.GetWithTimeout(ClientHubDynamic, GvrPolicy, policyName, UserNamespace, false, DefaultTimeoutSeconds)
 	ExpectWithOffset(1, plc).To(BeNil())
@@ -215,13 +214,13 @@ func EnforcePolicy(policyName string, templateGVRs ...schema.GroupVersionResourc
 	By("Patching remediationAction = enforce on root policy")
 	EventuallyWithOffset(1, func(g Gomega) {
 		rootPlc, err := rootPolicyClient.Get(ctx, policyName, metav1.GetOptions{})
-		g.ExpectWithOffset(1, err).To(BeNil())
+		g.ExpectWithOffset(1, err).ToNot(HaveOccurred())
 
 		err = unstructured.SetNestedField(rootPlc.Object, "enforce", "spec", "remediationAction")
-		g.ExpectWithOffset(1, err).To(BeNil())
+		g.ExpectWithOffset(1, err).ToNot(HaveOccurred())
 
 		_, err = rootPolicyClient.Update(ctx, rootPlc, metav1.UpdateOptions{})
-		g.ExpectWithOffset(1, err).To(BeNil())
+		g.ExpectWithOffset(1, err).ToNot(HaveOccurred())
 	}, DefaultTimeoutSeconds, 1).Should(Succeed())
 
 	managedPolicyClient := ClientManagedDynamic.Resource(GvrPolicy).Namespace(ClusterNamespace)
@@ -229,10 +228,10 @@ func EnforcePolicy(policyName string, templateGVRs ...schema.GroupVersionResourc
 	By("Checking that remediationAction = enforce on replicated policy")
 	EventuallyWithOffset(1, func(g Gomega) {
 		managedPlc, err := managedPolicyClient.Get(ctx, UserNamespace+"."+policyName, metav1.GetOptions{})
-		g.ExpectWithOffset(1, err).To(BeNil())
+		g.ExpectWithOffset(1, err).ToNot(HaveOccurred())
 
 		action, found, err := unstructured.NestedString(managedPlc.Object, "spec", "remediationAction")
-		g.ExpectWithOffset(1, err).To(BeNil())
+		g.ExpectWithOffset(1, err).ToNot(HaveOccurred())
 		g.ExpectWithOffset(1, found).To(BeTrue())
 		g.ExpectWithOffset(1, action).To(Equal("enforce"))
 	}, DefaultTimeoutSeconds, 1).Should(Succeed())
@@ -245,10 +244,10 @@ func EnforcePolicy(policyName string, templateGVRs ...schema.GroupVersionResourc
 
 		EventuallyWithOffset(1, func(g Gomega) {
 			template, err := templateClient.Get(ctx, policyName, metav1.GetOptions{})
-			g.ExpectWithOffset(1, err).To(BeNil())
+			g.ExpectWithOffset(1, err).ToNot(HaveOccurred())
 
 			action, found, err := unstructured.NestedString(template.Object, "spec", "remediationAction")
-			g.ExpectWithOffset(1, err).To(BeNil())
+			g.ExpectWithOffset(1, err).ToNot(HaveOccurred())
 			g.ExpectWithOffset(1, found).To(BeTrue())
 			g.ExpectWithOffset(1, action).To(Equal("enforce"))
 		}, DefaultTimeoutSeconds, 1).Should(Succeed())

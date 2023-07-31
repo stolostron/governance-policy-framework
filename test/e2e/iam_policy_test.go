@@ -6,8 +6,9 @@ package e2e
 import (
 	. "github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
-	"github.com/stolostron/governance-policy-framework/test/common"
 	policiesv1 "open-cluster-management.io/governance-policy-propagator/api/v1"
+
+	"github.com/stolostron/governance-policy-framework/test/common"
 )
 
 var _ = Describe("Test iam policy", func() {
@@ -23,7 +24,7 @@ var _ = Describe("Test iam policy", func() {
 		It("the policy should be noncompliant after creating clusterrolebindings", func() {
 			By("Creating ../resources/iam_policy/clusterrolebinding.yaml")
 			_, err := common.OcManaged("apply", "-f", "../resources/iam_policy/clusterrolebinding.yaml")
-			Expect(err).To(BeNil())
+			Expect(err).ToNot(HaveOccurred())
 			common.DoRootComplianceTest(iamPolicyName, policiesv1.NonCompliant)
 		})
 		It("the policy should be compliant again after delete clusterrolebindings", func() {
@@ -33,7 +34,7 @@ var _ = Describe("Test iam policy", func() {
 				"delete", "-f", "../resources/iam_policy/clusterrolebinding.yaml",
 				"--ignore-not-found",
 			)
-			Expect(err).To(BeNil())
+			Expect(err).ToNot(HaveOccurred())
 			common.DoRootComplianceTest(iamPolicyName, policiesv1.Compliant)
 		})
 		AfterAll(func() {

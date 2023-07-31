@@ -21,12 +21,12 @@ import (
 func cleanupConfig(ctx context.Context, configMapName string, configMapCopyName string) {
 	err := clientHub.CoreV1().ConfigMaps(userNamespace).Delete(ctx, configMapName, metav1.DeleteOptions{})
 	if !k8serrors.IsNotFound(err) {
-		Expect(err).To(BeNil())
+		Expect(err).ToNot(HaveOccurred())
 	}
 
 	err = clientManaged.CoreV1().ConfigMaps("default").Delete(ctx, configMapCopyName, metav1.DeleteOptions{})
 	if !k8serrors.IsNotFound(err) {
-		Expect(err).To(BeNil())
+		Expect(err).ToNot(HaveOccurred())
 	}
 }
 
@@ -58,7 +58,7 @@ var _ = Describe(
 			}
 
 			_, err := clientHub.CoreV1().ConfigMaps(userNamespace).Create(ctx, configMap, metav1.CreateOptions{})
-			Expect(err).To(BeNil())
+			Expect(err).ToNot(HaveOccurred())
 		})
 
 		It(policyName+" should be created on the Hub", func() {

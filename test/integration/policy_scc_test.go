@@ -32,11 +32,11 @@ var _ = Describe("GRC: [P1][Sev1][policy-grc] Test the policy-scc policy",
 			_, err := utils.KubectlWithOutput(
 				"apply", "-f", rootPolicyURL, "-n", userNamespace, "--kubeconfig="+kubeconfigHub,
 			)
-			Expect(err).To(BeNil())
+			Expect(err).ToNot(HaveOccurred())
 
 			By("Patching placement rule")
 			err = common.PatchPlacementRule(userNamespace, "placement-"+rootPolicyName)
-			Expect(err).To(BeNil())
+			Expect(err).ToNot(HaveOccurred())
 
 			By("Checking that " + rootPolicyName + " exists on the Hub cluster")
 			rootPolicy := utils.GetWithTimeout(
@@ -77,7 +77,7 @@ var _ = Describe("GRC: [P1][Sev1][policy-grc] Test the policy-scc policy",
 				[]byte(`[{"op": "replace", "path": "/spec/remediationAction", "value": "enforce"}]`),
 				metav1.PatchOptions{},
 			)
-			Expect(err).To(BeNil())
+			Expect(err).ToNot(HaveOccurred())
 		})
 
 		It("stable/"+rootPolicyName+" should be Compliant", func() {
@@ -110,6 +110,6 @@ var _ = Describe("GRC: [P1][Sev1][policy-grc] Test the policy-scc policy",
 				userNamespace, "--kubeconfig="+kubeconfigHub,
 				"--ignore-not-found",
 			)
-			Expect(err).To(BeNil())
+			Expect(err).ToNot(HaveOccurred())
 		})
 	})

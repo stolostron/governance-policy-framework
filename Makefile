@@ -101,7 +101,7 @@ fmt: fmt-dependencies
 
 .PHONY: lint-dependencies
 lint-dependencies:
-	$(call go-get-tool,github.com/golangci/golangci-lint/cmd/golangci-lint@v1.46.2)
+	$(call go-get-tool,github.com/golangci/golangci-lint/cmd/golangci-lint@v1.52.2)
 
 .PHONY: lint
 lint: lint-dependencies lint-all

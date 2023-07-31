@@ -28,7 +28,7 @@ var _ = Describe("GRC: [P1][Sev1][policy-grc] Test the Policy Generator "+
 			"-n",
 			namespace,
 		)
-		Expect(err).Should(BeNil())
+		Expect(err).ShouldNot(HaveOccurred())
 	})
 
 	It("Validates the propagated policies", func() {
@@ -52,9 +52,9 @@ var _ = Describe("GRC: [P1][Sev1][policy-grc] Test the Policy Generator "+
 		// than this since the policy generator unit tests cover this scenario well. This test is
 		// meant to verify that the integration is successful.
 		policies, found, err := unstructured.NestedSlice(policyset.Object, "spec", "policies")
-		Expect(err).Should(BeNil())
+		Expect(err).ShouldNot(HaveOccurred())
 		Expect(found).Should(BeTrue())
-		Expect(len(policies)).Should(Equal(1))
+		Expect(policies).Should(HaveLen(1))
 		Expect(policies[0]).Should(Equal(policyName))
 
 		By("Checking that the root policy was created")
@@ -77,16 +77,16 @@ var _ = Describe("GRC: [P1][Sev1][policy-grc] Test the Policy Generator "+
 		// than this since the policy generator unit tests cover this scenario well. This test is
 		// meant to verify that the integration is successful.
 		templates, found, err := unstructured.NestedSlice(policy.Object, "spec", "policy-templates")
-		Expect(err).Should(BeNil())
+		Expect(err).ShouldNot(HaveOccurred())
 		Expect(found).Should(BeTrue())
-		Expect(len(templates)).Should(Equal(1))
+		Expect(templates).Should(HaveLen(1))
 
 		objTemplates, found, err := unstructured.NestedSlice(
 			templates[0].(map[string]interface{}), "objectDefinition", "spec", "object-templates",
 		)
-		Expect(err).Should(BeNil())
+		Expect(err).ShouldNot(HaveOccurred())
 		Expect(found).Should(BeTrue())
-		Expect(len(objTemplates)).Should(Equal(3))
+		Expect(objTemplates).Should(HaveLen(3))
 
 		By("Checking that the policy was propagated to the local-cluster namespace")
 		Eventually(

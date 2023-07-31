@@ -38,11 +38,11 @@ var _ = Describe("GRC: [P1][Sev1][policy-grc] Test "+
 			userNamespace,
 			"--kubeconfig="+kubeconfigHub,
 		)
-		Expect(err).To(BeNil())
+		Expect(err).ToNot(HaveOccurred())
 
 		By("Patching the placement rule")
 		err = common.PatchPlacementRule(userNamespace, "placement-"+iamPolicyName)
-		Expect(err).To(BeNil())
+		Expect(err).ToNot(HaveOccurred())
 
 		By("Checking " + iamPolicyName + " on the hub cluster in the ns " + userNamespace)
 		rootPlc := utils.GetWithTimeout(
@@ -101,7 +101,7 @@ var _ = Describe("GRC: [P1][Sev1][policy-grc] Test "+
 			iamPolicyManagedNamespace,
 			"--kubeconfig="+kubeconfigManaged,
 		)
-		Expect(err).To(BeNil())
+		Expect(err).ToNot(HaveOccurred())
 
 		By("Creating a cluster role binding")
 		_, err = utils.KubectlWithOutput(
@@ -111,7 +111,7 @@ var _ = Describe("GRC: [P1][Sev1][policy-grc] Test "+
 			iamPolicyManagedNamespace,
 			"--kubeconfig="+kubeconfigManaged,
 		)
-		Expect(err).To(BeNil())
+		Expect(err).ToNot(HaveOccurred())
 	})
 
 	It("stable/"+iamPolicyName+" should be noncompliant", func() {
@@ -129,7 +129,7 @@ var _ = Describe("GRC: [P1][Sev1][policy-grc] Test "+
 			"--kubeconfig="+kubeconfigManaged,
 			"--ignore-not-found",
 		)
-		Expect(err).To(BeNil())
+		Expect(err).ToNot(HaveOccurred())
 	})
 
 	It("stable/"+iamPolicyName+" should be compliant", func() {
@@ -145,7 +145,7 @@ var _ = Describe("GRC: [P1][Sev1][policy-grc] Test "+
 			iamPolicyManagedNamespace,
 			metav1.DeleteOptions{},
 		)
-		Expect(err).Should(BeNil())
+		Expect(err).ShouldNot(HaveOccurred())
 
 		_, err = utils.KubectlWithOutput(
 			"delete", "-f",
@@ -155,7 +155,7 @@ var _ = Describe("GRC: [P1][Sev1][policy-grc] Test "+
 			"--kubeconfig="+kubeconfigHub,
 			"--ignore-not-found",
 		)
-		Expect(err).To(BeNil())
+		Expect(err).ToNot(HaveOccurred())
 
 		Eventually(
 			func() interface{} {
@@ -173,5 +173,14 @@ var _ = Describe("GRC: [P1][Sev1][policy-grc] Test "+
 			defaultTimeoutSeconds,
 			1,
 		).Should(BeNil())
+
+		By("Ensuring the test OpenShift group is gone")
+		_, err = utils.KubectlWithOutput(
+			"delete", "-f",
+			"../resources/iam_policy/group.yaml",
+			"--kubeconfig="+kubeconfigManaged,
+			"--ignore-not-found",
+		)
+		Expect(err).ToNot(HaveOccurred())
 	})
 })
