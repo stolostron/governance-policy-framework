@@ -33,7 +33,7 @@ var _ = Describe("GRC: [P1][Sev1][policy-grc] Test the Policy Generator "+
 			"-n",
 			namespace,
 		)
-		Expect(err).Should(BeNil())
+		Expect(err).ShouldNot(HaveOccurred())
 	})
 
 	It("Validates the propagated policies", func() {
@@ -55,19 +55,19 @@ var _ = Describe("GRC: [P1][Sev1][policy-grc] Test the Policy Generator "+
 		).Should(BeNil())
 
 		templates, found, err := unstructured.NestedSlice(policy.Object, "spec", "policy-templates")
-		Expect(err).Should(BeNil())
+		Expect(err).ShouldNot(HaveOccurred())
 		Expect(found).Should(BeTrue())
-		Expect(len(templates)).Should(Equal(3))
+		Expect(templates).Should(HaveLen(3))
 
 		for _, template := range templates {
 			objSpec, found, err := unstructured.NestedMap(template.(map[string]interface{}), "objectDefinition", "spec")
-			Expect(err).Should(BeNil())
+			Expect(err).ShouldNot(HaveOccurred())
 			Expect(found).Should(BeTrue())
 			Expect(objSpec["severity"]).Should(Equal("high"))
 			objTemplates, found, err := unstructured.NestedSlice(objSpec, "object-templates")
-			Expect(err).Should(BeNil())
+			Expect(err).ShouldNot(HaveOccurred())
 			Expect(found).Should(BeTrue())
-			Expect(len(objTemplates)).Should(Equal(1))
+			Expect(objTemplates).Should(HaveLen(1))
 			templateObj := objTemplates[0].(map[string]interface{})
 			Expect(templateObj["complianceType"]).Should(Equal("mustnothave"))
 		}

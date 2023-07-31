@@ -34,11 +34,11 @@ var _ = Describe(
 			_, err := utils.KubectlWithOutput(
 				"apply", "-f", policyEtcdEncryptionURL, "-n", userNamespace, "--kubeconfig="+kubeconfigHub,
 			)
-			Expect(err).To(BeNil())
+			Expect(err).ToNot(HaveOccurred())
 
 			By("Patching placement rule")
 			err = common.PatchPlacementRule(userNamespace, "placement-"+policyEtcdEncryptionName)
-			Expect(err).To(BeNil())
+			Expect(err).ToNot(HaveOccurred())
 
 			By("Checking that " + policyEtcdEncryptionName + " exists on the Hub cluster")
 			rootPolicy := utils.GetWithTimeout(
@@ -88,7 +88,7 @@ var _ = Describe(
 				),
 				metav1.PatchOptions{},
 			)
-			Expect(err).To(BeNil())
+			Expect(err).ToNot(HaveOccurred())
 		})
 
 		It("Etcd encryption should be enabled", func() {
@@ -145,7 +145,7 @@ var _ = Describe(
 				userNamespace, "--kubeconfig="+kubeconfigHub,
 				"--ignore-not-found",
 			)
-			Expect(err).To(BeNil())
+			Expect(err).ToNot(HaveOccurred())
 
 			_, err = clientManagedDynamic.Resource(common.GvrAPIServer).Patch(
 				context.TODO(),
@@ -154,6 +154,6 @@ var _ = Describe(
 				[]byte(`[{"op": "remove", "path": "/spec/encryption"}]`),
 				metav1.PatchOptions{},
 			)
-			Expect(err).To(BeNil())
+			Expect(err).ToNot(HaveOccurred())
 		})
 	})
