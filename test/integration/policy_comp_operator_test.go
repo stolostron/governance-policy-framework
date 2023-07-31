@@ -28,11 +28,11 @@ func complianceScanTest(scanPolicyName string, scanPolicyURL string, scanName st
 				userNamespace,
 				"--kubeconfig="+kubeconfigHub,
 			)
-			Expect(err).To(BeNil())
+			Expect(err).ToNot(HaveOccurred())
 
 			By("Patching placement rule")
 			err = common.PatchPlacementRule(userNamespace, "placement-"+scanPolicyName)
-			Expect(err).To(BeNil())
+			Expect(err).ToNot(HaveOccurred())
 
 			By("Checking policy on hub cluster in ns " + userNamespace)
 			rootPlc := utils.GetWithTimeout(
@@ -117,7 +117,7 @@ func complianceScanTest(scanPolicyName string, scanPolicyURL string, scanName st
 					rootPlc,
 					metav1.UpdateOptions{},
 				)
-				Expect(err).To(BeNil())
+				Expect(err).ToNot(HaveOccurred())
 
 				By("Checking if remediationAction is inform for root policy")
 				rootPlc = utils.GetWithTimeout(
@@ -156,7 +156,7 @@ func complianceScanTest(scanPolicyName string, scanPolicyURL string, scanName st
 					context.TODO(),
 					metav1.ListOptions{},
 				)
-				g.Expect(err).To(BeNil())
+				g.Expect(err).ToNot(HaveOccurred())
 
 				return len(list.Items)
 			}, common.MaxTravisTimeoutSeconds, 1).ShouldNot(Equal(0))
@@ -203,7 +203,7 @@ func complianceScanTest(scanPolicyName string, scanPolicyURL string, scanName st
 			"--kubeconfig="+kubeconfigHub,
 			"--ignore-not-found",
 		)
-		Expect(err).To(BeNil())
+		Expect(err).ToNot(HaveOccurred())
 
 		utils.GetWithTimeout(
 			clientManagedDynamic,
@@ -234,7 +234,7 @@ func complianceScanTest(scanPolicyName string, scanPolicyURL string, scanName st
 			"--kubeconfig="+kubeconfigManaged,
 			"--ignore-not-found",
 		)
-		Expect(err).To(BeNil())
+		Expect(err).ToNot(HaveOccurred())
 
 		utils.ListWithTimeoutByNamespace(
 			clientManagedDynamic,
@@ -301,10 +301,10 @@ var _ = Describe("RHACM4K-2222 GRC: [P1][Sev1][policy-grc] "+
 				userNamespace,
 				"--kubeconfig="+kubeconfigHub,
 			)
-			Expect(err).To(BeNil())
+			Expect(err).ToNot(HaveOccurred())
 			By("Patching placement rule")
 			err = common.PatchPlacementRule(userNamespace, "placement-"+compPolicyName)
-			Expect(err).To(BeNil())
+			Expect(err).ToNot(HaveOccurred())
 			By("Checking " + compPolicyName + " on hub cluster in ns " + userNamespace)
 			rootPlc := utils.GetWithTimeout(
 				clientHubDynamic,
@@ -350,7 +350,7 @@ var _ = Describe("RHACM4K-2222 GRC: [P1][Sev1][policy-grc] "+
 						"-oyaml",
 						"--kubeconfig="+kubeconfigManaged,
 					)
-					g.Expect(err).To(BeNil())
+					g.Expect(err).ToNot(HaveOccurred())
 
 					_, err = utils.KubectlWithOutput(
 						"delete", "-n",
@@ -360,14 +360,14 @@ var _ = Describe("RHACM4K-2222 GRC: [P1][Sev1][policy-grc] "+
 						"--kubeconfig="+kubeconfigManaged,
 						"--ignore-not-found",
 					)
-					g.Expect(err).To(BeNil())
+					g.Expect(err).ToNot(HaveOccurred())
 				}
 				i++
 				podList, err := clientManaged.CoreV1().Pods("openshift-compliance").List(
 					context.TODO(),
 					metav1.ListOptions{LabelSelector: "name=compliance-operator"},
 				)
-				g.Expect(err).To(BeNil())
+				g.Expect(err).ToNot(HaveOccurred())
 
 				return len(podList.Items)
 			}, defaultTimeoutSeconds*12, 1).Should(Equal(1))
@@ -377,7 +377,7 @@ var _ = Describe("RHACM4K-2222 GRC: [P1][Sev1][policy-grc] "+
 					context.TODO(),
 					metav1.ListOptions{LabelSelector: "name=compliance-operator"},
 				)
-				g.Expect(err).To(BeNil())
+				g.Expect(err).ToNot(HaveOccurred())
 
 				return string(podList.Items[0].Status.Phase)
 			}, defaultTimeoutSeconds*6, 1).Should(Equal("Running"))
@@ -389,7 +389,7 @@ var _ = Describe("RHACM4K-2222 GRC: [P1][Sev1][policy-grc] "+
 					context.TODO(),
 					metav1.ListOptions{LabelSelector: "profile-bundle=ocp4"},
 				)
-				g.Expect(err).To(BeNil())
+				g.Expect(err).ToNot(HaveOccurred())
 
 				return len(podList.Items)
 			}, defaultTimeoutSeconds*6, 1).Should(Equal(1))
@@ -399,7 +399,7 @@ var _ = Describe("RHACM4K-2222 GRC: [P1][Sev1][policy-grc] "+
 					context.TODO(),
 					metav1.ListOptions{LabelSelector: "profile-bundle=ocp4"},
 				)
-				g.Expect(err).To(BeNil())
+				g.Expect(err).ToNot(HaveOccurred())
 
 				return string(podList.Items[0].Status.Phase)
 			}, defaultTimeoutSeconds*8, 1).Should(Equal("Running"))
@@ -409,7 +409,7 @@ var _ = Describe("RHACM4K-2222 GRC: [P1][Sev1][policy-grc] "+
 					context.TODO(),
 					metav1.ListOptions{LabelSelector: "profile-bundle=rhcos4"},
 				)
-				g.Expect(err).To(BeNil())
+				g.Expect(err).ToNot(HaveOccurred())
 
 				return len(podList.Items)
 			}, defaultTimeoutSeconds*6, 1).Should(Equal(1))
@@ -421,7 +421,7 @@ var _ = Describe("RHACM4K-2222 GRC: [P1][Sev1][policy-grc] "+
 						LabelSelector: "profile-bundle=rhcos4",
 					},
 				)
-				g.Expect(err).To(BeNil())
+				g.Expect(err).ToNot(HaveOccurred())
 
 				return string(podList.Items[0].Status.Phase)
 			}, defaultTimeoutSeconds*8, 1).Should(Equal("Running"))
@@ -447,7 +447,7 @@ var _ = Describe("RHACM4K-2222 GRC: [P1][Sev1][policy-grc] "+
 					rootPlc,
 					metav1.UpdateOptions{},
 				)
-				Expect(err).To(BeNil())
+				Expect(err).ToNot(HaveOccurred())
 				By("Checking if remediationAction is inform for root policy")
 				rootPlc = utils.GetWithTimeout(
 					clientHubDynamic,
@@ -491,7 +491,7 @@ var _ = Describe("RHACM4K-2222 GRC: [P1][Sev1][policy-grc] "+
 			"--kubeconfig="+kubeconfigHub,
 			"--ignore-not-found",
 		)
-		Expect(err).To(BeNil())
+		Expect(err).ToNot(HaveOccurred())
 
 		utils.GetWithTimeout(
 			clientManagedDynamic,
@@ -508,7 +508,7 @@ var _ = Describe("RHACM4K-2222 GRC: [P1][Sev1][policy-grc] "+
 			"--kubeconfig="+kubeconfigManaged,
 			"--ignore-not-found",
 		)
-		Expect(err).To(BeNil())
+		Expect(err).ToNot(HaveOccurred())
 
 		_, err = utils.KubectlWithOutput(
 			"delete", "-n",
@@ -518,7 +518,7 @@ var _ = Describe("RHACM4K-2222 GRC: [P1][Sev1][policy-grc] "+
 			"--kubeconfig="+kubeconfigManaged,
 			"--ignore-not-found",
 		)
-		Expect(err).To(BeNil())
+		Expect(err).ToNot(HaveOccurred())
 
 		_, err = utils.KubectlWithOutput(
 			"delete", "-n",
@@ -528,7 +528,7 @@ var _ = Describe("RHACM4K-2222 GRC: [P1][Sev1][policy-grc] "+
 			"--kubeconfig="+kubeconfigManaged,
 			"--ignore-not-found",
 		)
-		Expect(err).To(BeNil())
+		Expect(err).ToNot(HaveOccurred())
 
 		out, _ := utils.KubectlWithOutput(
 			"delete", "ns",
@@ -544,7 +544,7 @@ var _ = Describe("RHACM4K-2222 GRC: [P1][Sev1][policy-grc] "+
 			"--kubeconfig="+kubeconfigManaged,
 			"--ignore-not-found",
 		)
-		Expect(err).To(BeNil())
+		Expect(err).ToNot(HaveOccurred())
 
 		_, err = utils.KubectlWithOutput(
 			"delete", "events", "-n",
@@ -553,7 +553,7 @@ var _ = Describe("RHACM4K-2222 GRC: [P1][Sev1][policy-grc] "+
 			"--kubeconfig="+kubeconfigManaged,
 			"--ignore-not-found",
 		)
-		Expect(err).To(BeNil())
+		Expect(err).ToNot(HaveOccurred())
 
 		_, err = utils.KubectlWithOutput(
 			"delete", "events", "-n",
@@ -562,6 +562,6 @@ var _ = Describe("RHACM4K-2222 GRC: [P1][Sev1][policy-grc] "+
 			"--kubeconfig="+kubeconfigManaged,
 			"--ignore-not-found",
 		)
-		Expect(err).To(BeNil())
+		Expect(err).ToNot(HaveOccurred())
 	})
 })

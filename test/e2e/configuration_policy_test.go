@@ -33,7 +33,7 @@ var _ = Describe("Test configuration policy", Ordered, func() {
 				"../resources/configuration_policy/role-policy-e2e.yaml",
 				"-n", "default",
 			)
-			Expect(err).To(BeNil())
+			Expect(err).ToNot(HaveOccurred())
 			common.DoRootComplianceTest(rolePolicyName, policiesv1.Compliant)
 		})
 		It("the policy should be noncompliant after removing the role", func() {
@@ -43,7 +43,7 @@ var _ = Describe("Test configuration policy", Ordered, func() {
 				"../resources/configuration_policy/role-policy-e2e.yaml",
 				"-n", "default", "--ignore-not-found",
 			)
-			Expect(err).To(BeNil())
+			Expect(err).ToNot(HaveOccurred())
 			common.DoRootComplianceTest(rolePolicyName, policiesv1.NonCompliant)
 		})
 		It("the policy should be compliant after manually creating a role that more", func() {
@@ -53,7 +53,7 @@ var _ = Describe("Test configuration policy", Ordered, func() {
 				"../resources/configuration_policy/role-policy-e2e-more.yaml",
 				"-n", "default",
 			)
-			Expect(err).To(BeNil())
+			Expect(err).ToNot(HaveOccurred())
 			common.DoRootComplianceTest(rolePolicyName, policiesv1.Compliant)
 		})
 		It("the policy should be noncompliant after manually creating a role that has less rule", func() {
@@ -63,7 +63,7 @@ var _ = Describe("Test configuration policy", Ordered, func() {
 				"../resources/configuration_policy/role-policy-e2e-less.yaml",
 				"-n", "default",
 			)
-			Expect(err).To(BeNil())
+			Expect(err).ToNot(HaveOccurred())
 			common.DoRootComplianceTest(rolePolicyName, policiesv1.NonCompliant)
 		})
 		It("the policy should be compliant after manually creating the role that matches", func() {
@@ -73,7 +73,7 @@ var _ = Describe("Test configuration policy", Ordered, func() {
 				"../resources/configuration_policy/role-policy-e2e.yaml",
 				"-n", "default",
 			)
-			Expect(err).To(BeNil())
+			Expect(err).ToNot(HaveOccurred())
 			common.DoRootComplianceTest(rolePolicyName, policiesv1.Compliant)
 		})
 		It("the policy should be noncompliant after removing the role", func() {
@@ -83,7 +83,7 @@ var _ = Describe("Test configuration policy", Ordered, func() {
 				"../resources/configuration_policy/role-policy-e2e.yaml",
 				"-n", "default", "--ignore-not-found",
 			)
-			Expect(err).To(BeNil())
+			Expect(err).ToNot(HaveOccurred())
 
 			common.DoRootComplianceTest(rolePolicyName, policiesv1.NonCompliant)
 		})
@@ -93,9 +93,14 @@ var _ = Describe("Test configuration policy", Ordered, func() {
 				"delete", "role", "-n", "default", roleName,
 				"--ignore-not-found",
 			)
-			Expect(err).To(BeNil())
+			Expect(err).ToNot(HaveOccurred())
 		})
 	})
+})
+
+var _ = Describe("Test configuration policy enforce", Ordered, func() {
+	const roleName string = "role-policy-e2e"
+
 	Describe("Test object musthave enforce", Ordered, func() {
 		const rolePolicyName string = "role-policy-musthave"
 		const rolePolicyYaml string = "../resources/configuration_policy/role-policy-musthave.yaml"
@@ -115,7 +120,7 @@ var _ = Describe("Test configuration policy", Ordered, func() {
 				"delete", "role", "-n", "default", roleName,
 				"--ignore-not-found",
 			)
-			Expect(err).To(BeNil())
+			Expect(err).ToNot(HaveOccurred())
 
 			By("Checking if the role has been recreated")
 			Eventually(func() interface{} {
@@ -137,7 +142,7 @@ var _ = Describe("Test configuration policy", Ordered, func() {
 				"../resources/configuration_policy/role-policy-e2e-more.yaml",
 				"-n", "default",
 			)
-			Expect(err).To(BeNil())
+			Expect(err).ToNot(HaveOccurred())
 			By("Checking if the role is not patched to match in 30s")
 			yamlRole := utils.ParseYaml("../resources/configuration_policy/role-policy-e2e-more.yaml")
 			Consistently(func() interface{} {
@@ -162,7 +167,7 @@ var _ = Describe("Test configuration policy", Ordered, func() {
 				"../resources/configuration_policy/role-policy-e2e-less.yaml",
 				"-n", "default",
 			)
-			Expect(err).To(BeNil())
+			Expect(err).ToNot(HaveOccurred())
 			By("Checking if the role has been patched to match")
 			yamlRole := utils.ParseYaml("../resources/configuration_policy/role-policy-e2e.yaml")
 			Eventually(func() interface{} {
@@ -187,7 +192,7 @@ var _ = Describe("Test configuration policy", Ordered, func() {
 				"delete", "role", "-n", "default", roleName,
 				"--ignore-not-found",
 			)
-			Expect(err).To(BeNil())
+			Expect(err).ToNot(HaveOccurred())
 		})
 	})
 	Describe("Test object mustnothave inform", func() {
@@ -206,7 +211,7 @@ var _ = Describe("Test configuration policy", Ordered, func() {
 				"../resources/configuration_policy/role-policy-e2e.yaml",
 				"-n", "default",
 			)
-			Expect(err).To(BeNil())
+			Expect(err).ToNot(HaveOccurred())
 			common.DoRootComplianceTest(rolePolicyName, policiesv1.NonCompliant)
 		})
 		It("the policy should be compliant after removing the role", func() {
@@ -215,7 +220,7 @@ var _ = Describe("Test configuration policy", Ordered, func() {
 				"delete", "role", "-n", "default", roleName,
 				"--ignore-not-found",
 			)
-			Expect(err).To(BeNil())
+			Expect(err).ToNot(HaveOccurred())
 			common.DoRootComplianceTest(rolePolicyName, policiesv1.Compliant)
 		})
 		AfterAll(func() {
@@ -224,7 +229,7 @@ var _ = Describe("Test configuration policy", Ordered, func() {
 				"delete", "role", "-n", "default", roleName,
 				"--ignore-not-found",
 			)
-			Expect(err).To(BeNil())
+			Expect(err).ToNot(HaveOccurred())
 		})
 	})
 	Describe("Test object mustnothave enforce", func() {
@@ -243,7 +248,7 @@ var _ = Describe("Test configuration policy", Ordered, func() {
 				"../resources/configuration_policy/role-policy-e2e.yaml",
 				"-n", "default",
 			)
-			Expect(err).To(BeNil())
+			Expect(err).ToNot(HaveOccurred())
 			common.DoRootComplianceTest(rolePolicyName, policiesv1.NonCompliant)
 		})
 		It("the policy should be compliant after enforcing it", func() {
@@ -257,7 +262,7 @@ var _ = Describe("Test configuration policy", Ordered, func() {
 				"../resources/configuration_policy/role-policy-e2e.yaml",
 				"-n", "default",
 			)
-			Expect(err).To(BeNil())
+			Expect(err).ToNot(HaveOccurred())
 			By("Checking if the role has been deleted")
 			Eventually(func() interface{} {
 				role, _ := clientManagedDynamic.Resource(common.GvrRole).Namespace("default").Get(
@@ -277,7 +282,7 @@ var _ = Describe("Test configuration policy", Ordered, func() {
 				"delete", "role", "-n", "default", roleName,
 				"--ignore-not-found",
 			)
-			Expect(err).To(BeNil())
+			Expect(err).ToNot(HaveOccurred())
 		})
 	})
 	Describe("Test object mustonlyhave inform", func() {
@@ -298,7 +303,7 @@ var _ = Describe("Test configuration policy", Ordered, func() {
 				"-n",
 				"default",
 			)
-			Expect(err).To(BeNil())
+			Expect(err).ToNot(HaveOccurred())
 			common.DoRootComplianceTest(rolePolicyName, policiesv1.Compliant)
 		})
 		It("the role should be noncompliant if mismatch", func() {
@@ -310,7 +315,7 @@ var _ = Describe("Test configuration policy", Ordered, func() {
 				"-n",
 				"default",
 			)
-			Expect(err).To(BeNil())
+			Expect(err).ToNot(HaveOccurred())
 			common.DoRootComplianceTest(rolePolicyName, policiesv1.NonCompliant)
 		})
 		It("the policy should be compliant if matches", func() {
@@ -322,7 +327,7 @@ var _ = Describe("Test configuration policy", Ordered, func() {
 				"-n",
 				"default",
 			)
-			Expect(err).To(BeNil())
+			Expect(err).ToNot(HaveOccurred())
 			common.DoRootComplianceTest(rolePolicyName, policiesv1.Compliant)
 		})
 		It("the policy should be noncompliant if has less rules", func() {
@@ -334,7 +339,7 @@ var _ = Describe("Test configuration policy", Ordered, func() {
 				"-n",
 				"default",
 			)
-			Expect(err).To(BeNil())
+			Expect(err).ToNot(HaveOccurred())
 			common.DoRootComplianceTest(rolePolicyName, policiesv1.NonCompliant)
 		})
 		It("the policy should be compliant if matches", func() {
@@ -346,7 +351,7 @@ var _ = Describe("Test configuration policy", Ordered, func() {
 				"-n",
 				"default",
 			)
-			Expect(err).To(BeNil())
+			Expect(err).ToNot(HaveOccurred())
 			common.DoRootComplianceTest(rolePolicyName, policiesv1.Compliant)
 		})
 		It("the policy should be noncompliant if has more rules", func() {
@@ -358,7 +363,7 @@ var _ = Describe("Test configuration policy", Ordered, func() {
 				"-n",
 				"default",
 			)
-			Expect(err).To(BeNil())
+			Expect(err).ToNot(HaveOccurred())
 			common.DoRootComplianceTest(rolePolicyName, policiesv1.NonCompliant)
 		})
 		AfterAll(func() {
@@ -367,7 +372,7 @@ var _ = Describe("Test configuration policy", Ordered, func() {
 				"delete", "role", "-n", "default", roleName,
 				"--ignore-not-found",
 			)
-			Expect(err).To(BeNil())
+			Expect(err).ToNot(HaveOccurred())
 		})
 	})
 	Describe("Test object mustonlyhave enforce", func() {
@@ -398,7 +403,7 @@ var _ = Describe("Test configuration policy", Ordered, func() {
 				"delete", "role", "-n", "default", roleName,
 				"--ignore-not-found",
 			)
-			Expect(err).To(BeNil())
+			Expect(err).ToNot(HaveOccurred())
 
 			By("Checking if the role has been recreated")
 			Eventually(func() interface{} {
@@ -420,7 +425,7 @@ var _ = Describe("Test configuration policy", Ordered, func() {
 				"../resources/configuration_policy/role-policy-e2e-less.yaml",
 				"-n", "default",
 			)
-			Expect(err).To(BeNil())
+			Expect(err).ToNot(HaveOccurred())
 			By("Checking if the role has been patched to match by config policy")
 			yamlRole := utils.ParseYaml("../resources/configuration_policy/role-policy-e2e.yaml")
 			Eventually(func() interface{} {
@@ -446,7 +451,7 @@ var _ = Describe("Test configuration policy", Ordered, func() {
 				"-n",
 				"default",
 			)
-			Expect(err).To(BeNil())
+			Expect(err).ToNot(HaveOccurred())
 			By("Checking if the role has been patched to match by config policy")
 			yamlRole := utils.ParseYaml("../resources/configuration_policy/role-policy-e2e.yaml")
 			Eventually(func() interface{} {
@@ -471,7 +476,7 @@ var _ = Describe("Test configuration policy", Ordered, func() {
 				"-f",
 				"../resources/configuration_policy/role-policy-e2e-mismatch.yaml", "-n", "default",
 			)
-			Expect(err).To(BeNil())
+			Expect(err).ToNot(HaveOccurred())
 			By("Checking if the role has been patched to match by config policy")
 			yamlRole := utils.ParseYaml("../resources/configuration_policy/role-policy-e2e.yaml")
 			Eventually(func() interface{} {
@@ -495,7 +500,7 @@ var _ = Describe("Test configuration policy", Ordered, func() {
 				"delete", "role", "-n", "default", roleName,
 				"--ignore-not-found",
 			)
-			Expect(err).To(BeNil())
+			Expect(err).ToNot(HaveOccurred())
 		})
 	})
 })

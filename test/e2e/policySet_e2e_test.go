@@ -28,7 +28,7 @@ var _ = Describe("Test policy set", func() {
 		It("Should create and process policy and policyset", func() {
 			By("Creating " + testPolicySetYaml)
 			_, err := common.OcHub("apply", "-f", testPolicySetYaml, "-n", userNamespace)
-			Expect(err).To(BeNil())
+			Expect(err).ToNot(HaveOccurred())
 
 			rootPolicy := utils.GetWithTimeout(
 				clientHubDynamic, common.GvrPolicy, testPolicyName, userNamespace, true, defaultTimeoutSeconds,
@@ -44,7 +44,7 @@ var _ = Describe("Test policy set", func() {
 			_, err = clientHubDynamic.Resource(common.GvrPlacementRule).Namespace(userNamespace).UpdateStatus(
 				context.TODO(), plr, metav1.UpdateOptions{},
 			)
-			Expect(err).To(BeNil())
+			Expect(err).ToNot(HaveOccurred())
 
 			By("Checking " + testPolicyName + " on managed cluster in ns " + clusterNamespace)
 			managedplc := utils.GetWithTimeout(
@@ -78,7 +78,7 @@ var _ = Describe("Test policy set", func() {
 		It("Should add a status entry in policyset for a policy that does not exist", func() {
 			By("Creating " + testPolicySetPatchYaml)
 			_, err := common.OcHub("apply", "-f", testPolicySetPatchYaml, "-n", userNamespace)
-			Expect(err).To(BeNil())
+			Expect(err).ToNot(HaveOccurred())
 
 			plcSet := utils.GetWithTimeout(
 				clientHubDynamic, common.GvrPolicySet, testPolicySetName, userNamespace, true, defaultTimeoutSeconds,
@@ -103,7 +103,7 @@ var _ = Describe("Test policy set", func() {
 
 			By("Undoing patch with " + testPolicySetPatchYaml)
 			_, err = common.OcHub("apply", "-f", testUndoPolicySetPatchYaml, "-n", userNamespace)
-			Expect(err).To(BeNil())
+			Expect(err).ToNot(HaveOccurred())
 		})
 
 		It("Should update to compliant if all its child policy violations have been remediated", func() {
@@ -129,7 +129,7 @@ var _ = Describe("Test policy set", func() {
 		It("Should update status properly if a policy is disabled", func() {
 			By("Creating " + testedDisablePolicyYaml)
 			_, err := common.OcHub("apply", "-f", testedDisablePolicyYaml, "-n", userNamespace)
-			Expect(err).To(BeNil())
+			Expect(err).ToNot(HaveOccurred())
 
 			plc := utils.GetWithTimeout(
 				clientHubDynamic, common.GvrPolicy, testPolicyName, userNamespace, true, defaultTimeoutSeconds,
@@ -158,14 +158,14 @@ var _ = Describe("Test policy set", func() {
 				"delete", "-f", testPolicySetYaml,
 				"-n", userNamespace, "--ignore-not-found",
 			)
-			Expect(err).To(BeNil())
+			Expect(err).ToNot(HaveOccurred())
 
 			_, err = common.OcManaged(
 				"delete", "pod",
 				"-n", "default",
 				"pod-that-does-not-exist", "--ignore-not-found",
 			)
-			Expect(err).To(BeNil())
+			Expect(err).ToNot(HaveOccurred())
 		})
 	})
 })

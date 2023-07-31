@@ -78,7 +78,7 @@ var _ = Describe("GRC: [P1][Sev1][policy-grc] Test the ACM Hardening "+
 			context.TODO(), &mcs, metav1.CreateOptions{},
 		)
 		if !k8serrors.IsAlreadyExists(err) {
-			Expect(err).To(BeNil())
+			Expect(err).ToNot(HaveOccurred())
 		}
 
 		By("Creating the application subscription")
@@ -90,7 +90,7 @@ var _ = Describe("GRC: [P1][Sev1][policy-grc] Test the ACM Hardening "+
 			"-n",
 			namespace,
 		)
-		Expect(err).Should(BeNil())
+		Expect(err).ShouldNot(HaveOccurred())
 	})
 
 	It("Validates the propagated policies", func() {
@@ -112,9 +112,9 @@ var _ = Describe("GRC: [P1][Sev1][policy-grc] Test the ACM Hardening "+
 
 		// Perform some basic validation on the generated policySet.
 		policies, found, err := unstructured.NestedSlice(policyset.Object, "spec", "policies")
-		Expect(err).Should(BeNil())
+		Expect(err).ShouldNot(HaveOccurred())
 		Expect(found).Should(BeTrue())
-		Expect(len(policies)).Should(Equal(len(policyNames)))
+		Expect(policies).Should(HaveLen(len(policyNames)))
 		for idx, policyName := range policyNames {
 			Expect(policies[idx]).Should(Equal(policyName))
 		}

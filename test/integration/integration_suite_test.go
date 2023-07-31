@@ -94,13 +94,13 @@ var _ = AfterSuite(func() {
 		"delete", "namespace", userNamespace,
 		"--ignore-not-found",
 	)
-	Expect(err).To(BeNil())
+	Expect(err).ToNot(HaveOccurred())
 
 	_, err = common.OcHub(
 		"delete", "pod", "default",
 		"pod-that-does-not-exist", "--ignore-not-found",
 	)
-	Expect(err).To(BeNil())
+	Expect(err).ToNot(HaveOccurred())
 })
 
 func canCreateOpenshiftNamespaces() bool {

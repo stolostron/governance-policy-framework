@@ -6,8 +6,9 @@ package test
 import (
 	. "github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
-	. "github.com/stolostron/governance-policy-framework/test/common"
 	policiesv1 "open-cluster-management.io/governance-policy-propagator/api/v1"
+
+	. "github.com/stolostron/governance-policy-framework/test/common"
 )
 
 func TemplateSyncErrors(labels ...string) bool {
@@ -26,7 +27,7 @@ func TemplateSyncErrors(labels ...string) bool {
 					nonexistentPolicyKindYaml, "-n", UserNamespace,
 					"--ignore-not-found",
 				)
-				Expect(err).To(BeNil())
+				Expect(err).ToNot(HaveOccurred())
 			})
 			It("Should be noncompliant with a mapping not found status", func() {
 				DoCreatePolicyTest(nonexistentPolicyKindYaml)
@@ -44,7 +45,7 @@ func TemplateSyncErrors(labels ...string) bool {
 						"path":"/spec/policy-templates/0/objectDefinition/kind",
 						"value":"ConfigurationPolicy"
 					}]`)
-				Expect(err).To(BeNil())
+				Expect(err).ToNot(HaveOccurred())
 				DoRootComplianceTest(nonexistentPolicyKindName, policiesv1.Compliant)
 
 				Eventually(
@@ -54,7 +55,7 @@ func TemplateSyncErrors(labels ...string) bool {
 			})
 			It("Should become noncompliant when the original policy is restored", func() {
 				_, err := OcHub("apply", "-f", nonexistentPolicyKindYaml, "-n", UserNamespace)
-				Expect(err).To(BeNil())
+				Expect(err).ToNot(HaveOccurred())
 				DoRootComplianceTest(nonexistentPolicyKindName, policiesv1.NonCompliant)
 
 				Eventually(
@@ -69,7 +70,7 @@ func TemplateSyncErrors(labels ...string) bool {
 					"delete", "-f", invalidCRPolicyYaml,
 					"-n", UserNamespace, "--ignore-not-found",
 				)
-				Expect(err).To(BeNil())
+				Expect(err).ToNot(HaveOccurred())
 			})
 			It("Should be noncompliant and report the reason the CR is invalid", func() {
 				DoCreatePolicyTest(invalidCRPolicyYaml)
@@ -87,7 +88,7 @@ func TemplateSyncErrors(labels ...string) bool {
 						"path":"/spec/policy-templates/0/objectDefinition/spec/pruneObjectBehavior",
 						"value":"None"
 					}]`)
-				Expect(err).To(BeNil())
+				Expect(err).ToNot(HaveOccurred())
 				DoRootComplianceTest(invalidCRPolicyName, policiesv1.Compliant)
 
 				Eventually(
@@ -97,7 +98,7 @@ func TemplateSyncErrors(labels ...string) bool {
 			})
 			It("Should become noncompliant when the original policy is restored", func() {
 				_, err := OcHub("apply", "-f", invalidCRPolicyYaml, "-n", UserNamespace)
-				Expect(err).To(BeNil())
+				Expect(err).ToNot(HaveOccurred())
 				DoRootComplianceTest(invalidCRPolicyName, policiesv1.NonCompliant)
 
 				Eventually(
