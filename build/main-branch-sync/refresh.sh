@@ -42,9 +42,11 @@ do
   ${GIT} commit -s -m "${commit_msg}" -m "Update date in README.md"  &&
     OUTPUT=`${GIT} push origin ${refresh_branch} 2>&1` || { echo "${OUTPUT}"; exit 1; }
   [[ -n "${OUTPUT}" ]] && echo "${OUTPUT}"
-  PR_URL="$(echo "${OUTPUT}" | grep "remote:.*https" | sed 's/^remote: *//')"
+  PR_URL="$(echo "${OUTPUT}" | grep "remote:.*https.*${refresh_branch}" | sed 's/^remote: *//')"
   if [[ -z "${PR_URL}" ]]; then
     PR_URL="${repo} : Failed to update README.md"
+  else
+    PR_URL="https://github.com/${repo}/compare/${branch}...${refresh_branch}"
   fi
   URLS="${URLS}
   ${PR_URL}"
