@@ -104,6 +104,9 @@ deploy-policy-framework-hub-crd-operator:
 	kubectl apply -f https://raw.githubusercontent.com/stolostron/governance-policy-propagator/$(RELEASE_BRANCH)/deploy/crds/policy.open-cluster-management.io_policyautomations.yaml
 	@echo installing policy-propagator on hub
 	kubectl apply -f https://raw.githubusercontent.com/stolostron/governance-policy-propagator/$(RELEASE_BRANCH)/deploy/operator.yaml -n $(KIND_HUB_NAMESPACE)
+	kubectl patch deployment governance-policy-propagator -n $(KIND_HUB_NAMESPACE) \
+	  -p "{\"spec\":{\"template\":{\"spec\":{\"containers\":[{\"name\":\"governance-policy-propagator\",\"image\":\"${DOCKER_URI}/governance-policy-propagator:${VERSION_TAG}\"}]}}}}"
+	kubectl rollout status deployment/governance-policy-propagator -n $(KIND_HUB_NAMESPACE) --timeout=180s
 
 .PHONY: deploy-policy-framework-hub
 deploy-policy-framework-hub: kind-policy-framework-hub-setup deploy-policy-framework-hub-crd-operator
@@ -123,7 +126,8 @@ deploy-policy-framework-managed-crd-operator:
 	kubectl apply -f https://raw.githubusercontent.com/stolostron/governance-policy-propagator/$(RELEASE_BRANCH)/deploy/crds/policy.open-cluster-management.io_policies.yaml
 	@echo installing governance-policy-framework-addon on managed
 	kubectl apply -f https://raw.githubusercontent.com/stolostron/governance-policy-framework-addon/$(RELEASE_BRANCH)/deploy/operator.yaml -n $(KIND_MANAGED_NAMESPACE)
-		kubectl patch deployment governance-policy-framework-addon -n $(KIND_MANAGED_NAMESPACE) -p "{\"spec\":{\"template\":{\"spec\":{\"containers\":[{\"name\":\"governance-policy-framework-addon\",\"args\":[\"--hub-cluster-configfile=/var/run/klusterlet/kubeconfig\", \"--cluster-namespace=$(MANAGED_CLUSTER_NAME)\", \"--enable-lease=true\", \"--log-level=2\", \"--disable-spec-sync=$(deployOnHub)\"]}]}}}}";\
+	kubectl patch deployment governance-policy-framework-addon -n $(KIND_MANAGED_NAMESPACE) -p "{\"spec\":{\"template\":{\"spec\":{\"containers\":[{\"name\":\"governance-policy-framework-addon\",\"args\":[\"--hub-cluster-configfile=/var/run/klusterlet/kubeconfig\", \"--cluster-namespace=$(MANAGED_CLUSTER_NAME)\", \"--enable-lease=true\", \"--log-level=2\", \"--disable-spec-sync=$(deployOnHub)\"]}]}}}}"
+	kubectl rollout status deployment/governance-policy-framework-addon -n $(KIND_MANAGED_NAMESPACE) --timeout=180s
 
 .PHONY: deploy-policy-framework-managed
 deploy-policy-framework-managed: kind-policy-framework-managed-setup deploy-policy-framework-managed-crd-operator
@@ -143,6 +147,9 @@ kind-deploy-policy-propagator:
 		sed 's/namespace: open-cluster-management/namespace: $(KIND_HUB_NAMESPACE)/g' | \
 	 	kubectl apply -f - --kubeconfig=$(PWD)/kubeconfig_$(HUB_CLUSTER_NAME)
 	kubectl apply -f https://raw.githubusercontent.com/stolostron/governance-policy-propagator/$(RELEASE_BRANCH)/deploy/operator.yaml -n $(KIND_HUB_NAMESPACE) --kubeconfig=$(PWD)/kubeconfig_$(HUB_CLUSTER_NAME)
+	kubectl patch deployment governance-policy-propagator -n $(KIND_HUB_NAMESPACE) --kubeconfig=$(PWD)/kubeconfig_$(HUB_CLUSTER_NAME) \
+	  -p "{\"spec\":{\"template\":{\"spec\":{\"containers\":[{\"name\":\"governance-policy-propagator\",\"image\":\"${DOCKER_URI}/governance-policy-propagator:${VERSION_TAG}\"}]}}}}"
+	kubectl rollout status deployment/governance-policy-propagator -n $(KIND_HUB_NAMESPACE) --timeout=180s --kubeconfig=$(PWD)/kubeconfig_$(HUB_CLUSTER_NAME)
 
 .PHONY: kind-deploy-policy-framework
 kind-deploy-policy-framework: kind-deploy-policy-propagator
@@ -154,6 +161,7 @@ kind-deploy-policy-framework: kind-deploy-policy-propagator
 	echo patching governance-policy-framework-addon to set the managed cluster
 	kubectl patch deployment governance-policy-framework-addon -n $(KIND_MANAGED_NAMESPACE) --kubeconfig=$(PWD)/kubeconfig_$(MANAGED_CLUSTER_NAME) \
 		-p "{\"spec\":{\"template\":{\"spec\":{\"containers\":[{\"name\":\"governance-policy-framework-addon\",\"image\":\"${DOCKER_URI}/governance-policy-framework-addon:${VERSION_TAG}\",\"args\":[\"--hub-cluster-configfile=/var/run/klusterlet/kubeconfig\", \"--cluster-namespace=$(MANAGED_CLUSTER_NAME)\", \"--enable-lease=true\", \"--log-level=2\", \"--disable-spec-sync=$(deployOnHub)\"]}]}}}}"
+	kubectl rollout status deployment/governance-policy-framework-addon -n $(KIND_MANAGED_NAMESPACE) --timeout=180s --kubeconfig=$(PWD)/kubeconfig_$(MANAGED_CLUSTER_NAME)
 
 .PHONY: kind-deploy-config-policy-controller
 kind-deploy-config-policy-controller:
@@ -162,6 +170,7 @@ kind-deploy-config-policy-controller:
 	kubectl apply -f https://raw.githubusercontent.com/stolostron/config-policy-controller/$(RELEASE_BRANCH)/deploy/crds/policy.open-cluster-management.io_configurationpolicies.yaml -n $(KIND_MANAGED_NAMESPACE) --kubeconfig=$(PWD)/kubeconfig_$(MANAGED_CLUSTER_NAME)
 	kubectl patch deployment config-policy-controller -n $(KIND_MANAGED_NAMESPACE) --kubeconfig=$(PWD)/kubeconfig_$(MANAGED_CLUSTER_NAME) \
 		-p "{\"spec\":{\"template\":{\"spec\":{\"containers\":[{\"name\":\"config-policy-controller\",\"image\":\"${DOCKER_URI}/config-policy-controller:${VERSION_TAG}\"}]}}}}"
+	kubectl rollout status deployment/config-policy-controller -n $(KIND_MANAGED_NAMESPACE) --timeout=180s --kubeconfig=$(PWD)/kubeconfig_$(MANAGED_CLUSTER_NAME)
 
 .PHONY: kind-deploy-cert-policy-controller
 kind-deploy-cert-policy-controller:
@@ -175,6 +184,7 @@ kind-deploy-cert-policy-controller:
 	kubectl patch deployment cert-policy-controller \
 		-n $(KIND_MANAGED_NAMESPACE) -p '{"spec": {"template": {"spec": {"containers": [{"name":"cert-policy-controller", "args": ["--enable-lease=true"]}]}}}}' \
 		--kubeconfig=$(PWD)/kubeconfig_$(MANAGED_CLUSTER_NAME)
+	kubectl rollout status deployment/cert-policy-controller -n $(KIND_MANAGED_NAMESPACE) --timeout=180s --kubeconfig=$(PWD)/kubeconfig_$(MANAGED_CLUSTER_NAME)
 
 .PHONY: kind-deploy-iam-policy-controller
 kind-deploy-iam-policy-controller:
@@ -186,6 +196,7 @@ kind-deploy-iam-policy-controller:
 	kubectl patch deployment iam-policy-controller \
 		-n $(KIND_MANAGED_NAMESPACE) -p '{"spec": {"template": {"spec": {"containers": [{"name":"iam-policy-controller", "args": ["--enable-lease=true"]}]}}}}' \
 		--kubeconfig=$(PWD)/kubeconfig_$(MANAGED_CLUSTER_NAME)
+	kubectl rollout status deployment/iam-policy-controller -n $(KIND_MANAGED_NAMESPACE) --timeout=180s --kubeconfig=$(PWD)/kubeconfig_$(MANAGED_CLUSTER_NAME)
 
 .PHONY: kind-deploy-olm
 kind-deploy-olm:
@@ -344,7 +355,7 @@ integration-test:
 ADDON_CONTROLLER = $(PWD)/.go/governance-policy-addon-controller
 
 .PHONY: kind-bootstrap-hosted
-kind-bootstrap-hosted: kind-install-hosted kind-deploy-policy-propagator install-crds install-resources kind-deploy-cert-manager setup-managedcluster
+kind-bootstrap-hosted: kind-install-hosted install-crds install-resources kind-deploy-policy-propagator kind-deploy-cert-manager setup-managedcluster
 	@echo "Restarting propagator and addon-controller"
 	kubectl delete pod -l name=governance-policy-propagator -A --kubeconfig=./kubeconfig_$(HUB_CLUSTER_NAME)
 	kubectl delete pod -l app=governance-policy-addon-controller -A --kubeconfig=./kubeconfig_$(HUB_CLUSTER_NAME)
