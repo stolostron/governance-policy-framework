@@ -4,7 +4,6 @@
 package e2e
 
 import (
-	"bytes"
 	"context"
 	"crypto/x509"
 	"encoding/pem"
@@ -157,23 +156,22 @@ var _ = Describe("Test Hub Template Encryption", Ordered, func() {
 				Update(ctx, encryptionSecret, metav1.UpdateOptions{})
 			Expect(err).ToNot(HaveOccurred())
 
-			// Wait until the "last-rotated" annotation is set to indicate the key has been rotated
 			Eventually(
-				func() interface{} {
+				func(g Gomega) {
 					encryptionSecret, err = clientHub.CoreV1().Secrets(clusterNamespaceOnHub).Get(
 						ctx, "policy-encryption-key", metav1.GetOptions{},
 					)
-					Expect(err).ToNot(HaveOccurred())
+					g.Expect(err).ToNot(HaveOccurred())
 
-					return encryptionSecret.Annotations[lastRotatedAnnotation]
+					// Wait until the "last-rotated" annotation is set to indicate the key has been rotated
+					g.Expect(encryptionSecret.Annotations[lastRotatedAnnotation]).ToNot(Equal(""))
+					// Verify the rotation
+					g.Expect(originalKey).ToNot(Equal(encryptionSecret.Data["key"]))
+					g.Expect(originalKey).To(Equal(encryptionSecret.Data["previousKey"]))
 				},
 				defaultTimeoutSeconds,
 				1,
-			).ShouldNot(Equal(""))
-
-			// Verify the rotation
-			Expect(bytes.Equal(originalKey, encryptionSecret.Data["key"])).To(BeFalse())
-			Expect(bytes.Equal(originalKey, encryptionSecret.Data["previousKey"])).To(BeTrue())
+			).Should(Succeed())
 
 			// Wait until the "trigger-update" annotation has been set on the policy
 			expectedTriggerUpdate := fmt.Sprintf(
