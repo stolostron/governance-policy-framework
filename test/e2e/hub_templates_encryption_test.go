@@ -14,6 +14,7 @@ import (
 
 	. "github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
+	v1 "k8s.io/api/core/v1"
 	k8serrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
@@ -144,30 +145,32 @@ var _ = Describe("Test Hub Template Encryption", Ordered, func() {
 		})
 
 		It("Verifies that the key can be rotated", func() {
+			By("Fetching current encryption key")
 			encryptionSecret, err := clientHub.CoreV1().Secrets(clusterNamespaceOnHub).Get(
 				ctx, "policy-encryption-key", metav1.GetOptions{},
 			)
 			Expect(err).ToNot(HaveOccurred())
 			originalKey := encryptionSecret.Data["key"]
 
-			// Trigger a key rotation
+			By("Clearing the last-rotated annotation to trigger a key rotation")
 			encryptionSecret.Annotations[lastRotatedAnnotation] = ""
 			_, err = clientHub.CoreV1().Secrets(clusterNamespaceOnHub).
 				Update(ctx, encryptionSecret, metav1.UpdateOptions{})
 			Expect(err).ToNot(HaveOccurred())
 
+			var newEncryptionSecret *v1.Secret
 			Eventually(
 				func(g Gomega) {
-					encryptionSecret, err = clientHub.CoreV1().Secrets(clusterNamespaceOnHub).Get(
+					newEncryptionSecret, err = clientHub.CoreV1().Secrets(clusterNamespaceOnHub).Get(
 						ctx, "policy-encryption-key", metav1.GetOptions{},
 					)
 					g.Expect(err).ToNot(HaveOccurred())
 
 					// Wait until the "last-rotated" annotation is set to indicate the key has been rotated
-					g.Expect(encryptionSecret.Annotations[lastRotatedAnnotation]).ToNot(Equal(""))
+					g.Expect(newEncryptionSecret.Annotations[lastRotatedAnnotation]).ToNot(Equal(""))
 					// Verify the rotation
-					g.Expect(originalKey).ToNot(Equal(encryptionSecret.Data["key"]))
-					g.Expect(originalKey).To(Equal(encryptionSecret.Data["previousKey"]))
+					g.Expect(originalKey).ToNot(Equal(newEncryptionSecret.Data["key"]))
+					g.Expect(originalKey).To(Equal(newEncryptionSecret.Data["previousKey"]))
 				},
 				defaultTimeoutSeconds,
 				1,
@@ -177,7 +180,7 @@ var _ = Describe("Test Hub Template Encryption", Ordered, func() {
 			expectedTriggerUpdate := fmt.Sprintf(
 				"rotate-key-%s-%s",
 				clusterNamespaceOnHub,
-				encryptionSecret.Annotations[lastRotatedAnnotation],
+				newEncryptionSecret.Annotations[lastRotatedAnnotation],
 			)
 
 			Eventually(
