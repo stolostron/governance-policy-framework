@@ -37,8 +37,8 @@ do
   ${GIT} checkout --quiet ${branch}
   ${GIT} checkout -b ${refresh_branch}
   newdate=`date +"%m/%d/%Y"`
-  ${SED} -i "s,^Date: .*,Date: $newdate," README.md
-  ${GIT} add README.md
+  ${SED} -i "s,^Date: .*,Date: $newdate," ${p}/README.md
+  ${GIT} add ${p}/README.md
   ${GIT} commit -s -m "${commit_msg}" -m "Update date in README.md"  &&
     OUTPUT=`${GIT} push origin ${refresh_branch} 2>&1` || { echo "${OUTPUT}"; exit 1; }
   [[ -n "${OUTPUT}" ]] && echo "${OUTPUT}"
