@@ -14,7 +14,6 @@ import (
 
 	. "github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
-	v1 "k8s.io/api/core/v1"
 	k8serrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
@@ -158,19 +157,19 @@ var _ = Describe("Test Hub Template Encryption", Ordered, func() {
 				Update(ctx, encryptionSecret, metav1.UpdateOptions{})
 			Expect(err).ToNot(HaveOccurred())
 
-			var newEncryptionSecret *v1.Secret
+			By("Verifying the key was rotated")
 			Eventually(
 				func(g Gomega) {
-					newEncryptionSecret, err = clientHub.CoreV1().Secrets(clusterNamespaceOnHub).Get(
+					encryptionSecret, err = clientHub.CoreV1().Secrets(clusterNamespaceOnHub).Get(
 						ctx, "policy-encryption-key", metav1.GetOptions{},
 					)
 					g.Expect(err).ToNot(HaveOccurred())
 
 					// Wait until the "last-rotated" annotation is set to indicate the key has been rotated
-					g.Expect(newEncryptionSecret.Annotations[lastRotatedAnnotation]).ToNot(Equal(""))
+					g.Expect(encryptionSecret.Annotations[lastRotatedAnnotation]).ToNot(Equal(""))
 					// Verify the rotation
-					g.Expect(originalKey).ToNot(Equal(newEncryptionSecret.Data["key"]))
-					g.Expect(originalKey).To(Equal(newEncryptionSecret.Data["previousKey"]))
+					g.Expect(originalKey).ToNot(Equal(encryptionSecret.Data["key"]))
+					g.Expect(originalKey).To(Equal(encryptionSecret.Data["previousKey"]))
 				},
 				defaultTimeoutSeconds,
 				1,
@@ -180,7 +179,7 @@ var _ = Describe("Test Hub Template Encryption", Ordered, func() {
 			expectedTriggerUpdate := fmt.Sprintf(
 				"rotate-key-%s-%s",
 				clusterNamespaceOnHub,
-				newEncryptionSecret.Annotations[lastRotatedAnnotation],
+				encryptionSecret.Annotations[lastRotatedAnnotation],
 			)
 
 			Eventually(
