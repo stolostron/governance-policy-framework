@@ -11,7 +11,7 @@
 ########################
 
 if [[ -z "${GITHUB_TOKEN}" ]]; then
-  echo "error: Exporting GITHUB_TOKEN is required to fetch repos."
+  echo "error: Exporting GITHUB_TOKEN is required to fetch repos." >&2
   exit 1
 fi
 
