@@ -2,9 +2,9 @@
 apiVersion: cluster.open-cluster-management.io/v1beta2
 kind: ManagedClusterSetBinding
 metadata:
-  name: default
+  name: global
 spec:
-  clusterSet: default
+  clusterSet: global
 ---
 apiVersion: app.k8s.io/v1beta1
 kind: Application
