@@ -5,7 +5,6 @@
 DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" >/dev/null 2>&1 && pwd )"
 source ${DIR}/common.sh
 
-CHECK_RELEASES="2.5 2.6 2.7 2.8"
 # This list can include all postsubmit jobs for all repos--if a job doesn't exist it's filtered to empty and skipped
 CHECK_JOBS=${CHECK_JOBS:-"publish publish-test images latest-image-mirror latest-test-image-mirror"}
 
@@ -183,7 +182,7 @@ cleanup
 SUMMARY_FILE="${ARTIFACT_DIR}/summary-${ERROR_FILE_NAME}"
 
 echo ""
-echo "****" | tee -a ${SUMMARY_FILE}
+echo "****" | tee ${SUMMARY_FILE}
 echo "CI STATUS REPORT" | tee -a ${SUMMARY_FILE}
 echo "***" | tee -a ${SUMMARY_FILE}
 if [ -f ${ERROR_FILE} ]; then
