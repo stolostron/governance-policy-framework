@@ -35,19 +35,40 @@ makefileDiff() {
 
 	REPO_MAKEFILE_PATH="${COMPONENT_ORG}/${repo}/build/common/${COMMON_MAKEFILE_NAME}"
 	if [[ ! -f ${REPO_MAKEFILE_PATH} ]]; then
-		echo "****"
-		echo "ERROR: Makefile not found: ${REPO_MAKEFILE_PATH}" | tee -a ${ERROR_FILE}
-		echo "***"
-		return 1
+		echo "WARN: Makefile not found: ${REPO_MAKEFILE_PATH}"
+		return 0
 	fi
 
 	MAKEFILE_DIFF=$(diff ${COMMON_MAKEFILE_PATH} ${REPO_MAKEFILE_PATH})
 	if [[ -n "${MAKEFILE_DIFF}" ]]; then
 		echo "****"
 		echo "ERROR: Common Makefile is not synced to $repo" | tee -a ${ERROR_FILE}
-		echo "${MAKEFILE_DIFF}" | sed 's/^/   /' | tee -a ${ERROR_FILE}
+		echo "${MAKEFILE_DIFF}" | sed 's/^/   /' #| tee -a ${ERROR_FILE} # Commenting out until the Makefiles are synced since it's too noisy
 		echo "***"
 		return 1
+	fi
+}
+
+# Compare the Dockerfile across the repos
+COMMON_DOCKERFILE_NAME=Dockerfile
+COMMON_DOCKERFILE_PATH=${DIR}/${COMMON_DOCKERFILE_NAME}.e2etest
+
+dockerfileDiff() {
+  repo="${1}"
+
+	REPO_DOCKER_PATH="${COMPONENT_ORG}/${repo}/build/${COMMON_DOCKERFILE_NAME}"
+	if [[ ! -f ${REPO_DOCKER_PATH} ]]; then
+		echo "WARN: Dockerfile not found: ${REPO_DOCKER_PATH}"
+		return 0
+	fi
+
+	DOCKERFILE_DIFF=$(diff <(grep "^FROM " ${COMMON_DOCKERFILE_PATH}) <(grep "^FROM " ${REPO_DOCKER_PATH}))
+	if [[ -n "${DOCKERFILE_DIFF}" ]]; then
+		echo "****"
+		echo "ERROR: Dockerfile images are not synced to $repo" | tee -a ${ERROR_FILE}
+		echo "${DOCKERFILE_DIFF}" | sed 's/^/   /' | tee -a ${ERROR_FILE}
+		echo "***"
+		rc=1
 	fi
 }
 
@@ -58,10 +79,17 @@ packageVersioning() {
 	PACKAGES="^go 
 		github.com/onsi/ginkgo"
 
+	GOMOD_NAME="go.mod"
+	REPO_GOMOD_PATH="${COMPONENT_ORG}/${repo}/${GOMOD_NAME}"
+	if [[ ! -f ${REPO_GOMOD_PATH} ]]; then
+		echo "WARN: ${GOMOD_NAME} not found: ${REPO_GOMOD_PATH}"
+		return 0
+	fi
+
 	rcode=0
 	for pkg in ${PACKAGES}; do
-		FRAMEWORK_VERSION="$(awk '/'${pkg//\//\\\/}'/ {print $2}' ${DIR}/../go.mod)"
-		REPO_VERSION="$(awk '/'${pkg//\//\\\/}'/ {print $2}' ${COMPONENT_ORG}/${repo}/go.mod)"
+		FRAMEWORK_VERSION="$(awk '/'${pkg//\//\\\/}'/ {print $2}' ${DIR}/../${GOMOD_NAME})"
+		REPO_VERSION="$(awk '/'${pkg//\//\\\/}'/ {print $2}' ${REPO_GOMOD_PATH})"
 
 		# If the package wasn't found, assume it's not needed
 		if [[ -z "${REPO_VERSION}" ]]; then
@@ -153,7 +181,11 @@ cloneRepos
 
 REPOS=`ls "${COMPONENT_ORG}"`
 for repo in ${REPOS}; do
-	git -C ${COMPONENT_ORG}/${repo} checkout --quiet ${DEFAULT_BRANCH}
+	if !(git -C ${COMPONENT_ORG}/${repo} checkout --quiet ${DEFAULT_BRANCH}); then
+		echo "WARN: ${repo} doesn't have a ${DEFAULT_BRANCH} branch. Skipping."
+
+		continue
+	fi
 
 	# Verify that the common Makefile matches the framework
   makefileDiff "${repo}"
@@ -169,6 +201,12 @@ for repo in ${REPOS}; do
 
 	# Verify .ci-operator.yaml file is up-to-date
 	ciopDiff "${repo}"
+	if [ $? -eq 1 ]; then
+		rc=1
+	fi
+
+	# Verify that the Dockerfile images match the framework
+	dockerfileDiff "${repo}"
 	if [ $? -eq 1 ]; then
 		rc=1
 	fi
@@ -192,7 +230,7 @@ cleanup
 SUMMARY_FILE="${ARTIFACT_DIR}/summary-${ERROR_FILE_NAME}"
 
 echo ""
-echo "****" | tee -a ${SUMMARY_FILE}
+echo "****" | tee ${SUMMARY_FILE}
 echo "CODEBASE STATUS REPORT" | tee -a ${SUMMARY_FILE}
 echo "***" | tee -a ${SUMMARY_FILE}
 if [ -f ${ERROR_FILE} ]; then

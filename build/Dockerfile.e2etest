@@ -1,0 +1,48 @@
+# Copyright (c) 2020 Red Hat, Inc.
+
+# Stage 1: Use image builder to retrieve Go binaries
+FROM registry.ci.openshift.org/stolostron/builder:go1.20-linux AS builder
+
+# Stage 2: Copy Go binaries and run tests on ubi-minimal
+FROM registry.access.redhat.com/ubi8/ubi-minimal:latest
+
+RUN microdnf update -y \
+        && microdnf install tar \
+        && microdnf install gzip \
+        && microdnf install git \
+        && microdnf install which \
+        && microdnf install make \
+        && microdnf install findutils \
+        && microdnf clean all
+
+# prepare jq
+ADD https://github.com/stedolan/jq/releases/download/jq-1.6/jq-linux64 /usr/local/bin/jq
+RUN chmod +x /usr/local/bin/jq
+
+# copy go files from builder image
+COPY --from=builder /usr/local/go /usr/local/go
+COPY --from=builder /go /go
+
+ENV GOPATH /go
+ENV PATH $GOPATH/bin:/usr/local/go/bin:$PATH
+WORKDIR $GOPATH
+RUN mkdir -p $GOPATH/src/github.com/stolostron/governance-policy-framework
+
+WORKDIR $GOPATH/src/github.com/stolostron/governance-policy-framework
+
+COPY go.mod .
+COPY go.sum .
+COPY Makefile .
+COPY test ./test
+COPY build ./build
+
+RUN ./build/download-clis.sh
+
+RUN make e2e-dependencies
+
+RUN go mod vendor
+
+# Give write permissions for the directory
+RUN chmod -R go+w $GOPATH/src/github.com/stolostron/governance-policy-framework
+
+CMD ["./build/run-test-image.sh"]

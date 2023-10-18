@@ -105,7 +105,7 @@ jobs:
                   "type": "section",
                   "text": {
                     "type": "mrkdwn",
-                    "text": "Codebase health check ${{ env.ACTION_RESULT == 0 && 'succeeded' || 'failed' }}: <${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}|View workflow run>:\n:${{ env.CI_ICON }}: CI check\n:${{ env.CODEBASE_ICON }}: Codebase check"
+                    "text": "Codebase health check ${{ env.ACTION_RESULT == 0 && 'succeeded' || 'failed' }}: <${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}#artifacts|View workflow run>:\n:${{ env.CI_ICON }}: CI check\n:${{ env.CODEBASE_ICON }}: Codebase check"
                   }
                 }
               ]
