@@ -203,12 +203,11 @@ var _ = Describe("GRC: [P1][Sev1][policy-grc] Test policyreport_info metric", Or
 		if len(routeList.Items) == 0 {
 			By("Exposing the insights metrics service as a route")
 			_, err = common.OcHub(
-				"expose",
-				"service",
-				metricsSvc.Name,
-				"-n",
-				ocmNS,
-				`--overrides={"spec":{"tls":{"termination":"reencrypt"}}}`,
+				"create",
+				"route",
+				"reencrypt",
+				"--service="+metricsSvc.Name,
+				"--namespace="+ocmNS,
 			)
 			Expect(err).ToNot(HaveOccurred())
 
@@ -266,7 +265,7 @@ var _ = Describe("GRC: [P1][Sev1][policy-grc] Test policyreport_info metric", Or
 			}
 
 			return status
-		}, defaultTimeoutSeconds, 1).Should(ContainSubstring("Unauthorized"))
+		}, "90s", 1).Should(ContainSubstring("Unauthorized"))
 	})
 	It("Checks that a noncompliant policy reports a metric", func() {
 		By("Creating a noncompliant policy")
