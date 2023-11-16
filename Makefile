@@ -363,10 +363,10 @@ kind-bootstrap-hosted: kind-install-hosted install-crds install-resources kind-d
 .PHONY: kind-install-hosted
 kind-install-hosted: $(ADDON_CONTROLLER)
 	@cd $(ADDON_CONTROLLER) && KIND_VERSION=$(KIND_VERSION) HOSTED_MODE=true ./build/manage-clusters.sh
-	@cp $(ADDON_CONTROLLER)/policy-addon-ctrl1.kubeconfig ./kubeconfig_$(HUB_CLUSTER_NAME)
-	@cp $(ADDON_CONTROLLER)/policy-addon-ctrl1.kubeconfig-internal ./kubeconfig_$(HUB_CLUSTER_NAME)_internal
-	@cp $(ADDON_CONTROLLER)/policy-addon-ctrl2.kubeconfig ./kubeconfig_$(MANAGED_CLUSTER_NAME)
-	@cp $(ADDON_CONTROLLER)/policy-addon-ctrl2.kubeconfig-internal ./kubeconfig_$(MANAGED_CLUSTER_NAME)_internal
+	@cp $(ADDON_CONTROLLER)/kubeconfig_cluster1_e2e ./kubeconfig_$(HUB_CLUSTER_NAME)
+	@cp $(ADDON_CONTROLLER)/kubeconfig_cluster1_e2e-internal ./kubeconfig_$(HUB_CLUSTER_NAME)_internal
+	@cp $(ADDON_CONTROLLER)/kubeconfig_cluster2_e2e ./kubeconfig_$(MANAGED_CLUSTER_NAME)
+	@cp $(ADDON_CONTROLLER)/kubeconfig_cluster2_e2e-internal ./kubeconfig_$(MANAGED_CLUSTER_NAME)_internal
 
 $(ADDON_CONTROLLER):
 	git clone --depth=1 -b $(RELEASE_BRANCH) https://github.com/stolostron/governance-policy-addon-controller.git $(ADDON_CONTROLLER)
