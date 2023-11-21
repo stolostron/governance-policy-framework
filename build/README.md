@@ -1,6 +1,6 @@
 # Build scripts and resources
 
-# Testing scripts
+## Testing scripts
 
 | File                                                                                 | Runs In                                                 | Description                                                                                                 |
 | ------------------------------------------------------------------------------------ | ------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------- |
@@ -11,7 +11,7 @@
 | [periodic.sh](./periodic.sh)                                                         | [GRC CI Check](../.github/workflows/repo-config.yml)    | Verify that all essential CI jobs are passing and syncing is unblocked                                      |
 | [codebase-check.sh](./codebase-check.sh)                                             | [GRC CI Check](../.github/workflows/repo-config.yml)    | Verify that repos are using consistent versions, CI, and CRDs                                               |
 
-# Utility scripts
+## Utility scripts
 
 | Folder                                    | Description                                                                                          |
 | ----------------------------------------- | ---------------------------------------------------------------------------------------------------- |
