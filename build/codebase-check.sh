@@ -155,7 +155,7 @@ crdSyncCheck() {
 	WORKFLOW_JSON=$(curl -s https://api.github.com/repos/stolostron/governance-policy-addon-controller/actions/workflows/crd-sync.yml/runs)
 	WORKFLOW_CONCLUSION=$(echo "${WORKFLOW_JSON}" | jq -r '.workflow_runs[0].conclusion')
 	WORKFLOW_URL=$(echo "${WORKFLOW_JSON}" | jq -r '.workflow_runs[0].html_url')
-	if [[ "${WORKFLOW_CONCLUSION}" != "success" ]]; then
+	if [[ "${WORKFLOW_CONCLUSION}" != "success" ]] && [[ "${WORKFLOW_URL}" != "null" ]]; then
 		echo "WORKFLOW_CONCLUSION=${WORKFLOW_CONCLUSION}"
 		echo "****"
 		echo "ERROR: CRD sync action is failing in governance-policy-addon-controller" | tee -a ${ERROR_FILE}
