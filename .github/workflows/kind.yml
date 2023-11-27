@@ -191,7 +191,7 @@ jobs:
       if: ${{ failure() }}
       uses: actions/upload-artifact@v3
       with:
-        name: fw-kind-debug-${{ matrix.kind }}-${{ matrix.deployOnHub }}
+        name: fw-kind-debug-${{ matrix.kind }}-${{ matrix.deployOnHub }}${{ matrix.hosted == 'hosted' && '-hosted' || '' }}
         path: framework/e2e-debug.tar.gz
 
     - name: Upload Test Reports
