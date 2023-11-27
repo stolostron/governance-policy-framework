@@ -289,7 +289,7 @@ e2e-debug-hub:
 		PODNAME=$${POD##"pod/"}; \
 	  	kubectl logs $${PODNAME} -c governance-policy-propagator -n $(KIND_HUB_NAMESPACE) --kubeconfig=$(PWD)/kubeconfig_$(HUB_CLUSTER_NAME) > $(DEBUG_DIR)/hub_logs_$${PODNAME}.log; \
 	done
-	-for POD in $$(kubectl get pods -n governance-policy-addon-controller-system -l name=governance-policy-addon-controller -o name --kubeconfig=$(PWD)/kubeconfig_$(HUB_CLUSTER_NAME)); do \
+	-for POD in $$(kubectl get pods -n $(KIND_HUB_NAMESPACE) -l name=governance-policy-addon-controller -o name --kubeconfig=$(PWD)/kubeconfig_$(HUB_CLUSTER_NAME)); do \
 		PODNAME=$${POD##"pod/"}; \
 	  	kubectl logs $${PODNAME} -n $(KIND_HUB_NAMESPACE) --kubeconfig=$(PWD)/kubeconfig_$(HUB_CLUSTER_NAME) > $(DEBUG_DIR)/hub_logs_$${PODNAME}.log; \
 	done
