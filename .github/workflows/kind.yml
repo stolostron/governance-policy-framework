@@ -184,7 +184,14 @@ jobs:
       if: ${{ failure() }}
       working-directory: framework
       run: |
-        make e2e-debug-kind
+        if [[ "${HOSTED}" == "hosted" ]]; then
+          KIND_MANAGED_NAMESPACE=cluster2-hosted \
+            MANAGED_CLUSTER_NAME=hub \
+            make e2e-debug-acm
+        else
+          make e2e-debug-kind
+        fi
+
         tar -czvf e2e-debug.tar.gz test-output/debug
 
     - name: Upload Debug Artifacts
