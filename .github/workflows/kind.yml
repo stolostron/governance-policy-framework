@@ -9,7 +9,7 @@ on:
         default: 'false'
 
 env:
-  RELEASE_BRANCH: ${{ github.event.pull_request.base.ref || github.ref_name }}
+  RELEASE_BRANCH: ${{ github.event.pull_request.base.ref || github.ref_name || 'main' }}
 
 defaults:
   run:
@@ -202,6 +202,7 @@ jobs:
         path: framework/e2e-debug.tar.gz
 
     - name: Upload Test Reports
+      if: ${{ !cancelled() }}
       uses: actions/upload-artifact@v3
       with:
         name: fw-kind-report-${{ matrix.kind }}-${{ matrix.deployOnHub }}${{ matrix.hosted == 'hosted' && '-hosted' || '' }}

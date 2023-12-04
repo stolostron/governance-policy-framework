@@ -1,0 +1,111 @@
+name: GRC Integration Test
+
+on:
+  schedule:
+  - cron: "0 5,11,14,17,20,23 * * 0-6"  # UTC  0,6,9,12,15,18 in EASTERN STANDARD
+
+defaults:
+  run:
+    shell: bash
+
+jobs:
+  e2e:
+    name: KinD E2E
+    uses: ./.github/workflows/kind.yml
+
+  integration:
+    name: Integration Tests
+    runs-on: ubuntu-latest
+    env:
+      MANAGED_CLUSTER_NAME: "local-cluster"
+    steps:
+    - name: Checkout Policy Framework
+      uses: actions/checkout@v3
+
+    - name: Cluster setup
+      run: |
+        echo "::group::Set up prerequisites"
+        ./build/download-clis.sh
+        make e2e-dependencies
+        oc login ${{ secrets.E2E_URL }} --insecure-skip-tls-verify=true -u ${{ secrets.E2E_USER }} -p ${{ secrets.E2E_PASSWORD }}
+        cp ${HOME}/.kube/config ./kubeconfig_hub
+        cp ${HOME}/.kube/config ./kubeconfig_managed
+        echo "::endgroup::"
+
+        echo "::group::Patch images to latest"
+        ./build/patch-dev-images.sh
+        echo "::endgroup::"
+
+        echo "::group::Clean cluster"
+        ./build/clean-up-cluster.sh
+        echo "::endgroup::"
+
+    - name: Integration Test
+      shell: bash
+      env:
+        MANAGED_CLUSTER_NAME: "local-cluster"
+        TEST_ARGS: "--label-filter=!etcd --json-report=report.json --junit-report=report.xml --output-dir=test-output"
+      run: |
+        make integration-test
+
+    - name: etcd Encryption Test
+      shell: bash
+      env:
+        MANAGED_CLUSTER_NAME: "local-cluster"
+        TEST_ARGS: "--label-filter=etcd --json-report=etcd-report.json --junit-report=etcd-report.xml --output-dir=test-output"
+      run: |
+        make integration-test
+
+    - name: Upload Test Reports
+      if: ${{ !cancelled() }}
+      uses: actions/upload-artifact@v3
+      with:
+        name: integration-report
+        path: |
+          test-output/report.xml
+          test-output/report.json
+          test-output/etcd-report.xml
+          test-output/etcd-report.json
+
+  ff:
+    name: Fast Forward
+    needs: [ e2e, integration ]
+    runs-on: ubuntu-latest
+    if: ${{ vars.FAST_FORWARD == true }}
+    steps:
+    - name: Checkout Policy Framework
+      uses: actions/checkout@v3
+    - run: |
+        ./build/main-branch-sync/sync.sh
+
+  slack:
+    name: Send result to Slack
+    needs: [ e2e, integration, ff ]
+    runs-on: ubuntu-latest
+    if: ${{ always() }}
+    steps:
+    - name: Checkout Policy Framework
+      uses: actions/checkout@v3
+      with:
+        path: framework
+
+    - uses: actions/download-artifact@v3
+      with:
+        path: artifacts
+
+    - name: Format result message
+      env:
+        ARTIFACTS_PATH: artifacts
+        WF_LINK: "<${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}|View workflow run>"
+        WF_CONCLUSION: ${{ contains(needs.*.result, 'failure') && 'failed' || contains(needs.*.result, 'cancelled') && 'cancelled' || 'succeeded' }}
+        GH_NEEDS_CTX: ${{ toJSON(needs) }}
+        ORIGIN: "${{ github.repository }} ${{ github.workflow }}"
+      run: |
+        ./framework/build/periodic-slack-report.sh  
+
+    - uses: slackapi/slack-github-action@v1.23.0
+      env:
+        SLACK_WEBHOOK_TYPE: INCOMING_WEBHOOK
+        SLACK_WEBHOOK_URL: ${{ secrets.E2E_SLACK_WEBHOOK }}
+      with:
+        payload-file-path: artifacts/slack-payload.json

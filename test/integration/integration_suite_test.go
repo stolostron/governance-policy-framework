@@ -62,7 +62,7 @@ func init() {
 
 var _ = BeforeSuite(func() {
 	By("Setup hub and managed client")
-	common.InitInterfaces(common.KubeconfigHub, common.KubeconfigManaged, false)
+	common.InitInterfaces(common.KubeconfigHub, common.KubeconfigManaged, common.IsHosted)
 	kubeconfigHub = common.KubeconfigHub
 	kubeconfigManaged = common.KubeconfigManaged
 	userNamespace = common.UserNamespace
