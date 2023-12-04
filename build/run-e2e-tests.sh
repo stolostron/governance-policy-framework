@@ -4,8 +4,6 @@
 
 set -e
 
-while sleep 5m; do echo "\n=====[ $SECONDS seconds elapsed, keep Travis running ]=====\n"; done &
-
 printf "* Running E2E "
 if [ "$deployOnHub" == "true" ]; then
     echo "with deployOnHub=true..."

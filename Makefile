@@ -1,7 +1,5 @@
 # Copyright Contributors to the Open Cluster Management project
 
-TRAVIS_BUILD ?= 1
-
 PWD := $(shell pwd)
 LOCAL_BIN ?= $(PWD)/bin
 deployOnHub ?= false
@@ -249,10 +247,10 @@ install-resources:
 	@echo creating user namespace on hub
 	kubectl create ns policy-test --kubeconfig=$(PWD)/kubeconfig_$(HUB_CLUSTER_NAME)
 	@echo creating cluster namespace on hub 
-	kubectl create ns managed --kubeconfig=$(PWD)/kubeconfig_$(HUB_CLUSTER_NAME)
+	kubectl create ns $(MANAGED_CLUSTER_NAMESPACE) --kubeconfig=$(PWD)/kubeconfig_$(HUB_CLUSTER_NAME)
 	kubectl apply -f test/resources/managed-cluster.yaml --kubeconfig=$(PWD)/kubeconfig_$(HUB_CLUSTER_NAME)
 	@echo creating cluster namespace on managed 
-	kubectl create ns managed --kubeconfig=$(PWD)/kubeconfig_$(MANAGED_CLUSTER_NAME) || true
+	kubectl create ns $(MANAGED_CLUSTER_NAMESPACE) --kubeconfig=$(PWD)/kubeconfig_$(MANAGED_CLUSTER_NAME) || true
 
 .PHONY: e2e-dependencies
 e2e-dependencies:
@@ -260,7 +258,7 @@ e2e-dependencies:
 K8SCLIENT ?= oc
 GINKGO = $(LOCAL_BIN)/ginkgo
 IS_HOSTED ?= false
-MANAGED_CLUSTER_NAMESPACE ?= managed
+MANAGED_CLUSTER_NAMESPACE ?= $(MANAGED_CLUSTER_NAME)
 
 .PHONY: e2e-test
 e2e-test:
@@ -349,7 +347,7 @@ e2e-debug-dump:
 
 .PHONY: integration-test
 integration-test:
-	$(GINKGO) -v $(TEST_ARGS) test/integration
+	$(GINKGO) -v $(TEST_ARGS) test/integration -- -cluster_namespace=$(MANAGED_CLUSTER_NAMESPACE) -k8s_client=$(K8SCLIENT) -is_hosted=$(IS_HOSTED) -cluster_namespace_on_hub=$(MANAGED_CLUSTER_NAMESPACE) -patch_decisions=false
 
 #hosted
 ADDON_CONTROLLER = $(PWD)/.go/governance-policy-addon-controller

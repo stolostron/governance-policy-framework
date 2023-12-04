@@ -7,9 +7,8 @@
   - SSH access to GitHub
   - Write access to the repos
   - Fork and clone your fork of the [`release`](https://github.com/openshift/release) repo
-- To disable fast-forwarding for GRC, set the `FF` variable in the
-  [governance-policy-framework Travis settings](https://app.travis-ci.com/github/stolostron/governance-policy-framework/settings)
-  to "false"
+- To disable fast-forwarding for GRC, set the `FAST_FORWARD` GitHub Actions variable in this repository
+to "false"
 
 1. Update the version:
    - Update the `CURRENT_VERSION` file to the new release version.
@@ -41,6 +40,5 @@
    - Delete any `stolostron/` directory that exists there
    - Double check `repo.txt` to make sure the list of repos is up-to-date
    - Run `create.sh`
-4. Check that fast-forwarding is re-enabled (the `FF` variable in the
-   [governance-policy-framework Travis settings](https://app.travis-ci.com/github/stolostron/governance-policy-framework/settings)
-   should be set to "true")
+4. Check that fast-forwarding is re-enabled (the `FAST_FORWARD` GitHub Actions variable in this 
+   repository should be set to "true")

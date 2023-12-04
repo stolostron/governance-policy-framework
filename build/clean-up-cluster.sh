@@ -91,10 +91,6 @@ function managed() {
     oc delete events -n local-cluster --all --ignore-not-found
 }
 
-echo "Login..."
-# These are provided in the Travis environment
-oc login ${OC_HUB_CLUSTER_URL} --insecure-skip-tls-verify=true -u ${OC_CLUSTER_USER} -p ${OC_HUB_CLUSTER_PASS}
-
 hub
 managed
 

@@ -114,18 +114,6 @@ echo "
   Note: For each token, login with OIDC, click the link for the token, click \"Create new version\", 
         and update the values for the keys above with the regenerated tokens.
 
-==========
-  TRAVIS
-==========
-- https://app.travis-ci.com/github/stolostron/governance-policy-framework/settings
-  COLLECTIVE_TOKEN  ${COLLECTIVE_SECRET}
-  GITHUB_TOKEN      ${BUILDS_GH_TOKEN}
-
-- https://app.travis-ci.com/github/stolostron/policy-grc-squad/settings
-  GITHUB_TOKEN  ${BUILDS_GH_TOKEN}
-
-  Note: For each token, delete the old key, and create a new one, making sure to not display the value in build logs.
-
 =============
   BITWARDEN
 =============
