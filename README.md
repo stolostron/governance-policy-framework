@@ -1,7 +1,7 @@
 [comment]: # ( Copyright Contributors to the Open Cluster Management project )
 
 # Governance Policy Framework
-![Build Status](https://github.com/stolostron/governance-policy-framework/actions/workflows/integration.yml/badge.svg)
+[![GRC Integration Test](https://github.com/stolostron/governance-policy-framework/actions/workflows/integration.yml/badge.svg)](https://github.com/stolostron/governance-policy-framework/actions/workflows/integration.yml)
 
 Open Cluster Management - Governance Policy Framework
 
