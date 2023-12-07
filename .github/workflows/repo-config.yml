@@ -56,6 +56,8 @@ jobs:
           FAILURE_ICON="no_entry"
 
           echo "ACTION_RESULT=$([[ "${{ env.CI_EXIT_CODE }}" == 0 ]] && [[ "${{ env.CODEBASE_EXIT_CODE }}" == 0 ]] && echo 0 || echo 1)" >> ${GITHUB_ENV}
+          echo "CI_SUMMARY=\"\`\`\`\n$(cat summary-ci-errors.log)\n\`\`\`\"" >> ${GITHUB_ENV}
+          echo "CODEBASE_SUMMARY=\"\`\`\`\n$(cat summary-codebase-errors.log)\n\`\`\`\"" >> ${GITHUB_ENV}
 
           CI_ICON=${SUCCESS_ICON}
           if [[ "${{ env.CI_EXIT_CODE }}" == 1 ]]; then
@@ -66,9 +68,7 @@ jobs:
           echo "" >> ${GITHUB_STEP_SUMMARY}
           echo "<details><summary>See more</summary>" >> ${GITHUB_STEP_SUMMARY}
           echo "" >> ${GITHUB_STEP_SUMMARY}
-          echo "\`\`\`" >> ${GITHUB_STEP_SUMMARY}
-          cat summary-ci-errors.log >> ${GITHUB_STEP_SUMMARY}
-          echo "\`\`\`" >> ${GITHUB_STEP_SUMMARY}
+          echo -e "${CI_SUMMARY}" >> ${GITHUB_STEP_SUMMARY}
           echo "" >> ${GITHUB_STEP_SUMMARY}
           echo "</details>" >> ${GITHUB_STEP_SUMMARY}
           echo "" >> ${GITHUB_STEP_SUMMARY}
@@ -84,9 +84,7 @@ jobs:
           echo "" >> ${GITHUB_STEP_SUMMARY}
           echo "<details><summary>See more</summary>" >> ${GITHUB_STEP_SUMMARY}
           echo "" >> ${GITHUB_STEP_SUMMARY}
-          echo "\`\`\`" >> ${GITHUB_STEP_SUMMARY}
-          cat summary-codebase-errors.log >> ${GITHUB_STEP_SUMMARY}
-          echo "\`\`\`" >> ${GITHUB_STEP_SUMMARY}
+          echo -e "${CODEBASE_SUMMARY}" >> ${GITHUB_STEP_SUMMARY}
           echo "" >> ${GITHUB_STEP_SUMMARY}
           echo "</details>" >> ${GITHUB_STEP_SUMMARY}
 
@@ -105,7 +103,7 @@ jobs:
                   "type": "section",
                   "text": {
                     "type": "mrkdwn",
-                    "text": "Codebase health check ${{ env.ACTION_RESULT == 0 && 'succeeded' || 'failed' }}: <${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}#artifacts|View workflow run>:\n:${{ env.CI_ICON }}: CI check\n:${{ env.CODEBASE_ICON }}: Codebase check"
+                    "text": "Codebase health check ${{ env.ACTION_RESULT == 0 && 'succeeded' || 'failed' }}: <${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}#artifacts|View workflow run>:\n:${{ env.CI_ICON }}: CI check\n${{ env.CI_SUMMARY }}:${{ env.CODEBASE_ICON }}: Codebase check\n${{ env.CODEBASE_SUMMARY }}"
                   }
                 }
               ]

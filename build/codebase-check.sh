@@ -230,15 +230,15 @@ cleanup
 SUMMARY_FILE="${ARTIFACT_DIR}/summary-${ERROR_FILE_NAME}"
 
 echo ""
-echo "****" | tee ${SUMMARY_FILE}
-echo "CODEBASE STATUS REPORT" | tee -a ${SUMMARY_FILE}
-echo "***" | tee -a ${SUMMARY_FILE}
+echo "****"
+echo "CODEBASE STATUS REPORT"
+echo "***"
 if [ -f ${ERROR_FILE} ]; then
 	# Print the error log to stdout with duplicate lines removed
-	awk '!a[$0]++' ${ERROR_FILE} | tee -a ${SUMMARY_FILE}
+	awk '!a[$0]++' ${ERROR_FILE} | tee ${SUMMARY_FILE}
 else
-	echo "All checks PASSED!" | tee -a ${SUMMARY_FILE}
+	echo "All checks PASSED!" | tee ${SUMMARY_FILE}
 fi
-echo "***" | tee -a ${SUMMARY_FILE}
+echo "***"
 
 exit ${rc}
