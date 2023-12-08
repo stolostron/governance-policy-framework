@@ -56,8 +56,12 @@ jobs:
           FAILURE_ICON="no_entry"
 
           echo "ACTION_RESULT=$([[ "${{ env.CI_EXIT_CODE }}" == 0 ]] && [[ "${{ env.CODEBASE_EXIT_CODE }}" == 0 ]] && echo 0 || echo 1)" >> ${GITHUB_ENV}
-          echo "CI_SUMMARY=\"\`\`\`\n$(cat summary-ci-errors.log)\n\`\`\`\"" >> ${GITHUB_ENV}
-          echo "CODEBASE_SUMMARY=\"\`\`\`\n$(cat summary-codebase-errors.log)\n\`\`\`\"" >> ${GITHUB_ENV}
+          if [[ -f summary-ci-errors.log ]]; then
+            echo "CI_SUMMARY=\n\`\`\`\n$(awk '{printf "%s\\n", $0}' summary-ci-errors.log)\`\`\`" >> ${GITHUB_ENV}
+          fi
+          if [[ -f summary-codebase-errors.log ]]; then
+            echo "CODEBASE_SUMMARY=\n\`\`\`\n$(awk '{printf "%s\\n", $0}' summary-codebase-errors.log)\`\`\`" >> ${GITHUB_ENV}
+          fi
 
           CI_ICON=${SUCCESS_ICON}
           if [[ "${{ env.CI_EXIT_CODE }}" == 1 ]]; then
@@ -103,7 +107,7 @@ jobs:
                   "type": "section",
                   "text": {
                     "type": "mrkdwn",
-                    "text": "Codebase health check ${{ env.ACTION_RESULT == 0 && 'succeeded' || 'failed' }}: <${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}#artifacts|View workflow run>:\n:${{ env.CI_ICON }}: CI check\n${{ env.CI_SUMMARY }}:${{ env.CODEBASE_ICON }}: Codebase check\n${{ env.CODEBASE_SUMMARY }}"
+                    "text": "Codebase health check ${{ env.ACTION_RESULT == 0 && 'succeeded' || 'failed' }}: <${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}#artifacts|View workflow run>\n:${{ env.CI_ICON }}: CI check${{ env.CI_SUMMARY }}\n:${{ env.CODEBASE_ICON }}: Codebase check${{ env.CODEBASE_SUMMARY }}"
                   }
                 }
               ]
