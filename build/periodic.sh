@@ -179,17 +179,15 @@ done
 
 cleanup
 
-SUMMARY_FILE="${ARTIFACT_DIR}/summary-${ERROR_FILE_NAME}"
-
 echo ""
 echo "****"
 echo "CI STATUS REPORT"
 echo "***"
 if [ -f ${ERROR_FILE} ]; then
 	# Print the error log to stdout with duplicate lines removed
-	awk '!a[$0]++' ${ERROR_FILE} | tee ${SUMMARY_FILE}
+	awk '!a[$0]++' ${ERROR_FILE} | tee "${ARTIFACT_DIR}/summary-${ERROR_FILE_NAME}"
 else
-	echo "All checks PASSED!" | tee ${SUMMARY_FILE}
+	echo "All checks PASSED!"
 fi
 echo "***"
 
