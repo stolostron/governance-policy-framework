@@ -34,6 +34,7 @@ function hub() {
             oc delete policies.policy.open-cluster-management.io -n $ns --all --ignore-not-found
             oc delete placementbindings.policy.open-cluster-management.io  -n $ns --all --ignore-not-found
             oc delete placementrules.apps.open-cluster-management.io -n $ns --all --ignore-not-found
+            oc delete placements.cluster.open-cluster-management.io -n $ns --all --ignore-not-found
         done
     oc delete ns -l e2e=true --ignore-not-found
     oc delete ns policy-test duplicatetest --ignore-not-found
