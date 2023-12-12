@@ -2,7 +2,7 @@
 
 DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" >/dev/null 2>&1 && pwd )"
 
-RELEASES="2.6 2.7 2.8 2.9"
+RELEASES="2.7 2.8 2.9 2.10"
 
 if [[ -z "${1}" ]]; then
   echo "Error: A module query argument is required to run this script."
@@ -16,10 +16,7 @@ echo "Go module query: '${MODULE_QUERY}'"
 # Collect repos from main-branch-sync/repo.txt
 REPOS=$(cat ${DIR}/main-branch-sync/repo.txt)
 # Manually append deprecated repos
-REPOS="${REPOS}
-  stolostron/governance-policy-spec-sync
-  stolostron/governance-policy-status-sync
-  stolostron/governance-policy-template-sync"
+# REPOS="${REPOS}"
 SUMMARY="Modules matching '${MODULE_QUERY}':"
 FOUND="false"
 GO_LIST_TMPL='

@@ -14,8 +14,7 @@
 CHECKOUT_BRANCH=${CHECKOUT_BRANCH:-""}
 OWNERS_FILE_NAME="OWNERS"
 GITHUB_ORG=${GITHUB_ORG:-"stolostron"}
-REPOS="${REPOS:-$(cat repo.txt && cat repo-extra.txt &&
-  echo stolostron/policy-collection)}"
+REPOS="${REPOS:-$(cat repo.txt && cat repo-extra.txt)}"
 UPDATED_REPOS=()
 if [[ "${GITHUB_ORG}" != "stolostron" ]]; then
   REPOS=$(echo "${REPOS}" | sed "s/stolostron/${GITHUB_ORG}/g")
