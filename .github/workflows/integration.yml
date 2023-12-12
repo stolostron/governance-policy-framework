@@ -71,7 +71,7 @@ jobs:
     name: Fast Forward
     needs: [ e2e, integration ]
     runs-on: ubuntu-latest
-    if: ${{ vars.FAST_FORWARD == true }}
+    if: ${{ vars.FAST_FORWARD == "true" }}
     steps:
     - name: Checkout Policy Framework
       uses: actions/checkout@v3
