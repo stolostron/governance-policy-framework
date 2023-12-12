@@ -43,16 +43,6 @@ metadata:
     app: grc-e2e-policy-generator
   name: grc-e2e-policy-generator-subscription
 spec:
-  allow:
-    - apiVersion: policy.open-cluster-management.io/v1
-      kinds:
-        - "*"
-    - apiVersion: policy.open-cluster-management.io/v1beta1
-      kinds:
-        - "*"
-    - apiVersion: apps.open-cluster-management.io/v1
-      kinds:
-        - PlacementRule
   channel: grc-e2e-policy-generator/grc-e2e-policy-generator
   placement:
     placementRef:
