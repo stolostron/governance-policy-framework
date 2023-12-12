@@ -56,15 +56,15 @@ spec:
   channel: grc-e2e-policy-generator/grc-e2e-policy-generator
   placement:
     placementRef:
-      kind: PlacementRule
+      kind: Placement
       name: grc-e2e-policy-generator-placement
 ---
 apiVersion: cluster.open-cluster-management.io/v1beta1
 kind: Placement
 metadata:
   labels:
-    app: acm-hardening
-  name: acm-hardening-placement
+    app: grc-e2e-policy-generator
+  name: grc-e2e-policy-generator-placement
 spec:
   predicates:
   - requiredClusterSelector:
