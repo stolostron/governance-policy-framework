@@ -46,7 +46,7 @@ spec:
   channel: policies/acm-hardening
   placement:
     placementRef:
-      kind: PlacementRule
+      kind: Placement
       name: acm-hardening-placement
 ---
 apiVersion: cluster.open-cluster-management.io/v1beta1
