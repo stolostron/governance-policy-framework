@@ -356,6 +356,10 @@ kind-install-hosted: $(ADDON_CONTROLLER)
 	@cp $(ADDON_CONTROLLER)/kubeconfig_cluster1_e2e-internal ./kubeconfig_$(HUB_CLUSTER_NAME)_internal
 	@cp $(ADDON_CONTROLLER)/kubeconfig_cluster2_e2e ./kubeconfig_$(MANAGED_CLUSTER_NAME)
 	@cp $(ADDON_CONTROLLER)/kubeconfig_cluster2_e2e-internal ./kubeconfig_$(MANAGED_CLUSTER_NAME)_internal
+	kubectl apply -f $(ADDON_CONTROLLER)/test/resources/cert_policy_clustermanagementaddon.yaml --kubeconfig=$(PWD)/kubeconfig_$(HUB_CLUSTER_NAME)
+	kubectl apply -f $(ADDON_CONTROLLER)/test/resources/config_policy_clustermanagementaddon.yaml --kubeconfig=$(PWD)/kubeconfig_$(HUB_CLUSTER_NAME)
+	kubectl apply -f $(ADDON_CONTROLLER)/test/resources/framework_clustermanagementaddon.yaml --kubeconfig=$(PWD)/kubeconfig_$(HUB_CLUSTER_NAME)
+	kubectl apply -f $(ADDON_CONTROLLER)/test/resources/iam_policy_clustermanagementaddon.yaml --kubeconfig=$(PWD)/kubeconfig_$(HUB_CLUSTER_NAME)
 	@echo installing policy-propagator on hub
 	-kubectl create ns $(KIND_HUB_NAMESPACE) --kubeconfig=$(PWD)/kubeconfig_$(HUB_CLUSTER_NAME)
 	kubectl apply -f https://raw.githubusercontent.com/stolostron/governance-policy-propagator/$(RELEASE_BRANCH)/deploy/operator.yaml -n $(KIND_HUB_NAMESPACE) --kubeconfig=$(PWD)/kubeconfig_$(HUB_CLUSTER_NAME)
