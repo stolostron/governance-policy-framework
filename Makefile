@@ -367,6 +367,10 @@ kind-install-hosted: $(ADDON_CONTROLLER)
 	@cp $(ADDON_CONTROLLER)/kubeconfig_cluster1_e2e-internal ./kubeconfig_$(HUB_CLUSTER_NAME)_internal
 	@cp $(ADDON_CONTROLLER)/kubeconfig_cluster2_e2e ./kubeconfig_$(MANAGED_CLUSTER_NAME)
 	@cp $(ADDON_CONTROLLER)/kubeconfig_cluster2_e2e-internal ./kubeconfig_$(MANAGED_CLUSTER_NAME)_internal
+	kubectl apply -f $(ADDON_CONTROLLER)/test/resources/cert_policy_clustermanagementaddon.yaml --kubeconfig=$(PWD)/kubeconfig_$(HUB_CLUSTER_NAME)
+	kubectl apply -f $(ADDON_CONTROLLER)/test/resources/config_policy_clustermanagementaddon.yaml --kubeconfig=$(PWD)/kubeconfig_$(HUB_CLUSTER_NAME)
+	kubectl apply -f $(ADDON_CONTROLLER)/test/resources/framework_clustermanagementaddon.yaml --kubeconfig=$(PWD)/kubeconfig_$(HUB_CLUSTER_NAME)
+	kubectl apply -f $(ADDON_CONTROLLER)/test/resources/iam_policy_clustermanagementaddon.yaml --kubeconfig=$(PWD)/kubeconfig_$(HUB_CLUSTER_NAME)
 
 $(ADDON_CONTROLLER):
 	git clone --depth=1 -b $(RELEASE_BRANCH) https://github.com/stolostron/governance-policy-addon-controller.git $(ADDON_CONTROLLER)
