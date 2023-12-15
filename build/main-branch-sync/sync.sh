@@ -9,7 +9,7 @@ while IFS="" read -r repo || [ -n "${repo}" ]
 do
   printf '%s\n' "Updating ${repo} ...."
   p="${path}/${repo}"
-  git clone git@github.com:${repo}.git ${p}
+  git clone https://${GITHUB_USER}:${GITHUB_TOKEN}@github.com:${repo}.git ${p}
   GIT="git -C ${p}"
   ${GIT} checkout main
   ${GIT} pull

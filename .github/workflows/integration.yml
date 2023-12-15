@@ -72,6 +72,9 @@ jobs:
     needs: [ e2e, integration ]
     runs-on: ubuntu-latest
     if: ${{ vars.FAST_FORWARD == 'true' }}
+    env:
+      GITHUB_USER: ${{ secrets.WORKFLOW_USER }}
+      GITHUB_TOKEN: ${{ secrets.WORKFLOW_TOKEN }}
     steps:
     - name: Checkout Policy Framework
       uses: actions/checkout@v3
