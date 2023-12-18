@@ -102,10 +102,10 @@ for dirpath in ${COMPONENT_LIST}; do
     # Update the 'promotion' stanza
     if [ "$(yq e '.promotion.name' ${NEW_FILENAME})" != "null" ]; then
       # - For the new version:
-      ver="${NEW_VERSION}" yq e '.promotion.name=env(ver)' -i ${NEW_FILENAME}
+      ver="${NEW_VERSION}" yq e '.promotion.name=strenv(ver)' -i ${NEW_FILENAME}
       yq e '.promotion.disabled=true' -i ${NEW_FILENAME}
       # - For the 'main' branch:
-      ver="${NEW_VERSION}" yq e '.promotion.name=env(ver)' -i ${FILE_PREFIX}-main.yaml
+      ver="${NEW_VERSION}" yq e '.promotion.name=strenv(ver)' -i ${FILE_PREFIX}-main.yaml
       # - For the old version, re-enable promotion:
       yq e 'del(.promotion.disabled)' -i ${OLD_FILENAME}
     fi
@@ -115,7 +115,7 @@ for dirpath in ${COMPONENT_LIST}; do
 
     # Handle UI version tag in 'e2e-tests'
     oldver="${OLD_VERSION}" newver="${NEW_VERSION}" \
-    yq e '.tests[] |= select(.as=="e2e-tests").steps.test[].commands |= sub("latest-"+env(oldver), "latest-"+env(newver))' -i ${NEW_FILENAME}
+    yq e '.tests[] |= select(.as=="e2e-tests").steps.test[].commands |= sub("latest-"+strenv(oldver), "latest-"+strenv(newver))' -i ${NEW_FILENAME}
 
     # Add custom YAML to 'tests' stanza (uncomment code below and add the YAML strings to it)
     # if [[ "${CODE_TYPE}" == "go" ]]; then
@@ -130,10 +130,10 @@ for dirpath in ${COMPONENT_LIST}; do
 
   RULES_CONFIG_FILE="${RELEASE_RULES_PATH}/${dirpath}_prowconfig.yaml"
   EXISTING_CONFIG="$(oldver="${OLD_VERSION}" component="${COMPONENT}" \
-    yq e '.branch-protection.orgs.stolostron.repos[env(component)].branches["release-"+env(oldver)]' ${RULES_CONFIG_FILE})"
+    yq e '.branch-protection.orgs.stolostron.repos[strenv(component)].branches["release-"+strenv(oldver)]' ${RULES_CONFIG_FILE})"
   if [ -f "${RULES_CONFIG_FILE}" ] && [ "${EXISTING_CONFIG}" != "null" ]; then
     oldconfig="${EXISTING_CONFIG}" newver="${NEW_VERSION}" component="${COMPONENT}" \
-    yq e '.branch-protection.orgs.stolostron.repos[env(component)] |= .branches["release-"+env(newver)]=env(oldconfig)' -i ${RULES_CONFIG_FILE}
+    yq e '.branch-protection.orgs.stolostron.repos[strenv(component)] |= .branches["release-"+strenv(newver)]=env(oldconfig)' -i ${RULES_CONFIG_FILE}
   else
     echo "* Skipping update for _prowconfig.yaml"
   fi
