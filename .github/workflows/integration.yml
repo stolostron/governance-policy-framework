@@ -18,7 +18,14 @@ jobs:
     runs-on: ubuntu-latest
     env:
       MANAGED_CLUSTER_NAME: "local-cluster"
+    outputs:
+      START_TIME: ${{ steps.start-time.outputs.START_TIME }}
     steps:
+    - name: Set start timestamp
+      id: start-time
+      run: |
+        echo "START_TIME=$(date)" >> "$GITHUB_OUTPUT"
+
     - name: Checkout Policy Framework
       uses: actions/checkout@v3
 
@@ -79,7 +86,7 @@ jobs:
     - name: Checkout Policy Framework
       uses: actions/checkout@v3
     - run: |
-        ./build/main-branch-sync/sync.sh
+        COMMIT_TIME="${{ needs.integration.outputs.START_TIME }}" ./build/main-branch-sync/sync.sh
 
   slack:
     name: Send result to Slack
