@@ -62,6 +62,7 @@ clean::
 	-rm kubeconfig_*
 	-rm -r test-output/
 	-rm -r vendor/
+	find . -type d \( -name "stolostron" -o -name "open-cluster-management-io" \) -exec rm -rf {} +
 
 ############################################################
 # lint section
