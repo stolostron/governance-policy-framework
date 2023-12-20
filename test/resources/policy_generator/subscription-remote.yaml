@@ -1,4 +1,11 @@
 ---
+apiVersion: cluster.open-cluster-management.io/v1beta2
+kind: ManagedClusterSetBinding
+metadata:
+  name: global
+spec:
+  clusterSet: global
+---
 apiVersion: app.k8s.io/v1beta1
 kind: Application
 metadata:
@@ -36,16 +43,6 @@ metadata:
     app: grc-e2e-remote-policy-generator
   name: grc-e2e-remote-policy-generator-subscription
 spec:
-  allow:
-    - apiVersion: policy.open-cluster-management.io/v1
-      kinds:
-        - "*"
-    - apiVersion: policy.open-cluster-management.io/v1beta1
-      kinds:
-        - "*"
-    - apiVersion: apps.open-cluster-management.io/v1
-      kinds:
-        - PlacementRule
   channel: grc-e2e-remote-policy-generator/grc-e2e-remote-policy-generator
   placement:
     placementRef:
