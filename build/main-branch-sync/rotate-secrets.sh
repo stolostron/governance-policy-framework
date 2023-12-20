@@ -87,7 +87,7 @@ done
 
 # Update GitHub tokens for GitHub Actions
 echo "Setting GitHub token on GitHub repos..."
-for REPO in "stolostron/governance-policy-framework"; do
+for REPO in "stolostron/governance-policy-framework stolostron/gatekeeper-operator"; do
   gh secret set WORKFLOW_USER -b ${GITHUB_BOT_USER} --repo ${REPO}
   gh secret set WORKFLOW_TOKEN -b ${BUILDS_GH_TOKEN} --repo ${REPO}
 done
@@ -106,8 +106,6 @@ echo "
   PROW
 ========
 - https://vault.ci.openshift.org/ui/vault/secrets/kv/list/selfservice/ocm-grc-secrets/
-  ocm-grc-aws-kind.credentials  access_key_id         = ${AWS_ACCESS_KEY_ID}
-                                aws_secret_access_key = ${AWS_SECRET_ACCESS_KEY}
 
   ocm-grc-clusterpool.token     ${COLLECTIVE_SECRET}
 
