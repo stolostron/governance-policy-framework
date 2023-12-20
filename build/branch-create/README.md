@@ -7,11 +7,11 @@
   - SSH access to GitHub
   - Write access to the repos
   - Fork and clone your fork of the [`release`](https://github.com/openshift/release) repo
-- To disable fast-forwarding for GRC, set the `FAST_FORWARD` GitHub Actions variable in this repository
-to "false"
+- To disable fast-forwarding for GRC, set the `FAST_FORWARD` GitHub Actions variable in this repository 
+  to "false". (This is not necessary when moving to a new release version.)
 
 1. Update the version:
-   - Update the `CURRENT_VERSION` file to the new release version.
+   - Update the `CURRENT_VERSION` file to the new release version. (Do not merge this until step 2 is merged.)
 2. Update existing and create new Prow configurations for the new version (see
    [CICD docs](https://github.com/stolostron/cicd-docs/blob/main/prow) for details on
    Prow):
@@ -35,10 +35,8 @@ to "false"
    - Once all PRs are validated and merged, delete each repo's `release` branches that were created
      (or delete your fork of the `release` repo) to prevent conflict with the next run of the
      script.
-3. **After the prow configurations are updated, so that the prow jobs are triggered on the new branches,** create new release branches for the new version in each of the repos:
-   - Change to the `branch-create/` directory
-   - Delete any `stolostron/` directory that exists there
-   - Double check `repo.txt` to make sure the list of repos is up-to-date
-   - Run `create.sh`
+3. **After the prow configurations are updated, so that the prow jobs are triggered on the new branches**, 
+   merge the `CURRENT_VERSION` update. `sync.sh` will create the new `release-*` branches and pick up the 
+   new Prow configurations.
 4. Check that fast-forwarding is re-enabled (the `FAST_FORWARD` GitHub Actions variable in this 
    repository should be set to "true")
