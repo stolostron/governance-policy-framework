@@ -12,7 +12,7 @@ do
   git clone https://${GITHUB_USER}:${GITHUB_TOKEN}@github.com/${repo}.git ${p}
   GIT="git -C ${p}"
   ${GIT} checkout main
-  ${GIT} checkout release-${CURRENT_VERSION}} || ${GIT} checkout -b release-${CURRENT_VERSION}
+  ${GIT} checkout release-${CURRENT_VERSION} || ${GIT} checkout -b release-${CURRENT_VERSION}
   ${GIT} rebase main
   ${GIT} push || { exit_code=1; printf '%s\n' "Failed to fast forward ${p}"; }
 done <${path}/repo.txt
