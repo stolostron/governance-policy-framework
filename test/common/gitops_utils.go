@@ -55,7 +55,7 @@ func GitOpsUserSetup(ocpUser *OCPUser) {
 				APIGroups:     []string{"cluster.open-cluster-management.io"},
 				Verbs:         []string{"create"},
 				Resources:     []string{"managedclustersets/bind"},
-				ResourceNames: []string{"default"},
+				ResourceNames: []string{"default", "global"},
 			},
 			{
 				APIGroups: []string{"cluster.open-cluster-management.io"},
