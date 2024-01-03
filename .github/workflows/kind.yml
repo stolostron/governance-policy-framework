@@ -22,6 +22,7 @@ jobs:
     runs-on: ubuntu-latest
     env:
       REGISTRY: localhost:5000
+      KIND_VERSION: ${{ matrix.kind }}
     strategy:
       # Don't skip all tests if one fails - others may still have useful info
       fail-fast: false
@@ -98,7 +99,6 @@ jobs:
       working-directory: framework
       env:
         deployOnHub: ${{ matrix.deployOnHub }}
-        KIND_VERSION: ${{ matrix.kind }}
         HOSTED: ${{ matrix.hosted }}
       run: |
         echo "::group::make e2e-dependencies"
