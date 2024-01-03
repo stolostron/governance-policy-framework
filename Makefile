@@ -210,6 +210,7 @@ kind-create-clusters:
 	@echo "creating cluster hub"
 	kind create cluster --name $(HUB_CLUSTER_NAME) $(KIND_ARGS)
 	kind get kubeconfig --name $(HUB_CLUSTER_NAME) > $(PWD)/kubeconfig_$(HUB_CLUSTER_NAME)
+	cp $(PWD)/kubeconfig_$(HUB_CLUSTER_NAME) $(PWD)/kubeconfig_$(HUB_CLUSTER_NAME)_e2e
 	# needed for managed -> hub communication
 	kind get kubeconfig --name $(HUB_CLUSTER_NAME) --internal > $(PWD)/kubeconfig_$(HUB_CLUSTER_NAME)_internal
 	@if [ "$(deployOnHub)" = "true" ]; then\
@@ -220,6 +221,7 @@ kind-create-clusters:
 		kind create cluster --name $(MANAGED_CLUSTER_NAME) $(KIND_ARGS);\
 		kind get kubeconfig --name $(MANAGED_CLUSTER_NAME) > $(PWD)/kubeconfig_$(MANAGED_CLUSTER_NAME);\
 	fi
+	cp $(PWD)/kubeconfig_$(MANAGED_CLUSTER_NAME) $(PWD)/kubeconfig_$(MANAGED_CLUSTER_NAME)_e2e
 
 .PHONY: kind-delete-cluster
 kind-delete-cluster:
