@@ -136,12 +136,11 @@ deploy-community-policy-framework-managed: deploy-policy-framework-managed-crd-o
 
 .PHONY: kind-deploy-policy-propagator
 kind-deploy-policy-propagator:
-	@echo installing policy-propagator on hub
+	# Installing policy-propagator on hub
 	-kubectl create ns $(KIND_HUB_NAMESPACE) --kubeconfig=$(PWD)/kubeconfig_$(HUB_CLUSTER_NAME)
+	# Installing cert-manager (prerequisite for webhook)
 	kubectl apply -f https://github.com/cert-manager/cert-manager/releases/download/${CERT_MANAGER_VERSION}/cert-manager.yaml --kubeconfig=$(PWD)/kubeconfig_$(HUB_CLUSTER_NAME)
-	@echo "wait until cert-manager pods are up"
-	kubectl wait deployment -n cert-manager cert-manager --for condition=Available=True --timeout=180s --kubeconfig=$(PWD)/kubeconfig_$(HUB_CLUSTER_NAME)
-	kubectl wait --for=condition=Ready pod -l app.kubernetes.io/instance=cert-manager -n cert-manager --timeout=180s  --kubeconfig=$(PWD)/kubeconfig_$(HUB_CLUSTER_NAME)
+	kubectl wait deployment -n cert-manager -l app.kubernetes.io/instance=cert-manager --for condition=Available=True --timeout=180s --kubeconfig=$(PWD)/kubeconfig_$(HUB_CLUSTER_NAME)
 	curl https://raw.githubusercontent.com/stolostron/governance-policy-propagator/${RELEASE_BRANCH}/deploy/webhook.yaml | \
 		sed 's/namespace: open-cluster-management/namespace: $(KIND_HUB_NAMESPACE)/g' | \
 	 	kubectl apply -f - --kubeconfig=$(PWD)/kubeconfig_$(HUB_CLUSTER_NAME)
