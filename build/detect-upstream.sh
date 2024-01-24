@@ -25,6 +25,7 @@ importexceptions=(
   "klusterlet-addon-controller"
   "library-e2e-go"
   "library-go"
+  "sdk-go"
 )
 
 parse_imports(){
