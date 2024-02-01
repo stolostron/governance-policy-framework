@@ -196,6 +196,21 @@ var _ = Describe("Test cert policy", func() {
 				"NonCompliant;  1 CA certificates expire in less than 45h0m0s: default:cert-policy-secret",
 			)
 		})
+		It("the messages from history should not repeat", func() {
+			By("Creating ../resources/cert_policy/certificate_disallow-noncompliant.yaml in ns default")
+			_, err := common.OcManaged(
+				"apply", "-f",
+				"../resources/cert_policy/certificate_disallow-noncompliant.yaml",
+				"-n", "default",
+			)
+			Expect(err).ToNot(HaveOccurred())
+			By("the policy should not duplicate messages")
+			Consistently(func() interface{} {
+				msg := common.GetDuplicateHistoryMessage(certPolicyName)
+
+				return msg
+			}, 60, 10).Should(Equal(""))
+		})
 		AfterAll(func() {
 			By("Deleting the resource, policy and events on managed cluster")
 
