@@ -212,6 +212,31 @@ func GetLatestStatusMessage(policyName string, templateIdx int) func() string {
 	}
 }
 
+func GetDuplicateHistoryMessage(policyName string) string {
+	history, _, err := GetHistoryMessages(policyName, 0)
+	if err != nil {
+		return ""
+	}
+
+	historyMsgs := []string{}
+
+	for _, h := range history {
+		historyItem, _ := h.(map[string]interface{})
+		m, _, _ := unstructured.NestedString(historyItem, "message")
+		historyMsgs = append(historyMsgs, m)
+	}
+
+	for i, m := range historyMsgs {
+		if i > 0 {
+			if m == historyMsgs[i-1] {
+				return m
+			}
+		}
+	}
+
+	return ""
+}
+
 func DoHistoryUpdatedTest(policyName string, messages ...string) {
 	By("Getting policy history")
 

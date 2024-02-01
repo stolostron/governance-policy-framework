@@ -725,6 +725,14 @@ var _ = Describe("Test configuration policy enforce", Ordered, func() {
 			)
 			common.DoHistoryUpdatedTest(rolePolicyName, expectedStatusMsgs...)
 		})
+		It("the messages from history should not repeat", func() {
+			By("the policy should not duplicate messages")
+			Consistently(func() interface{} {
+				msg := common.GetDuplicateHistoryMessage(rolePolicyName)
+
+				return msg
+			}, 20, 5).Should(Equal(""))
+		})
 		AfterAll(func() {
 			configPolicyTestCleanUp(rolePolicyName, rolePolicyYaml)
 		})
