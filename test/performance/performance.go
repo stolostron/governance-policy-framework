@@ -115,7 +115,6 @@ func setupMetrics() (token []byte, thanosHost string) {
 			"kubectl", "apply", "-f",
 			path.Join(performanceDir, "resources/setup/metrics-configmap.yaml"),
 		).CombinedOutput()
-
 		if err != nil {
 			klog.Exitf("Error applying metrics configMap: %s", err)
 		}
@@ -164,7 +163,6 @@ func setupMetrics() (token []byte, thanosHost string) {
 	}
 
 	token, err = base64.StdEncoding.DecodeString(strings.Trim(string(tokenB64), "'"))
-
 	if err != nil {
 		klog.Exitf("Error decoding token from secret %s", err)
 	}
@@ -598,8 +596,8 @@ func main() {
 	}
 
 	outpath := path.Join(wd, performanceDir, "output")
-	err = os.MkdirAll(outpath, os.ModePerm)
 
+	err = os.MkdirAll(outpath, os.ModePerm)
 	if err != nil {
 		klog.Errorf("Error creating output directory: %s", err)
 	}
