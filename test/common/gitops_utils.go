@@ -19,6 +19,7 @@ import (
 
 var gitopsTestNamespaces = []string{
 	"grc-e2e-policy-generator",
+	"grc-e2e-helm-policy-generator",
 	"grc-e2e-remote-policy-generator",
 	"policies",
 }
