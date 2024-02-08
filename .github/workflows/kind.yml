@@ -52,7 +52,7 @@ jobs:
     - name: Checkout Component Repository
       # Checkout a specific component when called from another repository
       if: ${{ github.event.repository.name != 'governance-policy-framework' }}
-      uses: actions/checkout@v3
+      uses: actions/checkout@v4
       with:
         # `repository` is inferred as the "caller" repository 
         path: component
@@ -61,7 +61,7 @@ jobs:
     - name: Checkout Policy Framework
       # Checkout a stable branch when called from another repository
       if: ${{ github.event.repository.name != 'governance-policy-framework' }}
-      uses: actions/checkout@v3
+      uses: actions/checkout@v4
       with:
         repository: stolostron/governance-policy-framework
         path: framework
@@ -70,14 +70,14 @@ jobs:
     - name: Checkout Policy Framework
       # Checkout like "usual" when called from this repository
       if: ${{ github.event.repository.name == 'governance-policy-framework' }}
-      uses: actions/checkout@v3
+      uses: actions/checkout@v4
       with:
         # `repository` is inferred as the "caller" repository 
         path: framework
         # `ref` is inferred as the new commit
 
     - name: Set up Go
-      uses: actions/setup-go@v3
+      uses: actions/setup-go@v5
       with:
         go-version-file: framework/go.mod
 
@@ -196,14 +196,14 @@ jobs:
 
     - name: Upload Debug Artifacts
       if: ${{ failure() }}
-      uses: actions/upload-artifact@v3
+      uses: actions/upload-artifact@v4
       with:
         name: fw-kind-debug-${{ matrix.kind }}-${{ matrix.deployOnHub }}${{ matrix.hosted == 'hosted' && '-hosted' || '' }}
         path: framework/e2e-debug.tar.gz
 
     - name: Upload Test Reports
       if: ${{ !cancelled() }}
-      uses: actions/upload-artifact@v3
+      uses: actions/upload-artifact@v4
       with:
         name: fw-kind-report-${{ matrix.kind }}-${{ matrix.deployOnHub }}${{ matrix.hosted == 'hosted' && '-hosted' || '' }}
         path: |
