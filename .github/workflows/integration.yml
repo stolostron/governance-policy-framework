@@ -27,7 +27,7 @@ jobs:
         echo "START_TIME=$(date)" >> "$GITHUB_OUTPUT"
 
     - name: Checkout Policy Framework
-      uses: actions/checkout@v3
+      uses: actions/checkout@v4
 
     - name: Cluster setup
       run: |
@@ -65,7 +65,7 @@ jobs:
 
     - name: Upload Test Reports
       if: ${{ !cancelled() }}
-      uses: actions/upload-artifact@v3
+      uses: actions/upload-artifact@v4
       with:
         name: integration-report
         path: |
@@ -84,7 +84,7 @@ jobs:
       GITHUB_TOKEN: ${{ secrets.WORKFLOW_TOKEN }}
     steps:
     - name: Checkout Policy Framework
-      uses: actions/checkout@v3
+      uses: actions/checkout@v4
     - run: |
         COMMIT_TIME="${{ needs.integration.outputs.START_TIME }}" ./build/main-branch-sync/sync.sh
 
@@ -95,11 +95,11 @@ jobs:
     if: ${{ always() }}
     steps:
     - name: Checkout Policy Framework
-      uses: actions/checkout@v3
+      uses: actions/checkout@v4
       with:
         path: framework
 
-    - uses: actions/download-artifact@v3
+    - uses: actions/download-artifact@v4
       with:
         path: artifacts
 
@@ -113,7 +113,7 @@ jobs:
       run: |
         ./framework/build/periodic-slack-report.sh  
 
-    - uses: slackapi/slack-github-action@v1.23.0
+    - uses: slackapi/slack-github-action@v1.25.0
       env:
         SLACK_WEBHOOK_TYPE: INCOMING_WEBHOOK
         SLACK_WEBHOOK_URL: ${{ secrets.E2E_SLACK_WEBHOOK }}

@@ -14,7 +14,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout Policy Framework
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
         with:
           # `repository` is inferred as the "caller" repository
           path: framework
@@ -94,7 +94,7 @@ jobs:
 
       - name: Send result to Slack
         id: slack
-        uses: slackapi/slack-github-action@v1.23.0
+        uses: slackapi/slack-github-action@v1.25.0
         if: ${{ always() }}
         env:
           SLACK_WEBHOOK_TYPE: INCOMING_WEBHOOK
