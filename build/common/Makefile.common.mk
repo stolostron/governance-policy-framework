@@ -135,7 +135,7 @@ KIND_VERSION ?= latest
 # Set the Kind version tag
 ifdef KIND_VERSION
   ifeq ($(KIND_VERSION), minimum)
-    KIND_ARGS = --image kindest/node:v1.19.16
+    KIND_ARGS = --image kindest/node:v1.25.16
   else ifneq ($(KIND_VERSION), latest)
     KIND_ARGS = --image kindest/node:$(KIND_VERSION)
   endif
