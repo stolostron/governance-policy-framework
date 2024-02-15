@@ -133,7 +133,7 @@ var _ = Describe("GRC: [P1][Sev1][policy-grc] Test the policy-limitmemory policy
 				},
 				defaultTimeoutSeconds*2,
 				1,
-			).Should(BeNil())
+			).ShouldNot(HaveOccurred())
 		})
 
 		AfterAll(func() {

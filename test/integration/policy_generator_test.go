@@ -46,7 +46,7 @@ var _ = Describe("GRC: [P1][Sev1][policy-grc] Test the Policy Generator "+
 			},
 			defaultTimeoutSeconds*4,
 			1,
-		).Should(BeNil())
+		).ShouldNot(HaveOccurred())
 
 		// Perform some basic validation on the generated policySet. There isn't a need to do any more
 		// than this since the policy generator unit tests cover this scenario well. This test is
@@ -71,7 +71,7 @@ var _ = Describe("GRC: [P1][Sev1][policy-grc] Test the Policy Generator "+
 			},
 			defaultTimeoutSeconds*2,
 			1,
-		).Should(BeNil())
+		).ShouldNot(HaveOccurred())
 
 		// Perform some basic validation on the generated policy. There isn't a need to do any more
 		// than this since the policy generator unit tests cover this scenario well. This test is
@@ -91,8 +91,7 @@ var _ = Describe("GRC: [P1][Sev1][policy-grc] Test the Policy Generator "+
 		By("Checking that the policy was propagated to the local-cluster namespace")
 		Eventually(
 			func() error {
-				var err error
-				policy, err = policyRsrc.Namespace("local-cluster").Get(
+				_, err := policyRsrc.Namespace("local-cluster").Get(
 					context.TODO(),
 					namespace+"."+policyName,
 					metav1.GetOptions{},
@@ -102,14 +101,13 @@ var _ = Describe("GRC: [P1][Sev1][policy-grc] Test the Policy Generator "+
 			},
 			defaultTimeoutSeconds*2,
 			1,
-		).Should(BeNil())
+		).ShouldNot(HaveOccurred())
 
 		By("Checking that the configuration policy was created in the local-cluster namespace")
 		configPolicyRsrc := clientHubDynamic.Resource(common.GvrConfigurationPolicy)
 		Eventually(
 			func() error {
-				var err error
-				policy, err = configPolicyRsrc.Namespace("local-cluster").Get(
+				_, err := configPolicyRsrc.Namespace("local-cluster").Get(
 					context.TODO(), policyName, metav1.GetOptions{},
 				)
 
@@ -117,6 +115,6 @@ var _ = Describe("GRC: [P1][Sev1][policy-grc] Test the Policy Generator "+
 			},
 			defaultTimeoutSeconds,
 			1,
-		).Should(BeNil())
+		).ShouldNot(HaveOccurred())
 	})
 })
