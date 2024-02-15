@@ -49,7 +49,7 @@ var _ = Describe("GRC: [P1][Sev1][policy-grc] Test policy set", Ordered, Label("
 				},
 				defaultTimeoutSeconds*2,
 				1,
-			).Should(BeNil())
+			).ShouldNot(HaveOccurred())
 
 			templates, found, err := unstructured.NestedSlice(rootPolicy.Object, "spec", "policy-templates")
 			Expect(err).ShouldNot(HaveOccurred())
@@ -73,7 +73,7 @@ var _ = Describe("GRC: [P1][Sev1][policy-grc] Test policy set", Ordered, Label("
 				},
 				defaultTimeoutSeconds*2,
 				1,
-			).Should(BeNil())
+			).ShouldNot(HaveOccurred())
 
 			By("Checking the status of policy set")
 			yamlPlc := utils.ParseYaml("../resources/policy_set/statuscheck-1.yaml")
@@ -167,7 +167,7 @@ var _ = Describe("GRC: [P1][Sev1][policy-grc] Test policy set", Ordered, Label("
 				},
 				defaultTimeoutSeconds*2,
 				1,
-			).Should(BeNil())
+			).ShouldNot(HaveOccurred())
 
 			By("Checking the status of policy set")
 			yamlPlc := utils.ParseYaml("../resources/policy_set/statuscheck-4.yaml")

@@ -47,7 +47,7 @@ var _ = Describe("GRC: [P1][Sev1][policy-grc] Test the Policy Generator "+
 			},
 			defaultTimeoutSeconds*2,
 			1,
-		).Should(BeNil())
+		).ShouldNot(HaveOccurred())
 
 		templates, found, err := unstructured.NestedSlice(policy.Object, "spec", "policy-templates")
 		Expect(err).ShouldNot(HaveOccurred())
@@ -70,8 +70,7 @@ var _ = Describe("GRC: [P1][Sev1][policy-grc] Test the Policy Generator "+
 		By("Checking that the policy was propagated to the local-cluster namespace")
 		Eventually(
 			func() error {
-				var err error
-				policy, err = policyRsrc.Namespace("local-cluster").Get(
+				_, err := policyRsrc.Namespace("local-cluster").Get(
 					context.TODO(),
 					namespace+"."+policyName,
 					metav1.GetOptions{},
@@ -81,15 +80,14 @@ var _ = Describe("GRC: [P1][Sev1][policy-grc] Test the Policy Generator "+
 			},
 			defaultTimeoutSeconds*2,
 			1,
-		).Should(BeNil())
+		).ShouldNot(HaveOccurred())
 
 		By("Checking that the configuration policies were created in the local-cluster namespace")
 		configPolicyRsrc := clientHubDynamic.Resource(common.GvrConfigurationPolicy)
 		for _, suffix := range []string{"", "2", "3"} {
 			Eventually(
 				func() error {
-					var err error
-					policy, err = configPolicyRsrc.Namespace("local-cluster").Get(
+					_, err := configPolicyRsrc.Namespace("local-cluster").Get(
 						context.TODO(), policyName+suffix, metav1.GetOptions{},
 					)
 
@@ -97,7 +95,7 @@ var _ = Describe("GRC: [P1][Sev1][policy-grc] Test the Policy Generator "+
 				},
 				defaultTimeoutSeconds,
 				1,
-			).Should(BeNil())
+			).ShouldNot(HaveOccurred())
 		}
 	})
 })

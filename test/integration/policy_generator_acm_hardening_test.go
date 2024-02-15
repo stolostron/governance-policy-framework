@@ -71,7 +71,7 @@ var _ = Describe("GRC: [P1][Sev1][policy-grc] Test the ACM Hardening "+
 			},
 			defaultTimeoutSeconds*2,
 			1,
-		).Should(BeNil())
+		).ShouldNot(HaveOccurred())
 
 		// Perform some basic validation on the generated policySet.
 		policies, found, err := unstructured.NestedSlice(policyset.Object, "spec", "policies")
@@ -105,7 +105,7 @@ var _ = Describe("GRC: [P1][Sev1][policy-grc] Test the ACM Hardening "+
 			},
 			defaultTimeoutSeconds*2,
 			1,
-		).Should(BeNil())
+		).ShouldNot(HaveOccurred())
 
 		By("Checking that the policy-managedclusteraddon-available policy " +
 			"was propagated to the local-cluster namespace")
@@ -121,7 +121,7 @@ var _ = Describe("GRC: [P1][Sev1][policy-grc] Test the ACM Hardening "+
 			},
 			defaultTimeoutSeconds*2,
 			1,
-		).Should(BeNil())
+		).ShouldNot(HaveOccurred())
 
 		By("Checking that the policy reports configuration policy was created in the local-cluster namespace")
 		configPolicyRsrc := clientHubDynamic.Resource(common.GvrConfigurationPolicy)
@@ -135,6 +135,6 @@ var _ = Describe("GRC: [P1][Sev1][policy-grc] Test the ACM Hardening "+
 			},
 			defaultTimeoutSeconds*2,
 			1,
-		).Should(BeNil())
+		).ShouldNot(HaveOccurred())
 	})
 })

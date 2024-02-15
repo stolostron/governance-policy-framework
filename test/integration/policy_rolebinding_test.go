@@ -121,7 +121,7 @@ var _ = Describe("GRC: [P1][Sev1][policy-grc] Test the policy-rolebinding policy
 				},
 				defaultTimeoutSeconds*2,
 				1,
-			).Should(BeNil())
+			).ShouldNot(HaveOccurred())
 		})
 
 		AfterAll(func() {
