@@ -15,6 +15,7 @@ vendor/
 *-errors.log
 install.sh
 
+test/resources/policy_generator/helm-kustomization/base/charts/
 governance-policy-addon-controller/
 build/**/stolostron/
 build/**/open-cluster-management-io/

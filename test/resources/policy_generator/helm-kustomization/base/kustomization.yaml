@@ -1,0 +1,5 @@
+helmCharts:
+- valuesInline:
+    enableLookup: true
+  name: helm
+  repo: https://github.com/dhaiducek/grc-e2e-policy-generator-test/raw/package-helm/helm/
