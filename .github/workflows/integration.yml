@@ -35,8 +35,7 @@ jobs:
         ./build/download-clis.sh
         make e2e-dependencies
         oc login ${{ secrets.E2E_URL }} --insecure-skip-tls-verify=true -u ${{ secrets.E2E_USER }} -p ${{ secrets.E2E_PASSWORD }}
-        cp ${HOME}/.kube/config ./kubeconfig_hub
-        cp ${HOME}/.kube/config ./kubeconfig_managed
+        make e2e-setup-kube
         echo "::endgroup::"
 
         echo "::group::Patch images to latest"

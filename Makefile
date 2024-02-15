@@ -78,6 +78,12 @@ fmt:
 ############################################################
 # e2e test section
 ############################################################
+.PHONY: e2e-setup-kube
+e2e-setup-kube: KUBECONFIG ?= $(HOME)/.kube/config
+e2e-setup-kube:
+	cp $(KUBECONFIG) kubeconfig_$(HUB_CLUSTER_NAME)
+	cp $(KUBECONFIG) kubeconfig_$(MANAGED_CLUSTER_NAME)
+
 .PHONY: kind-bootstrap-cluster
 kind-bootstrap-cluster: kind-create-clusters install-crds install-resources kind-deploy-policy-framework kind-deploy-policy-controllers
 
