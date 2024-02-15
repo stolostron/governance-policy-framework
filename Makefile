@@ -62,6 +62,7 @@ clean::
 	-rm kubeconfig_*
 	-rm -r test-output/
 	-rm -r vendor/
+	-rm -r test/resources/policy_generator/helm-kustomization/base/charts/
 	find . -type d \( -name "stolostron" -o -name "open-cluster-management-io" \) -exec rm -rf {} +
 
 ############################################################
@@ -263,7 +264,7 @@ IS_HOSTED ?= false
 MANAGED_CLUSTER_NAMESPACE ?= $(MANAGED_CLUSTER_NAME)
 
 .PHONY: e2e-test
-e2e-test:
+e2e-test: e2e-dependencies
 	$(GINKGO) -v $(TEST_ARGS) test/e2e -- -cluster_namespace=$(MANAGED_CLUSTER_NAMESPACE) -k8s_client=$(K8SCLIENT) -is_hosted=$(IS_HOSTED) -cluster_namespace_on_hub=$(CLUSTER_NAMESPACE_ON_HUB)
 
 .PHONY: e2e-test-hosted
@@ -348,7 +349,7 @@ e2e-debug-dump:
 	done
 
 .PHONY: integration-test
-integration-test:
+integration-test: e2e-dependencies
 	$(GINKGO) -v $(TEST_ARGS) test/integration -- -cluster_namespace=$(MANAGED_CLUSTER_NAMESPACE) -k8s_client=$(K8SCLIENT) -is_hosted=$(IS_HOSTED) -cluster_namespace_on_hub=$(MANAGED_CLUSTER_NAMESPACE) -patch_decisions=false
 
 #hosted

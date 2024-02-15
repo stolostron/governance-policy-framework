@@ -1,0 +1,22 @@
+apiVersion: policy.open-cluster-management.io/v1
+kind: PolicyGenerator
+metadata:
+  name: e2e-grc-policy-generator
+placementBindingDefaults:
+  name: e2e-grc-placement-binding
+policyDefaults:
+  namespace: grc-e2e-helm-policy-generator
+  consolidateManifests: false
+  placement:
+    labelSelector:
+      matchExpressions:
+        - key: local-cluster
+          operator: In
+          values:
+            - "true"
+policies:
+  - name: e2e-grc-helm-policy-app
+    manifests:
+      - path: base/
+        complianceType: musthave
+        severity: critical
