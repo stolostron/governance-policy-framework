@@ -292,11 +292,11 @@ e2e-debug-hub:
 	-kubectl get leases -n $(KIND_HUB_NAMESPACE) --kubeconfig=$(PWD)/kubeconfig_$(HUB_CLUSTER_NAME) > $(DEBUG_DIR)/hub_get_leases_$(KIND_HUB_NAMESPACE).log
 	-kubectl describe pods -n $(KIND_HUB_NAMESPACE) --kubeconfig=$(PWD)/kubeconfig_$(HUB_CLUSTER_NAME) > $(DEBUG_DIR)/hub_describe_pods_$(KIND_HUB_NAMESPACE).log
 	-kubectl get managedclusteraddon -A -o yaml --kubeconfig=$(PWD)/kubeconfig_$(HUB_CLUSTER_NAME) > $(DEBUG_DIR)/hub_managedclusteraddon.yaml
-	-for POD in $$(kubectl get pods -n $(KIND_HUB_NAMESPACE) -l name=governance-policy-propagator -o name --kubeconfig=$(PWD)/kubeconfig_$(HUB_CLUSTER_NAME)); do \
+	-for POD in $$(kubectl get pods -n $(KIND_HUB_NAMESPACE) -l "app=multicluster-operators-hub-subscription" -o name --kubeconfig=$(PWD)/kubeconfig_$(HUB_CLUSTER_NAME)); do \
 		PODNAME=$${POD##"pod/"}; \
-	  	kubectl logs $${PODNAME} -c governance-policy-propagator -n $(KIND_HUB_NAMESPACE) --kubeconfig=$(PWD)/kubeconfig_$(HUB_CLUSTER_NAME) > $(DEBUG_DIR)/hub_logs_$${PODNAME}.log; \
+	  	kubectl logs $${PODNAME} -n $(KIND_HUB_NAMESPACE) --kubeconfig=$(PWD)/kubeconfig_$(HUB_CLUSTER_NAME) > $(DEBUG_DIR)/hub_logs_$${PODNAME}.log; \
 	done
-	-for POD in $$(kubectl get pods -n $(KIND_HUB_NAMESPACE) -l name=governance-policy-addon-controller -o name --kubeconfig=$(PWD)/kubeconfig_$(HUB_CLUSTER_NAME)); do \
+	-for POD in $$(kubectl get pods -n $(KIND_HUB_NAMESPACE) -l "name in (governance-policy-propagator,governance-policy-addon-controller)" -o name --kubeconfig=$(PWD)/kubeconfig_$(HUB_CLUSTER_NAME)); do \
 		PODNAME=$${POD##"pod/"}; \
 	  	kubectl logs $${PODNAME} -n $(KIND_HUB_NAMESPACE) --kubeconfig=$(PWD)/kubeconfig_$(HUB_CLUSTER_NAME) > $(DEBUG_DIR)/hub_logs_$${PODNAME}.log; \
 	done
