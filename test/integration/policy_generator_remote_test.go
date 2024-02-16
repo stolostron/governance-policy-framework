@@ -29,6 +29,21 @@ var _ = Describe("GRC: [P1][Sev1][policy-grc] Test the Policy Generator "+
 			namespace,
 		)
 		Expect(err).ShouldNot(HaveOccurred())
+
+		Eventually(func(g Gomega) {
+			appSubRsrc, err := clientHubDynamic.Resource(common.GvrSubscription).Namespace(namespace).Get(
+				context.TODO(), "grc-e2e-remote-policy-generator-subscription", metav1.GetOptions{},
+			)
+			g.Expect(err).ShouldNot(HaveOccurred(), "The subscription should exist.")
+
+			appSubPhase, found, err := unstructured.NestedString(appSubRsrc.Object, "status", "phase")
+			g.Expect(err).ShouldNot(HaveOccurred(), "The subscription status should be parseable.")
+			g.Expect(found).Should(BeTrue(), "The subscription status should have a phase.")
+			g.Expect(appSubPhase).Should(Equal("Propagated"), "The subscription should propagate successfully.")
+		},
+			defaultTimeoutSeconds,
+			1,
+		).Should(Succeed())
 	})
 
 	It("Validates the propagated policies", func() {

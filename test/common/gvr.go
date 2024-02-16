@@ -67,6 +67,11 @@ var (
 		Version:  "v1",
 		Resource: "placementrules",
 	}
+	GvrSubscription = schema.GroupVersionResource{
+		Group:    "apps.open-cluster-management.io",
+		Version:  "v1",
+		Resource: "subscriptions",
+	}
 	GvrK8sRequiredLabels = schema.GroupVersionResource{
 		Group:    "constraints.gatekeeper.sh",
 		Version:  "v1beta1",
