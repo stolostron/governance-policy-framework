@@ -9,8 +9,8 @@ import (
 
 	. "github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
+	k8serrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	policiesv1 "open-cluster-management.io/governance-policy-propagator/api/v1"
 
 	"github.com/stolostron/governance-policy-framework/test/common"
@@ -18,21 +18,21 @@ import (
 
 var _ = Describe("GRC: [P1][Sev1][policy-grc] Test policy_governance_info metric", Ordered, Label("BVT"), func() {
 	const (
-		propagatorMetricsSelector = "component=ocm-policy-propagator"
-		metricName                = "policy_governance_info"
-		metricsAccName            = "grc-framework-sa-metrics"
-		metricsTokenYaml          = "../resources/policy_info_metric/metrics_token.yaml"
-		metricsTokenName          = "grc-framework-sa-metrics-token-manual"
-		metricsRoleName           = "grc-framework-metrics-reader"
-		metricsRoleYaml           = "../resources/policy_info_metric/metrics_role.yaml"
-		noMetricsAccName          = "grc-framework-sa-nometrics"
-		noMetricsTokenYaml        = "../resources/policy_info_metric/nometrics_token.yaml"
-		noMetricsTokenName        = "grc-framework-sa-nometrics-token-manual"
-		roleBindingName           = "grc-framework-metrics-reader-binding"
-		compliantPolicyYaml       = "../resources/policy_info_metric/compliant.yaml"
-		compliantPolicyName       = "policy-metric-compliant"
-		noncompliantPolicyYaml    = "../resources/policy_info_metric/noncompliant.yaml"
-		noncompliantPolicyName    = "policy-metric-noncompliant"
+		metricsSvcName         = "grc-policy-propagator-metrics"
+		metricName             = "policy_governance_info"
+		metricsAccName         = "grc-framework-sa-metrics"
+		metricsTokenYaml       = "../resources/policy_info_metric/metrics_token.yaml"
+		metricsTokenName       = "grc-framework-sa-metrics-token-manual"
+		metricsRoleName        = "grc-framework-metrics-reader"
+		metricsRoleYaml        = "../resources/policy_info_metric/metrics_role.yaml"
+		noMetricsAccName       = "grc-framework-sa-nometrics"
+		noMetricsTokenYaml     = "../resources/policy_info_metric/nometrics_token.yaml"
+		noMetricsTokenName     = "grc-framework-sa-nometrics-token-manual"
+		roleBindingName        = "grc-framework-metrics-reader-binding"
+		compliantPolicyYaml    = "../resources/policy_info_metric/compliant.yaml"
+		compliantPolicyName    = "policy-metric-compliant"
+		noncompliantPolicyYaml = "../resources/policy_info_metric/noncompliant.yaml"
+		noncompliantPolicyName = "policy-metric-noncompliant"
 	)
 
 	var (
@@ -43,57 +43,35 @@ var _ = Describe("GRC: [P1][Sev1][policy-grc] Test policy_governance_info metric
 
 	It("Sets up the metrics service endpoint for tests", func() {
 		By("Ensuring the metrics service exists")
-		svcList, err := clientHub.CoreV1().Services(ocmNS).List(
-			context.TODO(),
-			metav1.ListOptions{
-				LabelSelector: propagatorMetricsSelector,
-			},
+		_, err := clientHub.CoreV1().Services(ocmNS).Get(
+			context.TODO(), metricsSvcName, metav1.GetOptions{},
 		)
 		Expect(err).ToNot(HaveOccurred())
-		Expect(svcList.Items).To(HaveLen(1))
-		metricsSvc := svcList.Items[0]
 
 		By("Checking for an existing metrics route")
-		var routeList *unstructured.UnstructuredList
-		Eventually(func(g Gomega) []unstructured.Unstructured {
-			var err error
-			routeList, err = clientHubDynamic.Resource(common.GvrRoute).Namespace(ocmNS).List(
-				context.TODO(),
-				metav1.ListOptions{
-					LabelSelector: propagatorMetricsSelector,
-				},
-			)
-			g.Expect(err).ToNot(HaveOccurred())
-
-			return routeList.Items
-		}, defaultTimeoutSeconds, 1).Should(Or(HaveLen(0), HaveLen(1)))
-
-		if len(routeList.Items) == 0 {
+		metricsRoute, err := clientHubDynamic.Resource(common.GvrRoute).Namespace(ocmNS).Get(
+			context.TODO(), metricsSvcName, metav1.GetOptions{},
+		)
+		if !k8serrors.IsNotFound(err) {
+			Expect(err).ToNot(HaveOccurred())
+		} else {
 			By("Exposing the metrics service as a route")
 			_, err = common.OcHub(
 				"create",
 				"route",
 				"reencrypt",
-				"--service="+metricsSvc.Name,
+				"--service="+metricsSvcName,
 				"--namespace="+ocmNS,
 			)
 			Expect(err).ToNot(HaveOccurred())
 
-			Eventually(func(g Gomega) []unstructured.Unstructured {
-				var err error
-				routeList, err = clientHubDynamic.Resource(common.GvrRoute).Namespace(ocmNS).List(
-					context.TODO(),
-					metav1.ListOptions{
-						LabelSelector: propagatorMetricsSelector,
-					},
-				)
-				g.Expect(err).ToNot(HaveOccurred())
-
-				return routeList.Items
-			}, defaultTimeoutSeconds, 1).Should(HaveLen(1))
+			metricsRoute, err = clientHubDynamic.Resource(common.GvrRoute).Namespace(ocmNS).Get(
+				context.TODO(), metricsSvcName, metav1.GetOptions{},
+			)
+			Expect(err).ToNot(HaveOccurred())
 		}
 
-		routeHost := routeList.Items[0].Object["spec"].(map[string]interface{})["host"].(string)
+		routeHost := metricsRoute.Object["spec"].(map[string]interface{})["host"].(string)
 		By("Got the metrics route url: " + routeHost)
 		propagatorMetricsURL = "https://" + routeHost + "/metrics"
 	})
@@ -246,7 +224,7 @@ var _ = Describe("GRC: [P1][Sev1][policy-grc] Test policy_governance_info metric
 		Expect(err).ToNot(HaveOccurred())
 		_, err = common.OcHub("delete", "-f", noncompliantPolicyYaml, "-n", userNamespace, "--ignore-not-found")
 		Expect(err).ToNot(HaveOccurred())
-		_, err = common.OcHub("delete", "route", "-n", ocmNS, "-l", propagatorMetricsSelector, "--ignore-not-found")
+		_, err = common.OcHub("delete", "route", "-n", ocmNS, metricsSvcName, "--ignore-not-found")
 		Expect(err).ToNot(HaveOccurred())
 		_, err = common.OcHub("delete", "clusterrole", metricsRoleName, "--ignore-not-found")
 		Expect(err).ToNot(HaveOccurred())
