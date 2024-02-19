@@ -87,7 +87,7 @@ done
 
 # Update GitHub tokens for GitHub Actions
 echo "Setting GitHub token on GitHub repos..."
-for REPO in "stolostron/governance-policy-framework stolostron/gatekeeper-operator"; do
+for REPO in stolostron/governance-policy-framework stolostron/gatekeeper-operator; do
   gh secret set WORKFLOW_USER -b ${GITHUB_BOT_USER} --repo ${REPO}
   gh secret set WORKFLOW_TOKEN -b ${BUILDS_GH_TOKEN} --repo ${REPO}
 done
