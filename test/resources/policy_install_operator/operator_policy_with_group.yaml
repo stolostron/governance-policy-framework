@@ -1,0 +1,53 @@
+apiVersion: policy.open-cluster-management.io/v1
+kind: Policy
+metadata:
+  name: test-op-43545
+  annotations:
+    policy.open-cluster-management.io/description: Test rhacm4k-43545
+spec:
+  disabled: false
+  remediationAction: inform
+  policy-templates:
+    - objectDefinition:
+        apiVersion: policy.open-cluster-management.io/v1beta1
+        kind: OperatorPolicy
+        metadata:
+          name: operator-policy-43545
+        spec:
+          remediationAction: inform
+          severity: medium
+          complianceType: musthave
+          operatorGroup:
+            name: grcqeopgroup-43545
+            namespace: grcqeoptest-ns-43545
+            targetNamespaces:
+                - grcqeoptest-ns-43545
+          subscription:
+            channel: stable-3.8
+            name: quay-operator
+            namespace: grcqeoptest-ns-43545
+            installPlanApproval: Automatic
+            source: redhat-operators
+            sourceNamespace: openshift-marketplace
+            startingCSV: quay-operator.v3.8.1
+---
+apiVersion: policy.open-cluster-management.io/v1
+kind: PlacementBinding
+metadata:
+  name: test-op-43545-plb
+placementRef:
+  name: test-op-43545-plr
+  kind: PlacementRule
+  apiGroup: apps.open-cluster-management.io
+subjects:
+- name: test-op-43545
+  kind: Policy
+  apiGroup: policy.open-cluster-management.io
+---
+apiVersion: apps.open-cluster-management.io/v1
+kind: PlacementRule
+metadata:
+  name: test-op-43545-plr
+spec:
+  clusterSelector:
+    matchExpressions: []
