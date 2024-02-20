@@ -42,6 +42,26 @@ var (
 		Version:  "v1",
 		Resource: "configurationpolicies",
 	}
+	GvrOperatorPolicy = schema.GroupVersionResource{
+		Group:    "policy.open-cluster-management.io",
+		Version:  "v1beta1",
+		Resource: "operatorpolicies",
+	}
+	GvrSubscriptionOLM = schema.GroupVersionResource{
+		Group:    "operators.coreos.com",
+		Version:  "v1alpha1",
+		Resource: "subscriptions",
+	}
+	GvrOperatorGroup = schema.GroupVersionResource{
+		Group:    "operators.coreos.com",
+		Version:  "v1",
+		Resource: "operatorgroups",
+	}
+	GvrClusterServiceVersion = schema.GroupVersionResource{
+		Group:    "operators.coreos.com",
+		Version:  "v1alpha1",
+		Resource: "clusterserviceversions",
+	}
 	GvrCertPolicy = schema.GroupVersionResource{
 		Group:    "policy.open-cluster-management.io",
 		Version:  "v1",
