@@ -192,6 +192,43 @@ func GetHistoryMessages(policyName string, templateIdx int) ([]interface{}, bool
 	return history, found, err
 }
 
+func GetOpPolicyCompMsg(policyName string) func() string {
+	return func() string {
+		unstructOpPol := utils.GetWithTimeout(
+			ClientManagedDynamic,
+			GvrOperatorPolicy,
+			policyName,
+			ClusterNamespace,
+			true,
+			DefaultTimeoutSeconds,
+		)
+		Expect(unstructOpPol).NotTo(BeNil())
+
+		condList, found, err := unstructured.NestedSlice(
+			unstructOpPol.Object,
+			"status",
+			"conditions",
+		)
+		if err != nil || !found {
+			return ""
+		}
+
+		for _, cond := range condList {
+			condMap, ok := cond.(map[string]interface{})
+			if !ok {
+				continue
+			}
+
+			condType, _, _ := unstructured.NestedString(condMap, "type")
+			if condType == "Compliant" {
+				return fmt.Sprintf("%v", condMap["message"])
+			}
+		}
+
+		return ""
+	}
+}
+
 // GetLatestStatusMessage returns the most recent status message for the given policy template.
 // If the policy, template, or status do not exist for any reason, an empty string is returned.
 func GetLatestStatusMessage(policyName string, templateIdx int) func() string {
