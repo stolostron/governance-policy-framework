@@ -57,10 +57,10 @@ jobs:
 
           echo "ACTION_RESULT=$([[ "${{ env.CI_EXIT_CODE }}" == 0 ]] && [[ "${{ env.CODEBASE_EXIT_CODE }}" == 0 ]] && echo 0 || echo 1)" >> ${GITHUB_ENV}
           if [[ -f summary-ci-errors.log ]]; then
-            echo "CI_SUMMARY=\n\`\`\`\n$(awk '{printf "%s\\n", $0}' summary-ci-errors.log)\`\`\`" >> ${GITHUB_ENV}
+            echo "CI_SUMMARY=\n\`\`\`\n$(awk '{printf "%s\\n", $0}' summary-ci-errors.log | sed 's/"/\\"/g')\`\`\`" >> ${GITHUB_ENV}
           fi
           if [[ -f summary-codebase-errors.log ]]; then
-            echo "CODEBASE_SUMMARY=\n\`\`\`\n$(awk '{printf "%s\\n", $0}' summary-codebase-errors.log)\`\`\`" >> ${GITHUB_ENV}
+            echo "CODEBASE_SUMMARY=\n\`\`\`\n$(awk '{printf "%s\\n", $0}' summary-codebase-errors.log | sed 's/"/\\"/g')\`\`\`" >> ${GITHUB_ENV}
           fi
 
           CI_ICON=${SUCCESS_ICON}
