@@ -81,8 +81,8 @@ fmt:
 .PHONY: e2e-setup-kube
 e2e-setup-kube: KUBECONFIG ?= $(HOME)/.kube/config
 e2e-setup-kube:
-	cp $(KUBECONFIG) kubeconfig_$(HUB_CLUSTER_NAME)
-	cp $(KUBECONFIG) kubeconfig_$(MANAGED_CLUSTER_NAME)
+	cp $(KUBECONFIG) kubeconfig_hub
+	cp $(KUBECONFIG) kubeconfig_managed
 
 .PHONY: kind-bootstrap-cluster
 kind-bootstrap-cluster: kind-create-clusters install-crds install-resources kind-deploy-policy-framework kind-deploy-policy-controllers
