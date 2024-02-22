@@ -1,0 +1,105 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: compliance-history-postgres
+  labels:
+    app: compliance-history-postgres
+  annotations:
+    service.beta.openshift.io/serving-cert-secret-name: compliance-history-postgres-cert
+spec:
+  selector:
+    app: compliance-history-postgres
+  ports:
+    - name: postgres
+      port: 5432
+      targetPort: 5432
+  type: ClusterIP
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  labels:
+    app: compliance-history-postgres
+  name: compliance-history-postgres
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: compliance-history-postgres
+  template:
+    metadata:
+      labels:
+        app: compliance-history-postgres
+    spec:
+      containers:
+      - command:
+        - run-postgresql
+        - -c
+        - ssl=on
+        - -c
+        - ssl_cert_file=/etc/ssl/certs/tls.crt
+        - -c
+        - ssl_key_file=/etc/ssl/certs/tls.key
+        - -c
+        - ssl_ca_file=/etc/ssl/certs/tls.crt
+        - -c
+        - log_statement=all
+        - -c
+        - log_destination=stderr
+        env:
+        - name: POSTGRESQL_DATABASE
+          value: grc
+        - name: POSTGRESQL_USER
+          value: grc
+        - name: POSTGRESQL_PASSWORD
+          value: grc
+        image: registry.redhat.io/rhel8/postgresql-13:latest
+        imagePullPolicy: Always
+        name: compliance-history-postgres
+        ports:
+        - containerPort: 5432
+          protocol: TCP
+        resources:
+          limits:
+            cpu: 60m
+            memory: 512Mi
+          requests:
+            cpu: 30m
+            memory: 128Mi
+        securityContext:
+          allowPrivilegeEscalation: false
+          capabilities:
+            drop:
+            - ALL
+          privileged: false
+          runAsNonRoot: true
+        terminationMessagePath: /dev/termination-log
+        terminationMessagePolicy: File
+        volumeMounts:
+        - mountPath: /etc/ssl/certs
+          name: postgres-ssl-certs
+          readOnly: true
+        - mountPath: /var/lib/pgsql/data
+          name: postgres-db
+          subPath: data
+      restartPolicy: Always
+      securityContext:
+        runAsNonRoot: true
+        seccompProfile:
+          type: RuntimeDefault
+      terminationGracePeriodSeconds: 60
+      volumes:
+      - name: postgres-ssl-certs
+        secret:
+          defaultMode: 288
+          secretName: compliance-history-postgres-cert
+      - emptyDir:
+          sizeLimit: 250Mi
+        name: postgres-db
+---
+apiVersion: v1
+kind: Secret
+metadata:
+  name: governance-policy-database
+stringData:
+  connectionURL: postgres://grc:grc@compliance-history-postgres/grc?sslmode=require
