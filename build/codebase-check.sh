@@ -212,8 +212,8 @@ for repo in ${REPOS}; do
 	fi
 done
 
-# Check CRDs for default branch and latest release
-for release in $DEFAULT_BRANCH ${CHECK_RELEASES##* }; do
+# Check CRDs for default branch and supported releases
+for release in ${DEFAULT_BRANCH} ${CHECK_RELEASES}; do
 	crdDiff "${release}"
 	if [ $? -eq 1 ]; then
 		rc=2

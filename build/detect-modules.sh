@@ -2,7 +2,7 @@
 
 DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" >/dev/null 2>&1 && pwd )"
 
-RELEASES="2.7 2.8 2.9 2.10"
+RELEASES="$(cat CURRENT_VERSION; echo; cat CURRENT_SUPPORTED_VERSIONS)"
 
 if [[ -z "${1}" ]]; then
   echo "Error: A module query argument is required to run this script."
