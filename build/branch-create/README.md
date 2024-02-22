@@ -10,13 +10,23 @@
 - To disable fast-forwarding for GRC, set the `FAST_FORWARD` GitHub Actions variable in this repository 
   to "false". (This is not necessary when moving to a new release version.)
 
-1. Update the version:
-   - Update the `CURRENT_VERSION` file to the new release version. (Do not merge this until step 2 is merged.)
+1. Update the version information at the base of the repo (Do not merge this until step 2 is merged.):
+   ```shell
+   export OLD_VERSION=$(cat CURRENT_VERSION)
+   printf vX.Y > CURRENT_VERSION
+   mv CURRENT_SUPPORTED_VERSIONS CURRENT_SUPPORTED_VERSIONS.bk
+   { echo "${OLD_VERSION}"; head -2 CURRENT_SUPPORTED_VERSIONS.bk; } > CURRENT_SUPPORTED_VERSIONS
+   rm CURRENT_SUPPORTED_VERSIONS.bk
+   ```
+   These commands script will:
+   - Export the previous release version (also used in step 2)
+   - Update the `CURRENT_VERSION` file to the new release version
+   - Update `CURRENT_SUPPORTED_VERSION` with the new set of supported versions
 2. Update existing and create new Prow configurations for the new version (see
    [CICD docs](https://github.com/stolostron/cicd-docs/blob/main/prow) for details on
    Prow):
-   - Export the previous release version: `export OLD_VERSION=<previous-version>`
-   - Copy the absolute path to `update-release.sh`: `ls $PWD/update-release.sh`
+   - Make sure `OLD_VERSION` is set to the previous release version.
+   - Copy the absolute path to `update-release.sh`: `ls $PWD/build/branch-create/update-release.sh`
    - Change to the local directory for the [`release`](https://github.com/openshift/release) repo
    - Run the `update-release.sh` script using the path you copied.
      - **Notes**: The `update-release.sh` script will:
