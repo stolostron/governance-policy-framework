@@ -18,3 +18,4 @@
 | [branch-create/](./branch-create/)        | Scripts for cutting new release branches and configurations                                          |
 | [main-branch-sync/](./main-branch-sync/)  | Scripts for maintaining cross-repo `main` branches and fast-forwarding to the current release branch |
 | [detect-modules.sh](./detect-modules.sh) | Script to build binaries and check for Go modules in the built binary across all repos               |
+| [pull-requests.sh](./pull-requests.sh) | Script to find open PRs for the squad |
