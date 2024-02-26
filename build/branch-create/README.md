@@ -12,7 +12,7 @@
 
 1. Update the version information at the base of the repo (Do not merge this until step 2 is merged.):
    ```shell
-   export OLD_VERSION=$(cat CURRENT_VERSION)
+   OLD_VERSION=$(cat CURRENT_VERSION)
    printf vX.Y > CURRENT_VERSION
    mv CURRENT_SUPPORTED_VERSIONS CURRENT_SUPPORTED_VERSIONS.bk
    { echo "${OLD_VERSION}"; head -2 CURRENT_SUPPORTED_VERSIONS.bk; } > CURRENT_SUPPORTED_VERSIONS
@@ -25,7 +25,6 @@
 2. Update existing and create new Prow configurations for the new version (see
    [CICD docs](https://github.com/stolostron/cicd-docs/blob/main/prow) for details on
    Prow):
-   - Make sure `OLD_VERSION` is set to the previous release version.
    - Copy the absolute path to `update-release.sh`: `ls $PWD/build/branch-create/update-release.sh`
    - Change to the local directory for the [`release`](https://github.com/openshift/release) repo
    - Run the `update-release.sh` script using the path you copied.
