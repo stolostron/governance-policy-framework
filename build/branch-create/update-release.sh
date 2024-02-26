@@ -55,13 +55,19 @@ RELEASE_RULES_PATH="${RELEASE_ROOT_PATH}/core-services/prow/02_config"
 
 echo "===== Checking for environment variables ====="
 # Version checks
-NEW_VERSION=$(cat ${SCRIPT_DIR}/../CURRENT_VERSION)
+NEW_VERSION=$(cat ${SCRIPT_DIR}/../../CURRENT_VERSION)
+OLD_VERSION=$(head -1 ${SCRIPT_DIR}/../../CURRENT_SUPPORTED_VERSIONS)
+
 if [ -z "${OLD_VERSION}" ]; then
   echo "error: OLD_VERSION is empty"
   exit 1
 fi
-if [ -z "${NEW_VERSION}" ] || [ "${NEW_VERSION}" == "${OLD_VERSION}" ]; then
-  echo "error: NEW_VERSION ('${NEW_VERSION}') is empty or is equal to OLD_VERSION ('${OLD_VERSION}')"
+if [ -z "${NEW_VERSION}" ]; then
+  echo "error: NEW_VERSION is empty"
+  exit 1
+fi
+if [ "${NEW_VERSION}" == "${OLD_VERSION}" ]; then
+  echo "error: NEW_VERSION ('${NEW_VERSION}') is equal to OLD_VERSION ('${OLD_VERSION}')"
   exit 1
 fi
 
@@ -100,14 +106,14 @@ for dirpath in ${COMPONENT_LIST}; do
     yq e 'del(.zz_generated_metadata)' -i ${NEW_FILENAME}
 
     # Update the 'promotion' stanza
-    if [ "$(yq e '.promotion.name' ${NEW_FILENAME})" != "null" ]; then
+    if [ "$(yq e '.promotion.to[0].name' ${NEW_FILENAME})" != "null" ]; then
       # - For the new version:
-      ver="${NEW_VERSION}" yq e '.promotion.name=strenv(ver)' -i ${NEW_FILENAME}
+      ver="${NEW_VERSION}" yq e '.promotion.to[0].name=strenv(ver)' -i ${NEW_FILENAME}
       yq e '.promotion.disabled=true' -i ${NEW_FILENAME}
       # - For the 'main' branch:
-      ver="${NEW_VERSION}" yq e '.promotion.name=strenv(ver)' -i ${FILE_PREFIX}-main.yaml
+      ver="${NEW_VERSION}" yq e '.promotion.to[0].name=strenv(ver)' -i ${FILE_PREFIX}-main.yaml
       # - For the old version, re-enable promotion:
-      yq e 'del(.promotion.disabled)' -i ${OLD_FILENAME}
+      yq e 'del(.promotion.to[0].disabled)' -i ${OLD_FILENAME}
     fi
 
     # Update the 'latest-image-mirror' tests item
