@@ -80,6 +80,7 @@ jobs:
       uses: actions/setup-go@v5
       with:
         go-version-file: framework/go.mod
+        cache-dependency-path: framework/go.sum
 
     - name: Verify modules
       if: ${{ github.event.repository.name == 'governance-policy-framework' }}
