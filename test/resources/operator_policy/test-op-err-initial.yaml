@@ -1,0 +1,49 @@
+apiVersion: policy.open-cluster-management.io/v1
+kind: Policy
+metadata:
+  name: test-op-err-initial
+  # namespace: default
+  annotations:
+    policy.open-cluster-management.io/description: Test rhacm4k-43568
+spec:
+  disabled: false
+  remediationAction: inform
+  policy-templates:
+    - objectDefinition:
+        apiVersion: policy.open-cluster-management.io/v1beta1
+        kind: OperatorPolicy
+        metadata:
+          name: test-op-err-initial
+        spec:
+          remediationAction: inform
+          severity: medium
+          complianceType: musthave
+          subscription:
+            channel: stable-3.8
+            name: quay-operator
+            namespace: grcqeoptest-notcreated
+            installPlanApproval: Automatic
+            source: redhat-operators
+            sourceNamespace: openshift-marketplace
+            startingCSV: quay-operator.v3.8.1
+---
+apiVersion: policy.open-cluster-management.io/v1
+kind: PlacementBinding
+metadata:
+  name: test-op-err-initial-plb
+placementRef:
+  name: test-op-err-initial-plr
+  kind: PlacementRule
+  apiGroup: apps.open-cluster-management.io
+subjects:
+- name: test-op-err-initial
+  kind: Policy
+  apiGroup: policy.open-cluster-management.io
+---
+apiVersion: apps.open-cluster-management.io/v1
+kind: PlacementRule
+metadata:
+  name: test-op-err-initial-plr
+spec:
+  clusterSelector:
+    matchExpressions: []
