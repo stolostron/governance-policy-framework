@@ -180,19 +180,19 @@ var _ = Describe("Test cert policy", func() {
 		It("the messages from history should match", func() {
 			By("the policy should have matched history after all these test")
 			common.DoHistoryUpdatedTest(certPolicyName,
-				"Compliant",
+				"Compliant; All evaluated certificates are compliant",
 				"NonCompliant;  1 certificates defined SAN entries do not match pattern Allowed: "+
 					".*.test.com Disallowed: [\\*]: default:cert-policy-secret",
-				"Compliant",
+				"Compliant; All evaluated certificates are compliant",
 				"NonCompliant;  1 certificates defined SAN entries do not match pattern Allowed: "+
 					".*.test.com Disallowed: [\\*]: default:cert-policy-secret",
-				"Compliant",
+				"Compliant; All evaluated certificates are compliant",
 				"NonCompliant;  1 CA certificates exceed the maximum duration of 26280h0m0s: "+
 					"default:cert-policy-secret",
-				"Compliant",
+				"Compliant; All evaluated certificates are compliant",
 				"NonCompliant;  1 certificates exceed the maximum duration of 9528h0m0s: "+
 					"default:cert-policy-secret",
-				"Compliant",
+				"Compliant; All evaluated certificates are compliant",
 				"NonCompliant;  1 CA certificates expire in less than 45h0m0s: default:cert-policy-secret",
 			)
 		})
