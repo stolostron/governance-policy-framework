@@ -172,12 +172,6 @@ var _ = Describe("GRC: [P1][Sev1][policy-grc] Test the compliance history API", 
 		if !k8serrors.IsNotFound(err) {
 			Expect(err).ToNot(HaveOccurred())
 		}
-
-		By("Restarting the Propagator to clear its compliance database ID cache")
-		_, err = common.OcHub(
-			"-n", common.OCMNamespace, "rollout", "restart", "deployment/grc-policy-propagator",
-		)
-		Expect(err).ToNot(HaveOccurred())
 	})
 
 	It("Creates a policy with a compliant and noncompliant configuration policy", func(ctx context.Context) {
