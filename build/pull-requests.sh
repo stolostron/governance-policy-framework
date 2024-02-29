@@ -13,10 +13,10 @@ for org in "${ORGS[@]}"; do
   query+="+org:${org}"
 done
 
-format='"\(if (.title | length) <= 50 then .title else (.title[0:47] + "...") end)\t'
-format+='\(.user.login)\t'
+format='"\(if (.title | length) <= 40 then .title else (.title[0:37] + "...") end)\t'
+format+='\(.user.login[0:10])\t'
 format+='\(.created_at[0:10])\t'
-format+='\(.html_url | ltrimstr("https://"))"'
+format+='\(.html_url)"'
 
 title="# GRC PR report for $(date) #"
 border=$(echo "${title}" | sed 's/./#/g')
