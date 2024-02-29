@@ -70,11 +70,15 @@ jobs:
           echo "CI_ICON=${CI_ICON}" >> ${GITHUB_ENV}
           echo "## :${CI_ICON}: CI Check" >> ${GITHUB_STEP_SUMMARY}
           echo "" >> ${GITHUB_STEP_SUMMARY}
-          echo "<details><summary>See more</summary>" >> ${GITHUB_STEP_SUMMARY}
-          echo "" >> ${GITHUB_STEP_SUMMARY}
-          echo -e "${CI_SUMMARY}" >> ${GITHUB_STEP_SUMMARY}
-          echo "" >> ${GITHUB_STEP_SUMMARY}
-          echo "</details>" >> ${GITHUB_STEP_SUMMARY}
+          if [[ -f ci-errors.log ]]; then
+            echo "<details><summary>See more</summary>" >> ${GITHUB_STEP_SUMMARY}
+            echo "" >> ${GITHUB_STEP_SUMMARY}
+            echo '```' >> ${GITHUB_STEP_SUMMARY}
+            cat ci-errors.log >> ${GITHUB_STEP_SUMMARY}
+            echo '```' >> ${GITHUB_STEP_SUMMARY}
+            echo "" >> ${GITHUB_STEP_SUMMARY}
+            echo "</details>" >> ${GITHUB_STEP_SUMMARY}
+          fi
           echo "" >> ${GITHUB_STEP_SUMMARY}
 
           CODEBASE_ICON=${SUCCESS_ICON}
@@ -86,11 +90,15 @@ jobs:
           echo "CODEBASE_ICON=${CODEBASE_ICON}" >> ${GITHUB_ENV}
           echo "## :${CODEBASE_ICON}: Codebase Check" >> ${GITHUB_STEP_SUMMARY}
           echo "" >> ${GITHUB_STEP_SUMMARY}
-          echo "<details><summary>See more</summary>" >> ${GITHUB_STEP_SUMMARY}
-          echo "" >> ${GITHUB_STEP_SUMMARY}
-          echo -e "${CODEBASE_SUMMARY}" >> ${GITHUB_STEP_SUMMARY}
-          echo "" >> ${GITHUB_STEP_SUMMARY}
-          echo "</details>" >> ${GITHUB_STEP_SUMMARY}
+          if [[ -f codebase-errors.log ]]; then
+            echo "<details><summary>See more</summary>" >> ${GITHUB_STEP_SUMMARY}
+            echo "" >> ${GITHUB_STEP_SUMMARY}
+            echo '```' >> ${GITHUB_STEP_SUMMARY}
+            cat codebase-errors.log >> ${GITHUB_STEP_SUMMARY}
+            echo '```' >> ${GITHUB_STEP_SUMMARY}
+            echo "" >> ${GITHUB_STEP_SUMMARY}
+            echo "</details>" >> ${GITHUB_STEP_SUMMARY}
+          fi
 
       - name: Send result to Slack
         id: slack
