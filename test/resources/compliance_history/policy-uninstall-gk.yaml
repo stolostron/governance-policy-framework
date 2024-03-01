@@ -1,0 +1,61 @@
+apiVersion: policy.open-cluster-management.io/v1
+kind: Policy
+metadata:
+  name: compliance-api-uninstall-gk
+  namespace: open-cluster-management-global-set
+spec:
+  disabled: false
+  policy-templates:
+    - objectDefinition:
+        apiVersion: policy.open-cluster-management.io/v1
+        kind: ConfigurationPolicy
+        metadata:
+          name: compliance-api-uninstall-gk
+        spec:
+          object-templates-raw: |
+            {{- $csvName := (lookup "operators.coreos.com/v1alpha1" "Subscription" "openshift-operators" "gatekeeper-operator-product").status.installedCSV -}}
+            - complianceType: mustnothave
+              objectDefinition:
+                apiVersion: operator.gatekeeper.sh/v1alpha1
+                kind: Gatekeeper
+                metadata:
+                  name: gatekeeper
+            - complianceType: mustnothave
+              objectDefinition:
+                apiVersion: operators.coreos.com/v1alpha1
+                kind: Subscription
+                metadata:
+                  name: gatekeeper-operator-product
+                  namespace: openshift-operators
+            {{- if $csvName }}
+            - complianceType: mustnothave
+              objectDefinition:
+                apiVersion: operators.coreos.com/v1alpha1
+                kind: ClusterServiceVersion
+                metadata:
+                  name: {{ $csvName }}
+                  namespace: openshift-operators
+            {{- end }}
+          remediationAction: enforce
+          severity: critical
+---
+apiVersion: cluster.open-cluster-management.io/v1beta1
+kind: Placement
+metadata:
+  name: compliance-api-uninstall-gk
+  namespace: open-cluster-management-global-set
+spec: {}
+---
+apiVersion: policy.open-cluster-management.io/v1
+kind: PlacementBinding
+metadata:
+  name: compliance-api-uninstall-gk
+  namespace: open-cluster-management-global-set
+placementRef:
+  name: compliance-api-uninstall-gk
+  apiGroup: cluster.open-cluster-management.io
+  kind: Placement
+subjects:
+  - name: compliance-api-uninstall-gk
+    apiGroup: policy.open-cluster-management.io
+    kind: Policy
