@@ -1,7 +1,7 @@
 apiVersion: policy.open-cluster-management.io/v1
 kind: Policy
 metadata:
-  name: compliance-history-test
+  name: compliance-api-configpolicy
   namespace: open-cluster-management-global-set
   annotations:
     policy.open-cluster-management.io/categories: CM Configuration Management
@@ -44,20 +44,20 @@ spec:
 apiVersion: cluster.open-cluster-management.io/v1beta1
 kind: Placement
 metadata:
-  name: compliance-history-test
+  name: compliance-api-configpolicy
   namespace: open-cluster-management-global-set
 spec: {}
 ---
 apiVersion: policy.open-cluster-management.io/v1
 kind: PlacementBinding
 metadata:
-  name: compliance-history-test
+  name: compliance-api-configpolicy
   namespace: open-cluster-management-global-set
 placementRef:
-  name: compliance-history-test
+  name: compliance-api-configpolicy
   apiGroup: cluster.open-cluster-management.io
   kind: Placement
 subjects:
-  - name: compliance-history-test
+  - name: compliance-api-configpolicy
     apiGroup: policy.open-cluster-management.io
     kind: Policy
