@@ -28,6 +28,7 @@ import (
 var _ = Describe("GRC: [P1][Sev1][policy-grc] Test the compliance history API", Ordered, Serial, Label("BVT"), func() {
 	const policyNS = "open-cluster-management-global-set"
 	var eventsEndpoint string
+	var csvEndpoint string
 	var token string
 	const saName = "compliance-history-user"
 
@@ -118,6 +119,7 @@ var _ = Describe("GRC: [P1][Sev1][policy-grc] Test the compliance history API", 
 		}, common.DefaultTimeoutSeconds, 1).Should(Succeed())
 
 		eventsEndpoint = fmt.Sprintf("https://%s/api/v1/compliance-events", routeHost)
+		csvEndpoint = fmt.Sprintf("https://%s/api/v1/reports/compliance-events", routeHost)
 
 		By("Creating the AddOnDeploymentConfig with the complianceHistoryAPIURL variable")
 		addonDeploymentConfig := unstructured.Unstructured{
@@ -337,6 +339,31 @@ var _ = Describe("GRC: [P1][Sev1][policy-grc] Test the compliance history API", 
 					"The policy was removed because the parent policy no longer applies to this cluster",
 				))
 			}
+		}, defaultTimeoutSeconds, 1).Should(Succeed())
+
+		expectedEvents = len(clusters) * 4
+
+		By("Verifying the CSV report")
+		Eventually(func(g Gomega) {
+			req, err := http.NewRequestWithContext(
+				ctx, http.MethodGet, csvEndpoint+"?event.timestamp_after="+startOfTest, nil,
+			)
+			g.Expect(err).ToNot(HaveOccurred())
+
+			req.Header.Set("Authorization", "Bearer "+token)
+
+			resp, err := httpClient.Do(req)
+			g.Expect(err).ToNot(HaveOccurred())
+
+			defer resp.Body.Close()
+
+			g.Expect(resp.StatusCode).To(Equal(http.StatusOK))
+			g.Expect(resp.Header.Get("Content-Type")).To(Equal("text/csv"))
+
+			body, err := io.ReadAll(resp.Body)
+			g.Expect(err).ToNot(HaveOccurred())
+			// Add 1 to expectedEvents to account for the CSV header line
+			g.Expect(strings.Split(strings.TrimSpace(string(body)), "\n")).To(HaveLen(expectedEvents + 1))
 		}, defaultTimeoutSeconds, 1).Should(Succeed())
 	})
 
