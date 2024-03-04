@@ -18,6 +18,7 @@ import (
 	k8serrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
+	k8stypes "k8s.io/apimachinery/pkg/types"
 
 	"github.com/stolostron/governance-policy-framework/test/common"
 )
@@ -211,7 +212,7 @@ var _ = Describe("GRC: [P1][Sev1][policy-grc] Test the compliance history API", 
 	It("Creates a policy with a compliant and noncompliant configuration policy", func(ctx context.Context) {
 		const policyName = "compliance-api-configpolicy"
 
-		now := time.Now().UTC().Add(-1 * time.Second).Format(time.RFC3339)
+		startOfTest := time.Now().UTC().Format(time.RFC3339Nano)
 
 		By("Creating the policy")
 		_, err := common.OcHub(
@@ -243,7 +244,9 @@ var _ = Describe("GRC: [P1][Sev1][policy-grc] Test the compliance history API", 
 				// is run multiple times. This won't be needed after https://issues.redhat.com/browse/ACM-9314 is
 				// addressed.
 				events, err := listComplianceEvents(
-					ctx, "cluster.name="+cluster, "parent_policy.name="+policyName, "event.timestamp_after="+now,
+					ctx, "cluster.name="+cluster,
+					"parent_policy.name="+policyName,
+					"event.timestamp_after="+startOfTest,
 				)
 				g.Expect(err).ToNot(HaveOccurred())
 
@@ -259,6 +262,80 @@ var _ = Describe("GRC: [P1][Sev1][policy-grc] Test the compliance history API", 
 					g.Expect(event1["event"].(map[string]interface{})["compliance"]).To(Equal("NonCompliant"))
 					g.Expect(event2["event"].(map[string]interface{})["compliance"]).To(Equal("Compliant"))
 				}
+			}
+		}, defaultTimeoutSeconds, 1).Should(Succeed())
+
+		now := time.Now().UTC().Format(time.RFC3339Nano)
+
+		By("Deleting a policy template to verify the disabled event")
+		_, err = clientHubDynamic.Resource(common.GvrPolicy).Namespace(policyNS).Patch(
+			ctx,
+			policyName,
+			k8stypes.JSONPatchType,
+			[]byte(
+				`[{"op": "remove", "path": "/spec/policy-templates/1"}]`,
+			),
+			metav1.PatchOptions{},
+		)
+		Expect(err).ToNot(HaveOccurred())
+
+		By("Verifying that there is a single disabled compliance events for the parent policy")
+		Eventually(func(g Gomega) {
+			for _, cluster := range clusters {
+				events, err := listComplianceEvents(
+					ctx,
+					"cluster.name="+cluster,
+					"parent_policy.name="+policyName,
+					"event.timestamp_after="+now,
+					"event.compliance=Disabled",
+				)
+				g.Expect(err).ToNot(HaveOccurred())
+
+				g.Expect(events).To(HaveLen(1), fmt.Sprintf("expected cluster %s to have one disabled events", cluster))
+
+				event := events[0].(map[string]interface{})
+				g.Expect(event["policy"].(map[string]interface{})["name"]).To(Equal(
+					"does-not-exist-namespace-must-exist",
+				))
+				eventDetails := event["event"].(map[string]interface{})
+
+				g.Expect(eventDetails["compliance"]).To(Equal("Disabled"))
+				g.Expect(eventDetails["message"]).To(Equal("The policy was removed from the parent policy"))
+			}
+		}, defaultTimeoutSeconds, 1).Should(Succeed())
+
+		now = time.Now().UTC().Format(time.RFC3339Nano)
+
+		_, err = common.OcHub(
+			"delete",
+			"-f",
+			"../resources/compliance_history/policy.yaml",
+			"--ignore-not-found",
+		)
+		Expect(err).ToNot(HaveOccurred())
+
+		By("Verifying that there is a single disabled compliance event for the parent policy")
+		Eventually(func(g Gomega) {
+			for _, cluster := range clusters {
+				events, err := listComplianceEvents(
+					ctx,
+					"cluster.name="+cluster,
+					"parent_policy.name="+policyName,
+					"event.timestamp_after="+now,
+					"event.compliance=Disabled",
+				)
+				g.Expect(err).ToNot(HaveOccurred())
+
+				g.Expect(events).To(HaveLen(1), fmt.Sprintf("expected cluster %s to have one disabled events", cluster))
+
+				event := events[0].(map[string]interface{})
+				g.Expect(event["policy"].(map[string]interface{})["name"]).To(Equal("default-namespace-must-exist"))
+				eventDetails := event["event"].(map[string]interface{})
+
+				g.Expect(eventDetails["compliance"]).To(Equal("Disabled"))
+				g.Expect(eventDetails["message"]).To(Equal(
+					"The policy was removed because the parent policy no longer applies to this cluster",
+				))
 			}
 		}, defaultTimeoutSeconds, 1).Should(Succeed())
 	})
