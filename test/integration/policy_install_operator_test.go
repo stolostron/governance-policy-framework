@@ -48,7 +48,7 @@ var _ = Describe("GRC: [P1][Sev1][policy-grc] Test install Operator",
 
 				_, err = common.OcManaged(
 					"delete",
-					"subscription",
+					"subscription.operators.coreos.com",
 					subName,
 					"-n",
 					testNS+noGroupSuffix,
@@ -60,8 +60,7 @@ var _ = Describe("GRC: [P1][Sev1][policy-grc] Test install Operator",
 					"delete",
 					"operatorgroup",
 					dynamicOpGroupName,
-					"-n",
-					testNS+noGroupSuffix,
+					"-n", testNS+noGroupSuffix,
 					"--ignore-not-found=true",
 				)
 				Expect(err).ToNot(HaveOccurred())
@@ -69,8 +68,8 @@ var _ = Describe("GRC: [P1][Sev1][policy-grc] Test install Operator",
 				_, err = common.OcManaged(
 					"delete",
 					"clusterserviceversion",
-					csvName, "-n",
-					testNS+noGroupSuffix,
+					csvName,
+					"-n", testNS+noGroupSuffix,
 					"--ignore-not-found=true",
 				)
 				Expect(err).ToNot(HaveOccurred())
@@ -249,10 +248,9 @@ var _ = Describe("GRC: [P1][Sev1][policy-grc] Test install Operator",
 
 				_, err = common.OcManaged(
 					"delete",
-					"subscription",
+					"subscription.operators.coreos.com",
 					"quay-operator",
-					"-n",
-					testNS+withGroupSuffix,
+					"-n", testNS+withGroupSuffix,
 					"--ignore-not-found=true",
 				)
 				Expect(err).ToNot(HaveOccurred())
@@ -261,8 +259,7 @@ var _ = Describe("GRC: [P1][Sev1][policy-grc] Test install Operator",
 					"delete",
 					"operatorgroup",
 					opGroupName+withGroupSuffix,
-					"-n",
-					testNS+withGroupSuffix,
+					"-n", testNS+withGroupSuffix,
 					"--ignore-not-found=true",
 				)
 				Expect(err).ToNot(HaveOccurred())
