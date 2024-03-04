@@ -3,11 +3,18 @@
 package integration
 
 import (
+	"bytes"
 	"context"
+	"crypto/rand"
+	"crypto/rsa"
 	"crypto/tls"
+	"crypto/x509"
+	"crypto/x509/pkix"
 	"encoding/json"
+	"encoding/pem"
 	"fmt"
 	"io"
+	"math/big"
 	"net/http"
 	"strings"
 	"time"
@@ -546,6 +553,216 @@ var _ = Describe("GRC: [P1][Sev1][policy-grc] Test the compliance history API", 
 				g.Expect(eventDetails["message"]).To(Equal("The constraint has no violations"))
 			}
 		}, defaultTimeoutSeconds*2, 1).Should(Succeed())
+	})
+
+	It("Creates a policy with a compliant and non-compliant cert policy", func(ctx context.Context) {
+		const policyName = "cert-policy"
+		const certNs = "cert-policy-test-ns"
+		const certPath = "../resources/compliance_history/cert-policy.yaml"
+		const certSecret = "cert-secret"
+
+		now := time.Now().Format(time.RFC3339Nano)
+
+		DeferCleanup(func(ctx context.Context) {
+			By("Deleting the policy")
+			_, err := common.OcHub(
+				"delete",
+				"-f",
+				certPath,
+				"-n", policyNS,
+				"--ignore-not-found",
+			)
+			Expect(err).ToNot(HaveOccurred())
+
+			By("Deleting the namespace")
+			_, err = common.OcHub(
+				"delete",
+				"ns",
+				certNs,
+				"--ignore-not-found",
+			)
+			Expect(err).ToNot(HaveOccurred())
+		})
+
+		By("Creating the namespace")
+		_, err := common.OcHub(
+			"create",
+			"ns",
+			certNs,
+		)
+		Expect(err).ToNot(HaveOccurred())
+
+		By("Creating the policy")
+		_, err = common.OcHub(
+			"apply",
+			"-f",
+			certPath,
+			"-n", policyNS,
+		)
+		Expect(err).ToNot(HaveOccurred())
+
+		By("Checking to see if the cert policy is compliant on the managed clusters")
+		clusters := verifyPolicyOnAllClusters(ctx, policyNS, policyName, "Compliant", defaultTimeoutSeconds)
+
+		By("Create wrong tls secret")
+		key, err := rsa.GenerateKey(rand.Reader, 2048)
+		Expect(err).ToNot(HaveOccurred())
+
+		template := x509.Certificate{
+			SerialNumber: big.NewInt(1),
+			Subject: pkix.Name{
+				Organization: []string{"Red Hat"},
+			},
+			NotBefore: time.Now().Add(time.Hour * -2),
+			NotAfter:  time.Now().Add(time.Hour * -1),
+			DNSNames:  []string{"www.wrong.com"},
+		}
+		derBytes, err := x509.CreateCertificate(rand.Reader, &template, &template, &key.PublicKey, key)
+		Expect(err).ToNot(HaveOccurred())
+
+		pemBytes := &bytes.Buffer{}
+		err = pem.Encode(pemBytes, &pem.Block{Type: "CERTIFICATE", Bytes: derBytes})
+		Expect(err).ToNot(HaveOccurred())
+
+		secret := corev1.Secret{
+			ObjectMeta: metav1.ObjectMeta{Name: certSecret},
+			Data:       map[string][]byte{"tls.crt": pemBytes.Bytes()},
+		}
+		_, err = clientManaged.CoreV1().Secrets(certNs).Create(
+			context.TODO(), &secret, metav1.CreateOptions{},
+		)
+		Expect(err).ToNot(HaveOccurred())
+
+		expectedEvents := len(clusters) * 2
+
+		By(fmt.Sprintf("Verifying that there are %d compliance events for the Cert parent policy",
+			expectedEvents))
+		Eventually(func(g Gomega) {
+			for _, cluster := range clusters {
+				events, err := listComplianceEvents(
+					ctx, "cluster.name="+cluster, "parent_policy.name="+policyName, "event.timestamp_after="+now)
+				g.Expect(err).ToNot(HaveOccurred())
+
+				g.Expect(events).To(
+					HaveLen(expectedEvents),
+					fmt.Sprintf("expected cluster %s to have %d events", cluster, expectedEvents),
+				)
+
+				event0 := events[0].(map[string]interface{})
+				g.Expect(event0["event"].(map[string]interface{})["compliance"]).To(Equal("NonCompliant"))
+				g.Expect(event0["event"].(map[string]interface{})["message"]).
+					To(ContainSubstring("certificates expire in less than 30h0m0s"))
+				g.Expect(event0["event"].(map[string]interface{})["message"]).
+					To(ContainSubstring("certificates defined SAN entries do not match pattern Allowed: .*.test.com"))
+
+				event1 := events[1].(map[string]interface{})
+				g.Expect(event1["event"].(map[string]interface{})["compliance"]).To(Equal("Compliant"))
+				g.Expect(event1["event"].(map[string]interface{})["message"]).
+					To(ContainSubstring("All evaluated certificates are compliant"))
+
+			}
+		}, 120, 1).Should(Succeed())
+	})
+
+	It("Creates a policy with a noncompliant and compliant operator policy", func(ctx context.Context) {
+		now := time.Now().Format(time.RFC3339Nano)
+		const opNs = "operator-policy-ns"
+		const opPolicyPath = "../resources/compliance_history/operator-policy-invalid.yaml"
+		const policyName = "op-compliance-api"
+
+		DeferCleanup(func(ctx context.Context) {
+			By("Deleting the operator policy")
+			_, err := common.OcHub(
+				"delete",
+				"-f",
+				opPolicyPath,
+				"-n", policyNS,
+				"--ignore-not-found",
+			)
+			Expect(err).ToNot(HaveOccurred())
+
+			// Delete subscription, catalog, etc at once
+			By("Deleting the namespace")
+			_, err = common.OcHub(
+				"delete",
+				"ns",
+				opNs,
+				"--ignore-not-found",
+			)
+			Expect(err).ToNot(HaveOccurred())
+		})
+
+		By("Creating the namespace")
+		_, err := common.OcHub(
+			"create",
+			"ns",
+			opNs,
+		)
+		Expect(err).ToNot(HaveOccurred())
+
+		By("Creating the Policy")
+		_, err = common.OcHub(
+			"apply",
+			"-f",
+			opPolicyPath,
+			"-n", policyNS,
+		)
+		Expect(err).ToNot(HaveOccurred())
+
+		clusters := verifyPolicyOnAllClusters(ctx, policyNS, policyName, "NonCompliant", defaultTimeoutSeconds)
+
+		By("Verifying that there are NonCompliant compliance events for the Operator parent policy")
+		Eventually(func(g Gomega) {
+			for _, cluster := range clusters {
+				events, err := listComplianceEvents(
+					ctx, "cluster.name="+cluster, "parent_policy.name="+policyName, "event.timestamp_after="+now)
+				g.Expect(err).ToNot(HaveOccurred())
+
+				event0 := events[0].(map[string]interface{})
+				g.Expect(event0["event"].(map[string]interface{})["compliance"]).To(Equal("NonCompliant"))
+				g.Expect(event0["event"].(map[string]interface{})["message"]).
+					To(ContainSubstring("CatalogSource 'invalid' was not found"))
+			}
+		}, 120, 1).Should(Succeed())
+
+		now = time.Now().Format(time.RFC3339Nano)
+
+		By("Patch operator Policy to be Compliant")
+		_, err = common.OcHub("patch", "policies.policy.open-cluster-management.io", policyName,
+			"-n", policyNS, "--type=json", "-p", `[{
+			"op":"replace",
+			"path":"/spec/policy-templates/0/objectDefinition/spec/subscription/source",
+			"value":"redhat-operators"
+		}]`)
+		Expect(err).ToNot(HaveOccurred())
+		_, err = common.OcHub("patch", "policies.policy.open-cluster-management.io", policyName,
+			"-n", policyNS, "--type=json", "-p", `[{
+		"op":"replace",
+		"path":"/spec/remediationAction",
+		"value":"enforce"
+		 }]`)
+		Expect(err).ToNot(HaveOccurred())
+
+		By("The Policy should be Compliant")
+		clusters = verifyPolicyOnAllClusters(ctx, policyNS, policyName, "Compliant", defaultTimeoutSeconds)
+
+		By("Verifying that there are Compliant compliance events for the Operator parent policy")
+		Eventually(func(g Gomega) {
+			for _, cluster := range clusters {
+				events, err := listComplianceEvents(
+					ctx, "cluster.name="+cluster, "parent_policy.name="+policyName, "event.timestamp_after="+now)
+				g.Expect(err).ToNot(HaveOccurred())
+
+				event0 := events[0].(map[string]interface{})
+				g.Expect(event0["event"].(map[string]interface{})["compliance"]).To(Equal("Compliant"))
+				g.Expect(event0["event"].(map[string]interface{})["message"]).
+					To(ContainSubstring("the policy spec is valid, the OperatorGroup matches what " +
+						"is required by the policy, the Subscription matches what is required by the policy, " +
+						"no InstallPlans requiring approval were found, ClusterServiceVersion - install strategy" +
+						" completed with no errors, All operator Deployments have their minimum availability, " +
+						"CatalogSource was found"))
+			}
+		}, 120, 1).Should(Succeed())
 	})
 })
 
