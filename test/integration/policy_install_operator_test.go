@@ -4,8 +4,12 @@
 package integration
 
 import (
+	"strings"
+
 	. "github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
+	k8serrors "k8s.io/apimachinery/pkg/api/errors"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	policiesv1 "open-cluster-management.io/governance-policy-propagator/api/v1"
 	"open-cluster-management.io/governance-policy-propagator/test/utils"
@@ -22,20 +26,19 @@ var _ = Describe("GRC: [P1][Sev1][policy-grc] Test install Operator",
 			policyNamePrefix    = "test-op"
 			noGroupSuffix       = "-43544"
 			withGroupSuffix     = "-43545"
-			csvName             = "quay-operator.v3.8.15"
 			subName             = "quay-operator"
 			opGroupName         = "grcqeopgroup"
 		)
 
-		var dynamicOpGroupName string
-
 		Context("When no OperatorGroup is specified", func() {
+			var dynamicOpGroupName, dynamicCSVName string
+
 			BeforeAll(func() {
 				_, err := common.OcManaged("create", "ns", testNS+noGroupSuffix)
 				Expect(err).ToNot(HaveOccurred())
 			})
 
-			AfterAll(func() {
+			AfterAll(func(ctx SpecContext) {
 				_, err := common.OcHub(
 					"delete",
 					"-f",
@@ -56,23 +59,30 @@ var _ = Describe("GRC: [P1][Sev1][policy-grc] Test install Operator",
 				)
 				Expect(err).ToNot(HaveOccurred())
 
-				_, err = common.OcManaged(
-					"delete",
-					"operatorgroup",
-					dynamicOpGroupName,
-					"-n", testNS+noGroupSuffix,
-					"--ignore-not-found=true",
-				)
+				if dynamicOpGroupName != "" {
+					_, err = common.OcManaged(
+						"delete",
+						"operatorgroup",
+						dynamicOpGroupName,
+						"-n", testNS+noGroupSuffix,
+						"--ignore-not-found=true",
+					)
+					Expect(err).ToNot(HaveOccurred())
+				}
+
+				csvClient := clientManagedDynamic.Resource(common.GvrClusterServiceVersion)
+				csvList, err := csvClient.List(ctx, metav1.ListOptions{})
 				Expect(err).ToNot(HaveOccurred())
 
-				_, err = common.OcManaged(
-					"delete",
-					"clusterserviceversion",
-					csvName,
-					"-n", testNS+noGroupSuffix,
-					"--ignore-not-found=true",
-				)
-				Expect(err).ToNot(HaveOccurred())
+				for _, csv := range csvList.Items {
+					csvName := csv.GetName()
+					if strings.HasPrefix(csvName, subName+".") {
+						err := csvClient.Namespace(csv.GetNamespace()).Delete(ctx, csvName, metav1.DeleteOptions{})
+						if !k8serrors.IsNotFound(err) {
+							Expect(err).ToNot(HaveOccurred())
+						}
+					}
+				}
 
 				_, err = common.OcManaged("delete", "ns", testNS+noGroupSuffix)
 				Expect(err).ToNot(HaveOccurred())
@@ -108,13 +118,6 @@ var _ = Describe("GRC: [P1][Sev1][policy-grc] Test install Operator",
 			})
 
 			It("operator-policy"+noGroupSuffix+" should be NonCompliant", func() {
-				By("Checking if the status of the root policy is NonCompliant")
-				Eventually(
-					common.GetComplianceState(policyNamePrefix+noGroupSuffix),
-					defaultTimeoutSeconds*2,
-					1,
-				).Should(Equal(policiesv1.NonCompliant))
-
 				By("Checking if the correct condition is generated")
 				Eventually(
 					common.GetOpPolicyCompMsg("operator-policy"+noGroupSuffix),
@@ -122,17 +125,17 @@ var _ = Describe("GRC: [P1][Sev1][policy-grc] Test install Operator",
 					1,
 				).Should(MatchRegexp("NonCompliant.*the OperatorGroup required by the policy was not found.*" +
 					"the Subscription required by the policy was not found.*"))
-			})
 
-			It("Should enforce the policy on the hub", func() {
-				common.EnforcePolicy(policyNamePrefix + noGroupSuffix)
-
-				By("Checking if the status of the root policy is compliant")
+				By("Checking if the status of the root policy is NonCompliant")
 				Eventually(
 					common.GetComplianceState(policyNamePrefix+noGroupSuffix),
 					defaultTimeoutSeconds*2,
 					1,
-				).Should(Equal(policiesv1.Compliant))
+				).Should(Equal(policiesv1.NonCompliant))
+			})
+
+			It("Should enforce the policy on the hub", func() {
+				common.EnforcePolicy(policyNamePrefix + noGroupSuffix)
 
 				Eventually(
 					common.GetOpPolicyCompMsg("operator-policy"+noGroupSuffix),
@@ -140,6 +143,13 @@ var _ = Describe("GRC: [P1][Sev1][policy-grc] Test install Operator",
 					1,
 				).Should(MatchRegexp("Compliant.*the OperatorGroup matches what is required by the policy.*" +
 					"the Subscription matches what is required by the policy.*"))
+
+				By("Checking if the status of the root policy is compliant")
+				Eventually(
+					common.GetComplianceState(policyNamePrefix+noGroupSuffix),
+					defaultTimeoutSeconds*2,
+					1,
+				).Should(Equal(policiesv1.Compliant))
 			})
 
 			It("Should verify OperatorGroup details", func() {
@@ -196,6 +206,13 @@ var _ = Describe("GRC: [P1][Sev1][policy-grc] Test install Operator",
 					defaultTimeoutSeconds,
 				)
 				Expect(sub).NotTo(BeNil())
+
+				By("Parsing the Subscription for the CSV name")
+				csvName, found, err := unstructured.NestedString(sub.Object, "status", "installedCSV")
+				Expect(err).ToNot(HaveOccurred())
+				Expect(found).To(BeTrue())
+				Expect(csvName).ToNot(BeEmpty())
+				dynamicCSVName = csvName
 			})
 
 			It("Should verify CSV details", func() {
@@ -203,7 +220,7 @@ var _ = Describe("GRC: [P1][Sev1][policy-grc] Test install Operator",
 					csv := utils.GetWithTimeout(
 						clientManagedDynamic,
 						common.GvrClusterServiceVersion,
-						csvName,
+						dynamicCSVName,
 						testNS+noGroupSuffix,
 						true,
 						defaultTimeoutSeconds*4,
@@ -220,7 +237,7 @@ var _ = Describe("GRC: [P1][Sev1][policy-grc] Test install Operator",
 				opDeployment := utils.GetWithTimeout(
 					clientManagedDynamic,
 					common.GvrDeployment,
-					csvName, // Operator has the same name as its corresponding csv
+					dynamicCSVName, // Operator has the same name as its corresponding csv
 					testNS+noGroupSuffix,
 					true,
 					defaultTimeoutSeconds,
@@ -230,6 +247,8 @@ var _ = Describe("GRC: [P1][Sev1][policy-grc] Test install Operator",
 		})
 
 		Context("When an OperatorGroup is specified", func() {
+			var dynamicCSVName string
+
 			BeforeAll(func() {
 				_, err := common.OcManaged("create", "ns", testNS+withGroupSuffix)
 				Expect(err).ToNot(HaveOccurred())
@@ -264,15 +283,17 @@ var _ = Describe("GRC: [P1][Sev1][policy-grc] Test install Operator",
 				)
 				Expect(err).ToNot(HaveOccurred())
 
-				_, err = common.OcManaged(
-					"delete",
-					"clusterserviceversion",
-					csvName,
-					"-n",
-					testNS+withGroupSuffix,
-					"--ignore-not-found=true",
-				)
-				Expect(err).ToNot(HaveOccurred())
+				if dynamicCSVName != "" {
+					_, err = common.OcManaged(
+						"delete",
+						"clusterserviceversion",
+						dynamicCSVName,
+						"-n",
+						testNS+withGroupSuffix,
+						"--ignore-not-found=true",
+					)
+					Expect(err).ToNot(HaveOccurred())
+				}
 
 				_, err = common.OcManaged("delete", "ns", testNS+withGroupSuffix)
 				Expect(err).ToNot(HaveOccurred())
@@ -308,13 +329,6 @@ var _ = Describe("GRC: [P1][Sev1][policy-grc] Test install Operator",
 			})
 
 			It("operator-policy"+withGroupSuffix+" should be NonCompliant", func() {
-				By("Checking if the status of the root policy is NonCompliant")
-				Eventually(
-					common.GetComplianceState(policyNamePrefix+withGroupSuffix),
-					defaultTimeoutSeconds*2,
-					1,
-				).Should(Equal(policiesv1.NonCompliant))
-
 				By("Checking if the correct condition is generated")
 				Eventually(
 					common.GetOpPolicyCompMsg("operator-policy"+withGroupSuffix),
@@ -322,17 +336,17 @@ var _ = Describe("GRC: [P1][Sev1][policy-grc] Test install Operator",
 					1,
 				).Should(MatchRegexp("NonCompliant.*the OperatorGroup required by the policy was not found.*" +
 					"the Subscription required by the policy was not found.*"))
-			})
 
-			It("Should enforce the policy on the hub", func() {
-				common.EnforcePolicy(policyNamePrefix + withGroupSuffix)
-
-				By("Checking if the status of the root policy is compliant")
+				By("Checking if the status of the root policy is NonCompliant")
 				Eventually(
 					common.GetComplianceState(policyNamePrefix+withGroupSuffix),
 					defaultTimeoutSeconds*2,
 					1,
-				).Should(Equal(policiesv1.Compliant))
+				).Should(Equal(policiesv1.NonCompliant))
+			})
+
+			It("Should enforce the policy on the hub", func() {
+				common.EnforcePolicy(policyNamePrefix + withGroupSuffix)
 
 				Eventually(
 					common.GetOpPolicyCompMsg("operator-policy"+withGroupSuffix),
@@ -340,6 +354,13 @@ var _ = Describe("GRC: [P1][Sev1][policy-grc] Test install Operator",
 					1,
 				).Should(MatchRegexp("Compliant.*the OperatorGroup matches what is required by the policy.*" +
 					"the Subscription matches what is required by the policy.*"))
+
+				By("Checking if the status of the root policy is compliant")
+				Eventually(
+					common.GetComplianceState(policyNamePrefix+withGroupSuffix),
+					defaultTimeoutSeconds*2,
+					1,
+				).Should(Equal(policiesv1.Compliant))
 			})
 
 			It("Should verify OperatorGroup details", func() {
@@ -364,6 +385,13 @@ var _ = Describe("GRC: [P1][Sev1][policy-grc] Test install Operator",
 					defaultTimeoutSeconds,
 				)
 				Expect(sub).NotTo(BeNil())
+
+				By("Parsing the Subscription for the CSV name")
+				csvName, found, err := unstructured.NestedString(sub.Object, "status", "installedCSV")
+				Expect(err).ToNot(HaveOccurred())
+				Expect(found).To(BeTrue())
+				Expect(csvName).ToNot(BeEmpty())
+				dynamicCSVName = csvName
 			})
 
 			It("Should verify CSV details", func() {
@@ -371,7 +399,7 @@ var _ = Describe("GRC: [P1][Sev1][policy-grc] Test install Operator",
 					csv := utils.GetWithTimeout(
 						clientManagedDynamic,
 						common.GvrClusterServiceVersion,
-						csvName,
+						dynamicCSVName,
 						testNS+withGroupSuffix,
 						true,
 						defaultTimeoutSeconds*4,
@@ -388,7 +416,7 @@ var _ = Describe("GRC: [P1][Sev1][policy-grc] Test install Operator",
 				opDeployment := utils.GetWithTimeout(
 					clientManagedDynamic,
 					common.GvrDeployment,
-					csvName, // Operator has the same name as its corresponding csv
+					dynamicCSVName, // Operator has the same name as its corresponding csv
 					testNS+withGroupSuffix,
 					true,
 					defaultTimeoutSeconds,
