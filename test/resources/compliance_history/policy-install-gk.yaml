@@ -40,6 +40,9 @@ spec:
                 mutatingWebhook: Disabled
                 audit:
                   auditInterval: 10s
+                  resources:
+                    limits:
+                      memory: 1Gi
           remediationAction: enforce
           severity: critical
     - objectDefinition:
