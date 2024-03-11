@@ -62,6 +62,7 @@ clean::
 	-rm kubeconfig_*
 	-rm -r test-output/
 	-rm -r vendor/
+	-rm -rf $(ADDON_CONTROLLER)
 	-rm -r test/resources/policy_generator/helm-kustomization/base/charts/
 	find . -type d \( -name "stolostron" -o -name "open-cluster-management-io" \) -exec rm -rf {} +
 
