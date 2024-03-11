@@ -105,19 +105,17 @@ func DoCreatePolicyTest(policyFile string, templateGVRs ...schema.GroupVersionRe
 
 	managedPolicyName := UserNamespace + "." + policyName
 	By("Checking " + managedPolicyName + " on managed cluster in ns " + ClusterNamespace)
-	mplc := utils.GetWithTimeout(
+	ExpectWithOffset(1, utils.GetWithTimeout(
 		ClientHostingDynamic, GvrPolicy, managedPolicyName, ClusterNamespace, true, DefaultTimeoutSeconds*2,
-	)
-	ExpectWithOffset(1, mplc).NotTo(BeNil())
+	)).NotTo(BeNil())
 
 	for _, tmplGVR := range templateGVRs {
 		typedName := tmplGVR.String() + "/" + policyName
 		By("Checking that the policy template " + typedName + " is present on the managed cluster")
 
-		tmplPlc := utils.GetWithTimeout(
+		ExpectWithOffset(1, utils.GetWithTimeout(
 			ClientHostingDynamic, tmplGVR, policyName, ClusterNamespace, true, DefaultTimeoutSeconds,
-		)
-		ExpectWithOffset(1, tmplPlc).NotTo(BeNil())
+		)).NotTo(BeNil())
 	}
 }
 
@@ -134,24 +132,22 @@ func DoCleanupPolicy(policyFile string, templateGVRs ...schema.GroupVersionResou
 	)
 	Expect(err).ToNot(HaveOccurred())
 
-	plc := utils.GetWithTimeout(ClientHubDynamic, GvrPolicy, policyName, UserNamespace, false, DefaultTimeoutSeconds)
-	ExpectWithOffset(1, plc).To(BeNil())
+	ExpectWithOffset(1, utils.GetWithTimeout(
+		ClientHubDynamic, GvrPolicy, policyName, UserNamespace, false, DefaultTimeoutSeconds,
+	)).To(BeNil())
 
 	managedPolicyName := UserNamespace + "." + policyName
 	By("Checking " + managedPolicyName + " was removed from managed cluster in ns " + ClusterNamespace)
-	mplc := utils.GetWithTimeout(
+	ExpectWithOffset(1, utils.GetWithTimeout(
 		ClientManagedDynamic, GvrPolicy, managedPolicyName, ClusterNamespace, false, DefaultTimeoutSeconds,
-	)
-	ExpectWithOffset(1, mplc).To(BeNil())
+	)).To(BeNil())
 
 	for _, tmplGVR := range templateGVRs {
 		typedName := tmplGVR.String() + "/" + policyName
 		By("Checking that the policy template " + typedName + " was removed from the managed cluster")
-
-		tmplPlc := utils.GetWithTimeout(
+		ExpectWithOffset(1, utils.GetWithTimeout(
 			ClientManagedDynamic, tmplGVR, policyName, ClusterNamespace, false, DefaultTimeoutSeconds,
-		)
-		ExpectWithOffset(1, tmplPlc).To(BeNil())
+		)).To(BeNil())
 	}
 }
 
