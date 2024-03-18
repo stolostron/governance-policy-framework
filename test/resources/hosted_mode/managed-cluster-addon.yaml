@@ -4,7 +4,7 @@ metadata:
   name: governance-policy-framework
   annotations:
     addon.open-cluster-management.io/hosting-cluster-name: cluster1
-    addon.open-cluster-management.io/values: '{"global":{"imageOverrides":{"governance-policy-framework":"quay.io/stolostron/governance-policy-framework-addon:imagetag"}}}'
+    addon.open-cluster-management.io/values: '{"global":{"imageOverrides":{"governance_policy_framework_addon":"quay.io/stolostron/governance-policy-framework-addon:imagetag"}}}'
 spec:
   installNamespace: cluster2-hosted
 ---
