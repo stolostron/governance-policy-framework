@@ -175,6 +175,7 @@ jobs:
       env:
         TEST_ARGS: --fail-fast --json-report=report.json --junit-report=report.xml --output-dir=test-output
         HOSTED: ${{ matrix.hosted }}
+        UPSTREAM_TEST: ${{ github.event.organization.login == 'open-cluster-management-io' }}
       run: |
         if [[ "${HOSTED}" == "hosted" ]]; then
           make e2e-test-hosted
