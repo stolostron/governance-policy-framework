@@ -58,6 +58,10 @@ ifdef TEST_FILE
 	TEST_ARGS += --focus-file=$(TEST_FILE)
 endif
 
+ifeq ($(UPSTREAM_TEST), true)
+	TEST_ARGS += --skip-file=cert_policy --skip-file=iam_policy
+endif
+
 include build/common/Makefile.common.mk
 
 ############################################################
@@ -280,9 +284,6 @@ MANAGED_CLUSTER_NAMESPACE ?= $(MANAGED_CLUSTER_NAME)
 
 .PHONY: e2e-test
 e2e-test: e2e-dependencies
-	if [ "$(UPSTREAM_TEST)" = "true" ]; then\
-		TEST_ARGS += --skip-file=cert_policy --skip-file=iam_policy;\
-	fi
 	$(GINKGO) -v $(TEST_ARGS) test/e2e -- -cluster_namespace=$(MANAGED_CLUSTER_NAMESPACE) -k8s_client=$(K8SCLIENT) -is_hosted=$(IS_HOSTED) -cluster_namespace_on_hub=$(CLUSTER_NAMESPACE_ON_HUB)
 
 .PHONY: e2e-test-hosted
