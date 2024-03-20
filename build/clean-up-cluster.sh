@@ -29,11 +29,12 @@ function delete_all_and_wait() {
 
 function hub() {
     echo "Hub: clean up"
+    oc delete policies.policy.open-cluster-management.io --all-namespaces --all --ignore-not-found
+    oc delete placementbindings.policy.open-cluster-management.io  --all-namespaces --all --ignore-not-found
+    oc delete placementrules.apps.open-cluster-management.io --all-namespaces --all --ignore-not-found
+    # Don't clean up in all namespaces because the global-set placement shouldn't be deleted
     for ns in default policy-test e2e-rbac-test-1 e2e-rbac-test-2
         do
-            oc delete policies.policy.open-cluster-management.io -n $ns --all --ignore-not-found
-            oc delete placementbindings.policy.open-cluster-management.io  -n $ns --all --ignore-not-found
-            oc delete placementrules.apps.open-cluster-management.io -n $ns --all --ignore-not-found
             oc delete placements.cluster.open-cluster-management.io -n $ns --all --ignore-not-found
         done
     oc delete ns -l e2e=true --ignore-not-found
