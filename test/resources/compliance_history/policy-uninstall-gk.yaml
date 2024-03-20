@@ -10,16 +10,47 @@ spec:
         apiVersion: policy.open-cluster-management.io/v1
         kind: ConfigurationPolicy
         metadata:
-          name: compliance-api-uninstall-gk
+          name: compliance-api-uninstall-gk-csv
         spec:
           object-templates-raw: |
-            {{- $csvName := (lookup "operators.coreos.com/v1alpha1" "Subscription" "openshift-operators" "gatekeeper-operator-product").status.installedCSV -}}
+
+            {{ range $ns := (lookup "v1" "Namespace" "" "").items }}
+            {{ range $csv := (lookup "operators.coreos.com/v1alpha1" "ClusterServiceVersion"  "" "").items }}
+            {{ $csvName := $csv.metadata.name }}
+            {{ if hasPrefix "gatekeeper-operator-product." $csvName }}
+            - complianceType: mustnothave
+              objectDefinition:
+                apiVersion: operators.coreos.com/v1alpha1
+                kind: ClusterServiceVersion
+                metadata:
+                  name: {{ $csvName }}
+                  namespace: {{ $ns.metadata.name }}
+            {{ end }}
+            {{ end }}
+            {{ end }}
+          remediationAction: enforce
+          severity: critical
+    - extraDependencies:
+      - apiVersion: policy.open-cluster-management.io/v1
+        kind: ConfigurationPolicy
+        name: compliance-api-uninstall-gk-csv
+        compliance: Compliant
+      objectDefinition:
+        apiVersion: policy.open-cluster-management.io/v1
+        kind: ConfigurationPolicy
+        metadata:
+          name: compliance-api-uninstall-gk-sub
+        spec:
+          object-templates-raw: |
+
+            {{ if ne (default "" (lookup "apiextensions.k8s.io/v1" "CustomResourceDefinition" "" "gatekeepers.operator.gatekeeper.sh").metadata.name) "" }}
             - complianceType: mustnothave
               objectDefinition:
                 apiVersion: operator.gatekeeper.sh/v1alpha1
                 kind: Gatekeeper
                 metadata:
                   name: gatekeeper
+            {{ end }}
             - complianceType: mustnothave
               objectDefinition:
                 apiVersion: operators.coreos.com/v1alpha1
@@ -27,15 +58,6 @@ spec:
                 metadata:
                   name: gatekeeper-operator-product
                   namespace: openshift-operators
-            {{- if $csvName }}
-            - complianceType: mustnothave
-              objectDefinition:
-                apiVersion: operators.coreos.com/v1alpha1
-                kind: ClusterServiceVersion
-                metadata:
-                  name: {{ $csvName }}
-                  namespace: openshift-operators
-            {{- end }}
           remediationAction: enforce
           severity: critical
 ---
