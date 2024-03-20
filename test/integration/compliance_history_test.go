@@ -192,8 +192,17 @@ var _ = Describe("GRC: [P1][Sev1][policy-grc] Test the compliance history API", 
 	})
 
 	AfterAll(func(ctx context.Context) {
-		By("Deleting Postgres")
+		By("Deleting the policy-uninstall-gk policy")
 		_, err := common.OcHub(
+			"delete",
+			"-f",
+			"../resources/compliance_history/policy-uninstall-gk.yaml",
+			"--ignore-not-found",
+		)
+		Expect(err).ToNot(HaveOccurred())
+
+		By("Deleting Postgres")
+		_, err = common.OcHub(
 			"delete",
 			"-n",
 			common.OCMNamespace,
@@ -407,16 +416,8 @@ var _ = Describe("GRC: [P1][Sev1][policy-grc] Test the compliance history API", 
 			)
 			Expect(err).ToNot(HaveOccurred())
 
-			_ = verifyPolicyOnAllClusters(ctx, policyNS, uninstallGKPolicyName, "Compliant", defaultTimeoutSeconds*2)
-
-			By("Deleting the " + uninstallGKPolicyName + " policy")
-			_, err = common.OcHub(
-				"delete",
-				"-f",
-				"../resources/compliance_history/policy-uninstall-gk.yaml",
-				"--ignore-not-found",
-			)
-			Expect(err).ToNot(HaveOccurred())
+			// Deleting the CSV from every namespace takes the ConfigurationPolicy quite a while (~5 min)
+			_ = verifyPolicyOnAllClusters(ctx, policyNS, uninstallGKPolicyName, "Compliant", defaultTimeoutSeconds*12)
 		})
 
 		By("Creating the " + gkTargetNS + " namespace")
@@ -709,7 +710,7 @@ var _ = Describe("GRC: [P1][Sev1][policy-grc] Test the compliance history API", 
 		)
 		Expect(err).ToNot(HaveOccurred())
 
-		clusters := verifyPolicyOnAllClusters(ctx, policyNS, policyName, "NonCompliant", defaultTimeoutSeconds)
+		clusters := verifyPolicyOnAllClusters(ctx, policyNS, policyName, "NonCompliant", defaultTimeoutSeconds*2)
 
 		By("Verifying that there are NonCompliant compliance events for the Operator parent policy")
 		Eventually(func(g Gomega) {
