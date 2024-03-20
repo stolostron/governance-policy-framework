@@ -5,13 +5,13 @@ package integration
 
 import (
 	"context"
-	"fmt"
 	"strings"
 
 	. "github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
 	admissionv1 "k8s.io/api/admissionregistration/v1"
 	corev1 "k8s.io/api/core/v1"
+	k8serrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	policiesv1 "open-cluster-management.io/governance-policy-propagator/api/v1"
 	"open-cluster-management.io/governance-policy-propagator/test/utils"
@@ -84,43 +84,22 @@ var _ = Describe("RHACM4K-3055", Ordered, Label("policy-collection", "stable", "
 		It("Enforcing stable/policy-gatekeeper-operator", func() {
 			common.EnforcePolicy(gatekeeperPolicyName)
 		})
-		It("Gatekeeper operator pod should be running", func() {
+		It("Gatekeeper operator pod should be running", func(ctx SpecContext) {
 			By("Checking if pod gatekeeper-operator has been created")
-			i := 0
-			Eventually(func(g Gomega) []corev1.Pod {
-				if i == 60*2 || i == 60*4 {
-					fmt.Println(
-						"gatekeeper operator pod still not created, "+
-							"deleting subscription and let it recreate",
-						i,
-					)
-					_, err := utils.KubectlWithOutput(
-						"delete",
-						"-n",
-						"openshift-operators",
-						"subscriptions.operators.coreos.com",
-						"gatekeeper-operator-product",
-						"--kubeconfig="+kubeconfigManaged,
-						"--ignore-not-found",
-					)
-					Expect(err).ToNot(HaveOccurred())
-				}
-				i++
-				podList, err := clientManaged.CoreV1().Pods("openshift-operators").List(
-					context.TODO(),
+			Eventually(func() ([]corev1.Pod, error) {
+				podList, err := clientManaged.CoreV1().Pods("openshift-operators").List(ctx,
 					metav1.ListOptions{
-						LabelSelector: "control-plane in (controller-manager, " +
-							"gatekeeper-operator-controller-manager)",
+						LabelSelector: "control-plane in (controller-manager, gatekeeper-operator-controller-manager)",
 					},
 				)
-				g.Expect(err).ToNot(HaveOccurred())
 
-				return podList.Items
-			}, defaultTimeoutSeconds*12, 1).Should(HaveLen(1))
+				return podList.Items, err
+			}, defaultTimeoutSeconds*12, 1,
+			).Should(HaveLen(1))
 			By("Checking if pod gatekeeper-operator is running")
 			Eventually(func(g Gomega) interface{} {
 				podList, err := clientManaged.CoreV1().Pods("openshift-operators").List(
-					context.TODO(),
+					ctx,
 					metav1.ListOptions{
 						LabelSelector: "control-plane in " +
 							"(controller-manager, gatekeeper-operator-controller-manager)",
@@ -240,7 +219,7 @@ var _ = Describe("RHACM4K-3055", Ordered, Label("policy-collection", "stable", "
 		})
 	})
 
-	AfterAll(func() {
+	AfterAll(func(ctx SpecContext) {
 		if CurrentSpecReport().Failed() {
 			common.OutputDebugInfo(
 				"Gatekeeper policies",
@@ -274,14 +253,16 @@ var _ = Describe("RHACM4K-3055", Ordered, Label("policy-collection", "stable", "
 		}, defaultTimeoutSeconds, 1).Should(BeNil())
 
 		utils.Pause(20)
-		_, err = utils.KubectlWithOutput(
+		out, err := utils.KubectlWithOutput(
 			"delete",
 			"Gatekeeper",
 			"gatekeeper",
 			"--kubeconfig="+kubeconfigManaged,
 			"--ignore-not-found",
 		)
-		Expect(err).ToNot(HaveOccurred())
+		if err != nil {
+			Expect(strings.TrimSpace(out)).To(Equal("error: the server doesn't have a resource type \"Gatekeeper\""))
+		}
 
 		Eventually(func() interface{} {
 			out, _ := utils.KubectlWithOutput(
@@ -305,35 +286,32 @@ var _ = Describe("RHACM4K-3055", Ordered, Label("policy-collection", "stable", "
 		)
 		Expect(err).ToNot(HaveOccurred())
 
-		csvName, _ := utils.KubectlWithOutput(
-			"get", "-n", "openshift-operators", "csv", "-o",
-			"jsonpath=\"{.items[?(@.spec.displayName==\"Gatekeeper Operator\")].metadata.name}\"",
-			"--kubeconfig="+kubeconfigManaged,
-		)
-		csvName = strings.Trim(csvName, "\"")
-		_, err = utils.KubectlWithOutput(
-			"delete",
-			"-n",
-			"openshift-operators",
-			"csv",
-			csvName,
-			"--kubeconfig="+kubeconfigManaged,
-			"--ignore-not-found",
-		)
+		csvClient := clientManagedDynamic.Resource(common.GvrClusterServiceVersion)
+		csvList, err := csvClient.List(ctx, metav1.ListOptions{})
 		Expect(err).ToNot(HaveOccurred())
+
+		for _, csv := range csvList.Items {
+			csvName := csv.GetName()
+			if strings.HasPrefix(csvName, "gatekeeper-operator-product.") {
+				err := csvClient.Namespace(csv.GetNamespace()).Delete(ctx, csvName, metav1.DeleteOptions{})
+				if !k8serrors.IsNotFound(err) {
+					Expect(err).ToNot(HaveOccurred())
+				}
+			}
+		}
 
 		_, err = utils.KubectlWithOutput(
 			"delete",
-			"crd",
+			"customresourcedefinitions",
 			"gatekeepers.operator.gatekeeper.sh",
 			"--kubeconfig="+kubeconfigManaged,
 			"--ignore-not-found",
 		)
 		Expect(err).ToNot(HaveOccurred())
 
-		out, _ := utils.KubectlWithOutput(
+		out, _ = utils.KubectlWithOutput(
 			"delete",
-			"ns",
+			"namespace",
 			"openshift-gatekeeper-system",
 			"--kubeconfig="+kubeconfigManaged,
 		)
@@ -345,8 +323,7 @@ var _ = Describe("RHACM4K-3055", Ordered, Label("policy-collection", "stable", "
 		_, err = utils.KubectlWithOutput(
 			"delete",
 			"events",
-			"-n",
-			clusterNamespace,
+			"-n", clusterNamespace,
 			"--field-selector=involvedObject.name="+userNamespace+".policy-gatekeeper-operator",
 			"--kubeconfig="+kubeconfigManaged,
 			"--ignore-not-found",

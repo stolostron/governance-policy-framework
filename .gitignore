@@ -1,10 +1,11 @@
 /kubeconfig_*
-.vscode/launch.json
+.vscode/
 test/e2e/debug.test
 /results
 /test-output
 test/policy-collection/policy-collection.test
 test/policy-collection/debug.test
+test/integration/integration.test
 .DS_Store
 
 .go
