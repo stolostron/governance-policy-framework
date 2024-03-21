@@ -528,7 +528,7 @@ var _ = Describe("GRC: [P1][Sev1][policy-grc] Test the compliance history API", 
 				}
 			}
 			// It can take a while for the Gatekeeper audit pod to produce audit results.
-		}, defaultTimeoutSeconds*4, 1).Should(Succeed())
+		}, defaultTimeoutSeconds*6, 1).Should(Succeed())
 
 		By("Updating the ConfigMap to be valid")
 		configmap.Labels = map[string]string{"my-gk-test": "a-value"}

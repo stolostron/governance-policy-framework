@@ -10,35 +10,6 @@ spec:
         apiVersion: policy.open-cluster-management.io/v1
         kind: ConfigurationPolicy
         metadata:
-          name: compliance-api-uninstall-gk-csv
-        spec:
-          object-templates-raw: |
-
-            {{ range $ns := (lookup "v1" "Namespace" "" "").items }}
-            {{ range $csv := (lookup "operators.coreos.com/v1alpha1" "ClusterServiceVersion"  "" "").items }}
-            {{ $csvName := $csv.metadata.name }}
-            {{ if hasPrefix "gatekeeper-operator-product." $csvName }}
-            - complianceType: mustnothave
-              objectDefinition:
-                apiVersion: operators.coreos.com/v1alpha1
-                kind: ClusterServiceVersion
-                metadata:
-                  name: {{ $csvName }}
-                  namespace: {{ $ns.metadata.name }}
-            {{ end }}
-            {{ end }}
-            {{ end }}
-          remediationAction: enforce
-          severity: critical
-    - extraDependencies:
-      - apiVersion: policy.open-cluster-management.io/v1
-        kind: ConfigurationPolicy
-        name: compliance-api-uninstall-gk-csv
-        compliance: Compliant
-      objectDefinition:
-        apiVersion: policy.open-cluster-management.io/v1
-        kind: ConfigurationPolicy
-        metadata:
           name: compliance-api-uninstall-gk-sub
         spec:
           object-templates-raw: |
@@ -58,6 +29,35 @@ spec:
                 metadata:
                   name: gatekeeper-operator-product
                   namespace: openshift-operators
+          remediationAction: enforce
+          severity: critical
+    - extraDependencies:
+      - apiVersion: policy.open-cluster-management.io/v1
+        kind: ConfigurationPolicy
+        name: compliance-api-uninstall-gk-sub
+        compliance: Compliant
+      objectDefinition:
+        apiVersion: policy.open-cluster-management.io/v1
+        kind: ConfigurationPolicy
+        metadata:
+          name: compliance-api-uninstall-gk-csv
+        spec:
+          object-templates-raw: |
+
+            {{ range $ns := (lookup "v1" "Namespace" "" "").items }}
+            {{ range $csv := (lookup "operators.coreos.com/v1alpha1" "ClusterServiceVersion"  "" "").items }}
+            {{ $csvName := $csv.metadata.name }}
+            {{ if hasPrefix "gatekeeper-operator-product." $csvName }}
+            - complianceType: mustnothave
+              objectDefinition:
+                apiVersion: operators.coreos.com/v1alpha1
+                kind: ClusterServiceVersion
+                metadata:
+                  name: {{ $csvName }}
+                  namespace: {{ $ns.metadata.name }}
+            {{ end }}
+            {{ end }}
+            {{ end }}
           remediationAction: enforce
           severity: critical
 ---
