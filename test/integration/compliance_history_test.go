@@ -418,6 +418,14 @@ var _ = Describe("GRC: [P1][Sev1][policy-grc] Test the compliance history API", 
 
 			// Deleting the CSV from every namespace takes the ConfigurationPolicy quite a while (~5 min)
 			_ = verifyPolicyOnAllClusters(ctx, policyNS, uninstallGKPolicyName, "Compliant", defaultTimeoutSeconds*12)
+
+			By("Delete the " + uninstallGKPolicyName + " policy")
+			_, err = common.OcHub(
+				"delete",
+				"-f",
+				"../resources/compliance_history/policy-uninstall-gk.yaml",
+			)
+			Expect(err).ToNot(HaveOccurred())
 		})
 
 		By("Creating the " + gkTargetNS + " namespace")
@@ -440,10 +448,17 @@ var _ = Describe("GRC: [P1][Sev1][policy-grc] Test the compliance history API", 
 
 		DeferCleanup(func(ctx context.Context) {
 			By("Deleting the " + gkTargetNS + " namespace")
-			err := clientHub.CoreV1().Namespaces().Delete(ctx, gkTargetNS, metav1.DeleteOptions{})
-			if !k8serrors.IsNotFound(err) {
-				Expect(err).ToNot(HaveOccurred())
-			}
+			_, err = common.OcHub(
+				"delete",
+				"ns",
+				gkTargetNS,
+			)
+
+			Eventually(func() bool {
+				_, err := clientHub.CoreV1().Namespaces().Get(ctx, gkTargetNS, metav1.GetOptions{})
+
+				return k8serrors.IsNotFound(err)
+			}, defaultTimeoutSeconds*4, 1).Should(BeTrue())
 		})
 
 		// The audit pod can take a while to become healthy.
