@@ -94,6 +94,7 @@ spec:
         spec:
           enforcementAction: dryrun
           match:
+            name: compliance-api-*
             kinds:
               - apiGroups: [""]
                 kinds: ["ConfigMap"]

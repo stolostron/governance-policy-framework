@@ -386,8 +386,7 @@ var _ = Describe("GRC: [P1][Sev1][policy-grc] Test the compliance history API", 
 	It("Creates a policy with a Gatekeeper constraint", func(ctx context.Context) {
 		const installGKPolicyName = "compliance-api-install-gk"
 		const uninstallGKPolicyName = "compliance-api-uninstall-gk"
-		const gkTargetNS = "compliance-api-test"
-		const invalidConfigMapName = "compliance-api-test"
+		const gkPrereqPolicyName = "compliance-api-gk-prereq"
 		const gkPolicyName = "compliance-api-gk"
 
 		By("Creating the " + installGKPolicyName + " policy to install Gatekeeper")
@@ -428,38 +427,26 @@ var _ = Describe("GRC: [P1][Sev1][policy-grc] Test the compliance history API", 
 			Expect(err).ToNot(HaveOccurred())
 		})
 
-		By("Creating the " + gkTargetNS + " namespace")
-		ns := corev1.Namespace{
-			ObjectMeta: metav1.ObjectMeta{
-				Name: gkTargetNS,
-			},
-		}
-		_, err = clientHub.CoreV1().Namespaces().Create(ctx, &ns, metav1.CreateOptions{})
-		Expect(err).ToNot(HaveOccurred())
-
-		By("Creating an invalid ConfigMap")
-		configmap := &corev1.ConfigMap{
-			ObjectMeta: metav1.ObjectMeta{
-				Name: invalidConfigMapName,
-			},
-		}
-		configmap, err = clientHub.CoreV1().ConfigMaps(gkTargetNS).Create(ctx, configmap, metav1.CreateOptions{})
+		By("Creating an invalid ConfigMap with a policy")
+		_, err = common.OcHub(
+			"apply",
+			"-f",
+			"../resources/compliance_history/policy-gk-prereq.yaml",
+		)
 		Expect(err).ToNot(HaveOccurred())
 
 		DeferCleanup(func(ctx context.Context) {
-			By("Deleting the " + gkTargetNS + " namespace")
+			By("Deleting the " + gkPrereqPolicyName + " policy")
 			_, err = common.OcHub(
 				"delete",
-				"ns",
-				gkTargetNS,
+				"-f",
+				"../resources/compliance_history/policy-gk-prereq.yaml",
+				"--ignore-not-found",
 			)
-
-			Eventually(func() bool {
-				_, err := clientHub.CoreV1().Namespaces().Get(ctx, gkTargetNS, metav1.GetOptions{})
-
-				return k8serrors.IsNotFound(err)
-			}, defaultTimeoutSeconds*4, 1).Should(BeTrue())
+			Expect(err).ToNot(HaveOccurred())
 		})
+
+		_ = verifyPolicyOnAllClusters(ctx, policyNS, gkPrereqPolicyName, "Compliant", defaultTimeoutSeconds)
 
 		// The audit pod can take a while to become healthy.
 		_ = verifyPolicyOnAllClusters(ctx, policyNS, installGKPolicyName, "Compliant", defaultTimeoutSeconds*6)
@@ -545,10 +532,15 @@ var _ = Describe("GRC: [P1][Sev1][policy-grc] Test the compliance history API", 
 			// It can take a while for the Gatekeeper audit pod to produce audit results.
 		}, defaultTimeoutSeconds*6, 1).Should(Succeed())
 
-		By("Updating the ConfigMap to be valid")
-		configmap.Labels = map[string]string{"my-gk-test": "a-value"}
-		_, err = clientHub.CoreV1().ConfigMaps(gkTargetNS).Update(ctx, configmap, metav1.UpdateOptions{})
+		By("Updating the ConfigMap to be valid with a policy")
+		_, err = common.OcHub(
+			"apply",
+			"-f",
+			"../resources/compliance_history/policy-gk-prereq2.yaml",
+		)
 		Expect(err).ToNot(HaveOccurred())
+
+		_ = verifyPolicyOnAllClusters(ctx, policyNS, gkPrereqPolicyName, "Compliant", defaultTimeoutSeconds)
 
 		By("Verifying that a compliant event was sent")
 		Eventually(func(g Gomega) {
