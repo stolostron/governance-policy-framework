@@ -12,17 +12,17 @@ jobs:
   checks:
     name: Code Health Checks
     runs-on: ubuntu-latest
+    outputs:
+      ACTION_RESULT: ${{ steps.results.outputs.ACTION_RESULT }}
+      CI_ICON: ${{ steps.results.outputs.CI_ICON }}
+      CI_SUMMARY: ${{ steps.results.outputs.CI_SUMMARY }}
+      CODEBASE_ICON: ${{ steps.results.outputs.CODEBASE_ICON }}
+      CODEBASE_SUMMARY: ${{ steps.results.outputs.CODEBASE_SUMMARY }}
     steps:
       - name: Checkout Policy Framework
         uses: actions/checkout@v4
-        with:
-          # `repository` is inferred as the "caller" repository
-          path: framework
-          # `ref` is inferred as the new commit
 
       - name: CI Check
-        id: ci_check
-        working-directory: framework
         continue-on-error: true
         env:
           GITHUB_USER: ${{ secrets.WORKFLOW_USER }}
@@ -35,8 +35,6 @@ jobs:
           exit ${EXIT_CODE}
 
       - name: Codebase Check
-        id: codebase_check
-        working-directory: framework
         continue-on-error: true
         env:
           SKIP_CLONING: "true"
@@ -48,26 +46,25 @@ jobs:
 
       - name: Post results to action summary
         id: results
-        working-directory: framework
         if: ${{ always() }}
         run: |
           SUCCESS_ICON="white_check_mark"
           WARNING_ICON="warning"
           FAILURE_ICON="no_entry"
 
-          echo "ACTION_RESULT=$([[ "${{ env.CI_EXIT_CODE }}" == 0 ]] && [[ "${{ env.CODEBASE_EXIT_CODE }}" == 0 ]] && echo 0 || echo 1)" >> ${GITHUB_ENV}
+          echo "ACTION_RESULT=$([[ "${{ env.CI_EXIT_CODE }}" == 0 ]] && [[ "${{ env.CODEBASE_EXIT_CODE }}" == 0 ]] && echo 0 || echo 1)" >> ${GITHUB_OUTPUT}
           if [[ -f summary-ci-errors.log ]]; then
-            echo "CI_SUMMARY=\n\`\`\`\n$(awk '{printf "%s\\n", $0}' summary-ci-errors.log | sed 's/"/\\"/g')\`\`\`" >> ${GITHUB_ENV}
+            echo "CI_SUMMARY=\n\`\`\`\n$(awk '{printf "%s\\n", $0}' summary-ci-errors.log | sed 's/"/\\"/g')\`\`\`" >> ${GITHUB_OUTPUT}
           fi
           if [[ -f summary-codebase-errors.log ]]; then
-            echo "CODEBASE_SUMMARY=\n\`\`\`\n$(awk '{printf "%s\\n", $0}' summary-codebase-errors.log | sed 's/"/\\"/g')\`\`\`" >> ${GITHUB_ENV}
+            echo "CODEBASE_SUMMARY=\n\`\`\`\n$(awk '{printf "%s\\n", $0}' summary-codebase-errors.log | sed 's/"/\\"/g')\`\`\`" >> ${GITHUB_OUTPUT}
           fi
 
           CI_ICON=${SUCCESS_ICON}
           if [[ "${{ env.CI_EXIT_CODE }}" == 1 ]]; then
             CI_ICON=${FAILURE_ICON}
           fi
-          echo "CI_ICON=${CI_ICON}" >> ${GITHUB_ENV}
+          echo "CI_ICON=${CI_ICON}" >> ${GITHUB_OUTPUT}
           echo "## :${CI_ICON}: CI Check" >> ${GITHUB_STEP_SUMMARY}
           echo "" >> ${GITHUB_STEP_SUMMARY}
           if [[ -f ci-errors.log ]]; then
@@ -87,7 +84,7 @@ jobs:
           elif [[ "${{ env.CODEBASE_EXIT_CODE }}" == 2 ]]; then
             CODEBASE_ICON=${FAILURE_ICON}
           fi
-          echo "CODEBASE_ICON=${CODEBASE_ICON}" >> ${GITHUB_ENV}
+          echo "CODEBASE_ICON=${CODEBASE_ICON}" >> ${GITHUB_OUTPUT}
           echo "## :${CODEBASE_ICON}: Codebase Check" >> ${GITHUB_STEP_SUMMARY}
           echo "" >> ${GITHUB_STEP_SUMMARY}
           if [[ -f codebase-errors.log ]]; then
@@ -100,13 +97,74 @@ jobs:
             echo "</details>" >> ${GITHUB_STEP_SUMMARY}
           fi
 
+  clusteradm:
+    name: Deploy framework with clusteradm
+    runs-on: ubuntu-latest
+    steps:
+      - name: Install clusteradm
+        run: |
+          go install open-cluster-management.io/clusteradm/cmd/clusteradm@latest ||
+          {
+            echo "error: latest tag failed. Falling back to static commit.";
+            go install open-cluster-management.io/clusteradm/cmd/clusteradm@c24cfa7;
+          }
+      - name: Bootstrap clusters with OCM
+        # Source: https://github.com/open-cluster-management-io/ocm/blob/main/solutions/setup-dev-environment/local-up.sh
+        run: |
+          export PATH=${PATH}:$(go env GOPATH)/bin
+          hub="hub" c1="cluster1" c2="cluster2"
+
+          echo "::group::Initialize the OCM Hub cluster"
+          kind create cluster --name "${hub}"
+          clusteradm init --wait
+          joincmd=$(clusteradm get token | grep clusteradm)
+          echo "::endgroup::"
+
+          for idx in {1..2}; do
+            echo "::group::Create Managed cluster cluster${idx}"
+            kind create cluster --name "cluster${idx}"
+            echo "Join cluster${idx} to Hub cluster"
+            $(echo ${joincmd} --force-internal-endpoint-lookup --wait --context kind-cluster${idx} | sed "s/<cluster_name>/cluster${idx}/g")
+            echo "Accept join of cluster${idx}"
+            clusteradm accept --context kind-${hub} --clusters cluster${idx}
+            echo "::endgroup::"
+          done
+
+          kubectl config use-context kind-hub
+          echo "Wait for ManagedClusters to be available:"
+          kubectl wait managedclusters --all --for jsonpath='{.status.conditions[?(@.type=="ManagedClusterConditionAvailable")].status}'=True ||
+            kubectl get managedclusters --context kind-${hub}
+          kubectl get managedclusters --context kind-${hub}
+
+      - name: Install and enable the framework
+        run: |
+          export PATH=${PATH}:$(go env GOPATH)/bin
+
+          kubectl config use-context kind-hub
+          clusteradm install hub-addon --names governance-policy-framework --bundle-version latest
+          clusteradm addon enable --names governance-policy-framework,config-policy-controller --clusters cluster1,cluster2
+
+          for idx in {1..5}; do
+            echo "::group::Wait for ManagedClusterAddons to be available (${idx}/5)"
+            kubectl get managedclusteraddons --all-namespaces
+            kubectl wait managedclusteraddons --all-namespaces --all --for jsonpath='{.status.conditions[?(@.type=="Available")].status}'=True && break || { [[ ${idx} == 5 ]] && exit 1; }
+            echo "::endgroup::"
+          done
+
+  slack:
+    name: Post result to Slack
+    needs: [checks, clusteradm]
+    runs-on: ubuntu-latest
+    if: ${{ always() }}
+    steps:
       - name: Send result to Slack
-        id: slack
         uses: slackapi/slack-github-action@v1.25.0
-        if: ${{ always() }}
         env:
           SLACK_WEBHOOK_TYPE: INCOMING_WEBHOOK
           SLACK_WEBHOOK_URL: ${{ secrets.CODE_HEALTH_SLACK_WEBHOOK }}
+          OCM_RESULT:
+            ${{ contains(needs.clusteradm.result, 'failure') && 'no_entry' || contains(needs.cluster.result,
+            'cancelled') && 'warning' || 'white_check_mark' }}
         with:
           payload: |
             {
@@ -115,7 +173,7 @@ jobs:
                   "type": "section",
                   "text": {
                     "type": "mrkdwn",
-                    "text": "Codebase health check ${{ env.ACTION_RESULT == 0 && 'succeeded' || 'failed' }}: <${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}#artifacts|View workflow run>\n:${{ env.CI_ICON }}: CI check${{ env.CI_SUMMARY }}\n:${{ env.CODEBASE_ICON }}: Codebase check${{ env.CODEBASE_SUMMARY }}"
+                    "text": "Codebase health check ${{ needs.checks.outputs.ACTION_RESULT == 0 && env.OCM_RESULT == 'white_check_mark' && 'succeeded' || 'failed' }}: <${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}#artifacts|View workflow run>\n:${{ env.OCM_RESULT }}: OCM deployment\n:${{ needs.checks.outputs.CI_ICON }}: CI check${{ needs.checks.outputs.CI_SUMMARY }}\n:${{ needs.checks.outputs.CODEBASE_ICON }}: Codebase check${{ needs.checks.outputs.CODEBASE_SUMMARY }}"
                   }
                 }
               ]
