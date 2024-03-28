@@ -15,7 +15,7 @@ spec:
         apiVersion: policy.open-cluster-management.io/v1
         kind: ConfigurationPolicy
         metadata:
-          name: compliance-api-configure-gk
+          name: compliance-api-configure-namespace-configmap
         spec:
           pruneObjectBehavior: DeleteAll
           object-templates:
