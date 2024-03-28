@@ -1,0 +1,48 @@
+apiVersion: policy.open-cluster-management.io/v1
+kind: Policy
+metadata:
+  name: op-compliance-api
+  annotations:
+    policy.open-cluster-management.io/description: dog
+spec:
+  disabled: false
+  remediationAction: inform
+  policy-templates:
+    - objectDefinition:
+        apiVersion: policy.open-cluster-management.io/v1beta1
+        kind: OperatorPolicy
+        metadata:
+          name: test-operator-policy
+        spec:
+          remediationAction: inform
+          severity: medium
+          complianceType: musthave
+          subscription:
+            channel: stable-3.8
+            name: quay-operator
+            namespace: operator-policy-ns
+            installPlanApproval: Automatic
+            # correct one: redhat-operators
+            source: invalid
+            sourceNamespace: openshift-marketplace
+---
+apiVersion: cluster.open-cluster-management.io/v1beta1
+kind: Placement
+metadata:
+  name: compliance-history-test
+  namespace: open-cluster-management-global-set
+spec: {}
+---
+apiVersion: policy.open-cluster-management.io/v1
+kind: PlacementBinding
+metadata:
+  name: compliance-history-test
+  namespace: open-cluster-management-global-set
+placementRef:
+  name: compliance-history-test
+  apiGroup: cluster.open-cluster-management.io
+  kind: Placement
+subjects:
+  - name: op-compliance-api
+    apiGroup: policy.open-cluster-management.io
+    kind: Policy
