@@ -107,8 +107,6 @@ var _ = Describe("GRC: [P1][Sev1][policy-grc] Test "+
 		_, err = utils.KubectlWithOutput(
 			"apply", "-f",
 			"../resources/iam_policy/clusterrolebinding.yaml",
-			"-n",
-			iamPolicyManagedNamespace,
 			"--kubeconfig="+kubeconfigManaged,
 		)
 		Expect(err).ToNot(HaveOccurred())
@@ -124,6 +122,15 @@ var _ = Describe("GRC: [P1][Sev1][policy-grc] Test "+
 		_, err := utils.KubectlWithOutput(
 			"delete", "-f",
 			"../resources/iam_policy/group.yaml",
+			"--kubeconfig="+kubeconfigManaged,
+			"--ignore-not-found",
+		)
+		Expect(err).ToNot(HaveOccurred())
+
+		By("Deleting the ClusterRoleBinding")
+		_, err = utils.KubectlWithOutput(
+			"delete", "-f",
+			"../resources/iam_policy/clusterrolebinding.yaml",
 			"--kubeconfig="+kubeconfigManaged,
 			"--ignore-not-found",
 		)
@@ -171,6 +178,15 @@ var _ = Describe("GRC: [P1][Sev1][policy-grc] Test "+
 			defaultTimeoutSeconds,
 			1,
 		).Should(BeNil())
+
+		By("Ensuring the ClusterRoleBinding removed")
+		_, err = utils.KubectlWithOutput(
+			"delete", "-f",
+			"../resources/iam_policy/clusterrolebinding.yaml",
+			"--kubeconfig="+kubeconfigManaged,
+			"--ignore-not-found",
+		)
+		Expect(err).ToNot(HaveOccurred())
 
 		By("Ensuring the test OpenShift group is gone")
 		_, err = utils.KubectlWithOutput(
