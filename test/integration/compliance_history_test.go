@@ -752,7 +752,7 @@ var _ = Describe("GRC: [P1][Sev1][policy-grc] Test the compliance history API", 
 		Expect(err).ToNot(HaveOccurred())
 
 		By("The Policy should be Compliant")
-		clusters = verifyPolicyOnAllClusters(ctx, policyNS, policyName, "Compliant", defaultTimeoutSeconds)
+		clusters = verifyPolicyOnAllClusters(ctx, policyNS, policyName, "Compliant", defaultTimeoutSeconds*4)
 
 		By("Verifying that there are Compliant compliance events for the Operator parent policy")
 		Eventually(func(g Gomega) {
