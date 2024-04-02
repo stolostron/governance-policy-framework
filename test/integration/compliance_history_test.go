@@ -565,9 +565,10 @@ var _ = Describe("GRC: [P1][Sev1][policy-grc] Test the compliance history API", 
 
 	It("Creates a policy with a compliant and non-compliant cert policy", func(ctx context.Context) {
 		const policyName = "cert-policy"
-		const certNs = "cert-policy-test-ns"
+		const certNs = "ch-cert-policy-test-ns"
 		const certPath = "../resources/compliance_history/cert-policy.yaml"
 		const certSecret = "cert-secret"
+		const nsPolicyPath = "../resources/compliance_history/cert-prereq.yaml"
 
 		now := time.Now().Format(time.RFC3339Nano)
 
@@ -582,11 +583,12 @@ var _ = Describe("GRC: [P1][Sev1][policy-grc] Test the compliance history API", 
 			)
 			Expect(err).ToNot(HaveOccurred())
 
-			By("Deleting the namespace")
+			By("Deleting the namespace policy")
 			_, err = common.OcHub(
 				"delete",
-				"ns",
-				certNs,
+				"-f",
+				nsPolicyPath,
+				"-n", policyNS,
 				"--ignore-not-found",
 			)
 			Expect(err).ToNot(HaveOccurred())
@@ -594,9 +596,10 @@ var _ = Describe("GRC: [P1][Sev1][policy-grc] Test the compliance history API", 
 
 		By("Creating the namespace")
 		_, err := common.OcHub(
-			"create",
-			"ns",
-			certNs,
+			"apply",
+			"-f",
+			nsPolicyPath,
+			"-n", policyNS,
 		)
 		Expect(err).ToNot(HaveOccurred())
 
@@ -674,9 +677,9 @@ var _ = Describe("GRC: [P1][Sev1][policy-grc] Test the compliance history API", 
 
 	It("Creates a policy with a noncompliant and compliant operator policy", func(ctx context.Context) {
 		now := time.Now().Format(time.RFC3339Nano)
-		const opNs = "operator-policy-ns"
 		const opPolicyPath = "../resources/compliance_history/operator-policy-invalid.yaml"
 		const policyName = "op-compliance-api"
+		const nsPolicyPath = "../resources/compliance_history/operator-prereq.yaml"
 
 		DeferCleanup(func(ctx context.Context) {
 			By("Deleting the operator policy")
@@ -690,11 +693,12 @@ var _ = Describe("GRC: [P1][Sev1][policy-grc] Test the compliance history API", 
 			Expect(err).ToNot(HaveOccurred())
 
 			// Delete subscription, catalog, etc at once
-			By("Deleting the namespace")
+			By("Deleting the namespace policy")
 			_, err = common.OcHub(
 				"delete",
-				"ns",
-				opNs,
+				"-f",
+				nsPolicyPath,
+				"-n", policyNS,
 				"--ignore-not-found",
 			)
 			Expect(err).ToNot(HaveOccurred())
@@ -702,9 +706,10 @@ var _ = Describe("GRC: [P1][Sev1][policy-grc] Test the compliance history API", 
 
 		By("Creating the namespace")
 		_, err := common.OcHub(
-			"create",
-			"ns",
-			opNs,
+			"apply",
+			"-f",
+			nsPolicyPath,
+			"-n", policyNS,
 		)
 		Expect(err).ToNot(HaveOccurred())
 

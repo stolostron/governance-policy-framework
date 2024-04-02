@@ -1,0 +1,49 @@
+apiVersion: policy.open-cluster-management.io/v1
+kind: Policy
+metadata:
+  name: ch-cert-prereq-policy
+  namespace: open-cluster-management-global-set
+  annotations:
+    policy.open-cluster-management.io/categories: CM Configuration Management
+    policy.open-cluster-management.io/controls: CM-2 Baseline Configuration
+    policy.open-cluster-management.io/standards: NIST SP 800-53
+spec:
+  remediationAction: enforce
+  disabled: false
+  policy-templates:
+    - objectDefinition:
+        apiVersion: policy.open-cluster-management.io/v1
+        kind: ConfigurationPolicy
+        metadata:
+          name: ch-cert-prereq-configpolicy
+        spec:
+          pruneObjectBehavior: DeleteAll
+          object-templates:
+          - complianceType: musthave
+            objectDefinition:
+              apiVersion: v1
+              kind: Namespace
+              metadata:
+                name: ch-cert-policy-test-ns
+          severity: critical
+---
+apiVersion: cluster.open-cluster-management.io/v1beta1
+kind: Placement
+metadata:
+  name: ch-cert-prereq
+  namespace: open-cluster-management-global-set
+spec: {}
+---
+apiVersion: policy.open-cluster-management.io/v1
+kind: PlacementBinding
+metadata:
+  name: ch-cert-prereq
+  namespace: open-cluster-management-global-set
+placementRef:
+  name: ch-cert-prereq
+  apiGroup: cluster.open-cluster-management.io
+  kind: Placement
+subjects:
+  - name: ch-cert-prereq-policy
+    apiGroup: policy.open-cluster-management.io
+    kind: Policy

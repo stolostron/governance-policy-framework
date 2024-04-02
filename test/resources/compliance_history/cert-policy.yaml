@@ -19,7 +19,7 @@ spec:
           remediationAction: inform
           namespaceSelector:
             exclude: ["kube-*"]
-            include: ["cert-policy-test-ns"]
+            include: ["ch-cert-policy-test-ns"]
           severity: low
           minimumDuration: 30h
           allowedSANPattern: ".*.test.com"
