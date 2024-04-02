@@ -20,7 +20,7 @@ spec:
           subscription:
             channel: stable-3.8
             name: quay-operator
-            namespace: operator-policy-ns
+            namespace: ch-operator-policy-test-ns
             installPlanApproval: Automatic
             # correct one: redhat-operators
             source: invalid
