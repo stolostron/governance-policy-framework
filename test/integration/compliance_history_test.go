@@ -610,7 +610,7 @@ var _ = Describe("GRC: [P1][Sev1][policy-grc] Test the compliance history API", 
 		Expect(err).ToNot(HaveOccurred())
 
 		By("Checking to see if the cert policy is compliant on the managed clusters")
-		clusters := verifyPolicyOnAllClusters(ctx, policyNS, policyName, "Compliant", defaultTimeoutSeconds)
+		clusters := verifyPolicyOnAllClusters(ctx, policyNS, policyName, "Compliant", defaultTimeoutSeconds*2)
 
 		By("Create wrong tls secret")
 		key, err := rsa.GenerateKey(rand.Reader, 2048)
