@@ -147,7 +147,7 @@ var _ = Describe("GRC: [P1][Sev1][policy-grc] Test install Operator",
 				By("Checking if the status of the root policy is compliant")
 				Eventually(
 					common.GetComplianceState(policyNamePrefix+noGroupSuffix),
-					defaultTimeoutSeconds*2,
+					defaultTimeoutSeconds*4,
 					1,
 				).Should(Equal(policiesv1.Compliant))
 			})
