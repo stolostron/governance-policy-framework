@@ -644,10 +644,10 @@ var _ = Describe("GRC: [P1][Sev1][policy-grc] Test the compliance history API", 
 		)
 		Expect(err).ToNot(HaveOccurred())
 
-		expectedEvents := len(clusters) * 2
+		expectedEvents := 2
 
 		By(fmt.Sprintf("Verifying that there are %d compliance events for the Cert parent policy",
-			expectedEvents))
+			len(clusters)*expectedEvents))
 		Eventually(func(g Gomega) {
 			for _, cluster := range clusters {
 				events, err := listComplianceEvents(
@@ -656,7 +656,7 @@ var _ = Describe("GRC: [P1][Sev1][policy-grc] Test the compliance history API", 
 
 				g.Expect(events).To(
 					HaveLen(expectedEvents),
-					fmt.Sprintf("expected cluster %s to have %d events", cluster, expectedEvents),
+					fmt.Sprintf("Verifying that there are %d compliance events per cluster", expectedEvents),
 				)
 
 				event0 := events[0].(map[string]interface{})
