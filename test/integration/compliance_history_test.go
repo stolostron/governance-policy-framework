@@ -10,6 +10,7 @@ import (
 	"crypto/tls"
 	"crypto/x509"
 	"crypto/x509/pkix"
+	"encoding/base64"
 	"encoding/json"
 	"encoding/pem"
 	"fmt"
@@ -21,7 +22,6 @@ import (
 
 	. "github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
-	corev1 "k8s.io/api/core/v1"
 	k8serrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
@@ -577,15 +577,13 @@ var _ = Describe("GRC: [P1][Sev1][policy-grc] Test the compliance history API", 
 	It("Creates a policy with a compliant and non-compliant cert policy", func(ctx context.Context) {
 		const policyName = "cert-policy"
 		const prereqPolicyName = "ch-cert-prereq-policy"
-		const certNs = "ch-cert-policy-test-ns"
 		const certPath = "../resources/compliance_history/cert-policy.yaml"
-		const certSecret = "cert-secret"
 		const nsPolicyPath = "../resources/compliance_history/cert-prereq.yaml"
 
 		now := time.Now().Format(time.RFC3339Nano)
 
 		DeferCleanup(func(ctx context.Context) {
-			By("Deleting the policy")
+			By("Deleting the cert policy")
 			_, err := common.OcHub(
 				"delete",
 				"-f",
@@ -595,7 +593,7 @@ var _ = Describe("GRC: [P1][Sev1][policy-grc] Test the compliance history API", 
 			)
 			Expect(err).ToNot(HaveOccurred())
 
-			By("Deleting the namespace policy")
+			By("Deleting the prereq policy")
 			_, err = common.OcHub(
 				"delete",
 				"-f",
@@ -606,7 +604,7 @@ var _ = Describe("GRC: [P1][Sev1][policy-grc] Test the compliance history API", 
 			Expect(err).ToNot(HaveOccurred())
 		})
 
-		By("Creating the namespace")
+		By("Creating the prereq policy")
 		_, err := common.OcHub(
 			"apply",
 			"-f",
@@ -615,10 +613,10 @@ var _ = Describe("GRC: [P1][Sev1][policy-grc] Test the compliance history API", 
 		)
 		Expect(err).ToNot(HaveOccurred())
 
-		By("Verifying that the policy has created the namespace")
+		By("Verifying that the policy has created the namespace and secret")
 		verifyPolicyOnAllClusters(ctx, policyNS, prereqPolicyName, "Compliant", defaultTimeoutSeconds)
 
-		By("Creating the policy")
+		By("Creating the cert policy")
 		_, err = common.OcHub(
 			"apply",
 			"-f",
@@ -650,12 +648,16 @@ var _ = Describe("GRC: [P1][Sev1][policy-grc] Test the compliance history API", 
 		err = pem.Encode(pemBytes, &pem.Block{Type: "CERTIFICATE", Bytes: derBytes})
 		Expect(err).ToNot(HaveOccurred())
 
-		secret := corev1.Secret{
-			ObjectMeta: metav1.ObjectMeta{Name: certSecret},
-			Data:       map[string][]byte{"tls.crt": pemBytes.Bytes()},
-		}
-		_, err = clientManaged.CoreV1().Secrets(certNs).Create(
-			context.TODO(), &secret, metav1.CreateOptions{},
+		tlsEncoded := base64.StdEncoding.EncodeToString(pemBytes.Bytes())
+
+		_, err = common.OcHub("patch", "policies.policy.open-cluster-management.io", prereqPolicyName,
+			"-n", policyNS, "--type=json", "-p",
+			fmt.Sprintf(`[{
+                "op":"add",
+                "path":"/spec/policy-templates/1/objectDefinition/spec/`+
+				`object-templates/0/objectDefinition/data", 
+                "value":{"tls.crt":"%s"}
+            }]`, tlsEncoded),
 		)
 		Expect(err).ToNot(HaveOccurred())
 
