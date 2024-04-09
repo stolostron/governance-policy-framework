@@ -500,9 +500,12 @@ var _ = Describe("GRC: [P1][Sev1][policy-grc] Test the compliance history API", 
 
 				// Ensure the ConstraintTemplate has 1 event
 				g.Expect(policyToEventDetails["complianceapitest"]).To(HaveLen(1))
-				g.Expect(policyToEventDetails["complianceapitest"][0]["compliance"]).To(Equal("Compliant"))
-				expectedMsg := "ConstraintTemplate complianceapitest was created successfully"
-				g.Expect(policyToEventDetails["complianceapitest"][0]["message"]).To(Equal(expectedMsg))
+				msg := policyToEventDetails["complianceapitest"][0]["message"]
+				g.Expect(policyToEventDetails["complianceapitest"][0]["compliance"]).To(
+					Equal("Compliant"),
+					fmt.Sprintf("The ConstraintTemplate was not compliant on cluster %s: %s", cluster, msg),
+				)
+				g.Expect(msg).To(Equal("ConstraintTemplate complianceapitest was created successfully"))
 
 				// Ensure the constraint has 2 or more events. More than one template-error compliance event can
 				// be set based on race conditions.
@@ -510,15 +513,18 @@ var _ = Describe("GRC: [P1][Sev1][policy-grc] Test the compliance history API", 
 				g.Expect(lenOk).To(
 					BeTrue(),
 					fmt.Sprintf(
-						"Expected the compliance-api policy to have 2 or more compliance events, got %d",
-						len(policyToEventDetails["compliance-api"]),
+						"Expected the compliance-api policy to have 2 or more compliance events, got %d on cluster %s",
+						len(policyToEventDetails["compliance-api"]), cluster,
 					),
 				)
 				// Sorted by timestamp in descending order
 				g.Expect(policyToEventDetails["compliance-api"][0]["compliance"]).To(Equal("NonCompliant"))
-				expectedMsg = "warn - All configmaps must have a 'my-gk-test' label (on ConfigMap " +
+				expectedMsg := "warn - All configmaps must have a 'my-gk-test' label (on ConfigMap " +
 					"compliance-api-test/compliance-api-test)"
-				g.Expect(policyToEventDetails["compliance-api"][0]["message"]).To(Equal(expectedMsg))
+				g.Expect(policyToEventDetails["compliance-api"][0]["message"]).To(
+					Equal(expectedMsg),
+					"The constraint compliance message didn't match on cluster "+cluster,
+				)
 
 				// All other compliance events should be a template-error
 				for _, eventDetails := range policyToEventDetails["compliance-api"][1:] {
@@ -526,7 +532,9 @@ var _ = Describe("GRC: [P1][Sev1][policy-grc] Test the compliance history API", 
 					expectedMsg = "template-error; Mapping not found, check if the required ConstraintTemplate has " +
 						"been deployed: the resource version was not found: constraints.gatekeeper.sh/v1beta1, " +
 						"Kind=ComplianceAPITest"
-					g.Expect(eventDetails["message"]).To(Equal(expectedMsg))
+					g.Expect(eventDetails["message"]).To(
+						Equal(expectedMsg), "Unexpected constraint NonCompliant event on cluster "+cluster,
+					)
 				}
 			}
 			// It can take a while for the Gatekeeper audit pod to produce audit results.
@@ -557,7 +565,10 @@ var _ = Describe("GRC: [P1][Sev1][policy-grc] Test the compliance history API", 
 				g.Expect(events).To(HaveLen(1), fmt.Sprintf("expected cluster %s to have one compliant event", cluster))
 
 				eventDetails := events[0].(map[string]interface{})["event"].(map[string]interface{})
-				g.Expect(eventDetails["compliance"]).To(Equal("Compliant"))
+				g.Expect(eventDetails["compliance"]).To(
+					Equal("Compliant"),
+					fmt.Sprintf("The constraint was not compliant on cluster %s: %s", cluster, eventDetails["message"]),
+				)
 				g.Expect(eventDetails["message"]).To(Equal("The constraint has no violations"))
 			}
 		}, defaultTimeoutSeconds*2, 1).Should(Succeed())
