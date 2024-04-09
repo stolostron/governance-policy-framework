@@ -26,6 +26,21 @@ spec:
               metadata:
                 name: ch-cert-policy-test-ns
           severity: critical
+    - objectDefinition:
+        apiVersion: policy.open-cluster-management.io/v1
+        kind: ConfigurationPolicy
+        metadata:
+          name: ch-secret-prereq-configpolicy
+        spec:
+          pruneObjectBehavior: DeleteAll
+          object-templates:
+          - complianceType: musthave
+            objectDefinition:
+              apiVersion: v1
+              kind: Secret
+              metadata:
+                name: ch-cert-secret
+                namespace: ch-cert-policy-test-ns
 ---
 apiVersion: cluster.open-cluster-management.io/v1beta1
 kind: Placement
