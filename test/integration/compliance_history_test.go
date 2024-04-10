@@ -783,8 +783,8 @@ var _ = Describe("GRC: [P1][Sev1][policy-grc] Test the compliance history API", 
 					To(ContainSubstring("the policy spec is valid, the OperatorGroup matches what " +
 						"is required by the policy, the Subscription matches what is required by the policy, " +
 						"no InstallPlans requiring approval were found, ClusterServiceVersion - install strategy" +
-						" completed with no errors, All operator Deployments have their minimum availability, " +
-						"CatalogSource was found"))
+						" completed with no errors, There are CRDs present for the operator, All operator " +
+						"Deployments have their minimum availability, CatalogSource was found"))
 			}
 		}, 120, 1).Should(Succeed())
 	})
