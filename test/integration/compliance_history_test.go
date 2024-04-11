@@ -576,6 +576,7 @@ var _ = Describe("GRC: [P1][Sev1][policy-grc] Test the compliance history API", 
 
 	It("Creates a policy with a compliant and non-compliant cert policy", func(ctx context.Context) {
 		const policyName = "cert-policy"
+		const prereqPolicyName = "ch-cert-prereq-policy"
 		const certNs = "ch-cert-policy-test-ns"
 		const certPath = "../resources/compliance_history/cert-policy.yaml"
 		const certSecret = "cert-secret"
@@ -613,6 +614,9 @@ var _ = Describe("GRC: [P1][Sev1][policy-grc] Test the compliance history API", 
 			"-n", policyNS,
 		)
 		Expect(err).ToNot(HaveOccurred())
+
+		By("Verifying that the policy has created the namespace")
+		verifyPolicyOnAllClusters(ctx, policyNS, prereqPolicyName, "Compliant", defaultTimeoutSeconds)
 
 		By("Creating the policy")
 		_, err = common.OcHub(
@@ -691,6 +695,7 @@ var _ = Describe("GRC: [P1][Sev1][policy-grc] Test the compliance history API", 
 		const opPolicyPath = "../resources/compliance_history/operator-policy-invalid.yaml"
 		const policyName = "op-compliance-api"
 		const nsPolicyPath = "../resources/compliance_history/operator-prereq.yaml"
+		const prereqPolicyName = "ch-operator-prereq-policy"
 
 		DeferCleanup(func(ctx context.Context) {
 			By("Deleting the operator policy")
@@ -723,6 +728,9 @@ var _ = Describe("GRC: [P1][Sev1][policy-grc] Test the compliance history API", 
 			"-n", policyNS,
 		)
 		Expect(err).ToNot(HaveOccurred())
+
+		By("Verifying that the policy has created the namespace")
+		verifyPolicyOnAllClusters(ctx, policyNS, prereqPolicyName, "Compliant", defaultTimeoutSeconds)
 
 		By("Creating the Policy")
 		_, err = common.OcHub(
