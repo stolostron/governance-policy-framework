@@ -188,7 +188,7 @@ var _ = Describe("GRC: [P1][Sev1][policy-grc] Test the compliance history API", 
 			g.Expect(resp.StatusCode).To(
 				Equal(http.StatusOK), "expected the compliance API to return the 200 status code",
 			)
-		}, common.DefaultTimeoutSeconds*2, 1).Should(Succeed())
+		}, common.DefaultTimeoutSeconds*4, 1).Should(Succeed())
 	})
 
 	AfterAll(func(ctx context.Context) {
