@@ -1,8 +1,6 @@
 #! /bin/bash
 
 BUILD_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" >/dev/null 2>&1 && pwd)"
-: "${GITHUB_USER:?GITHUB_USER must be set}"
-: "${GITHUB_TOKEN:?GITHUB_TOKEN must be set}"
 
 CHECK_RELEASES="$(cat ${DIR}/../CURRENT_VERSION; echo; cat ${DIR}/../CURRENT_SUPPORTED_VERSIONS)"
 COMPONENT_ORG=stolostron
@@ -18,6 +16,9 @@ cloneRepos() {
 	if [[ "${SKIP_CLONING}" == "true" ]]; then
 		return 0
 	fi
+
+	: "${GITHUB_USER:?GITHUB_USER must be set}"
+	: "${GITHUB_TOKEN:?GITHUB_TOKEN must be set}"
 
 	for prereqrepo in ${UTIL_REPOS}; do
 		if [ ! -d ${prereqrepo} ]; then
