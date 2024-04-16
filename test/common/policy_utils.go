@@ -192,6 +192,9 @@ func GetHistoryMessages(policyName string, templateIdx int) ([]interface{}, bool
 	return history, found, err
 }
 
+// GetOpPolicyCompMsg returns a function (so that it can be used in an Eventually)
+// that returns the current Compliant condition message on the specified OperatorPolicy.
+// It will return an empty string if the OperatorPolicy or condition could not be found.
 func GetOpPolicyCompMsg(policyName string) func() string {
 	return func() string {
 		unstructOpPol := utils.GetWithTimeout(
@@ -366,4 +369,18 @@ func setRemediationAction(
 			g.ExpectWithOffset(1, action).To(Equal(remediationAction))
 		}, DefaultTimeoutSeconds, 1).Should(Succeed())
 	}
+}
+
+// RegisterDebugMessage returns a pointer to a string which this function will register to be
+// printed in the ginkgo logs only if the test fails.
+func RegisterDebugMessage() *string {
+	msg := new(string)
+
+	DeferCleanup(func() {
+		if CurrentSpecReport().Failed() {
+			GinkgoWriter.Println(*msg)
+		}
+	})
+
+	return msg
 }
