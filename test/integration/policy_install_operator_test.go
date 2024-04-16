@@ -31,7 +31,7 @@ var _ = Describe("GRC: [P1][Sev1][policy-grc] Test install Operator",
 		)
 
 		Context("When no OperatorGroup is specified", func() {
-			var dynamicOpGroupName, dynamicCSVName string
+			var dynamicOpGroupName string
 
 			BeforeAll(func() {
 				_, err := common.OcManaged("create", "ns", testNS+noGroupSuffix)
@@ -199,53 +199,47 @@ var _ = Describe("GRC: [P1][Sev1][policy-grc] Test install Operator",
 				Expect(opGroup).ToNot(BeNil())
 			})
 
-			It("Should verify Subscription details", func() {
-				sub := utils.GetWithTimeout(
-					clientManagedDynamic,
-					common.GvrSubscriptionOLM,
-					subName,
-					testNS+noGroupSuffix,
-					true,
-					defaultTimeoutSeconds,
-				)
-				Expect(sub).NotTo(BeNil())
+			It("Should verify Subscription, CSV, and Deployment details", func() {
+				Eventually(func(g Gomega) {
+					// Because of possible upgrades, lookup the CSV name every time
+					sub := utils.GetWithTimeout(
+						clientManagedDynamic,
+						common.GvrSubscriptionOLM,
+						subName,
+						testNS+noGroupSuffix,
+						true,
+						defaultTimeoutSeconds,
+					)
+					g.Expect(sub).NotTo(BeNil())
 
-				By("Parsing the Subscription for the CSV name")
-				csvName, found, err := unstructured.NestedString(sub.Object, "status", "installedCSV")
-				Expect(err).ToNot(HaveOccurred())
-				Expect(found).To(BeTrue())
-				Expect(csvName).ToNot(BeEmpty())
-				dynamicCSVName = csvName
-			})
+					csvName, found, err := unstructured.NestedString(sub.Object, "status", "installedCSV")
+					g.Expect(err).ToNot(HaveOccurred())
+					g.Expect(found).To(BeTrue())
+					g.Expect(csvName).ToNot(BeEmpty())
 
-			It("Should verify CSV details", func() {
-				Eventually(func() string {
 					csv := utils.GetWithTimeout(
 						clientManagedDynamic,
 						common.GvrClusterServiceVersion,
-						dynamicCSVName,
+						csvName,
 						testNS+noGroupSuffix,
 						true,
-						defaultTimeoutSeconds*4,
+						defaultTimeoutSeconds,
 					)
-					Expect(csv).NotTo(BeNil())
+					g.Expect(csv).NotTo(BeNil())
 
 					phase, _, _ := unstructured.NestedString(csv.Object, "status", "phase")
+					g.Expect(phase).To(Equal("Succeeded"))
 
-					return phase
-				}, defaultTimeoutSeconds*4, 1).Should(Equal("Succeeded"))
-			})
-
-			It("Should verify the intended operator is installed", func() {
-				opDeployment := utils.GetWithTimeout(
-					clientManagedDynamic,
-					common.GvrDeployment,
-					dynamicCSVName, // Operator has the same name as its corresponding csv
-					testNS+noGroupSuffix,
-					true,
-					defaultTimeoutSeconds,
-				)
-				Expect(opDeployment).NotTo(BeNil())
+					opDeployment := utils.GetWithTimeout(
+						clientManagedDynamic,
+						common.GvrDeployment,
+						csvName, // Operator has the same name as its corresponding csv
+						testNS+noGroupSuffix,
+						true,
+						defaultTimeoutSeconds,
+					)
+					g.Expect(opDeployment).NotTo(BeNil())
+				}, defaultTimeoutSeconds*4, 5).Should(Succeed())
 			})
 		})
 
@@ -384,53 +378,47 @@ var _ = Describe("GRC: [P1][Sev1][policy-grc] Test install Operator",
 				Expect(opGroup).ToNot(BeNil())
 			})
 
-			It("Should verify Subscription details", func() {
-				sub := utils.GetWithTimeout(
-					clientManagedDynamic,
-					common.GvrSubscriptionOLM,
-					subName,
-					testNS+withGroupSuffix,
-					true,
-					defaultTimeoutSeconds,
-				)
-				Expect(sub).NotTo(BeNil())
+			It("Should verify Subscription, CSV, and Deployment details", func() {
+				Eventually(func(g Gomega) {
+					// Because of possible upgrades, lookup the CSV name every time
+					sub := utils.GetWithTimeout(
+						clientManagedDynamic,
+						common.GvrSubscriptionOLM,
+						subName,
+						testNS+withGroupSuffix,
+						true,
+						defaultTimeoutSeconds,
+					)
+					g.Expect(sub).NotTo(BeNil())
 
-				By("Parsing the Subscription for the CSV name")
-				csvName, found, err := unstructured.NestedString(sub.Object, "status", "installedCSV")
-				Expect(err).ToNot(HaveOccurred())
-				Expect(found).To(BeTrue())
-				Expect(csvName).ToNot(BeEmpty())
-				dynamicCSVName = csvName
-			})
+					csvName, found, err := unstructured.NestedString(sub.Object, "status", "installedCSV")
+					g.Expect(err).ToNot(HaveOccurred())
+					g.Expect(found).To(BeTrue())
+					g.Expect(csvName).ToNot(BeEmpty())
 
-			It("Should verify CSV details", func() {
-				Eventually(func() string {
 					csv := utils.GetWithTimeout(
 						clientManagedDynamic,
 						common.GvrClusterServiceVersion,
-						dynamicCSVName,
+						csvName,
 						testNS+withGroupSuffix,
 						true,
-						defaultTimeoutSeconds*4,
+						defaultTimeoutSeconds,
 					)
-					Expect(csv).NotTo(BeNil())
+					g.Expect(csv).NotTo(BeNil())
 
 					phase, _, _ := unstructured.NestedString(csv.Object, "status", "phase")
+					g.Expect(phase).To(Equal("Succeeded"))
 
-					return phase
-				}, defaultTimeoutSeconds*4, 1).Should(Equal("Succeeded"))
-			})
-
-			It("Should verify the intended operator is installed", func() {
-				opDeployment := utils.GetWithTimeout(
-					clientManagedDynamic,
-					common.GvrDeployment,
-					dynamicCSVName, // Operator has the same name as its corresponding csv
-					testNS+withGroupSuffix,
-					true,
-					defaultTimeoutSeconds,
-				)
-				Expect(opDeployment).NotTo(BeNil())
+					opDeployment := utils.GetWithTimeout(
+						clientManagedDynamic,
+						common.GvrDeployment,
+						csvName, // Operator has the same name as its corresponding csv
+						testNS+withGroupSuffix,
+						true,
+						defaultTimeoutSeconds,
+					)
+					g.Expect(opDeployment).NotTo(BeNil())
+				}, defaultTimeoutSeconds*4, 5).Should(Succeed())
 			})
 		})
 	})
