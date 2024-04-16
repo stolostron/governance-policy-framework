@@ -144,12 +144,15 @@ var _ = Describe("GRC: [P1][Sev1][policy-grc] Test install Operator",
 				).Should(MatchRegexp("Compliant.*the OperatorGroup matches what is required by the policy.*" +
 					"the Subscription matches what is required by the policy.*"))
 
+				msg := common.RegisterDebugMessage()
+
 				By("Checking if the status of the root policy is compliant")
-				Eventually(
-					common.GetComplianceState(policyNamePrefix+noGroupSuffix),
-					defaultTimeoutSeconds*4,
-					1,
-				).Should(Equal(policiesv1.Compliant))
+				Eventually(func(g Gomega) interface{} {
+					*msg = "Current compliance condition of OperatorPolicy: " +
+						common.GetOpPolicyCompMsg("operator-policy"+noGroupSuffix)()
+
+					return common.GetComplianceState(policyNamePrefix + noGroupSuffix)(g)
+				}, defaultTimeoutSeconds*4, 1).Should(Equal(policiesv1.Compliant))
 			})
 
 			It("Should verify OperatorGroup details", func() {
@@ -337,12 +340,15 @@ var _ = Describe("GRC: [P1][Sev1][policy-grc] Test install Operator",
 				).Should(MatchRegexp("NonCompliant.*the OperatorGroup required by the policy was not found.*" +
 					"the Subscription required by the policy was not found.*"))
 
+				debugMsg := common.RegisterDebugMessage()
+
 				By("Checking if the status of the root policy is NonCompliant")
-				Eventually(
-					common.GetComplianceState(policyNamePrefix+withGroupSuffix),
-					defaultTimeoutSeconds*2,
-					1,
-				).Should(Equal(policiesv1.NonCompliant))
+				Eventually(func(g Gomega) interface{} {
+					*debugMsg = "Current compliance condition of OperatorPolicy: " +
+						common.GetOpPolicyCompMsg("operator-policy"+withGroupSuffix)()
+
+					return common.GetComplianceState(policyNamePrefix + withGroupSuffix)(g)
+				}, defaultTimeoutSeconds*2, 1).Should(Equal(policiesv1.NonCompliant))
 			})
 
 			It("Should enforce the policy on the hub", func() {
@@ -355,12 +361,15 @@ var _ = Describe("GRC: [P1][Sev1][policy-grc] Test install Operator",
 				).Should(MatchRegexp("Compliant.*the OperatorGroup matches what is required by the policy.*" +
 					"the Subscription matches what is required by the policy.*"))
 
+				debugMsg := common.RegisterDebugMessage()
+
 				By("Checking if the status of the root policy is compliant")
-				Eventually(
-					common.GetComplianceState(policyNamePrefix+withGroupSuffix),
-					defaultTimeoutSeconds*2,
-					1,
-				).Should(Equal(policiesv1.Compliant))
+				Eventually(func(g Gomega) interface{} {
+					*debugMsg = "Current compliance condition of OperatorPolicy: " +
+						common.GetOpPolicyCompMsg("operator-policy"+withGroupSuffix)()
+
+					return common.GetComplianceState(policyNamePrefix + withGroupSuffix)(g)
+				}, defaultTimeoutSeconds*2, 1).Should(Equal(policiesv1.Compliant))
 			})
 
 			It("Should verify OperatorGroup details", func() {
