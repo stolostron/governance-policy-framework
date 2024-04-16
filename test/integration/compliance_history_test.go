@@ -777,8 +777,42 @@ var _ = Describe("GRC: [P1][Sev1][policy-grc] Test the compliance history API", 
 		 }]`)
 		Expect(err).ToNot(HaveOccurred())
 
-		By("The Policy should be Compliant")
-		clusters = verifyPolicyOnAllClusters(ctx, policyNS, policyName, "Compliant", defaultTimeoutSeconds*2)
+		debugMsg := common.RegisterDebugMessage()
+
+		By("The Policy should be Compliant on all clusters")
+		Eventually(func(g Gomega) {
+			*debugMsg = ""
+
+			for _, cluster := range clusters {
+				replPol, err := clientHubDynamic.Resource(common.GvrPolicy).Namespace(cluster).Get(
+					ctx, policyNS+"."+policyName, metav1.GetOptions{},
+				)
+				g.Expect(err).ToNot(HaveOccurred())
+				g.Expect(replPol).NotTo(BeNil())
+
+				details, found, err := unstructured.NestedSlice(replPol.Object, "status", "details")
+				g.Expect(found).To(BeTrue())
+				g.Expect(err).NotTo(HaveOccurred())
+
+				det, ok := details[0].(map[string]interface{})
+				g.Expect(ok).To(BeTrue())
+
+				history, found, err := unstructured.NestedSlice(det, "history")
+				g.Expect(found).To(BeTrue())
+				g.Expect(err).NotTo(HaveOccurred())
+
+				item, ok := history[0].(map[string]interface{})
+				g.Expect(ok).To(BeTrue())
+
+				msg, found, err := unstructured.NestedString(item, "message")
+				g.Expect(found).To(BeTrue())
+				g.Expect(err).NotTo(HaveOccurred())
+
+				*debugMsg += fmt.Sprintf("Cluster %v current compliance message: %v\n", cluster, msg)
+			}
+
+			clusters = confirmComplianceOnAllClusters(ctx, policyNS, policyName, "Compliant")(g)
+		}, defaultTimeoutSeconds*2, 1).Should(Succeed())
 
 		By("Verifying that there are Compliant compliance events for the Operator parent policy")
 		Eventually(func(g Gomega) {
@@ -808,25 +842,35 @@ func verifyPolicyOnAllClusters(
 	By(fmt.Sprintf("Verifying that the policy %s/%s is %s", namespace, policy, compliance))
 
 	EventuallyWithOffset(1, func(g Gomega) {
-		clusters = []string{}
+		clusters = confirmComplianceOnAllClusters(ctx, namespace, policy, compliance)(g)
+	}, timeout, 1).Should(Succeed())
+
+	return
+}
+
+func confirmComplianceOnAllClusters(
+	ctx context.Context, namespace string, policy string, compliance string,
+) func(g Gomega) []string {
+	return func(g Gomega) []string {
+		clusters := []string{}
 
 		parentPolicy, err := clientHubDynamic.Resource(common.GvrPolicy).Namespace(namespace).Get(
 			ctx, policy, metav1.GetOptions{},
 		)
-		g.Expect(err).ToNot(HaveOccurred())
+		g.ExpectWithOffset(1, err).ToNot(HaveOccurred())
 
 		perClusterStatus, _, _ := unstructured.NestedSlice(parentPolicy.Object, "status", "status")
-		g.Expect(perClusterStatus).ToNot(BeEmpty(), "no cluster status was available on the parent policy")
+		g.ExpectWithOffset(1, perClusterStatus).ToNot(BeEmpty(), "no cluster status was available on the parent policy")
 
 		for _, clusterStatus := range perClusterStatus {
 			clusterStatus, ok := clusterStatus.(map[string]interface{})
-			g.Expect(ok).To(BeTrue(), "the cluster status was not the right type")
+			g.ExpectWithOffset(1, ok).To(BeTrue(), "the cluster status was not the right type")
 
-			g.Expect(clusterStatus["compliant"]).To(Equal(compliance))
-			g.Expect(clusterStatus["clustername"]).ToNot(BeEmpty())
+			g.ExpectWithOffset(1, clusterStatus["compliant"]).To(Equal(compliance))
+			g.ExpectWithOffset(1, clusterStatus["clustername"]).ToNot(BeEmpty())
 			clusters = append(clusters, clusterStatus["clustername"].(string))
 		}
-	}, timeout, 1).Should(Succeed())
 
-	return
+		return clusters
+	}
 }
