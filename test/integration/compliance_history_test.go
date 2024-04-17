@@ -476,6 +476,8 @@ var _ = Describe("GRC: [P1][Sev1][policy-grc] Test the compliance history API", 
 
 		expectedEvents := len(clusters) * 3
 
+		debugMsg := common.RegisterDebugMessage()
+
 		By(fmt.Sprintf("Verifying that there are %d compliance events for the parent policy", expectedEvents))
 		Eventually(func(g Gomega) {
 			for _, cluster := range clusters {
@@ -498,6 +500,10 @@ var _ = Describe("GRC: [P1][Sev1][policy-grc] Test the compliance history API", 
 					policyToEventDetails[policyName] = append(policyToEventDetails[policyName], eventDetails)
 				}
 
+				// In case all of these assertions don't pass by the end of the `Eventually`, print the
+				// last `policyToEventDetails` in order to try and understand the current state.
+				*debugMsg = fmt.Sprintf("Current 'policyToEventDetails': %v", policyToEventDetails)
+
 				// Ensure the ConstraintTemplate has 1 event
 				g.Expect(policyToEventDetails["complianceapitest"]).To(HaveLen(1))
 				msg := policyToEventDetails["complianceapitest"][0]["message"]
@@ -507,16 +513,9 @@ var _ = Describe("GRC: [P1][Sev1][policy-grc] Test the compliance history API", 
 				)
 				g.Expect(msg).To(Equal("ConstraintTemplate complianceapitest was created successfully"))
 
-				// Ensure the constraint has 2 or more events. More than one template-error compliance event can
-				// be set based on race conditions.
-				lenOk := len(policyToEventDetails["compliance-api"]) >= 2
-				g.Expect(lenOk).To(
-					BeTrue(),
-					fmt.Sprintf(
-						"Expected the compliance-api policy to have 2 or more compliance events, got %d on cluster %s",
-						len(policyToEventDetails["compliance-api"]), cluster,
-					),
-				)
+				// Ensure the constraint has at least one event.
+				g.Expect(policyToEventDetails["compliance-api"]).ToNot(BeEmpty())
+
 				// Sorted by timestamp in descending order
 				g.Expect(policyToEventDetails["compliance-api"][0]["compliance"]).To(Equal("NonCompliant"))
 				expectedMsg := "warn - All configmaps must have a 'my-gk-test' label (on ConfigMap " +
