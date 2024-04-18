@@ -24,7 +24,7 @@ else
 fi
 
 echo "* Install cert manager"
-$DIR/install-cert-manager.sh
+${DIR}/install-cert-manager.sh
 
 echo "* Set up cluster for test"
 
@@ -42,10 +42,14 @@ if [[ "${TARGET_BRANCH}" ]] && [[ "${TARGET_BRANCH}" != "main" ]]; then
 fi
 
 export KUBECONFIG=${HUB_KUBE}
-VERSION_TAG="${VERSION_TAG}" $DIR/patch-cluster-prow.sh
+VERSION_TAG="${VERSION_TAG}" ${DIR}/patch-cluster-prow.sh
 
-cp ${HUB_KUBE} $DIR/../kubeconfig_hub
-cp ${MANAGED_KUBE} $DIR/../kubeconfig_managed
+if [[ "${HUB_KUBE}" != "${MANAGED_KUBE}" ]]; then
+  MANAGED_KUBE=${MANAGED_KUBE} MANAGED_CLUSTER_NAME=${MANAGED_CLUSTER_NAME} ${DIR}/import-managed.sh
+fi
+
+cp ${HUB_KUBE} ${DIR}/../kubeconfig_hub
+cp ${MANAGED_KUBE} ${DIR}/../kubeconfig_managed
 
 if [[ -z ${GINKGO_LABEL_FILTER} ]]; then 
   echo "* No GINKGO_LABEL_FILTER set"
@@ -57,7 +61,7 @@ fi
 echo "===== E2E Test ====="
 echo "* Launching grc policy framework test"
 # Run test suite with reporting
-CGO_ENABLED=0 $DIR/../bin/ginkgo -v --no-color --fail-fast ${GINKGO_LABEL_FILTER} --junit-report=integration.xml --output-dir=test-output test/integration -- -cluster_namespace=$MANAGED_CLUSTER_NAME || EXIT_CODE=$?
+CGO_ENABLED=0 ${DIR}/../bin/ginkgo -v --no-color --fail-fast ${GINKGO_LABEL_FILTER} --junit-report=integration.xml --output-dir=test-output test/integration -- -cluster_namespace=$MANAGED_CLUSTER_NAME || EXIT_CODE=$?
 
 # Remove Ginkgo phases from report to prevent corrupting bracketed metadata
 if [ -f test-output/integration.xml ]; then
