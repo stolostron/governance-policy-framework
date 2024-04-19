@@ -72,11 +72,6 @@ var (
 		Version:  "v1",
 		Resource: "deployments",
 	}
-	GvrIamPolicy = schema.GroupVersionResource{
-		Group:    "policy.open-cluster-management.io",
-		Version:  "v1",
-		Resource: "iampolicies",
-	}
 	GvrPlacementBinding = schema.GroupVersionResource{
 		Group:    "policy.open-cluster-management.io",
 		Version:  "v1",

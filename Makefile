@@ -43,9 +43,9 @@ KIND_VERSION ?= latest
 OLM_VERSION ?= v0.24.0
 
 # Debugging configuration
-KIND_COMPONENTS := config-policy-controller cert-policy-controller iam-policy-controller governance-policy-framework-addon
+KIND_COMPONENTS := config-policy-controller cert-policy-controller governance-policy-framework-addon
 KIND_COMPONENT_SELECTOR := name
-ACM_COMPONENTS := cert-policy-controller iam-policy-controller config-policy-controller governance-policy-framework
+ACM_COMPONENTS := cert-policy-controller config-policy-controller governance-policy-framework
 ACM_COMPONENT_SELECTOR := app
 DEBUG_DIR ?= test-output/debug
 
@@ -59,7 +59,7 @@ ifdef TEST_FILE
 endif
 
 ifeq ($(UPSTREAM_TEST), true)
-	TEST_ARGS += --skip-file=cert_policy --skip-file=iam_policy
+	TEST_ARGS += --skip-file=cert_policy
 endif
 
 include build/common/Makefile.common.mk
@@ -104,7 +104,7 @@ kind-bootstrap-cluster: kind-create-clusters install-crds install-resources kind
 kind-bootstrap-cluster-dev: kind-create-clusters install-crds install-resources
 
 .PHONY: kind-deploy-policy-controllers
-kind-deploy-policy-controllers: kind-deploy-cert-policy-controller kind-deploy-config-policy-controller kind-deploy-iam-policy-controller kind-deploy-olm
+kind-deploy-policy-controllers: kind-deploy-cert-policy-controller kind-deploy-config-policy-controller kind-deploy-olm
 
 .PHONY: kind-policy-framework-hub-setup
 kind-policy-framework-hub-setup:
@@ -203,18 +203,6 @@ kind-deploy-cert-policy-controller:
 		-n $(KIND_MANAGED_NAMESPACE) -p '{"spec": {"template": {"spec": {"containers": [{"name":"cert-policy-controller", "args": ["--enable-lease=true"]}]}}}}' \
 		--kubeconfig=$(PWD)/kubeconfig_$(MANAGED_CLUSTER_NAME)
 	kubectl rollout status deployment/cert-policy-controller -n $(KIND_MANAGED_NAMESPACE) --timeout=180s --kubeconfig=$(PWD)/kubeconfig_$(MANAGED_CLUSTER_NAME)
-
-.PHONY: kind-deploy-iam-policy-controller
-kind-deploy-iam-policy-controller:
-	@echo installing iam-policy-controller on managed
-	kubectl apply -f https://raw.githubusercontent.com/stolostron/iam-policy-controller/$(RELEASE_BRANCH)/deploy/crds/policy.open-cluster-management.io_iampolicies.yaml --kubeconfig=$(PWD)/kubeconfig_$(MANAGED_CLUSTER_NAME)
-	kubectl apply -f https://raw.githubusercontent.com/stolostron/iam-policy-controller/$(RELEASE_BRANCH)/deploy/operator.yaml -n $(KIND_MANAGED_NAMESPACE) --kubeconfig=$(PWD)/kubeconfig_$(MANAGED_CLUSTER_NAME)
-	kubectl patch deployment iam-policy-controller -n $(KIND_MANAGED_NAMESPACE) --kubeconfig=$(PWD)/kubeconfig_$(MANAGED_CLUSTER_NAME) \
-		-p "{\"spec\":{\"template\":{\"spec\":{\"containers\":[{\"name\":\"iam-policy-controller\",\"image\":\"quay.io/stolostron/iam-policy-controller:${VERSION_TAG}\"}]}}}}"
-	kubectl patch deployment iam-policy-controller \
-		-n $(KIND_MANAGED_NAMESPACE) -p '{"spec": {"template": {"spec": {"containers": [{"name":"iam-policy-controller", "args": ["--enable-lease=true"]}]}}}}' \
-		--kubeconfig=$(PWD)/kubeconfig_$(MANAGED_CLUSTER_NAME)
-	kubectl rollout status deployment/iam-policy-controller -n $(KIND_MANAGED_NAMESPACE) --timeout=180s --kubeconfig=$(PWD)/kubeconfig_$(MANAGED_CLUSTER_NAME)
 
 .PHONY: kind-deploy-olm
 kind-deploy-olm:
@@ -323,7 +311,6 @@ e2e-debug-managed:
 	-kubectl get leases -n $(KIND_MANAGED_NAMESPACE) --kubeconfig=$(PWD)/kubeconfig_$(MANAGED_CLUSTER_NAME) > $(DEBUG_DIR)/managed_get_leases_$(KIND_MANAGED_NAMESPACE).log
 	-kubectl get configurationpolicies.policy.open-cluster-management.io --all-namespaces --kubeconfig=$(PWD)/kubeconfig_$(MANAGED_CLUSTER_NAME) > $(DEBUG_DIR)/managed_get_configurationpolicies.log
 	-kubectl get certificatepolicies.policy.open-cluster-management.io --all-namespaces --kubeconfig=$(PWD)/kubeconfig_$(MANAGED_CLUSTER_NAME) > $(DEBUG_DIR)/managed_get_certificatepolicies.log
-	-kubectl get iampolicies.policy.open-cluster-management.io --all-namespaces --kubeconfig=$(PWD)/kubeconfig_$(MANAGED_CLUSTER_NAME) > $(DEBUG_DIR)/managed_get_iampolicies.log
 	-kubectl describe pods -n $(KIND_MANAGED_NAMESPACE) --kubeconfig=$(PWD)/kubeconfig_$(MANAGED_CLUSTER_NAME) > $(DEBUG_DIR)/managed_describe_pods_$(KIND_MANAGED_NAMESPACE).log
 
 .PHONY: e2e-debug-kind
@@ -390,7 +377,6 @@ kind-install-hosted: $(ADDON_CONTROLLER)
 	kubectl apply -f https://raw.githubusercontent.com/stolostron/governance-policy-addon-controller/$(RELEASE_BRANCH)/test/resources/cert_policy_clustermanagementaddon.yaml --kubeconfig=$(PWD)/kubeconfig_$(HUB_CLUSTER_NAME)
 	kubectl apply -f $(ADDON_CONTROLLER)/test/resources/config_policy_clustermanagementaddon.yaml --kubeconfig=$(PWD)/kubeconfig_$(HUB_CLUSTER_NAME)
 	kubectl apply -f $(ADDON_CONTROLLER)/test/resources/framework_clustermanagementaddon.yaml --kubeconfig=$(PWD)/kubeconfig_$(HUB_CLUSTER_NAME)
-	kubectl apply -f https://raw.githubusercontent.com/stolostron/governance-policy-addon-controller/$(RELEASE_BRANCH)/test/resources/iam_policy_clustermanagementaddon.yaml --kubeconfig=$(PWD)/kubeconfig_$(HUB_CLUSTER_NAME)
 
 $(ADDON_CONTROLLER):
 	git clone --depth=1 -b $(RELEASE_BRANCH) https://github.com/$(CALLER_REPO)/governance-policy-addon-controller.git $(ADDON_CONTROLLER)
@@ -401,7 +387,6 @@ setup-managedcluster:
 	-kubectl create ns $(MANAGED_CLUSTER_NAMESPACE) --kubeconfig=kubeconfig_$(HUB_CLUSTER_NAME)
 	-kubectl -n $(MANAGED_CLUSTER_NAMESPACE) create secret generic config-policy-controller-managed-kubeconfig --from-file=kubeconfig=$(PWD)/kubeconfig_managed_internal --kubeconfig=kubeconfig_$(HUB_CLUSTER_NAME)
 	-kubectl -n $(MANAGED_CLUSTER_NAMESPACE) create secret generic cert-policy-controller-managed-kubeconfig --from-file=kubeconfig=$(PWD)/kubeconfig_managed_internal --kubeconfig=kubeconfig_$(HUB_CLUSTER_NAME)
-	-kubectl -n $(MANAGED_CLUSTER_NAMESPACE) create secret generic iam-policy-controller-managed-kubeconfig --from-file=kubeconfig=$(PWD)/kubeconfig_managed_internal --kubeconfig=kubeconfig_$(HUB_CLUSTER_NAME)
 	-sed 's/imagetag/$(VERSION_TAG)/g' test/resources/hosted_mode/managed-cluster-addon.yaml | kubectl apply -f- --kubeconfig=kubeconfig_$(HUB_CLUSTER_NAME) -n cluster2
 
 kind-delete-hosted: $(ADDON_CONTROLLER)

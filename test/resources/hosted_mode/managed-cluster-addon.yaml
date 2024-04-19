@@ -28,15 +28,4 @@ metadata:
     addon.open-cluster-management.io/values: '{"args": {"frequency": 10}, "global":{"imageOverrides":{"cert_policy_controller":"quay.io/stolostron/cert-policy-controller:imagetag"}}}'
 spec:
   installNamespace: cluster2-hosted
----
-apiVersion: addon.open-cluster-management.io/v1alpha1
-kind: ManagedClusterAddOn
-metadata:
-  name: iam-policy-controller
-  namespace: cluster2
-  annotations:
-    addon.open-cluster-management.io/hosting-cluster-name: cluster1
-    addon.open-cluster-management.io/values: '{"args": {"frequency": 10}, "global":{"imageOverrides":{"iam_policy_controller":"quay.io/stolostron/iam-policy-controller:imagetag"}}}'
-spec:
-  installNamespace: cluster2-hosted
 

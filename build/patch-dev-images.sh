@@ -24,7 +24,7 @@ DEPLOYMENT=$(oc get deployment -l ${LABEL} -n ${acm_installed_namespace} -o=json
 oc patch deployment ${DEPLOYMENT} -n ${acm_installed_namespace} -p "{\"spec\":{\"template\":{\"spec\":{\"containers\":[{\"name\":\"manager\",\"imagePullPolicy\":\"Always\",\"image\":\"${DOCKER_URI}/${COMPONENT}:${VERSION_TAG}\"}]}}}}"
 
 # Patch the addon-controller envs
-CONTAINERS=(cert-policy-controller config-policy-controller iam-policy-controller governance-policy-framework-addon)
+CONTAINERS=(cert-policy-controller config-policy-controller governance-policy-framework-addon)
 for CONTAINER in ${CONTAINERS[@]}; do
   IMAGE_NAME=$(echo $CONTAINER | tr 'a-z' 'A-Z' | tr '-' '_')_IMAGE
   oc set env deployment/${DEPLOYMENT} -n ${acm_installed_namespace} ${IMAGE_NAME}=${DOCKER_URI}/${CONTAINER}:${VERSION_TAG}
@@ -34,7 +34,7 @@ done
 echo "* Patching managed clusters to ${VERSION_TAG}"
 MANAGED_CLUSTERS=$(oc get managedcluster -o=jsonpath='{.items[*].metadata.name}')
 
-ADDON_COMPONENTS=(cert-policy-controller config-policy-controller iam-policy-controller governance-policy-framework)
+ADDON_COMPONENTS=(cert-policy-controller config-policy-controller governance-policy-framework)
 for MANAGED_CLUSTER in ${MANAGED_CLUSTERS}; do      
     oc annotate klusterletaddonconfig -n ${MANAGED_CLUSTER} ${MANAGED_CLUSTER} klusterletaddonconfig-pause=true --overwrite=true
     FOUND="false"
@@ -61,11 +61,9 @@ echo "* Deleting pods and waiting for restart"
 oc delete pod -l app=grc -A
 oc delete pod -l app=governance-policy-framework -A
 oc delete pod -l app=config-policy-controller -A
-oc delete pod -l app=iam-policy-controller -A
 oc delete pod -l app=cert-policy-controller -A
 
 ./build/wait_for.sh pod -l app=grc -A
 ./build/wait_for.sh pod -l app=governance-policy-framework -A
 ./build/wait_for.sh pod -l app=config-policy-controller -A
-./build/wait_for.sh pod -l app=iam-policy-controller -A
 ./build/wait_for.sh pod -l app=cert-policy-controller -A

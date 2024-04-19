@@ -7,6 +7,7 @@ test/policy-collection/policy-collection.test
 test/policy-collection/debug.test
 test/integration/integration.test
 .DS_Store
+__debug__*
 
 .go
 bin/
