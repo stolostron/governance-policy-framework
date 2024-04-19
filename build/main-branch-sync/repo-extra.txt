@@ -2,3 +2,4 @@ stolostron/go-log-utils
 stolostron/kubernetes-dependency-watches
 stolostron/gatekeeper
 stolostron/gatekeeper-operator
+stolostron/iam-policy-controller

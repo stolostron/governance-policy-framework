@@ -53,7 +53,6 @@ make kind-deploy-policy-controllers
 # wait for controller to start
 ./build/wait_for.sh pod -l name=config-policy-controller -n open-cluster-management-agent-addon
 ./build/wait_for.sh pod -l name=cert-policy-controller -n open-cluster-management-agent-addon
-./build/wait_for.sh pod -l name=iam-policy-controller -n open-cluster-management-agent-addon
 ./build/wait_for.sh pod -n olm
 ./build/wait_for.sh pod -n cert-manager
 

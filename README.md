@@ -30,7 +30,6 @@ The governance policy framework consists of following components:
     - [Configuration policy controller](https://github.com/stolostron/config-policy-controller)
       - [Usage examples](./doc/configuration-policy/README.md)
     - [Certificate policy controller](https://github.com/stolostron/cert-policy-controller)
-    - [IAM policy controller](https://github.com/stolostron/iam-policy-controller)
     - Third-party
       - [Gatekeeper](https://github.com/open-policy-agent/gatekeeper)
       - [Kyverno](https://github.com/kyverno/kyverno/)
