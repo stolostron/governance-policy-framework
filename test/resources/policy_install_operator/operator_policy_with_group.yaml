@@ -29,7 +29,6 @@ spec:
             installPlanApproval: Automatic
             source: redhat-operators
             sourceNamespace: openshift-marketplace
-            startingCSV: quay-operator.v3.8.1
 ---
 apiVersion: policy.open-cluster-management.io/v1
 kind: PlacementBinding
