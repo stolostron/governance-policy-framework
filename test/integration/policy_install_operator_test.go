@@ -201,7 +201,7 @@ var _ = Describe("GRC: [P1][Sev1][policy-grc] Test install Operator",
 
 			It("Should verify Subscription, CSV, and Deployment details", func() {
 				Eventually(func(g Gomega) {
-					// Because of possible upgrades, lookup the CSV name every time
+					// Because the version is not pinned, get the CSV name every time
 					sub := utils.GetWithTimeout(
 						clientManagedDynamic,
 						common.GvrSubscriptionOLM,
@@ -380,7 +380,7 @@ var _ = Describe("GRC: [P1][Sev1][policy-grc] Test install Operator",
 
 			It("Should verify Subscription, CSV, and Deployment details", func() {
 				Eventually(func(g Gomega) {
-					// Because of possible upgrades, lookup the CSV name every time
+					// Because the version is not pinned, get the CSV name every time
 					sub := utils.GetWithTimeout(
 						clientManagedDynamic,
 						common.GvrSubscriptionOLM,
