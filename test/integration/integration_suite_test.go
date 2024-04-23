@@ -21,7 +21,7 @@ import (
 )
 
 const (
-	policyCollectBaseURL      = "https://raw.githubusercontent.com/stolostron/policy-collection/main/"
+	policyCollectBaseURL      = "https://raw.githubusercontent.com/stolostron/policy-collection/release-2.7/"
 	policyCollectCommunityURL = policyCollectBaseURL + "community/"
 	policyCollectStableURL    = policyCollectBaseURL + "stable/"
 	policyCollectACURL        = policyCollectStableURL + "AC-Access-Control/"
