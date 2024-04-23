@@ -24,10 +24,10 @@ var _ = Describe("GRC: [P1][Sev1][policy-grc] Test the policy-pod policy",
 	Ordered, Label("policy-collection", "stable"), func() {
 		const (
 			policyPodName   = "policy-pod"
-			policyPodURL    = policyCollectCMURL + policyPodName + ".yaml"
 			policyPodNSName = "policy-pod"
 			podName         = "sample-nginx-pod"
 		)
+		policyPodURL := policyCollectCMURL + policyPodName + ".yaml"
 
 		It("stable/"+policyPodName+" should be created on the Hub", func() {
 			By("Creating the policy on the Hub")

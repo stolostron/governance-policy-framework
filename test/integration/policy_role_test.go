@@ -24,10 +24,11 @@ var _ = Describe("GRC: [P1][Sev1][policy-grc] Test the policy-role policy",
 	Ordered, Label("policy-collection", "stable"), func() {
 		const (
 			policyRoleName   = "policy-role"
-			policyRoleURL    = policyCollectACURL + policyRoleName + ".yaml"
 			policyRoleNSName = policyRoleName + "ns"
 			roleName         = "sample-role"
 		)
+		policyRoleURL := policyCollectACURL + policyRoleName + ".yaml"
+
 		It("stable/"+policyRoleName+" should be created on the Hub", func() {
 			By("Creating policy on hub")
 			_, err := utils.KubectlWithOutput(

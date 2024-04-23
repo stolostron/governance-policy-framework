@@ -24,10 +24,10 @@ var _ = Describe("GRC: [P1][Sev1][policy-grc] Test the policy-limitmemory policy
 	Ordered, Label("policy-collection", "stable"), func() {
 		const (
 			policyLimitMemoryName   = "policy-limitmemory"
-			policyLimitMemoryURL    = policyCollectSCURL + policyLimitMemoryName + ".yaml"
 			policyLimitMemoryNSName = "policy-limitmemory"
 			limitRangeName          = "mem-limit-range"
 		)
+		policyLimitMemoryURL := policyCollectSCURL + policyLimitMemoryName + ".yaml"
 
 		It("stable/"+policyLimitMemoryName+" should be created on the Hub", func() {
 			By("Creating the policy on the Hub")

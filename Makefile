@@ -356,7 +356,7 @@ e2e-debug-dump:
 
 .PHONY: integration-test
 integration-test: e2e-dependencies
-	$(GINKGO) -v $(TEST_ARGS) test/integration -- -cluster_namespace=$(MANAGED_CLUSTER_NAMESPACE) -k8s_client=$(K8SCLIENT) -is_hosted=$(IS_HOSTED) -cluster_namespace_on_hub=$(MANAGED_CLUSTER_NAMESPACE) -patch_decisions=false
+	$(GINKGO) -v $(TEST_ARGS) test/integration -- -cluster_namespace=$(MANAGED_CLUSTER_NAMESPACE) -k8s_client=$(K8SCLIENT) -is_hosted=$(IS_HOSTED) -cluster_namespace_on_hub=$(MANAGED_CLUSTER_NAMESPACE) -patch_decisions=false -policy_collection_branch=$(RELEASE_BRANCH)
 
 #hosted
 ADDON_CONTROLLER = $(PWD)/.go/governance-policy-addon-controller

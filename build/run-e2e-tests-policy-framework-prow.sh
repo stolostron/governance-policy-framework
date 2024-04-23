@@ -61,7 +61,7 @@ fi
 echo "===== E2E Test ====="
 echo "* Launching grc policy framework test"
 # Run test suite with reporting
-CGO_ENABLED=0 ${DIR}/../bin/ginkgo -v --no-color --fail-fast ${GINKGO_LABEL_FILTER} --junit-report=integration.xml --output-dir=test-output test/integration -- -cluster_namespace=$MANAGED_CLUSTER_NAME || EXIT_CODE=$?
+CGO_ENABLED=0 ${DIR}/../bin/ginkgo -v --no-color --fail-fast ${GINKGO_LABEL_FILTER} --junit-report=integration.xml --output-dir=test-output test/integration -- -cluster_namespace=$MANAGED_CLUSTER_NAME -policy_collection_branch=$TARGET_BRANCH || EXIT_CODE=$?
 
 # Remove Ginkgo phases from report to prevent corrupting bracketed metadata
 if [ -f test-output/integration.xml ]; then

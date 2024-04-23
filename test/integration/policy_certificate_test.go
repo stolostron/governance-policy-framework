@@ -32,10 +32,10 @@ var _ = Describe(
 	func() {
 		const (
 			policyCertificateName   = "policy-certificate"
-			policyCertificateURL    = policyCollectSCURL + policyCertificateName + ".yaml"
 			expiredCertSecretName   = "expired-cert"
 			policyCertificateNSName = "policy-certificate"
 		)
+		policyCertificateURL := policyCollectSCURL + policyCertificateName + ".yaml"
 
 		It("stable/"+policyCertificateName+" should be created on the Hub", func() {
 			By("Creating the policy on the Hub")

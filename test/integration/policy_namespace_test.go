@@ -21,10 +21,8 @@ import (
 
 var _ = Describe("GRC: [P1][Sev1][policy-grc] Test the policy-namespace policy",
 	Ordered, Label("policy-collection", "stable"), func() {
-		const (
-			policyNamespaceName = "policy-namespace"
-			policyNamespaceURL  = policyCollectCMURL + policyNamespaceName + ".yaml"
-		)
+		const policyNamespaceName = "policy-namespace"
+		policyNamespaceURL := policyCollectCMURL + policyNamespaceName + ".yaml"
 
 		It("stable/"+policyNamespaceName+" should be created on the Hub", func() {
 			By("Creating policy on hub")

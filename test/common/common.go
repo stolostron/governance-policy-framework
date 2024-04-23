@@ -33,6 +33,7 @@ var (
 	UserNamespace          string
 	ClusterNamespace       string
 	ClusterNamespaceOnHub  string
+	PolicyCollectionBranch string
 	OCMNamespace           string
 	OCMAddOnNamespace      string
 	DefaultTimeoutSeconds  int
@@ -77,6 +78,9 @@ func InitFlags(flagset *flag.FlagSet) {
 		"ocm_addon_namespace",
 		"open-cluster-management-agent-addon",
 		"ns of ocm addon installations",
+	)
+	flagset.StringVar(
+		&PolicyCollectionBranch, "policy_collection_branch", "main", "the branch of the policy-collection repo",
 	)
 	flagset.IntVar(&DefaultTimeoutSeconds, "timeout_seconds", 30, "Timeout seconds for assertion")
 	flagset.BoolVar(

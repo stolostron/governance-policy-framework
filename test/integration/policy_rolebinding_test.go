@@ -24,10 +24,11 @@ var _ = Describe("GRC: [P1][Sev1][policy-grc] Test the policy-rolebinding policy
 	Ordered, Label("policy-collection", "stable"), func() {
 		const (
 			policyRoleBindingName   = "policy-rolebinding"
-			policyRoleBindingURL    = policyCollectACURL + policyRoleBindingName + ".yaml"
 			policyRoleBindingNSName = policyRoleBindingName + "ns"
 			roleBindingName         = "sample-rolebinding"
 		)
+		policyRoleBindingURL := policyCollectACURL + policyRoleBindingName + ".yaml"
+
 		It("stable/"+policyRoleBindingName+" should be created on the Hub", func() {
 			By("Creating policy on hub")
 			_, err := utils.KubectlWithOutput(

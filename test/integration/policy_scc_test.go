@@ -18,13 +18,12 @@ import (
 
 var _ = Describe("GRC: [P1][Sev1][policy-grc] Test the policy-scc policy",
 	Ordered, Label("policy-collection", "stable"), func() {
+		rootPolicyURL := policyCollectSCURL + "policy-scc.yaml"
 		const (
 			rootPolicyName = "policy-securitycontextconstraints"
-			rootPolicyURL  = policyCollectSCURL + "policy-scc.yaml"
 			targetName     = "restricted"
 			targetKind     = "scc"
 		)
-
 		targetGVR := common.GvrSCC
 
 		It("stable/"+rootPolicyName+" should be created on the Hub", func() {
