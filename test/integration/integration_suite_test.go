@@ -4,6 +4,7 @@ package integration
 
 import (
 	"context"
+	"fmt"
 	"strings"
 	"testing"
 
@@ -20,15 +21,15 @@ import (
 	"github.com/stolostron/governance-policy-framework/test/common"
 )
 
-const (
-	policyCollectBaseURL      = "https://raw.githubusercontent.com/stolostron/policy-collection/main/"
-	policyCollectCommunityURL = policyCollectBaseURL + "community/"
-	policyCollectStableURL    = policyCollectBaseURL + "stable/"
-	policyCollectACURL        = policyCollectStableURL + "AC-Access-Control/"
-	policyCollectCAURL        = policyCollectStableURL + "CA-Security-Assessment-and-Authorization/"
-	policyCollectCMURL        = policyCollectStableURL + "CM-Configuration-Management/"
-	policyCollectSCURL        = policyCollectStableURL + "SC-System-and-Communications-Protection/"
-	policyCollectSIURL        = policyCollectStableURL + "SI-System-and-Information-Integrity/"
+var (
+	policyCollectBaseURL      string
+	policyCollectCommunityURL string
+	policyCollectStableURL    string
+	policyCollectACURL        string
+	policyCollectCAURL        string
+	policyCollectCMURL        string
+	policyCollectSCURL        string
+	policyCollectSIURL        string
 )
 
 var (
@@ -50,6 +51,17 @@ var (
 )
 
 func TestIntegration(t *testing.T) {
+	policyCollectBaseURL = fmt.Sprintf(
+		"https://raw.githubusercontent.com/stolostron/policy-collection/%s/", common.PolicyCollectionBranch,
+	)
+	policyCollectCommunityURL = policyCollectBaseURL + "community/"
+	policyCollectStableURL = policyCollectBaseURL + "stable/"
+	policyCollectACURL = policyCollectStableURL + "AC-Access-Control/"
+	policyCollectCAURL = policyCollectStableURL + "CA-Security-Assessment-and-Authorization/"
+	policyCollectCMURL = policyCollectStableURL + "CM-Configuration-Management/"
+	policyCollectSCURL = policyCollectStableURL + "SC-System-and-Communications-Protection/"
+	policyCollectSIURL = policyCollectStableURL + "SI-System-and-Information-Integrity/"
+
 	RegisterFailHandler(Fail)
 	RunSpecs(t, "GRC framework integration test suite")
 }

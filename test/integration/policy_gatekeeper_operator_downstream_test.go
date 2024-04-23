@@ -20,8 +20,9 @@ import (
 )
 
 var _ = Describe("RHACM4K-3055", Ordered, Label("policy-collection", "stable", "BVT"), func() {
-	const gatekeeperPolicyURL = policyCollectStableURL +
+	gatekeeperPolicyURL := policyCollectStableURL +
 		"CM-Configuration-Management/policy-gatekeeper-operator-downstream.yaml"
+
 	const gatekeeperPolicyName = "policy-gatekeeper-operator"
 
 	Describe("GRC: [P1][Sev1][policy-grc] Test installing gatekeeper operator", func() {

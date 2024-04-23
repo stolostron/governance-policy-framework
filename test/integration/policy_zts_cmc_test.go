@@ -21,10 +21,10 @@ var _ = Describe("GRC: [P1][Sev1][policy-grc] Test "+
 	"the zts-cmc policy", Ordered, Label("policy-collection", "stable"), func() {
 	const (
 		policyName     = "policy-zts-cmc"
-		policyURL      = policyCollectCMURL + policyName + ".yaml"
 		deploymentNS   = "default"
 		deploymentName = "zts-cmc-app-deploy"
 	)
+	policyURL := policyCollectCMURL + policyName + ".yaml"
 
 	It("stable/"+policyName+" should be created on the Hub", func() {
 		By("Creating the policy on the Hub")

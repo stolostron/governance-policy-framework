@@ -24,10 +24,10 @@ var _ = Describe(
 	func() {
 		const (
 			policyEtcdEncryptionName = "policy-etcdencryption"
-			policyEtcdEncryptionURL  = policyCollectSCURL + policyEtcdEncryptionName + ".yaml"
 			apiSeverName             = "cluster"
 			configPolicyName         = "enable-etcd-encryption"
 		)
+		policyEtcdEncryptionURL := policyCollectSCURL + policyEtcdEncryptionName + ".yaml"
 
 		It("stable/"+policyEtcdEncryptionName+" should be created on the Hub", func() {
 			By("Creating the policy on the Hub")

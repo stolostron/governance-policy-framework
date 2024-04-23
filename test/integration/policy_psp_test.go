@@ -21,9 +21,9 @@ import (
 
 var _ = Describe("GRC: [P1][Sev1][policy-grc] Test the policy-psp policy",
 	Ordered, Label("policy-collection", "stable"), func() {
+		rootPolicyURL := policyCollectSCURL + "policy-psp.yaml"
 		const (
 			rootPolicyName = "policy-podsecuritypolicy"
-			rootPolicyURL  = policyCollectSCURL + "policy-psp.yaml"
 			pspName        = "sample-restricted-psp"
 		)
 
