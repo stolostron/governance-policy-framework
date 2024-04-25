@@ -17,6 +17,7 @@ import (
 	"io"
 	"math/big"
 	"net/http"
+	"regexp"
 	"strings"
 	"time"
 
@@ -813,6 +814,15 @@ var _ = Describe("GRC: [P1][Sev1][policy-grc] Test the compliance history API", 
 			clusters = confirmComplianceOnAllClusters(ctx, policyNS, policyName, "Compliant")(g)
 		}, defaultTimeoutSeconds*2, 1).Should(Succeed())
 
+		// We don't know the patch version ahead of time and it could be different per managed cluster depending on the
+		// OCP version, so just allow 3.8.* in the message.
+		expectedMsg := regexp.QuoteMeta("the policy spec is valid, the OperatorGroup matches what "+
+			"is required by the policy, the Subscription matches what is required by the policy, "+
+			"no InstallPlans requiring approval were found, ClusterServiceVersion (quay-operator.v3.8.") + `\d+` +
+			regexp.QuoteMeta(") - install strategy"+
+				" completed with no errors, there are CRDs present for the operator, all operator "+
+				"Deployments have their minimum availability, CatalogSource was found")
+
 		By("Verifying that there are Compliant compliance events for the Operator parent policy")
 		Eventually(func(g Gomega) {
 			for _, cluster := range clusters {
@@ -822,12 +832,7 @@ var _ = Describe("GRC: [P1][Sev1][policy-grc] Test the compliance history API", 
 
 				event0 := events[0].(map[string]interface{})
 				g.Expect(event0["event"].(map[string]interface{})["compliance"]).To(Equal("Compliant"))
-				g.Expect(event0["event"].(map[string]interface{})["message"]).
-					To(ContainSubstring("the policy spec is valid, the OperatorGroup matches what " +
-						"is required by the policy, the Subscription matches what is required by the policy, " +
-						"no InstallPlans requiring approval were found, ClusterServiceVersion - install strategy" +
-						" completed with no errors, There are CRDs present for the operator, All operator " +
-						"Deployments have their minimum availability, CatalogSource was found"))
+				g.Expect(event0["event"].(map[string]interface{})["message"]).To(MatchRegexp(expectedMsg))
 			}
 		}, 120, 1).Should(Succeed())
 	})
