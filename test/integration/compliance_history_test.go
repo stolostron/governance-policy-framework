@@ -819,6 +819,7 @@ var _ = Describe("GRC: [P1][Sev1][policy-grc] Test the compliance history API", 
 				events, err := listComplianceEvents(
 					ctx, "cluster.name="+cluster, "parent_policy.name="+policyName, "event.timestamp_after="+now)
 				g.Expect(err).ToNot(HaveOccurred())
+				g.Expect(events).ToNot(BeEmpty())
 
 				event0 := events[0].(map[string]interface{})
 				g.Expect(event0["event"].(map[string]interface{})["compliance"]).To(Equal("Compliant"))
