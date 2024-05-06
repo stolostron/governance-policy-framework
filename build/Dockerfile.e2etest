@@ -4,15 +4,15 @@
 FROM registry.ci.openshift.org/stolostron/builder:go1.21-linux AS builder
 
 # Stage 2: Copy Go binaries and run tests on ubi-minimal
-FROM registry.access.redhat.com/ubi8/ubi-minimal:latest
+FROM registry.access.redhat.com/ubi9/ubi-minimal:latest
 
 RUN microdnf update -y \
-        && microdnf install tar \
-        && microdnf install gzip \
-        && microdnf install git \
-        && microdnf install which \
-        && microdnf install make \
-        && microdnf install findutils \
+        && microdnf install -y tar \
+        && microdnf install -y gzip \
+        && microdnf install -y git \
+        && microdnf install -y which \
+        && microdnf install -y make \
+        && microdnf install -y findutils \
         && microdnf clean all
 
 # prepare jq
