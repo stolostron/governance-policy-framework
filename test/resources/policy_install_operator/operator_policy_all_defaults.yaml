@@ -1,0 +1,44 @@
+apiVersion: policy.open-cluster-management.io/v1
+kind: Policy
+metadata:
+  name: test-op-47229
+  annotations:
+    policy.open-cluster-management.io/description: Test rhacm4k-47229
+spec:
+  disabled: false
+  remediationAction: enforce
+  policy-templates:
+    - objectDefinition:
+        apiVersion: policy.open-cluster-management.io/v1beta1
+        kind: OperatorPolicy
+        metadata:
+          name: operator-policy-47229
+        spec:
+          remediationAction: enforce
+          severity: medium
+          complianceType: musthave
+          subscription:
+            name: quay-operator
+            namespace: grcqeoptest-ns-47229
+            installPlanApproval: Automatic
+---
+apiVersion: policy.open-cluster-management.io/v1
+kind: PlacementBinding
+metadata:
+  name: test-op-47229
+placementRef:
+  name: test-op-47229
+  kind: PlacementRule
+  apiGroup: apps.open-cluster-management.io
+subjects:
+- name: test-op-47229
+  kind: Policy
+  apiGroup: policy.open-cluster-management.io
+---
+apiVersion: apps.open-cluster-management.io/v1
+kind: PlacementRule
+metadata:
+  name: test-op-47229
+spec:
+  clusterSelector:
+    matchExpressions: []

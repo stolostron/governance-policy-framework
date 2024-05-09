@@ -1,0 +1,47 @@
+apiVersion: policy.open-cluster-management.io/v1
+kind: Policy
+metadata:
+  name: cleanup-grcqeoptest-ns
+spec:
+  remediationAction: enforce
+  disabled: false
+  policy-templates:
+    - objectDefinition:
+        apiVersion: policy.open-cluster-management.io/v1
+        kind: ConfigurationPolicy
+        metadata:
+          name: cleanup-grcqeoptest-ns
+        spec:
+          remediationAction: enforce
+          object-templates-raw: |
+            {{- range $ns := (lookup "v1" "Namespace" "" "").items }}
+            {{- if hasPrefix "grcqeoptest-ns-" $ns.metadata.name }}
+            - complianceType: mustnothave
+              objectDefinition:
+                apiVersion: v1
+                kind: Namespace
+                metadata:
+                  name: '{{ $ns.metadata.name }}'
+            {{- end }}
+            {{- end }}
+---
+apiVersion: policy.open-cluster-management.io/v1
+kind: PlacementBinding
+metadata:
+  name: cleanup-grcqeoptest-ns
+placementRef:
+  apiGroup: apps.open-cluster-management.io
+  kind: PlacementRule
+  name: cleanup-grcqeoptest-ns
+subjects:
+  - apiGroup: policy.open-cluster-management.io
+    kind: Policy
+    name: cleanup-grcqeoptest-ns
+---
+apiVersion: apps.open-cluster-management.io/v1
+kind: PlacementRule
+metadata:
+  name: cleanup-grcqeoptest-ns
+spec:
+  clusterSelector:
+    matchExpressions: []
