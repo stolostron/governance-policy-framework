@@ -4,6 +4,7 @@
 package integration
 
 import (
+	"context"
 	"strings"
 
 	. "github.com/onsi/ginkgo/v2"
@@ -11,6 +12,7 @@ import (
 	k8serrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
+	"k8s.io/client-go/dynamic"
 	policiesv1 "open-cluster-management.io/governance-policy-propagator/api/v1"
 	"open-cluster-management.io/governance-policy-propagator/test/utils"
 
@@ -20,14 +22,18 @@ import (
 var _ = Describe("GRC: [P1][Sev1][policy-grc] Test install Operator",
 	Ordered, Label("BVT"), func() {
 		const (
-			testNS              = "grcqeoptest-ns"
-			policyNoGroupYAML   = "../resources/policy_install_operator/operator_policy_no_group.yaml"
-			policyWithGroupYAML = "../resources/policy_install_operator/operator_policy_with_group.yaml"
-			policyNamePrefix    = "test-op"
-			noGroupSuffix       = "-43544"
-			withGroupSuffix     = "-43545"
-			subName             = "quay-operator"
-			opGroupName         = "grcqeopgroup"
+			testNS                = "grcqeoptest-ns"
+			policyNoGroupYAML     = "../resources/policy_install_operator/operator_policy_no_group.yaml"
+			policyWithGroupYAML   = "../resources/policy_install_operator/operator_policy_with_group.yaml"
+			policyAllDefaultsYAML = "../resources/policy_install_operator/operator_policy_all_defaults.yaml"
+			cleanupPolicyYAML     = "../resources/policy_install_operator/clean-up-grcqeoptest-ns.yaml"
+			cleanupPolicyName     = "cleanup-grcqeoptest-ns"
+			policyNamePrefix      = "test-op"
+			noGroupSuffix         = "-43544"
+			withGroupSuffix       = "-43545"
+			allDefaultsSuffix     = "-47229"
+			subName               = "quay-operator"
+			opGroupName           = "grcqeopgroup"
 		)
 
 		Context("When no OperatorGroup is specified", func() {
@@ -419,6 +425,78 @@ var _ = Describe("GRC: [P1][Sev1][policy-grc] Test install Operator",
 					)
 					g.Expect(opDeployment).NotTo(BeNil())
 				}, defaultTimeoutSeconds*4, 5).Should(Succeed())
+			})
+		})
+
+		Context("When all defaults are used on the subscription", func() {
+			policyName := policyNamePrefix + allDefaultsSuffix
+
+			AfterAll(func(ctx SpecContext) {
+				By("Cleaning up the operator installation")
+				_, err := common.OcHub(
+					"delete",
+					"-f",
+					policyAllDefaultsYAML,
+					"-n",
+					userNamespace,
+					"--ignore-not-found=true",
+				)
+				Expect(err).ToNot(HaveOccurred())
+
+				_, err = common.OcHub("apply", "-f", cleanupPolicyYAML, "-n", userNamespace)
+				Expect(err).ToNot(HaveOccurred())
+
+				verifyPolicyOnAllClusters(ctx, userNamespace, cleanupPolicyName, "Compliant", defaultTimeoutSeconds*2)
+
+				_, err = common.OcHub(
+					"delete",
+					"-f",
+					cleanupPolicyYAML,
+					"-n",
+					userNamespace,
+					"--ignore-not-found=true",
+				)
+				Expect(err).ToNot(HaveOccurred())
+			})
+
+			It(policyName+" should be created and become compliant", func(ctx context.Context) {
+				_, err := common.OcHub("apply", "-f", policyAllDefaultsYAML, "-n", userNamespace)
+				Expect(err).ToNot(HaveOccurred())
+
+				verifyPolicyOnAllClusters(ctx, userNamespace, policyName, "Compliant", defaultTimeoutSeconds*4)
+			})
+
+			It("Should verify the subscription has defaults set", func() {
+				for i, client := range []dynamic.Interface{clientHubDynamic, clientManagedDynamic} {
+					var logSuffix string
+
+					if i == 0 {
+						logSuffix = "hub"
+					} else {
+						logSuffix = "managed cluster"
+					}
+
+					By("Checking the subscription defaults on the " + logSuffix)
+
+					sub := utils.GetWithTimeout(
+						client,
+						common.GvrSubscriptionOLM,
+						subName,
+						testNS+allDefaultsSuffix,
+						true,
+						defaultTimeoutSeconds,
+					)
+					Expect(sub).NotTo(BeNil())
+
+					channel, _, _ := unstructured.NestedString(sub.Object, "spec", "channel")
+					Expect(channel).ToNot(BeEmpty(), "spec.channel should have a default value set")
+
+					source, _, _ := unstructured.NestedString(sub.Object, "spec", "source")
+					Expect(source).ToNot(BeEmpty(), "spec.source should have a default value set")
+
+					sourceNamespace, _, _ := unstructured.NestedString(sub.Object, "spec", "sourceNamespace")
+					Expect(sourceNamespace).ToNot(BeEmpty(), "spec.sourceNamespace should have a default value set")
+				}
 			})
 		})
 	})

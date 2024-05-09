@@ -840,7 +840,7 @@ var _ = Describe("GRC: [P1][Sev1][policy-grc] Test the compliance history API", 
 })
 
 func verifyPolicyOnAllClusters(
-	ctx context.Context, namespace string, policy string, compliance string, timeout int, //nolint: unparam
+	ctx context.Context, namespace string, policy string, compliance string, timeout int,
 ) (
 	clusters []string,
 ) {
