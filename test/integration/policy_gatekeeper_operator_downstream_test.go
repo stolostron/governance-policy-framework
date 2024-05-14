@@ -23,7 +23,10 @@ var _ = Describe("RHACM4K-3055", Ordered, Label("policy-collection", "stable", "
 	gatekeeperPolicyURL := policyCollectStableURL +
 		"CM-Configuration-Management/policy-gatekeeper-operator-downstream.yaml"
 
-	const gatekeeperPolicyName = "policy-gatekeeper-operator"
+	const (
+		gatekeeperNamespace  = "openshift-gatekeeper-system"
+		gatekeeperPolicyName = "policy-gatekeeper-operator"
+	)
 
 	Describe("GRC: [P1][Sev1][policy-grc] Test installing gatekeeper operator", func() {
 		It("stable/policy-gatekeeper-operator should be created on hub", func() {
@@ -158,7 +161,7 @@ var _ = Describe("RHACM4K-3055", Ordered, Label("policy-collection", "stable", "
 		It("Gatekeeper audit pod should be running", func() {
 			By("Checking if pod gatekeeper-audit has been created")
 			Eventually(func(g Gomega) []corev1.Pod {
-				podList, err := clientManaged.CoreV1().Pods("openshift-gatekeeper-system").List(
+				podList, err := clientManaged.CoreV1().Pods(gatekeeperNamespace).List(
 					context.TODO(),
 					metav1.ListOptions{
 						LabelSelector: "control-plane=audit-controller",
@@ -170,7 +173,7 @@ var _ = Describe("RHACM4K-3055", Ordered, Label("policy-collection", "stable", "
 			}, defaultTimeoutSeconds*2, 1).Should(HaveLen(1))
 			By("Checking if pod gatekeeper-audit is running")
 			Eventually(func(g Gomega) interface{} {
-				podList, err := clientManaged.CoreV1().Pods("openshift-gatekeeper-system").List(
+				podList, err := clientManaged.CoreV1().Pods(gatekeeperNamespace).List(
 					context.TODO(),
 					metav1.ListOptions{
 						LabelSelector: "control-plane=audit-controller",
@@ -184,7 +187,7 @@ var _ = Describe("RHACM4K-3055", Ordered, Label("policy-collection", "stable", "
 		It("Gatekeeper controller manager pods should be running", func() {
 			By("Checking if pod gatekeeper-controller-manager has been created")
 			Eventually(func(g Gomega) []corev1.Pod {
-				podList, err := clientManaged.CoreV1().Pods("openshift-gatekeeper-system").List(
+				podList, err := clientManaged.CoreV1().Pods(gatekeeperNamespace).List(
 					context.TODO(),
 					metav1.ListOptions{
 						LabelSelector: "control-plane=controller-manager",
@@ -196,7 +199,7 @@ var _ = Describe("RHACM4K-3055", Ordered, Label("policy-collection", "stable", "
 			}, defaultTimeoutSeconds*2, 1).Should(HaveLen(2))
 			By("Checking if pod gatekeeper-controller-manager is running")
 			Eventually(func(g Gomega) interface{} {
-				podList, err := clientManaged.CoreV1().Pods("openshift-gatekeeper-system").List(
+				podList, err := clientManaged.CoreV1().Pods(gatekeeperNamespace).List(
 					context.TODO(),
 					metav1.ListOptions{
 						LabelSelector: "control-plane=controller-manager",
@@ -267,8 +270,8 @@ var _ = Describe("RHACM4K-3055", Ordered, Label("policy-collection", "stable", "
 
 		Eventually(func() interface{} {
 			out, _ := utils.KubectlWithOutput(
-				"get", "pods", "-n",
-				"openshift-gatekeeper-system",
+				"get", "pods",
+				"-n", gatekeeperNamespace,
 				"--kubeconfig="+kubeconfigManaged,
 			)
 
@@ -278,8 +281,7 @@ var _ = Describe("RHACM4K-3055", Ordered, Label("policy-collection", "stable", "
 
 		_, err = utils.KubectlWithOutput(
 			"delete",
-			"-n",
-			"openshift-operators",
+			"-n", "openshift-operators",
 			"subscriptions.operators.coreos.com",
 			"gatekeeper-operator-product",
 			"--kubeconfig="+kubeconfigManaged,
@@ -313,12 +315,12 @@ var _ = Describe("RHACM4K-3055", Ordered, Label("policy-collection", "stable", "
 		out, _ = utils.KubectlWithOutput(
 			"delete",
 			"namespace",
-			"openshift-gatekeeper-system",
+			gatekeeperNamespace,
 			"--kubeconfig="+kubeconfigManaged,
 		)
 		Expect(out).To(Or(
-			ContainSubstring("namespace \"openshift-gatekeeper-system\" deleted"),
-			ContainSubstring("namespaces \"openshift-gatekeeper-system\" not found"),
+			ContainSubstring("namespace \""+gatekeeperNamespace+"\" deleted"),
+			ContainSubstring("namespaces \""+gatekeeperNamespace+"\" not found"),
 		))
 
 		_, err = utils.KubectlWithOutput(

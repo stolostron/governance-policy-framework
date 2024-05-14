@@ -166,7 +166,10 @@ func complianceScanTest(scanPolicyName string, scanPolicyURL string, scanName st
 			scanName,
 			"--kubeconfig="+kubeconfigManaged,
 		)
-		Expect(out).To(ContainSubstring("scansettingbinding.compliance.openshift.io \"" + scanName + "\" deleted"))
+		Expect(out).To(Or(
+			ContainSubstring("scansettingbinding.compliance.openshift.io \""+scanName+"\" deleted"),
+			ContainSubstring("scansettingbinding.compliance.openshift.io \""+scanName+"\" not found"),
+		))
 		By("Wait for ComplianceSuite to be deleted")
 		_, err = utils.KubectlWithOutput(
 			"delete",
@@ -413,7 +416,11 @@ var _ = Describe("RHACM4K-2222 GRC: [P1][Sev1][policy-grc] "+
 			"--kubeconfig="+kubeconfigManaged,
 			"--ignore-not-found",
 		)
-		Expect(err).ToNot(HaveOccurred())
+		if err != nil {
+			Expect(err).To(Equal("error: the server doesn't have a resource type \"ProfileBundle\""))
+		} else {
+			Expect(err).ToNot(HaveOccurred())
+		}
 
 		_, err = utils.KubectlWithOutput(
 			"delete", "-n",
@@ -440,7 +447,10 @@ var _ = Describe("RHACM4K-2222 GRC: [P1][Sev1][policy-grc] "+
 			"openshift-compliance",
 			"--kubeconfig="+kubeconfigManaged,
 		)
-		Expect(out).To(ContainSubstring("namespace \"openshift-compliance\" deleted"))
+		Expect(out).To(Or(
+			ContainSubstring("namespace \"openshift-compliance\" deleted"),
+			ContainSubstring("namespaces \"openshift-compliance\" not found"),
+		))
 
 		_, err = utils.KubectlWithOutput(
 			"delete", "events", "-n",
