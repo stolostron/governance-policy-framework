@@ -56,13 +56,13 @@ for prefix in "${prefixs[@]}"; do
     if [[ "${success}" == "true" ]]; then
       yq -i -pj -oj -I=0 '.blocks[-1].text.text += ":white_check_mark: '"${name}"'\n"' ./slack-payload.json
     else
-      yq -pj -oj -I=0 '.[0].SpecReports | filter(.LeafNodeType == "It") | filter(.State == "failed")' "${report}" > "${report}-fails"
+      yq -pj -oj -I=0 '.[0].SpecReports | filter(.State == "failed")' "${report}" > "${report}-fails"
       failcount="$(yq -pj -oy 'length' "${report}-fails")"
       yq -i -pj -oj -I=0 '.blocks[-1].text.text += ":failed: '"${name}"' failure count: '"${failcount}"'\n"' ./slack-payload.json
 
       # Add failure message
       yq -i -pj -oj -I=0 '.blocks += {"type": "rich_text", "elements": [{"type": "rich_text_preformatted", "elements":[{"type":"text", "text":"- "}]}]}' ./slack-payload.json
-      yq -i -pj -oj -I=0 '.blocks[-1].elements[0].elements[0].text += (load("'"${report}-fails"'") | [.[] | .ContainerHierarchyTexts[0] + "\n  " + .LeafNodeText + "\n  " + (.Failure.Message | sub("\n", "\n    "))] | join("\n- "))' ./slack-payload.json
+      yq -i -pj -oj -I=0 '.blocks[-1].elements[0].elements[0].text += (load("'"${report}-fails"'") | [.[] | (.ContainerHierarchyTexts[0] // "[" + .LeafNodeType + "]") + "\n  " + .LeafNodeText + "\n  " + (.Failure.Message | sub("\n", "\n    "))] | join("\n- "))' ./slack-payload.json
       yq -i -pj -oj -I=0 '.blocks += {"type":"section","text":{"type":"mrkdwn","text":""}}' ./slack-payload.json
     fi
   else
