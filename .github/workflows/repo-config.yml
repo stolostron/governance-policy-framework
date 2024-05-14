@@ -132,7 +132,7 @@ jobs:
 
           kubectl config use-context kind-hub
           echo "Wait for ManagedClusters to be available:"
-          kubectl wait managedclusters --all --for jsonpath='{.status.conditions[?(@.type=="ManagedClusterConditionAvailable")].status}'=True ||
+          kubectl wait managedclusters --all --for condition=ManagedClusterConditionAvailable=True ||
             kubectl get managedclusters --context kind-${hub}
           kubectl get managedclusters --context kind-${hub}
 
@@ -147,7 +147,7 @@ jobs:
           for idx in {1..5}; do
             echo "::group::Wait for ManagedClusterAddons to be available (${idx}/5)"
             kubectl get managedclusteraddons --all-namespaces
-            kubectl wait managedclusteraddons --all-namespaces --all --for jsonpath='{.status.conditions[?(@.type=="Available")].status}'=True && break || { [[ ${idx} == 5 ]] && exit 1; }
+            kubectl wait managedclusteraddons --all-namespaces --all --for condition=Available=True && break || { [[ ${idx} == 5 ]] && exit 1; }
             echo "::endgroup::"
           done
 
