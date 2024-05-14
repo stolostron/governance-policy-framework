@@ -72,7 +72,7 @@ for idx in {1..6}; do
   echo "Waiting for ManagedClusterAddons to be available (${idx}/6)"
   kubectl get managedclusteraddons -n ${MANAGED_CLUSTER_NAME}
   kubectl wait managedclusteraddons -n ${MANAGED_CLUSTER_NAME} --all \
-    --for=jsonpath='{.status.conditions[?(@.type=="Available")].status}'=True &&
+    --for condition=Available=True &&
     break || err_code=$?
 done
 
