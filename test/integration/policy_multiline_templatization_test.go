@@ -93,19 +93,19 @@ var _ = Describe(
 				} {
 					By(fmt.Sprintf("Checking edited ConfigMap %s/%s on the %s cluster", userNamespace, name, cluster))
 					Eventually(
-						func() string {
+						func() (map[string]string, error) {
 							configMap, err := client.CoreV1().ConfigMaps(userNamespace).Get(
 								ctx, name, metav1.GetOptions{},
 							)
-							if err != nil {
-								return ""
-							}
 
-							return configMap.Data["extraData"]
-						},
-						defaultTimeoutSeconds*2,
-						1,
-					).Should(Equal("exists!"))
+							return configMap.Data, err
+						}, defaultTimeoutSeconds*2, 1,
+					).Should(
+						HaveKeyWithValue("extraData", "exists!"),
+						fmt.Sprintf("ConfigMap %s/%s on the %s cluster should have expected data",
+							userNamespace, name, cluster,
+						),
+					)
 				}
 			}
 		})
@@ -128,17 +128,19 @@ var _ = Describe(
 				} {
 					By(fmt.Sprintf("Checking copied ConfigMap %s/%s on the %s cluster", configNamespace, name, cluster))
 					Eventually(
-						func() string {
+						func() (map[string]string, error) {
 							configMap, err := client.CoreV1().ConfigMaps(configNamespace).Get(
 								ctx, name+"-copy", metav1.GetOptions{},
 							)
-							if err != nil {
-								return ""
-							}
 
-							return configMap.Data["extraData"]
+							return configMap.Data, err
 						}, defaultTimeoutSeconds*2, 1,
-					).Should(Equal("exists!"))
+					).Should(
+						HaveKeyWithValue("extraData", "exists!"),
+						fmt.Sprintf("ConfigMap %s/%s on the %s cluster should have expected data",
+							configNamespace, name, cluster,
+						),
+					)
 				}
 			}
 		})
