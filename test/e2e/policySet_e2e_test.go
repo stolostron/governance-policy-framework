@@ -35,16 +35,21 @@ var _ = Describe("Test policy set", func() {
 			)
 			Expect(rootPolicy).NotTo(BeNil())
 
-			By("Patching " + testPolicySetName + "-plr with decision of cluster managed")
-			plr := utils.GetWithTimeout(
-				clientHubDynamic, common.GvrPlacementRule, testPolicySetName+"-plr", userNamespace,
-				true, defaultTimeoutSeconds,
-			)
-			plr.Object["status"] = utils.GeneratePlrStatus(clusterNamespaceOnHub)
-			_, err = clientHubDynamic.Resource(common.GvrPlacementRule).Namespace(userNamespace).UpdateStatus(
-				context.TODO(), plr, metav1.UpdateOptions{},
-			)
+			err = common.PatchPlacementRule(userNamespace, testPolicySetName+"-plr")
 			Expect(err).ToNot(HaveOccurred())
+
+			if common.ManuallyPatchDecisions {
+				By("Patching " + testPolicySetName + "-plr with decision of cluster " + clusterNamespaceOnHub)
+				plr := utils.GetWithTimeout(
+					clientHubDynamic, common.GvrPlacementRule, testPolicySetName+"-plr", userNamespace,
+					true, defaultTimeoutSeconds,
+				)
+				plr.Object["status"] = utils.GeneratePlrStatus(clusterNamespaceOnHub)
+				_, err = clientHubDynamic.Resource(common.GvrPlacementRule).Namespace(userNamespace).UpdateStatus(
+					context.TODO(), plr, metav1.UpdateOptions{},
+				)
+				Expect(err).ToNot(HaveOccurred())
+			}
 
 			By("Checking " + testPolicyName + " on managed cluster in ns " + clusterNamespaceOnHub)
 			managedplc := utils.GetWithTimeout(
