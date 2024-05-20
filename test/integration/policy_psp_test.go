@@ -58,7 +58,6 @@ var _ = Describe("GRC: [P1][Sev1][policy-grc] Test the policy-psp policy",
 		})
 
 		It("stable/"+rootPolicyName+" should be created on the managed cluster", func() {
-			By("Patching placement rule placement-" + rootPolicyName)
 			err := common.PatchPlacementRule(userNamespace, "placement-"+rootPolicyName)
 			Expect(err).ToNot(HaveOccurred())
 

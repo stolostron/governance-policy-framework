@@ -98,7 +98,6 @@ var _ = Describe("GRC: [P1][Sev1][policy-grc] Test install Operator",
 				_, err := common.OcHub("apply", "-f", policyNoGroupYAML, "-n", userNamespace)
 				Expect(err).ToNot(HaveOccurred())
 
-				By("Patching the placement rule")
 				err = common.PatchPlacementRule(userNamespace, policyNamePrefix+noGroupSuffix+"-plr")
 				Expect(err).ToNot(HaveOccurred())
 
@@ -305,8 +304,6 @@ var _ = Describe("GRC: [P1][Sev1][policy-grc] Test install Operator",
 			It(policyNamePrefix+withGroupSuffix+" should be created on the hub", func() {
 				_, err := common.OcHub("apply", "-f", policyWithGroupYAML, "-n", userNamespace)
 				Expect(err).ToNot(HaveOccurred())
-
-				By("Patching the placement rule")
 				err = common.PatchPlacementRule(userNamespace, policyNamePrefix+withGroupSuffix+"-plr")
 				Expect(err).ToNot(HaveOccurred())
 

@@ -49,6 +49,9 @@ func GetClusterComplianceState(policyName, clusterName string) func(Gomega) inte
 // Patches the clusterSelector of the specified PlacementRule so that it will
 // always only match the targetCluster.
 func PatchPlacementRule(namespace, name string) error {
+	By("Patching PlacementRule " + namespace + "/" + name +
+		" with clusterSelector {name: " + ClusterNamespaceOnHub + "}")
+
 	_, err := OcHub(
 		"patch",
 		"-n",
