@@ -42,8 +42,5 @@ kind: PlacementRule
 metadata:
   name: policy-hub-templates-21440-plr
 spec:
-  clusterConditions:
-  - status: "True"
-    type: ManagedClusterConditionAvailable
   clusterSelector:
     matchExpressions: []

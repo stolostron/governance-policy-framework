@@ -57,9 +57,5 @@ kind: PlacementRule
 metadata:
   name: test-hub-encryption-plr
 spec:
-  clusterConditions:
-  - status: "True"
-    type: ManagedClusterConditionAvailable
   clusterSelector:
-    matchExpressions:
-      []
+    matchExpressions: []

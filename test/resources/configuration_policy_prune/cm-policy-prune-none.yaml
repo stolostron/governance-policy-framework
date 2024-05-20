@@ -49,7 +49,5 @@ kind: PlacementRule
 metadata:
   name: cm-policy-prune-none-plr
 spec:
-  clusterConditions: []
   clusterSelector:
-    matchExpressions:
-      []
+    matchExpressions: []

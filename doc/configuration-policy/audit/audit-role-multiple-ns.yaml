@@ -57,8 +57,5 @@ kind: PlacementRule
 metadata:
   name: placement-policy-role-audit-multiple-ns
 spec:
-  clusterConditions:
-    - status: 'True'
-      type: ManagedClusterConditionAvailable
   clusterSelector:
     matchExpressions: []

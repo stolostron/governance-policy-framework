@@ -44,9 +44,5 @@ kind: PlacementRule
 metadata:
   name: mclabels-fromcm-pol-plr
 spec:
-  clusterConditions:
-  - status: "True"
-    type: ManagedClusterConditionAvailable
   clusterSelector:
-    matchExpressions:
-      []
+    matchExpressions: []
