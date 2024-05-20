@@ -49,8 +49,5 @@ kind: PlacementRule
 metadata:
   name: placement-policy-pod-kind-field-filter
 spec:
-  clusterConditions:
-    - status: 'True'
-      type: ManagedClusterConditionAvailable
   clusterSelector:
     matchExpressions: []

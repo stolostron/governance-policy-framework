@@ -59,9 +59,5 @@ kind: PlacementRule
 metadata:
   name: test-policyset-plr
 spec:
-  clusterConditions:
-  - status: "True"
-    type: ManagedClusterConditionAvailable
   clusterSelector:
-    matchExpressions:
-      []
+    matchExpressions: []

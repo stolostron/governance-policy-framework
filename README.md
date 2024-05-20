@@ -98,9 +98,6 @@ kind: PlacementRule
 metadata:
   name: placement-policy-pod
 spec:
-  clusterConditions:
-  - status: "True"
-    type: ManagedClusterConditionAvailable
   clusterSelector:
     matchExpressions:
       - {key: environment, operator: In, values: ["dev"]}

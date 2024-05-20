@@ -53,9 +53,5 @@ kind: PlacementRule
 metadata:
   name: role-policy-musthave-plr
 spec:
-  clusterConditions:
-  - status: "True"
-    type: ManagedClusterConditionAvailable
   clusterSelector:
-    matchExpressions:
-      []
+    matchExpressions: []

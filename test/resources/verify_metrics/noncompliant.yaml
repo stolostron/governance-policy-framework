@@ -40,8 +40,5 @@ kind: PlacementRule
 metadata:
   name: placement-policy-verify-metrics-noncompliant
 spec:
-  clusterConditions:
-    - status: 'True'
-      type: ManagedClusterConditionAvailable
   clusterSelector:
     matchExpressions: []

@@ -52,8 +52,5 @@ kind: PlacementRule
 metadata:
   name: placement-policy-role-merge-patch
 spec:
-  clusterConditions:
-    - status: 'True'
-      type: ManagedClusterConditionAvailable
   clusterSelector:
     matchExpressions: []
