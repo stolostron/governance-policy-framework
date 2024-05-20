@@ -90,7 +90,7 @@ func DoCreatePolicyTest(policyFile string, templateGVRs ...schema.GroupVersionRe
 
 	if ManuallyPatchDecisions {
 		plrName := policyName + "-plr"
-		By("Patching " + plrName + " with decision of cluster " + UserNamespace)
+		By("Patching " + plrName + " with decision of cluster " + ClusterNamespaceOnHub)
 		plr := utils.GetWithTimeout(
 			ClientHubDynamic, GvrPlacementRule, plrName, UserNamespace, true, DefaultTimeoutSeconds,
 		)
