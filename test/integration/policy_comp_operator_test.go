@@ -32,7 +32,6 @@ func complianceScanTest(scanPolicyName string, scanPolicyURL string, scanName st
 			)
 			Expect(err).ToNot(HaveOccurred())
 
-			By("Patching placement rule")
 			err = common.PatchPlacementRule(userNamespace, "placement-"+scanPolicyName)
 			Expect(err).ToNot(HaveOccurred())
 
@@ -251,7 +250,6 @@ var _ = Describe("RHACM4K-2222 GRC: [P1][Sev1][policy-grc] "+
 				"--kubeconfig="+kubeconfigHub,
 			)
 			Expect(err).ToNot(HaveOccurred())
-			By("Patching placement rule")
 			err = common.PatchPlacementRule(userNamespace, "placement-"+compPolicyName)
 			Expect(err).ToNot(HaveOccurred())
 			By("Checking " + compPolicyName + " on hub cluster in ns " + userNamespace)

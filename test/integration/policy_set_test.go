@@ -56,7 +56,6 @@ var _ = Describe("GRC: [P1][Sev1][policy-grc] Test policy set", Ordered, Label("
 			Expect(found).Should(BeTrue())
 			Expect(templates).Should(HaveLen(1))
 
-			By("Patching placement rule " + testPolicySetName + "-plr")
 			err = testcommon.PatchPlacementRule(userNamespace, testPolicySetName+"-plr")
 			Expect(err).ToNot(HaveOccurred())
 

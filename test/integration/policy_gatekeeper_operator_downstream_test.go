@@ -51,7 +51,6 @@ var _ = Describe("RHACM4K-3055", Ordered, Label("policy-collection", "stable", "
 				"--kubeconfig="+kubeconfigHub,
 			)
 			Expect(err).ToNot(HaveOccurred())
-			By("Patching placement rule")
 			err = common.PatchPlacementRule(userNamespace, "placement-"+gatekeeperPolicyName)
 			Expect(err).ToNot(HaveOccurred())
 			By("Checking policy-gatekeeper-operator on hub cluster in ns " + userNamespace)

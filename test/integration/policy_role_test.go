@@ -60,7 +60,6 @@ var _ = Describe("GRC: [P1][Sev1][policy-grc] Test the policy-role policy",
 			)
 			Expect(err).ToNot(HaveOccurred())
 
-			By("Patching placement rule")
 			err = common.PatchPlacementRule(userNamespace, "placement-"+policyRoleName)
 			Expect(err).ToNot(HaveOccurred())
 

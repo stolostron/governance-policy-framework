@@ -71,7 +71,6 @@ var _ = Describe(
 			)
 			Expect(err).ToNot(HaveOccurred())
 
-			By("Patching placement rule")
 			err = common.PatchPlacementRule(userNamespace, "placement-"+policyCertificateName)
 			Expect(err).ToNot(HaveOccurred())
 
