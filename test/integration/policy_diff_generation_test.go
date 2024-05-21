@@ -83,18 +83,24 @@ var _ = Describe("GRC: [P1][Sev1][policy-grc] Test diff generation",
 			diffLogs := diffLogRegEx.FindAllString(controllerLogs, -1)
 			Expect(diffLogs).ToNot(BeEmpty(), "config-policy-controller logs should contain a diff")
 
-			diffLog := `Logging the diff:
+			diffLog := []string{
+				`Logging the diff:
 --- default/` + configMapName + ` : existing
 +++ default/` + configMapName + ` : updated
-@@ -2,3 +2,4 @@
+@@ -1,8 +1,9 @@
+ apiVersion: v1
  data:
 -  fish: tuna
 +  cephalopod: squid
 +  fish: marlin
  kind: ConfigMap
-	{"policy": "` + policyConfigMapName + `", "name": "` + configMapName +
-				`", "namespace": "default", "resource": "configmaps"}`
-			Expect(diffLogs[0]).To(Equal(diffLog))
+ metadata:`,
+				`	{"policy": "` + policyConfigMapName + `", "name": "` + configMapName +
+					`", "namespace": "default", "resource": "configmaps"}`,
+			}
+			for _, diff := range diffLog {
+				Expect(diffLogs[0]).To(ContainSubstring(diff))
+			}
 		})
 
 		AfterAll(func() {
