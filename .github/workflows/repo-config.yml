@@ -103,10 +103,10 @@ jobs:
     steps:
       - name: Install clusteradm
         run: |
-          go install open-cluster-management.io/clusteradm/cmd/clusteradm@latest ||
+          go install open-cluster-management.io/clusteradm/cmd/clusteradm@main ||
           {
-            echo "error: latest tag failed. Falling back to static commit.";
-            go install open-cluster-management.io/clusteradm/cmd/clusteradm@c24cfa7;
+            echo "error: installing latest commit on main failed. Falling back to latest tag.";
+            go install open-cluster-management.io/clusteradm/cmd/clusteradm@latest;
           }
       - name: Bootstrap clusters with OCM
         # Source: https://github.com/open-cluster-management-io/ocm/blob/main/solutions/setup-dev-environment/local-up.sh
