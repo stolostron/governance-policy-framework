@@ -12,6 +12,7 @@ import (
 	. "github.com/onsi/gomega"
 	k8serrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/runtime/schema"
 	k8stypes "k8s.io/apimachinery/pkg/types"
 	policiesv1 "open-cluster-management.io/governance-policy-propagator/api/v1"
 	"open-cluster-management.io/governance-policy-propagator/test/utils"
@@ -21,6 +22,11 @@ import (
 
 var _ = Describe("GRC: [P1][Sev1][policy-grc] Test the policy-psp policy",
 	Ordered, Label("policy-collection", "stable"), func() {
+		gvrPSP := schema.GroupVersionResource{
+			Group:    "policy",
+			Version:  "v1beta1",
+			Resource: "podsecuritypolicies",
+		}
 		rootPolicyURL := policyCollectSCURL + "policy-psp.yaml"
 		const (
 			rootPolicyName = "policy-podsecuritypolicy"
@@ -107,7 +113,7 @@ var _ = Describe("GRC: [P1][Sev1][policy-grc] Test the policy-psp policy",
 			By("Checking the PodSecurityPolicy " + pspName + " on the managed cluster")
 			Eventually(
 				func() error {
-					_, err := clientManaged.PolicyV1beta1().PodSecurityPolicies().Get(
+					_, err := clientManagedDynamic.Resource(gvrPSP).Get(
 						context.TODO(), pspName, metav1.GetOptions{},
 					)
 
@@ -132,7 +138,7 @@ var _ = Describe("GRC: [P1][Sev1][policy-grc] Test the policy-psp policy",
 			Expect(err).ToNot(HaveOccurred())
 
 			By("Deleting the PodSecurityPolicy " + pspName + " on the managed cluster")
-			err = clientManaged.PolicyV1beta1().PodSecurityPolicies().Delete(
+			err = clientManagedDynamic.Resource(gvrPSP).Delete(
 				context.TODO(),
 				pspName,
 				metav1.DeleteOptions{},
