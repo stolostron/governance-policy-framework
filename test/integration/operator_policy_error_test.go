@@ -99,13 +99,13 @@ var _ = Describe("GRC: [P1][Sev1][policy-grc] Test operatorpolicy errors",
 			Expect(err).ToNot(HaveOccurred())
 		})
 
-		It(operatorPolicyName+" should be patched with incorrect installPlanApproval", func() {
+		It(operatorPolicyName+" should be patched to specify installPlanApproval", func() {
 			_, err := common.OcHub(
 				"patch", "policies.policy.open-cluster-management.io", policyName,
 				"-n", userNamespace, "--type=json", "-p", `[{
 				"op":"replace", 
 				"path":"/spec/policy-templates/0/objectDefinition/spec/subscription/installPlanApproval",
-				"value":"Invalid"
+				"value":"Automatic"
 			}]`)
 			Expect(err).ToNot(HaveOccurred())
 		})
@@ -121,6 +121,6 @@ var _ = Describe("GRC: [P1][Sev1][policy-grc] Test operatorpolicy errors",
 				common.GetOpPolicyCompMsg(operatorPolicyName),
 				defaultTimeoutSeconds,
 				1,
-			).Should(ContainSubstring("the policy spec.subscription.installPlanApproval ('Invalid') is invalid"))
+			).Should(ContainSubstring("installPlanApproval is prohibited in spec.subscription"))
 		})
 	})

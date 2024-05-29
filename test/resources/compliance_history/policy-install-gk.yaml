@@ -19,9 +19,9 @@ spec:
             channel: stable
             name: gatekeeper-operator-product
             namespace: openshift-operators
-            installPlanApproval: Automatic
             source: redhat-operators
             sourceNamespace: openshift-marketplace
+          upgradeApproval: Automatic
     - objectDefinition:
         apiVersion: policy.open-cluster-management.io/v1
         kind: ConfigurationPolicy

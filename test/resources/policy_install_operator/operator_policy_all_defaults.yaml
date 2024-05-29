@@ -20,7 +20,7 @@ spec:
           subscription:
             name: quay-operator
             namespace: grcqeoptest-ns-47229
-            installPlanApproval: Automatic
+          upgradeApproval: Automatic
 ---
 apiVersion: policy.open-cluster-management.io/v1
 kind: PlacementBinding
