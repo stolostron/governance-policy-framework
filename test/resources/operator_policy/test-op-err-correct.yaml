@@ -22,9 +22,9 @@ spec:
             channel: stable-3.8
             name: quay-operator
             namespace: grcqeoptest-ns-43568
-            installPlanApproval: Automatic
             source: redhat-operators
             sourceNamespace: openshift-marketplace
+          upgradeApproval: Automatic
 ---
 apiVersion: policy.open-cluster-management.io/v1
 kind: PlacementBinding

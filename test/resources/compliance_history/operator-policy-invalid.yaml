@@ -21,10 +21,10 @@ spec:
             channel: stable-3.8
             name: quay-operator
             namespace: ch-operator-policy-test-ns
-            installPlanApproval: Automatic
             # correct one: redhat-operators
             source: invalid
             sourceNamespace: openshift-marketplace
+          upgradeApproval: Automatic
 ---
 apiVersion: cluster.open-cluster-management.io/v1beta1
 kind: Placement
