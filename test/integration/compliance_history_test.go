@@ -219,6 +219,25 @@ var _ = Describe("GRC: [P1][Sev1][policy-grc] Test the compliance history API", 
 		)
 		Expect(err).ToNot(HaveOccurred())
 
+		By("Unsetting the governance-policy-framework ClusterManagementAddOn to use the AddOnDeploymentConfig")
+		cma, err := clientHubDynamic.Resource(common.GvrClusterManagementAddOn).Get(
+			ctx, "governance-policy-framework", metav1.GetOptions{},
+		)
+		Expect(err).ToNot(HaveOccurred())
+
+		supportedConfigs := []interface{}{
+			map[string]interface{}{
+				"group":    "addon.open-cluster-management.io",
+				"resource": "addondeploymentconfigs",
+			},
+		}
+
+		err = unstructured.SetNestedField(cma.Object, supportedConfigs, "spec", "supportedConfigs")
+		Expect(err).ToNot(HaveOccurred())
+
+		_, err = clientHubDynamic.Resource(common.GvrClusterManagementAddOn).Update(ctx, cma, metav1.UpdateOptions{})
+		Expect(err).ToNot(HaveOccurred())
+
 		By("Deleting the AddOnDeploymentConfig")
 		err = clientHubDynamic.Resource(common.GvrAddonDeploymentConfig).Namespace(common.OCMNamespace).Delete(
 			ctx, "governance-policy-framework", metav1.DeleteOptions{},
