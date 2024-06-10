@@ -1,0 +1,65 @@
+apiVersion: policy.open-cluster-management.io/v1
+kind: Policy
+metadata:
+  name: recreate-option-initial
+  namespace: open-cluster-management-global-set
+spec:
+  disabled: false
+  policy-templates:
+    - objectDefinition:
+        apiVersion: policy.open-cluster-management.io/v1
+        kind: ConfigurationPolicy
+        metadata:
+          name: recreate-option-initial
+        spec:
+          remediationAction: enforce
+          object-templates:
+            - complianceType: musthave
+              objectDefinition:
+                apiVersion: apps/v1
+                kind: Deployment
+                metadata:
+                  name: recreate-option-deployment
+                  namespace: default
+                spec:
+                  replicas: 0
+                  selector:
+                    matchLabels:
+                      app: recreate-option-deployment
+                  strategy:
+                    type: Recreate
+                  template:
+                    metadata:
+                      labels:
+                        app: recreate-option-deployment
+                    spec:
+                      containers:
+                        - args:
+                            - do-not-start
+                          command:
+                            - config-policy-controller
+                          image: quay.io/open-cluster-management/config-policy-controller:latest
+                          imagePullPolicy: IfNotPresent
+                          name: recreate-option-deployment
+                      restartPolicy: Always
+---
+apiVersion: cluster.open-cluster-management.io/v1beta1
+kind: Placement
+metadata:
+  name: recreate-option-initial
+  namespace: open-cluster-management-global-set
+spec: {}
+---
+apiVersion: policy.open-cluster-management.io/v1
+kind: PlacementBinding
+metadata:
+  name: recreate-option-initial
+  namespace: open-cluster-management-global-set
+placementRef:
+  name: recreate-option-initial
+  apiGroup: cluster.open-cluster-management.io
+  kind: Placement
+subjects:
+  - name: recreate-option-initial
+    apiGroup: policy.open-cluster-management.io
+    kind: Policy
