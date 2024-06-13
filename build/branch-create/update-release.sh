@@ -102,14 +102,14 @@ for dirpath in ${COMPONENT_LIST}; do
     # Detect code type ("go" or "nodejs")
     CODE_TYPE=$(yq e '.build_root.image_stream_tag.tag' ${NEW_FILENAME} | grep -o '^[[:alpha:]]*')
 
-    # Remove 'zz_generated_metadata' stanza
-    yq e 'del(.zz_generated_metadata)' -i ${NEW_FILENAME}
+    # Set 'zz_generated_metadata' to the new release branch
+    branch="release-${NEW_VERSION}" yq e '.zz_generated_metadata.branch=strenv(branch)' -i ${NEW_FILENAME}
 
     # Update the 'promotion' stanza
     if [ "$(yq e '.promotion.to[0].name' ${NEW_FILENAME})" != "null" ]; then
       # - For the new version:
       ver="${NEW_VERSION}" yq e '.promotion.to[0].name=strenv(ver)' -i ${NEW_FILENAME}
-      yq e '.promotion.disabled=true' -i ${NEW_FILENAME}
+      yq e '.promotion.to[0].disabled=true' -i ${NEW_FILENAME}
       # - For the 'main' branch:
       ver="${NEW_VERSION}" yq e '.promotion.to[0].name=strenv(ver)' -i ${FILE_PREFIX}-main.yaml
       # - For the old version, re-enable promotion:
@@ -168,7 +168,7 @@ done
 
 echo "* Running 'make update'"
 make update
-if [[ "$?" != "0" ]]; then
+if [ $? -ne 0 ]; then
   echo "* 'make update' exited with an error. Check the output above."
   exit 1
 fi

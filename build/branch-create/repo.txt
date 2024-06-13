@@ -5,3 +5,4 @@ stolostron/governance-policy-addon-controller
 stolostron/governance-policy-framework
 stolostron/governance-policy-framework-addon
 stolostron/governance-policy-propagator
+stolostron/policy-generator-plugin
