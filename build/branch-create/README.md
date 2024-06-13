@@ -13,7 +13,7 @@
 1. Update the version information at the base of the repo (Do not merge this until step 2 is merged.):
    ```shell
    OLD_VERSION=$(cat CURRENT_VERSION)
-   printf vX.Y > CURRENT_VERSION
+   printf X.Y > CURRENT_VERSION
    mv CURRENT_SUPPORTED_VERSIONS CURRENT_SUPPORTED_VERSIONS.bk
    { echo "${OLD_VERSION}"; head -2 CURRENT_SUPPORTED_VERSIONS.bk; } > CURRENT_SUPPORTED_VERSIONS
    rm CURRENT_SUPPORTED_VERSIONS.bk
