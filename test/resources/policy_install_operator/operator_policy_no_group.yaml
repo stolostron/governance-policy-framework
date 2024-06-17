@@ -45,3 +45,6 @@ metadata:
 spec:
   clusterSelector:
     matchExpressions: []
+  clusterConditions:
+  - type: ManagedClusterConditionAvailable
+    status: "True"
