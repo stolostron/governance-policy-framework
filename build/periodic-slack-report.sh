@@ -75,10 +75,12 @@ done
 echo "::endgroup::"
 
 echo "::group::Fast Forwarding Section"
+path="$( cd "$( dirname "${BASH_SOURCE[0]}" )" >/dev/null 2>&1 && pwd )"
+CURRENT_VERSION=$(cat ${path}/../CURRENT_VERSION)
 
 ff_status="$(echo "${GH_NEEDS_CTX}" | yq -pj -oy '.ff.result')"
 if [[ "${ff_status}" == "success" ]]; then
-  yq -i -pj -oj -I=0 '.blocks += {"type":"section","text":{"type":"mrkdwn","text":":fast_forward: Fast Forwarding"}}' ./slack-payload.json
+  yq -i -pj -oj -I=0 '.blocks += {"type":"section","text":{"type":"mrkdwn","text":":fast_forward: Fast Forwarded to '"${CURRENT_VERSION}"'"}}' ./slack-payload.json
 elif [[ "${ff_status}" == "skipped" ]]; then
   yq -i -pj -oj -I=0 '.blocks += {"type":"section","text":{"type":"mrkdwn","text":":dotted_line_face: Fast Forwarding Skipped"}}' ./slack-payload.json
 else
