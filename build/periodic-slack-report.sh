@@ -9,6 +9,9 @@ set -euxo pipefail
 : "${GH_NEEDS_CTX:?GH_NEEDS_CTX must be set}"
 : "${ORIGIN:?ORIGIN must be set}"
 
+path="$( cd "$( dirname "${BASH_SOURCE[0]}" )" >/dev/null 2>&1 && pwd )"
+CURRENT_VERSION=$(cat ${path}/../CURRENT_VERSION)
+
 cd "${ARTIFACTS_PATH}"
 
 echo "::group::Initial Header"
@@ -75,8 +78,6 @@ done
 echo "::endgroup::"
 
 echo "::group::Fast Forwarding Section"
-path="$( cd "$( dirname "${BASH_SOURCE[0]}" )" >/dev/null 2>&1 && pwd )"
-CURRENT_VERSION=$(cat ${path}/../CURRENT_VERSION)
 
 ff_status="$(echo "${GH_NEEDS_CTX}" | yq -pj -oy '.ff.result')"
 if [[ "${ff_status}" == "success" ]]; then
