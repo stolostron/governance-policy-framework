@@ -40,6 +40,13 @@ var _ = Describe("Test Hub Template Encryption", Ordered, func() {
 		const lastRotatedAnnotation = "policy.open-cluster-management.io/last-rotated"
 		const triggerUpdateAnnotation = "policy.open-cluster-management.io/trigger-update"
 
+		JustAfterEach(func(ctx SpecContext) {
+			if CurrentSpecReport().Failed() {
+				DebugHubEncryption(policyName, secretName, configMapName, userNamespace,
+					clusterNamespaceOnHub, configMapCopyName, secretCopyName)
+			}
+		})
+
 		It("Should be created on the managed cluster", func() {
 			By("Creating the " + secretName + " Secret")
 			_, err := common.OcHub("apply", "-f", secretYAML, "-n", userNamespace)
@@ -260,3 +267,57 @@ var _ = Describe("Test Hub Template Encryption", Ordered, func() {
 		})
 	})
 })
+
+func DebugHubEncryption(policyName, secretName, configMapName, hubNs,
+	clusterNamespaceOnHub, configMapCopyName, secretCopyName string,
+) {
+	By("Collecting debug information")
+
+	dumpDebug := func(title string, output string) {
+		GinkgoWriter.Printf("\n=== DEBUG: %s:\n%s", title, output)
+	}
+
+	outYaml := "-o=yaml"
+
+	debugHubCmds := map[string][]string{
+		"Root Policy in " + hubNs: {
+			"get", "policy", policyName, "-n", hubNs, outYaml,
+		},
+		"Secret output": {
+			"get", "secret", secretName, "-n", hubNs, outYaml,
+		},
+		"ConfigMap output": {
+			"get", "configmap", configMapName, "-n", hubNs, outYaml,
+		},
+	}
+
+	for cmdName, cmd := range debugHubCmds {
+		out, _ := common.OcHub(cmd...)
+		dumpDebug(cmdName, out)
+	}
+
+	debugHostingCmds := map[string][]string{
+		"ConfigurationPolicy list": {
+			"get", "configurationpolicy", "-n", clusterNamespace,
+		},
+	}
+
+	for cmdName, cmd := range debugHostingCmds {
+		out, _ := common.OcHosting(cmd...)
+		dumpDebug(cmdName, out)
+	}
+
+	debugManagedCmds := map[string][]string{
+		"Secret output on Managed Cluster": {
+			"get", "secret", secretCopyName, "-n", "default", outYaml,
+		},
+		"ConfigMap output on Managed Cluster": {
+			"get", "configmap", configMapCopyName, "-n", "default", outYaml,
+		},
+	}
+
+	for cmdName, cmd := range debugManagedCmds {
+		out, _ := common.OcManaged(cmd...)
+		dumpDebug(cmdName, out)
+	}
+}
