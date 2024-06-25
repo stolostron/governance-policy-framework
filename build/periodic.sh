@@ -21,8 +21,8 @@ getSyncIssues() {
 getGitSha() {
 	component=$1
 	release=release-$2
-	co=`git -C $COMPONENT_ORG/$component checkout --quiet $release`
-	GITSHA=`git -C $COMPONENT_ORG/$component log -n 1 --no-decorate --pretty=oneline | awk '{print $1}'`
+	git -C $COMPONENT_ORG/$component checkout --quiet $release || return
+	GITSHA=$(git -C $COMPONENT_ORG/$component log -n 1 --no-decorate --pretty=oneline | awk '{print $1}')
 	echo "$GITSHA"
 }
 
@@ -33,8 +33,8 @@ getPipelineValue() {
 	release="${2}-integration"
 	key="$3"
 
-	co=$(git -C pipeline/ checkout --quiet "$release")
-	value=`jq -r '.[] |select(.["image-name"] == "'$component'") | .["'$key'"]' pipeline/manifest.json`
+	git -C pipeline/ checkout --quiet "$release" || return
+	value=$(jq -r '.[] |select(.["image-name"] == "'$component'") | .["'$key'"]' pipeline/manifest.json)
 	echo "$value"
 }
 
