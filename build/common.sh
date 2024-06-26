@@ -29,7 +29,9 @@ cloneRepos() {
 	if [ ! -d "${COMPONENT_ORG}" ]; then
 		# Collect repos from main-branch-sync/repo.txt
 		REPOS=$(cat ${REPO_PATH})
-		# Manually append deprecated repos
+		# Manually append deprecated/additional repos
+		REPOS="${REPOS}
+			stolostron/must-gather"
 		for repo in ${REPOS}; do
 			echo "Cloning $repo ...."
 			git clone --quiet https://github.com/${repo}.git ${repo} || exit 1

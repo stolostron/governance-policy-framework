@@ -2,15 +2,15 @@
 
 ########################
 #
-# Usage: 
-#   From the `release` repo folder, execute the script. 
+# Usage:
+#   From the `release` repo folder, execute the script.
 #   Export the following variables beforehand:
 #   - OLD_VERSION: The previous version of the release (Be sure to update the CURRENT_VERSION file
 #        at the root of this repo, which will be used as NEW_VERSION)
 #   - USERNAME: (Optional) Use a GitHub user present in the OWNERS file if a 'repo.txt' file is not
 #     present
 #
-# Description: 
+# Description:
 #   NOTE: Prior to execution, review and update the logic to fit the latest
 #         configuration instructions from CICD and your squad's needs. If files
 #         are not created as you expect, the script can be updated and re-run
@@ -33,7 +33,10 @@ if [[ -z "$(which yq)" ]]; then
   exit 1
 fi
 # Check for dependencies
-if [[ -z "$(which docker)" ]] || [[ "$(docker ps &>/dev/null; echo $?)" != "0" ]]; then
+if [[ -z "$(which docker)" ]] || [[ "$(
+  docker ps &>/dev/null
+  echo $?
+)" != "0" ]]; then
   echo "WARNING: You must have 'docker' installed and running to run 'make update'."
 fi
 
@@ -112,6 +115,9 @@ for dirpath in ${COMPONENT_LIST}; do
       yq e '.promotion.to[0].disabled=true' -i ${NEW_FILENAME}
       # - For the 'main' branch:
       ver="${NEW_VERSION}" yq e '.promotion.to[0].name=strenv(ver)' -i ${FILE_PREFIX}-main.yaml
+      ver="${NEW_VERSION}" \
+        yq e '.tests[] |= select(.as=="git-fast-forward").steps.env.DESTINATION_BRANCH = "release-"+strenv(ver)' -i ${FILE_PREFIX}-main.yaml
+
       # - For the old version, re-enable promotion:
       yq e 'del(.promotion.to[0].disabled)' -i ${OLD_FILENAME}
     fi
@@ -121,7 +127,7 @@ for dirpath in ${COMPONENT_LIST}; do
 
     # Handle UI version tag in 'e2e-tests'
     oldver="${OLD_VERSION}" newver="${NEW_VERSION}" \
-    yq e '.tests[] |= select(.as=="e2e-tests").steps.test[].commands |= sub("latest-"+strenv(oldver), "latest-"+strenv(newver))' -i ${NEW_FILENAME}
+      yq e '.tests[] |= select(.as=="e2e-tests").steps.test[].commands |= sub("latest-"+strenv(oldver), "latest-"+strenv(newver))' -i ${NEW_FILENAME}
 
     # Add custom YAML to 'tests' stanza (uncomment code below and add the YAML strings to it)
     # if [[ "${CODE_TYPE}" == "go" ]]; then
@@ -139,7 +145,7 @@ for dirpath in ${COMPONENT_LIST}; do
     yq e '.branch-protection.orgs.stolostron.repos[strenv(component)].branches["release-"+strenv(oldver)]' ${RULES_CONFIG_FILE})"
   if [ -f "${RULES_CONFIG_FILE}" ] && [ "${EXISTING_CONFIG}" != "null" ]; then
     oldconfig="${EXISTING_CONFIG}" newver="${NEW_VERSION}" component="${COMPONENT}" \
-    yq e '.branch-protection.orgs.stolostron.repos[strenv(component)] |= .branches["release-"+strenv(newver)]=env(oldconfig)' -i ${RULES_CONFIG_FILE}
+      yq e '.branch-protection.orgs.stolostron.repos[strenv(component)] |= .branches["release-"+strenv(newver)]=env(oldconfig)' -i ${RULES_CONFIG_FILE}
   else
     echo "* Skipping update for _prowconfig.yaml"
   fi
@@ -150,7 +156,10 @@ echo ""
 
 echo "===== Prow update / Create new branches ====="
 # Check for dependencies
-if [[ "$(docker ps &>/dev/null; echo $?)" != "0" ]]; then
+if [[ "$(
+  docker ps &>/dev/null
+  echo $?
+)" != "0" ]]; then
   echo "ERROR: Docker must be running to continue."
   exit 1
 fi
@@ -159,10 +168,12 @@ echo "* You should review the updated files before continuing to run 'make updat
 echo "* After your review, you can make changes that you require for individual files and then continue, or you can exit and then update and rerun the script to fix broader changes."
 while read -r -p "Would you like to continue to run 'make update' and create branches? (y/n) " response; do
   case "$response" in
-     Y|y )  break
-            ;;
-     N|n )  exit 0
-            ;;
+  Y | y)
+    break
+    ;;
+  N | n)
+    exit 0
+    ;;
   esac
 done
 
@@ -174,52 +185,29 @@ if [ $? -ne 0 ]; then
 fi
 echo ""
 
-# Create new branches for each component
-# Get current branch name (to use as a base)
-ROOT_BRANCH="$(git branch --show-current)"
-echo "* Creating new branches for the updated configurations."
+# Create new PR with each component as a separate commit
+BRANCH_NAME="ocm-new-grc-release-${NEW_VERSION}"
+git checkout -b ${BRANCH_NAME}
+echo "* Creating PR for the updated configurations."
 for dirpath in ${COMPONENT_LIST}; do
-  # Parse component name and create branch name
+  # Parse component name
   COMPONENT=$(echo ${dirpath} | sed 's/stolostron//g' | sed 's/[/.]//g')
-  BRANCH_NAME="ocm-new-release-${COMPONENT}"
-  echo "===== Creating branch for ${COMPONENT} ====="
-  # Create branch for component
-  git checkout -b "${BRANCH_NAME}"
-  if [[ "$?" == "0" ]]; then
-    echo "* Adding files"
-    git add ${RELEASE_CONFIG_PATH}/../*/${COMPONENT}/stolostron-${COMPONENT}-*
-    git add ${RELEASE_RULES_PATH}/${dirpath}_prowconfig.yaml
-    echo "* Committing files"
-    git commit -m "ocm - cut new release ${NEW_VERSION} (${COMPONENT})"
-    if [[ "$?" == "0" ]]; then
-      echo "* Push changes"
-      git push --set-upstream origin "${BRANCH_NAME}"
-      echo "* Return to branch ${ROOT_BRANCH}"
-      git checkout "${ROOT_BRANCH}"
-    else
-      # Commit error - Return to root branch and delete new branch
-      echo "* ERROR: Failed to commit files. Deleting branch '${BRANCH_NAME}'."
-      git checkout "${ROOT_BRANCH}"
-      git branch -D "${BRANCH_NAME}"
-    fi
-  else
-    echo "* ERROR: Failed to create branch '${BRANCH_NAME}'."
-    # Return to root branch
-    git checkout "${ROOT_BRANCH}"
-  fi
+  echo "===== Creating commit for ${COMPONENT} ====="
+  echo "* Adding files"
+  git add ${RELEASE_CONFIG_PATH}/../*/${COMPONENT}/stolostron-${COMPONENT}-*
+  git add ${RELEASE_RULES_PATH}/${dirpath}_prowconfig.yaml
+  echo "* Committing files"
+  git commit -m "New release ${NEW_VERSION} (${COMPONENT})"
 done
+echo "* Push changes"
+git push --set-upstream origin ${BRANCH_NAME}
 if [[ -n "$(git ls-files -mo)" ]]; then
   echo "WARNING: Some files were not committed. Check 'git status' for more information."
 fi
 echo ""
 
 echo "===== Processing complete ====="
-echo "* You can use these links to open new PRs:"
+echo "* You can use this link to open a new PR:"
 GIT_URL="$(git remote get-url --push origin)"
 PULL_URL=${GIT_URL%.git}
-for dirpath in ${COMPONENT_LIST}; do
-  # Parse component name and create branch name
-  COMPONENT=$(echo ${dirpath} | sed 's/stolostron//g' | sed 's/[/.]//g')
-  BRANCH_NAME="ocm-new-release-${COMPONENT}"
-  echo "* ${PULL_URL}/pull/new/${BRANCH_NAME}"
-done
+echo "* ${PULL_URL}/pull/new/${BRANCH_NAME}"
