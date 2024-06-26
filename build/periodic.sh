@@ -6,7 +6,7 @@ DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" >/dev/null 2>&1 && pwd )"
 source ${DIR}/common.sh
 
 # This list can include all postsubmit jobs for all repos--if a job doesn't exist it's filtered to empty and skipped
-CHECK_JOBS=${CHECK_JOBS:-"publish publish-test images latest-image-mirror latest-test-image-mirror"}
+CHECK_JOBS=${CHECK_JOBS:-"publish publish-test images latest-image-mirror latest-test-image-mirror git-fast-forward"}
 
 # return URL of open sync issues (uses authenticated API to prevent rate limiting)
 getSyncIssues() {
@@ -105,8 +105,6 @@ for repo in $REPOS; do
 	case $repo in
 		governance-policy-framework)
 			IMAGES="grc-policy-framework-tests";;
-		grc-ui)
-			IMAGES="$repo $repo-tests";;
 		*)
 			IMAGES=$repo;;
 	esac

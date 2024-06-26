@@ -22,7 +22,6 @@ View the following functions of the policy framework:
 
 The governance policy framework consists of following components:
 
-- [Governance dashboard](https://github.com/stolostron/grc-ui): Console
 - Govenance policy framework: A framework to distribute various supported policies to managed clusters and collect results to be sent to the hub cluster.
     - [Policy propagator](https://github.com/stolostron/governance-policy-propagator)
     - [Governance policy framework addon](https://github.com/stolostron/governance-policy-framework-addon)
