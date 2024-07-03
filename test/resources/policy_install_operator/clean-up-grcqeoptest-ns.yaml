@@ -44,4 +44,9 @@ metadata:
   name: cleanup-grcqeoptest-ns
 spec:
   clusterSelector:
-    matchExpressions: []
+    matchLabels:
+      feature.open-cluster-management.io/addon-config-policy-controller: "available"
+      feature.open-cluster-management.io/addon-governance-policy-framework: "available"
+  clusterConditions:
+    - type: ManagedClusterConditionAvailable
+      status: "True"
