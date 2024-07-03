@@ -111,7 +111,13 @@ kind: Placement
 metadata:
   name: compliance-api-gk
   namespace: open-cluster-management-global-set
-spec: {}
+spec:
+  predicates:
+    - requiredClusterSelector:
+        labelSelector:
+          matchLabels:
+            feature.open-cluster-management.io/addon-config-policy-controller: "available"
+            feature.open-cluster-management.io/addon-governance-policy-framework: "available"
 ---
 apiVersion: policy.open-cluster-management.io/v1
 kind: PlacementBinding
