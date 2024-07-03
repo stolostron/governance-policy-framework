@@ -41,7 +41,9 @@ metadata:
   name: test-op-47229
 spec:
   clusterSelector:
-    matchExpressions: []
+    matchLabels:
+      feature.open-cluster-management.io/addon-config-policy-controller: "available"
+      feature.open-cluster-management.io/addon-governance-policy-framework: "available"
   clusterConditions:
   - type: ManagedClusterConditionAvailable
     status: "True"

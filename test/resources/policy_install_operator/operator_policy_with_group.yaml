@@ -49,7 +49,9 @@ metadata:
   name: test-op-43545-plr
 spec:
   clusterSelector:
-    matchExpressions: []
+    matchLabels:
+      feature.open-cluster-management.io/addon-config-policy-controller: "available"
+      feature.open-cluster-management.io/addon-governance-policy-framework: "available"
   clusterConditions:
   - type: ManagedClusterConditionAvailable
     status: "True"
