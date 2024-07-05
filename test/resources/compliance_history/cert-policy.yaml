@@ -34,6 +34,7 @@ spec:
     - requiredClusterSelector:
         labelSelector:
           matchLabels:
+            feature.open-cluster-management.io/addon-cert-policy-controller: "available"
             feature.open-cluster-management.io/addon-config-policy-controller: "available"
             feature.open-cluster-management.io/addon-governance-policy-framework: "available"
 ---
