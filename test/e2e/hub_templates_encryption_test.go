@@ -43,7 +43,7 @@ var _ = Describe("Test Hub Template Encryption", Ordered, func() {
 		JustAfterEach(func(ctx SpecContext) {
 			if CurrentSpecReport().Failed() {
 				DebugHubEncryption(policyName, secretName, configMapName, userNamespace,
-					clusterNamespaceOnHub, configMapCopyName, secretCopyName)
+					configMapCopyName, secretCopyName)
 			}
 		})
 
@@ -269,7 +269,7 @@ var _ = Describe("Test Hub Template Encryption", Ordered, func() {
 })
 
 func DebugHubEncryption(policyName, secretName, configMapName, hubNs,
-	clusterNamespaceOnHub, configMapCopyName, secretCopyName string,
+	configMapCopyName, secretCopyName string,
 ) {
 	By("Collecting debug information")
 
@@ -296,9 +296,20 @@ func DebugHubEncryption(policyName, secretName, configMapName, hubNs,
 		dumpDebug(cmdName, out)
 	}
 
+	gfaNs := "open-cluster-management-agent-addon"
+	if common.IsHosted {
+		gfaNs = clusterNamespace
+	}
+
 	debugHostingCmds := map[string][]string{
 		"ConfigurationPolicy list": {
 			"get", "configurationpolicy", "-n", clusterNamespace,
+		},
+		"ConfigurationPolicy output": {
+			"get", "configurationpolicy", "-n", clusterNamespace, outYaml,
+		},
+		"Governance-policy-framework-addon log": {
+			"logs", "deployment/governance-policy-framework", "-n", gfaNs,
 		},
 	}
 
