@@ -21,10 +21,17 @@ MAJOR_OC=$(oc version -o json | jq -r '.clientVersion.gitVersion' | grep -o "[0-
 MINOR_OC=$(oc version -o json | jq -r '.clientVersion.gitVersion' | grep -o "[0-9]\+\.[0-9]\+" | sed 's/^[0-9]*\.//')
 if (( ${MAJOR_OC} < 4 )) || (( ${MAJOR_OC} == 4 )) && (( ${MINOR_OC} < 11 )); then
   echo "The openshift CLI must be at version 4.11 or later. Current version: $(oc version -o json | jq -r '.clientVersion.gitVersion')"
+  exit 1
 fi
 
 # Verify AWS access
 AWS_LOGIN_USER=$(aws iam list-access-keys | jq -r '.AccessKeyMetadata[0].UserName')
+
+if [[ -z "${AWS_LOGIN_USER}" ]]; then
+  echo "Log in to the AWS CLI with an Access Key (creatable from the AWS console) to continue"
+  exit 1
+fi
+
 echo "Currently logged into AWS as: ${AWS_LOGIN_USER}"
 
 # Verify GitHub access
@@ -38,6 +45,9 @@ if [[ "${CLUSTER}" != "collective-aws" ]] || (! oc status &>/dev/null); then
   echo "Link to login command: https://oauth-openshift.apps.collective.aws.red-chesterfield.com/oauth/token/request"
   exit 1
 fi
+
+echo "For GitHub, 'click through' to the specific token, and select 'Regenerate token'"
+echo "For SonarCloud, you must delete the existing token and create a new one."
 
 # Collect tokens from user input
 read -s -p "Enter the \"Clusterpool Token\" GitHub token regenerated from ${GITHUB_BOT_USER} (https://github.com/settings/tokens): " COLLECTIVE_GH_TOKEN
@@ -111,6 +121,10 @@ echo "
 
   Note: For each token, login with OIDC, click the link for the token, click \"Create new version\", 
         and update the values for the keys above with the regenerated tokens.
+
+  Note: If you can not see the secrets after logging in, contact another member of the team to gain
+        access. You can not be added to the collection until you log in once. Refer to
+        https://github.com/stolostron/cicd-docs/blob/main/prow/secrets.md.
 
 =============
   BITWARDEN
