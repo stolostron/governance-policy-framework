@@ -35,8 +35,6 @@ var _ = Describe("GRC: [P1][Sev1][policy-grc] Test required metrics are availabl
 	// of the other sync metrics indicate that the metrics are exported from governance-policy-framework addon properly.
 	// Other metrics that require error conditions to show up are also skipped.
 	requiredMetrics := []string{
-		"config_policies_evaluation_duration_seconds_bucket",
-		"config_policies_evaluation_duration_seconds_count",
 		"config_policy_evaluation_seconds_total",
 		"config_policy_evaluation_total",
 		`controller_runtime_reconcile_errors_total{controller="policy-encryption-keys"}`,
