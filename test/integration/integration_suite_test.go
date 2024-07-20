@@ -3,7 +3,6 @@
 package integration
 
 import (
-	"context"
 	"fmt"
 	"strings"
 	"testing"
@@ -72,7 +71,7 @@ func init() {
 	common.InitFlags(nil)
 }
 
-var _ = BeforeSuite(func() {
+var _ = BeforeSuite(func(ctx SpecContext) {
 	By("Setup hub and managed client")
 	common.InitInterfaces(common.KubeconfigHub, common.KubeconfigManaged, common.IsHosted)
 	kubeconfigHub = common.KubeconfigHub
@@ -91,23 +90,23 @@ var _ = BeforeSuite(func() {
 	By("Create Namespace if needed")
 	namespaces := clientHub.CoreV1().Namespaces()
 	if _, err := namespaces.Get(
-		context.TODO(),
+		ctx,
 		userNamespace,
 		metav1.GetOptions{},
 	); err != nil && errors.IsNotFound(err) {
-		Expect(namespaces.Create(context.TODO(), &corev1.Namespace{
+		Expect(namespaces.Create(ctx, &corev1.Namespace{
 			ObjectMeta: metav1.ObjectMeta{
 				Name: userNamespace,
 			},
 		}, metav1.CreateOptions{})).NotTo(BeNil())
 	}
-	Expect(namespaces.Get(context.TODO(), userNamespace, metav1.GetOptions{})).NotTo(BeNil())
+	Expect(namespaces.Get(ctx, userNamespace, metav1.GetOptions{})).NotTo(BeNil())
 
 	By("Setting up GitOps user")
-	common.GitOpsUserSetup(&gitopsUser)
+	common.GitOpsUserSetup(ctx, &gitopsUser)
 })
 
-var _ = AfterSuite(func() {
+var _ = AfterSuite(func(ctx SpecContext) {
 	By("Delete Namespace if needed")
 	_, err := common.OcHub(
 		"delete", "namespace", userNamespace,
@@ -121,7 +120,7 @@ var _ = AfterSuite(func() {
 	)
 	Expect(err).ToNot(HaveOccurred())
 
-	common.GitOpsCleanup(gitopsUser)
+	common.GitOpsCleanup(ctx, gitopsUser)
 })
 
 func canCreateOpenshiftNamespaces() bool {
