@@ -255,7 +255,7 @@ var _ = Describe("Test cert policy", func() {
 				"--field-selector=involvedObject.name="+common.UserNamespace+"."+certPolicyName,
 				"--ignore-not-found",
 			)
-			ExpectWithOffset(1, err).ToNot(HaveOccurred())
+			Expect(err).ToNot(HaveOccurred())
 		})
 	})
 })

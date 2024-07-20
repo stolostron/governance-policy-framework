@@ -34,7 +34,7 @@ func GetClusterComplianceState(policyName, clusterName string) func(Gomega) inte
 		)
 		var policy policiesv1.Policy
 		err := runtime.DefaultUnstructuredConverter.FromUnstructured(rootPlc.UnstructuredContent(), &policy)
-		g.ExpectWithOffset(1, err).ToNot(HaveOccurred())
+		g.Expect(err).ToNot(HaveOccurred())
 
 		for _, statusPerCluster := range policy.Status.Status {
 			if statusPerCluster.ClusterNamespace == clusterName {
@@ -81,15 +81,17 @@ func PatchPlacementRule(namespace, name string) error {
 // name of the policy, and that the PlacementRule has the same name, with '-plr'
 // appended.
 func DoCreatePolicyTest(policyFile string, templateGVRs ...schema.GroupVersionResource) {
+	GinkgoHelper()
+
 	policyName := strings.TrimSuffix(filepath.Base(policyFile), filepath.Ext(policyFile))
 
 	By("DoCreatePolicyTest creates " + policyFile + " on namespace " + UserNamespace)
 	output, err := OcHub("apply", "-f", policyFile, "-n", UserNamespace)
-	ExpectWithOffset(1, err).ToNot(HaveOccurred())
+	Expect(err).ToNot(HaveOccurred())
 	By("DoCreatePolicyTest OcHub apply output: " + output)
 
 	plc := utils.GetWithTimeout(ClientHubDynamic, GvrPolicy, policyName, UserNamespace, true, DefaultTimeoutSeconds)
-	ExpectWithOffset(1, plc).NotTo(BeNil())
+	Expect(plc).NotTo(BeNil())
 
 	if ManuallyPatchDecisions {
 		plrName := policyName + "-plr"
@@ -103,12 +105,12 @@ func DoCreatePolicyTest(policyFile string, templateGVRs ...schema.GroupVersionRe
 			plr,
 			metav1.UpdateOptions{},
 		)
-		ExpectWithOffset(1, err).ToNot(HaveOccurred())
+		Expect(err).ToNot(HaveOccurred())
 	}
 
 	managedPolicyName := UserNamespace + "." + policyName
 	By("Checking " + managedPolicyName + " on managed cluster in ns " + ClusterNamespace)
-	ExpectWithOffset(1, utils.GetWithTimeout(
+	Expect(utils.GetWithTimeout(
 		ClientHostingDynamic, GvrPolicy, managedPolicyName, ClusterNamespace, true, DefaultTimeoutSeconds*2,
 	)).NotTo(BeNil())
 
@@ -116,7 +118,7 @@ func DoCreatePolicyTest(policyFile string, templateGVRs ...schema.GroupVersionRe
 		typedName := tmplGVR.String() + "/" + policyName
 		By("Checking that the policy template " + typedName + " is present on the managed cluster")
 
-		ExpectWithOffset(1, utils.GetWithTimeout(
+		Expect(utils.GetWithTimeout(
 			ClientHostingDynamic, tmplGVR, policyName, ClusterNamespace, true, DefaultTimeoutSeconds,
 		)).NotTo(BeNil())
 	}
@@ -127,6 +129,8 @@ func DoCreatePolicyTest(policyFile string, templateGVRs ...schema.GroupVersionRe
 // it will check that there is no longer a policy template (for example
 // ConfigurationPolicy) of the same name on the managed cluster.
 func DoCleanupPolicy(policyFile string, templateGVRs ...schema.GroupVersionResource) {
+	GinkgoHelper()
+
 	policyName := strings.TrimSuffix(filepath.Base(policyFile), filepath.Ext(policyFile))
 	By("Deleting " + policyFile)
 	_, err := OcHub(
@@ -135,20 +139,20 @@ func DoCleanupPolicy(policyFile string, templateGVRs ...schema.GroupVersionResou
 	)
 	Expect(err).ToNot(HaveOccurred())
 
-	ExpectWithOffset(1, utils.GetWithTimeout(
+	Expect(utils.GetWithTimeout(
 		ClientHubDynamic, GvrPolicy, policyName, UserNamespace, false, DefaultTimeoutSeconds,
 	)).To(BeNil())
 
 	managedPolicyName := UserNamespace + "." + policyName
 	By("Checking " + managedPolicyName + " was removed from managed cluster in ns " + ClusterNamespace)
-	ExpectWithOffset(1, utils.GetWithTimeout(
+	Expect(utils.GetWithTimeout(
 		ClientManagedDynamic, GvrPolicy, managedPolicyName, ClusterNamespace, false, DefaultTimeoutSeconds,
 	)).To(BeNil())
 
 	for _, tmplGVR := range templateGVRs {
 		typedName := tmplGVR.String() + "/" + policyName
 		By("Checking that the policy template " + typedName + " was removed from the managed cluster")
-		ExpectWithOffset(1, utils.GetWithTimeout(
+		Expect(utils.GetWithTimeout(
 			ClientManagedDynamic, tmplGVR, policyName, ClusterNamespace, false, DefaultTimeoutSeconds,
 		)).To(BeNil())
 	}
@@ -157,6 +161,8 @@ func DoCleanupPolicy(policyFile string, templateGVRs ...schema.GroupVersionResou
 // DoRootComplianceTest asserts that the given policy has the given compliance
 // on the root policy on the hub cluster.
 func DoRootComplianceTest(policyName string, compliance policiesv1.ComplianceState) {
+	GinkgoHelper()
+
 	By("Checking if the status of root policy " + policyName + " is " + string(compliance))
 	EventuallyWithOffset(
 		1,
@@ -324,32 +330,34 @@ func EnforcePolicy(policyName string, templateGVRs ...schema.GroupVersionResourc
 func setRemediationAction(
 	policyName string, remediationAction string, templateGVRs ...schema.GroupVersionResource,
 ) {
+	GinkgoHelper()
+
 	ctx := context.TODO()
 	rootPolicyClient := ClientHubDynamic.Resource(GvrPolicy).Namespace(UserNamespace)
 
 	By("Patching remediationAction = " + remediationAction + " on root policy")
-	EventuallyWithOffset(1, func(g Gomega) {
+	Eventually(func(g Gomega) {
 		rootPlc, err := rootPolicyClient.Get(ctx, policyName, metav1.GetOptions{})
-		g.ExpectWithOffset(1, err).ToNot(HaveOccurred())
+		g.Expect(err).ToNot(HaveOccurred())
 
 		err = unstructured.SetNestedField(rootPlc.Object, remediationAction, "spec", "remediationAction")
-		g.ExpectWithOffset(1, err).ToNot(HaveOccurred())
+		g.Expect(err).ToNot(HaveOccurred())
 
 		_, err = rootPolicyClient.Update(ctx, rootPlc, metav1.UpdateOptions{})
-		g.ExpectWithOffset(1, err).ToNot(HaveOccurred())
+		g.Expect(err).ToNot(HaveOccurred())
 	}, DefaultTimeoutSeconds, 1).Should(Succeed())
 
 	managedPolicyClient := ClientHostingDynamic.Resource(GvrPolicy).Namespace(ClusterNamespace)
 
 	By("Checking that remediationAction = " + remediationAction + " on replicated policy")
-	EventuallyWithOffset(1, func(g Gomega) {
+	Eventually(func(g Gomega) {
 		managedPlc, err := managedPolicyClient.Get(ctx, UserNamespace+"."+policyName, metav1.GetOptions{})
-		g.ExpectWithOffset(1, err).ToNot(HaveOccurred())
+		g.Expect(err).ToNot(HaveOccurred())
 
 		action, found, err := unstructured.NestedString(managedPlc.Object, "spec", "remediationAction")
-		g.ExpectWithOffset(1, err).ToNot(HaveOccurred())
-		g.ExpectWithOffset(1, found).To(BeTrue())
-		g.ExpectWithOffset(1, action).To(Equal(remediationAction))
+		g.Expect(err).ToNot(HaveOccurred())
+		g.Expect(found).To(BeTrue())
+		g.Expect(action).To(Equal(remediationAction))
 	}, DefaultTimeoutSeconds, 1).Should(Succeed())
 
 	for _, tmplGVR := range templateGVRs {
@@ -358,14 +366,14 @@ func setRemediationAction(
 
 		templateClient := ClientHostingDynamic.Resource(tmplGVR).Namespace(ClusterNamespace)
 
-		EventuallyWithOffset(1, func(g Gomega) {
+		Eventually(func(g Gomega) {
 			template, err := templateClient.Get(ctx, policyName, metav1.GetOptions{})
-			g.ExpectWithOffset(1, err).ToNot(HaveOccurred())
+			g.Expect(err).ToNot(HaveOccurred())
 
 			action, found, err := unstructured.NestedString(template.Object, "spec", "remediationAction")
-			g.ExpectWithOffset(1, err).ToNot(HaveOccurred())
-			g.ExpectWithOffset(1, found).To(BeTrue())
-			g.ExpectWithOffset(1, action).To(Equal(remediationAction))
+			g.Expect(err).ToNot(HaveOccurred())
+			g.Expect(found).To(BeTrue())
+			g.Expect(action).To(Equal(remediationAction))
 		}, DefaultTimeoutSeconds, 1).Should(Succeed())
 	}
 }
