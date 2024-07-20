@@ -27,6 +27,8 @@ var gitopsTestNamespaces = []string{
 // GitOpsUserSetup configures a new user to use for the GitOps tests. It updates the provided
 // OCPUser instance, which contains a path to the created kubeconfig file.
 func GitOpsUserSetup(ocpUser *OCPUser) {
+	GinkgoHelper()
+
 	const subAdminBinding = "open-cluster-management:subscription-admin"
 	const clustersetRoleName = "grc-e2e-clusterset-role"
 
@@ -94,7 +96,7 @@ func GitOpsUserSetup(ocpUser *OCPUser) {
 		context.TODO(), &subAdminBindingObj, metav1.CreateOptions{},
 	)
 	if err != nil {
-		ExpectWithOffset(1, k8serrors.IsAlreadyExists(err)).Should(
+		Expect(k8serrors.IsAlreadyExists(err)).Should(
 			BeTrue(),
 			"Expected error to be 'already exists': "+fmt.Sprint(err),
 		)
@@ -105,9 +107,9 @@ func GitOpsUserSetup(ocpUser *OCPUser) {
 
 	// Wait for the oauth deployment to be completely ready in case an update was made that's still being processed
 	By("Waiting for the OCP oauth deployment to be ready")
-	EventuallyWithOffset(1, func(g Gomega) {
+	Eventually(func(g Gomega) {
 		authDeployment, err := ClientHub.AppsV1().Deployments("openshift-authentication").Get(
-			context.TODO(), "oauth-openshift", metav1.GetOptions{},
+			ctx, "oauth-openshift", metav1.GetOptions{},
 		)
 		g.Expect(err).ShouldNot(HaveOccurred())
 
@@ -127,27 +129,27 @@ func GitOpsUserSetup(ocpUser *OCPUser) {
 		_, err = ClientHub.CoreV1().Namespaces().Create(
 			context.TODO(), &nsObj, metav1.CreateOptions{},
 		)
-		ExpectWithOffset(1, err).ShouldNot(HaveOccurred())
+		Expect(err).ShouldNot(HaveOccurred())
 	}
 
 	// Create the OpenShift user that can be used for logging in.
 	ocpUser.Password, err = GenerateInsecurePassword()
-	ExpectWithOffset(1, err).ShouldNot(HaveOccurred())
+	Expect(err).ShouldNot(HaveOccurred())
 
 	// Fetch the current generation of the auth deployment to monitor its update
 	authDeployment, err := ClientHub.AppsV1().Deployments("openshift-authentication").Get(
 		context.TODO(), "oauth-openshift", metav1.GetOptions{},
 	)
-	ExpectWithOffset(1, err).ShouldNot(HaveOccurred())
+	Expect(err).ShouldNot(HaveOccurred())
 
 	oldAuthGeneration := authDeployment.Status.ObservedGeneration
 
 	err = CreateOCPUser(ClientHub, ClientHubDynamic, *ocpUser)
-	ExpectWithOffset(1, err).ShouldNot(HaveOccurred())
+	Expect(err).ShouldNot(HaveOccurred())
 
 	// Wait for the oauth deployment to update with at least one ready Pod
 	By("Waiting for at least one OCP oauth pod to be ready")
-	EventuallyWithOffset(1, func(g Gomega) {
+	Eventually(func(g Gomega) {
 		authDeployment, err := ClientHub.AppsV1().Deployments("openshift-authentication").Get(
 			context.TODO(), "oauth-openshift", metav1.GetOptions{},
 		)
@@ -164,7 +166,7 @@ func GitOpsUserSetup(ocpUser *OCPUser) {
 	// Get a kubeconfig logged in as the subscription and local-cluster administrator OpenShift
 	// user.
 	hubServerURL, err := OcHub("whoami", "--show-server=true")
-	ExpectWithOffset(1, err).ShouldNot(HaveOccurred())
+	Expect(err).ShouldNot(HaveOccurred())
 
 	hubServerURL = strings.TrimSuffix(hubServerURL, "\n")
 	// Use eventually since it can take a while for OpenShift to configure itself with the new
@@ -172,7 +174,7 @@ func GitOpsUserSetup(ocpUser *OCPUser) {
 	const fiveMinutes = 5 * 60
 
 	By("Fetching kubeconfig for user " + ocpUser.Username)
-	EventuallyWithOffset(1,
+	Eventually(
 		func() error {
 			var err error
 			ocpUser.Kubeconfig, err = GetKubeConfig(
@@ -193,19 +195,21 @@ func GitOpsUserSetup(ocpUser *OCPUser) {
 // as part of the GitOps test. The kubeconfig file is also deleted from the filesystem. Any errors will
 // be propagated as gomega failed assertions.
 func GitOpsCleanup(user OCPUser) {
+	GinkgoHelper()
+
 	By("Cleaning up artifacts from user " + user.Username)
 	// Delete kubeconfig file if it is specified
 	if user.Kubeconfig != "" {
 		err := os.Remove(user.Kubeconfig)
-		ExpectWithOffset(1, err).ShouldNot(HaveOccurred())
+		Expect(err).ShouldNot(HaveOccurred())
 	}
 
 	err := CleanupOCPUser(ClientHub, ClientHubDynamic, user)
-	ExpectWithOffset(1, err).ShouldNot(HaveOccurred())
+	Expect(err).ShouldNot(HaveOccurred())
 
 	err = ClientHub.CoreV1().Secrets("openshift-config").Delete(context.TODO(), user.Username, metav1.DeleteOptions{})
 	if !k8serrors.IsNotFound(err) {
-		ExpectWithOffset(1, err).ShouldNot(HaveOccurred())
+		Expect(err).ShouldNot(HaveOccurred())
 	}
 
 	for _, ns := range gitopsTestNamespaces {

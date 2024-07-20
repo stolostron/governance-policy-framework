@@ -17,6 +17,8 @@ import (
 )
 
 func configPolicyTestCleanUp(rolePolicyName, rolePolicyYAML string) {
+	GinkgoHelper()
+
 	const roleName string = "role-policy-e2e"
 
 	By("Deleting the role, policy, and events on managed cluster")
@@ -26,24 +28,24 @@ func configPolicyTestCleanUp(rolePolicyName, rolePolicyYAML string) {
 		"--field-selector=involvedObject.name="+common.UserNamespace+"."+rolePolicyName,
 		"--ignore-not-found",
 	)
-	ExpectWithOffset(1, err).ToNot(HaveOccurred())
+	Expect(err).ToNot(HaveOccurred())
 	_, err = common.OcHosting(
 		"delete", "events", "-n", common.ClusterNamespace,
 		"--field-selector=involvedObject.name="+rolePolicyName,
 		"--ignore-not-found",
 	)
-	ExpectWithOffset(1, err).ToNot(HaveOccurred())
+	Expect(err).ToNot(HaveOccurred())
 	_, err = common.OcHub(
 		"delete", "events", "-n", common.ClusterNamespaceOnHub,
 		"--field-selector=involvedObject.name="+common.UserNamespace+"."+rolePolicyName,
 		"--ignore-not-found",
 	)
-	ExpectWithOffset(1, err).ToNot(HaveOccurred())
+	Expect(err).ToNot(HaveOccurred())
 	_, err = common.OcManaged(
 		"delete", "role", "-n", "default", roleName,
 		"--ignore-not-found",
 	)
-	ExpectWithOffset(1, err).ToNot(HaveOccurred())
+	Expect(err).ToNot(HaveOccurred())
 }
 
 var _ = Describe("Test configuration policy inform", Ordered, func() {

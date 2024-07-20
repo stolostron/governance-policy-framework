@@ -294,15 +294,17 @@ func IsAtLeastVersion(minVersion string) bool {
 }
 
 func CleanupHubNamespace(namespace string) {
+	GinkgoHelper()
+
 	By("Deleting namespace " + namespace)
 
 	err := ClientHub.CoreV1().Namespaces().Delete(context.TODO(), namespace, metav1.DeleteOptions{})
 	if !k8serrors.IsNotFound(err) {
-		ExpectWithOffset(1, err).ShouldNot(HaveOccurred())
+		Expect(err).ShouldNot(HaveOccurred())
 	}
 
 	// Wait for the namespace to be fully deleted before proceeding.
-	EventuallyWithOffset(1,
+	Eventually(
 		func() bool {
 			_, err := ClientHub.CoreV1().Namespaces().Get(
 				context.TODO(), namespace, metav1.GetOptions{},

@@ -863,9 +863,11 @@ func verifyPolicyOnAllClusters(
 ) (
 	clusters []string,
 ) {
+	GinkgoHelper()
+
 	By(fmt.Sprintf("Verifying that the policy %s/%s is %s", namespace, policy, compliance))
 
-	EventuallyWithOffset(1, func(g Gomega) {
+	Eventually(func(g Gomega) {
 		clusters = confirmComplianceOnAllClusters(ctx, namespace, policy, compliance)(g)
 	}, timeout, 1).Should(Succeed())
 
@@ -876,22 +878,24 @@ func confirmComplianceOnAllClusters(
 	ctx context.Context, namespace string, policy string, compliance string,
 ) func(g Gomega) []string {
 	return func(g Gomega) []string {
+		GinkgoHelper()
+
 		clusters := []string{}
 
 		parentPolicy, err := clientHubDynamic.Resource(common.GvrPolicy).Namespace(namespace).Get(
 			ctx, policy, metav1.GetOptions{},
 		)
-		g.ExpectWithOffset(1, err).ToNot(HaveOccurred())
+		g.Expect(err).ToNot(HaveOccurred())
 
 		perClusterStatus, _, _ := unstructured.NestedSlice(parentPolicy.Object, "status", "status")
-		g.ExpectWithOffset(1, perClusterStatus).ToNot(BeEmpty(), "no cluster status was available on the parent policy")
+		g.Expect(perClusterStatus).ToNot(BeEmpty(), "no cluster status was available on the parent policy")
 
 		for _, clusterStatus := range perClusterStatus {
 			clusterStatus, ok := clusterStatus.(map[string]interface{})
-			g.ExpectWithOffset(1, ok).To(BeTrue(), "the cluster status was not the right type")
+			g.Expect(ok).To(BeTrue(), "the cluster status was not the right type")
 
-			g.ExpectWithOffset(1, clusterStatus["compliant"]).To(Equal(compliance))
-			g.ExpectWithOffset(1, clusterStatus["clustername"]).ToNot(BeEmpty())
+			g.Expect(clusterStatus["compliant"]).To(Equal(compliance))
+			g.Expect(clusterStatus["clustername"]).ToNot(BeEmpty())
 			clusters = append(clusters, clusterStatus["clustername"].(string))
 		}
 
