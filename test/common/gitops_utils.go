@@ -3,7 +3,6 @@
 package common
 
 import (
-	"context"
 	"fmt"
 	"os"
 	"strings"
@@ -26,7 +25,7 @@ var gitopsTestNamespaces = []string{
 
 // GitOpsUserSetup configures a new user to use for the GitOps tests. It updates the provided
 // OCPUser instance, which contains a path to the created kubeconfig file.
-func GitOpsUserSetup(ocpUser *OCPUser) {
+func GitOpsUserSetup(ctx SpecContext, ocpUser *OCPUser) {
 	GinkgoHelper()
 
 	const subAdminBinding = "open-cluster-management:subscription-admin"
@@ -69,7 +68,7 @@ func GitOpsUserSetup(ocpUser *OCPUser) {
 	}
 
 	_, err := ClientHub.RbacV1().ClusterRoles().Create(
-		context.TODO(), &clusterSetRule, metav1.CreateOptions{},
+		ctx, &clusterSetRule, metav1.CreateOptions{},
 	)
 	if err != nil {
 		Expect(k8serrors.IsAlreadyExists(err)).Should(BeTrue())
@@ -93,7 +92,7 @@ func GitOpsUserSetup(ocpUser *OCPUser) {
 	By("Verifying that the subscription-admin ClusterRoleBinding exists")
 
 	_, err = ClientHub.RbacV1().ClusterRoleBindings().Create(
-		context.TODO(), &subAdminBindingObj, metav1.CreateOptions{},
+		ctx, &subAdminBindingObj, metav1.CreateOptions{},
 	)
 	if err != nil {
 		Expect(k8serrors.IsAlreadyExists(err)).Should(
@@ -103,7 +102,7 @@ func GitOpsUserSetup(ocpUser *OCPUser) {
 	}
 
 	By("Cleaning up any existing subscription-admin user config")
-	GitOpsCleanup(*ocpUser)
+	GitOpsCleanup(ctx, *ocpUser)
 
 	// Wait for the oauth deployment to be completely ready in case an update was made that's still being processed
 	By("Waiting for the OCP oauth deployment to be ready")
@@ -127,7 +126,7 @@ func GitOpsUserSetup(ocpUser *OCPUser) {
 	for _, ns := range gitopsTestNamespaces {
 		nsObj := corev1.Namespace{ObjectMeta: metav1.ObjectMeta{Name: ns}}
 		_, err = ClientHub.CoreV1().Namespaces().Create(
-			context.TODO(), &nsObj, metav1.CreateOptions{},
+			ctx, &nsObj, metav1.CreateOptions{},
 		)
 		Expect(err).ShouldNot(HaveOccurred())
 	}
@@ -138,7 +137,7 @@ func GitOpsUserSetup(ocpUser *OCPUser) {
 
 	// Fetch the current generation of the auth deployment to monitor its update
 	authDeployment, err := ClientHub.AppsV1().Deployments("openshift-authentication").Get(
-		context.TODO(), "oauth-openshift", metav1.GetOptions{},
+		ctx, "oauth-openshift", metav1.GetOptions{},
 	)
 	Expect(err).ShouldNot(HaveOccurred())
 
@@ -151,7 +150,7 @@ func GitOpsUserSetup(ocpUser *OCPUser) {
 	By("Waiting for at least one OCP oauth pod to be ready")
 	Eventually(func(g Gomega) {
 		authDeployment, err := ClientHub.AppsV1().Deployments("openshift-authentication").Get(
-			context.TODO(), "oauth-openshift", metav1.GetOptions{},
+			ctx, "oauth-openshift", metav1.GetOptions{},
 		)
 		g.Expect(err).ShouldNot(HaveOccurred())
 
@@ -194,7 +193,7 @@ func GitOpsUserSetup(ocpUser *OCPUser) {
 // GitOpsCleanup will remove any test data/configuration on the OpenShift cluster that was added/updated
 // as part of the GitOps test. The kubeconfig file is also deleted from the filesystem. Any errors will
 // be propagated as gomega failed assertions.
-func GitOpsCleanup(user OCPUser) {
+func GitOpsCleanup(ctx SpecContext, user OCPUser) {
 	GinkgoHelper()
 
 	By("Cleaning up artifacts from user " + user.Username)
@@ -207,7 +206,7 @@ func GitOpsCleanup(user OCPUser) {
 	err := CleanupOCPUser(ClientHub, ClientHubDynamic, user)
 	Expect(err).ShouldNot(HaveOccurred())
 
-	err = ClientHub.CoreV1().Secrets("openshift-config").Delete(context.TODO(), user.Username, metav1.DeleteOptions{})
+	err = ClientHub.CoreV1().Secrets("openshift-config").Delete(ctx, user.Username, metav1.DeleteOptions{})
 	if !k8serrors.IsNotFound(err) {
 		Expect(err).ShouldNot(HaveOccurred())
 	}
