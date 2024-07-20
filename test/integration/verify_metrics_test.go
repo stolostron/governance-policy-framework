@@ -3,7 +3,6 @@
 package integration
 
 import (
-	"context"
 	"crypto/tls"
 	"encoding/base64"
 	"encoding/json"
@@ -62,7 +61,7 @@ var _ = Describe("GRC: [P1][Sev1][policy-grc] Test required metrics are availabl
 		Expect(err).ToNot(HaveOccurred())
 	})
 
-	It("Verifies all required metrics are available", func() {
+	It("Verifies all required metrics are available", func(ctx SpecContext) {
 		By("Creating a noncompliant policy")
 		_, err := common.OcHub("apply", "-f", noncompliantPolicyYAML, "-n", userNamespace)
 		Expect(err).ToNot(HaveOccurred())
@@ -74,7 +73,7 @@ var _ = Describe("GRC: [P1][Sev1][policy-grc] Test required metrics are availabl
 
 		By("Finding the Prometheus route")
 		route, err := clientHubDynamic.Resource(common.GvrRoute).Namespace(monitoringNS).Get(
-			context.TODO(), prometheusRouteName, metav1.GetOptions{},
+			ctx, prometheusRouteName, metav1.GetOptions{},
 		)
 		Expect(err).ToNot(HaveOccurred())
 
@@ -135,7 +134,7 @@ var _ = Describe("GRC: [P1][Sev1][policy-grc] Test required metrics are availabl
 				req.URL.RawQuery = q.Encode()
 
 				res, err := httpClient.Do(req)
-				g.Expect(err).ToNot(HaveOccurred())
+				g.Expect(err).ToNot(HaveOccurred(), "Unexpected error sending request to Prometheus")
 
 				resBody, err := io.ReadAll(res.Body)
 				g.Expect(err).ToNot(HaveOccurred())
@@ -150,7 +149,7 @@ var _ = Describe("GRC: [P1][Sev1][policy-grc] Test required metrics are availabl
 
 				result, ok := data["result"].([]interface{})
 				g.Expect(ok).To(BeTrue())
-				g.Expect(result).ToNot(BeEmpty())
+				g.Expect(result).ToNot(BeEmpty(), "Expected metrics for "+metric)
 			}, "60s", 1).Should(Succeed())
 		}
 	})
