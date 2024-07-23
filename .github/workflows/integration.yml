@@ -5,7 +5,7 @@ on:
     branches:
       - main
       - release-[0-9]+.[0-9]+
-      
+
   schedule:
   - cron: "0 5,11,14,17,20,23 * * 0-6"  # UTC  0,6,9,12,15,18 in EASTERN STANDARD
 
@@ -44,7 +44,7 @@ jobs:
         echo "::group::Set up prerequisites"
         ./build/download-clis.sh
         make e2e-dependencies
-        oc login ${{ secrets.E2E_URL }} --insecure-skip-tls-verify=true -u ${{ secrets.E2E_USER }} -p ${{ secrets.E2E_PASSWORD }}
+        oc login https://api.policy-grc-cp-autoclaims-txzxb.dev08.red-chesterfield.com:6443 --insecure-skip-tls-verify=true -u kubeadmin -p oayHt-zD844-K5LIf-nGybn
         make e2e-setup-kube
         echo "::endgroup::"
 
