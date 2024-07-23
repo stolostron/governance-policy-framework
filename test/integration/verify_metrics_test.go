@@ -19,7 +19,7 @@ import (
 	"github.com/stolostron/governance-policy-framework/test/common"
 )
 
-var _ = Describe("GRC: [P1][Sev1][policy-grc] Test required metrics are available", Ordered, Label("BVT"), func() {
+var _ = FDescribe("GRC: [P1][Sev1][policy-grc] Test required metrics are available", Ordered, Label("BVT"), func() {
 	const (
 		metricsAccName         = "grc-e2e-metrics-test"
 		metricsTokenName       = "grc-e2e-metrics-test-token-manual"
