@@ -289,6 +289,9 @@ func DebugHubEncryption(policyName, secretName, configMapName, hubNs,
 		"ConfigMap output": {
 			"get", "configmap", configMapName, "-n", hubNs, outYaml,
 		},
+		"Encryption key output on the hub": {
+			"get", "secret", "policy-encryption-key", "-n", clusterNamespace, outYaml,
+		},
 	}
 
 	for cmdName, cmd := range debugHubCmds {
@@ -310,6 +313,9 @@ func DebugHubEncryption(policyName, secretName, configMapName, hubNs,
 		},
 		"Governance-policy-framework-addon log": {
 			"logs", "deployment/governance-policy-framework", "-n", gfaNs,
+		},
+		"Encryption key output on Managed Cluster": {
+			"get", "secret", "policy-encryption-key", "-n", clusterNamespace, outYaml,
 		},
 	}
 
