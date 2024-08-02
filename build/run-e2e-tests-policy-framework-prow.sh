@@ -25,7 +25,7 @@ fi
 echo "* Managed cluster name set to ${MANAGED_CLUSTER_NAME}"
 
 echo "* Install cert manager"
-${DIR}/install-cert-manager.sh
+"${DIR}"/install-cert-manager.sh
 
 echo "* Set up cluster for test"
 
@@ -44,14 +44,14 @@ if [[ "${TARGET_BRANCH}" ]] && [[ "${TARGET_BRANCH}" != "main" ]]; then
 fi
 
 export KUBECONFIG=${HUB_KUBE}
-VERSION_TAG="${VERSION_TAG}" ${DIR}/patch-cluster-prow.sh
+VERSION_TAG="${VERSION_TAG}" "${DIR}"/patch-cluster-prow.sh
 
 if [[ "${HUB_KUBE}" != "${MANAGED_KUBE}" ]]; then
-  MANAGED_KUBE=${MANAGED_KUBE} MANAGED_CLUSTER_NAME=${MANAGED_CLUSTER_NAME} ${DIR}/import-managed.sh
+  MANAGED_KUBE=${MANAGED_KUBE} MANAGED_CLUSTER_NAME=${MANAGED_CLUSTER_NAME} "${DIR}"/import-managed.sh
 fi
 
-cp ${HUB_KUBE} ${DIR}/../kubeconfig_hub
-cp ${MANAGED_KUBE} ${DIR}/../kubeconfig_managed
+cp "${HUB_KUBE}" "${DIR}"/../kubeconfig_hub
+cp "${MANAGED_KUBE}" "${DIR}"/../kubeconfig_managed
 
 if [[ -z ${GINKGO_LABEL_FILTER} ]]; then
   echo "* No GINKGO_LABEL_FILTER set"
@@ -62,28 +62,22 @@ fi
 
 echo "===== E2E Test ====="
 echo "* Launching grc policy framework test"
+EXIT_CODE=0
 # Run test suite with reporting
-CGO_ENABLED=0 ${DIR}/../bin/ginkgo -v --no-color --fail-fast ${GINKGO_LABEL_FILTER} \
-  --junit-report=integration.xml --output-dir=test-output test/integration -- \
-  -patch_decisions=false -cluster_namespace=${MANAGED_CLUSTER_NAME} -policy_collection_branch=${TARGET_BRANCH} ||
+CGO_ENABLED=0 "${DIR}/"../bin/ginkgo -v --no-color --fail-fast ${GINKGO_LABEL_FILTER} \
+  --junit-report=integration.xml --output-dir="${ARTIFACT_DIR}" test/integration -- \
+  -patch_decisions=false -cluster_namespace="${MANAGED_CLUSTER_NAME}" -policy_collection_branch="${TARGET_BRANCH}" ||
   EXIT_CODE=$?
 
 # Collect exit code if it's an error
 if [[ "${EXIT_CODE}" != "0" ]]; then
-  ERROR_CODE=${EXIT_CODE}
-
   echo "* Detected test failure. Collecting debug logs..."
 
   # For debugging, the managed cluster might have a different name (i.e. 'local-cluster') but the
   # kubeconfig is still called 'kubeconfig_managed'
   export MANAGED_CLUSTER_NAME="managed"
-  make e2e-debug-acm
-fi
-
-if [[ -n "${ARTIFACT_DIR}" ]]; then
-  echo "* Copying 'test-output' directory to '${ARTIFACT_DIR}'..."
-  cp -r $DIR/../test-output/* ${ARTIFACT_DIR}
+  DEBUG_DIR="${ARTIFACT_DIR}/debug" make e2e-debug-acm
 fi
 
 # Since we captured the error code on the test run, we'll manually exit here with the collected code
-exit ${ERROR_CODE}
+exit "${EXIT_CODE}"

@@ -2,12 +2,12 @@
 
 set -e
 
-: ${MANAGED_KUBE?:MANAGED_KUBE must be set.}
-: ${MANAGED_CLUSTER_NAME?:MANAGED_CLUSTER_NAME must be set.}
+: "${MANAGED_KUBE?:MANAGED_KUBE must be set.}"
+: "${MANAGED_CLUSTER_NAME?:MANAGED_CLUSTER_NAME must be set.}"
 
 echo "* Attaching managed cluster ${MANAGED_CLUSTER_NAME} to hub"
 
-oc create ns ${MANAGED_CLUSTER_NAME}
+oc create ns "${MANAGED_CLUSTER_NAME}"
 
 cat <<EOF | oc create -f -
 apiVersion: cluster.open-cluster-management.io/v1
@@ -30,24 +30,24 @@ metadata:
 stringData:
   autoImportRetry: "5"
   kubeconfig: |-
-$(cat ${MANAGED_KUBE} | sed 's/^/    /g')
+$(sed 's/^/    /g' "${MANAGED_KUBE}")
 type: Opaque
 EOF
 
 for i in {1..6}; do
   err_code=0
   echo "Waiting for ManagedCluster ${MANAGED_CLUSTER_NAME} to be available (${i}/6) ..."
-  oc wait managedcluster ${MANAGED_CLUSTER_NAME} \
+  oc wait managedcluster "${MANAGED_CLUSTER_NAME}" \
     --for condition=ManagedClusterJoined=True \
     --for condition=ManagedClusterConditionAvailable=True \
     --timeout 30s && break || err_code=$?
 done
 
-oc get managedcluster ${MANAGED_CLUSTER_NAME}
+oc get managedcluster "${MANAGED_CLUSTER_NAME}"
 
 if [[ "${err_code}" != "0" ]]; then
   echo "ManagedCluster ${MANAGED_CLUSTER_NAME} failed to become available."
-  exit ${err_code}
+  exit "${err_code}"
 fi
 
 cat <<EOF | oc create -f -
@@ -70,15 +70,15 @@ EOF
 for idx in {1..6}; do
   err_code=0
   echo "Waiting for ManagedClusterAddons to be available (${idx}/6)"
-  kubectl get managedclusteraddons -n ${MANAGED_CLUSTER_NAME}
-  kubectl wait managedclusteraddons -n ${MANAGED_CLUSTER_NAME} --all \
+  kubectl get managedclusteraddons -n "${MANAGED_CLUSTER_NAME}"
+  kubectl wait managedclusteraddons -n "${MANAGED_CLUSTER_NAME}" --all \
     --for condition=Available=True &&
     break || err_code=$?
 done
 
-kubectl get managedclusteraddons -n ${MANAGED_CLUSTER_NAME}
+kubectl get managedclusteraddons -n "${MANAGED_CLUSTER_NAME}"
 
 if [[ "${err_code}" != "0" ]]; then
   echo "ManagedClusterAddons for ${MANAGED_CLUSTER_NAME} failed to become available."
-  exit ${err_code}
+  exit "${err_code}"
 fi
