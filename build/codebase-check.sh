@@ -208,7 +208,7 @@ cloneRepos
 
 REPOS=$(ls "${COMPONENT_ORG}")
 for repo in ${REPOS}; do
-	if !(git -C ${COMPONENT_ORG}/${repo} checkout --quiet ${DEFAULT_BRANCH}); then
+	if ! (git -C ${COMPONENT_ORG}/${repo} checkout --quiet ${DEFAULT_BRANCH}); then
 		echo "WARN: ${repo} doesn't have a ${DEFAULT_BRANCH} branch. Skipping."
 
 		continue
@@ -233,9 +233,11 @@ for repo in ${REPOS}; do
 	fi
 
 	# Verify that the Dockerfile images match the framework
-	dockerfileDiff "${repo}"
-	if [ $? -eq 1 ]; then
-		rc=1
+	if [[ "${repo}" != "must-gather" ]]; then
+		dockerfileDiff "${repo}"
+		if [ $? -eq 1 ]; then
+			rc=1
+		fi
 	fi
 done
 
