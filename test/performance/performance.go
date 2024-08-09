@@ -3,7 +3,6 @@ package main
 import (
 	"context"
 	"crypto/tls"
-	"encoding/base64"
 	"encoding/csv"
 	"flag"
 	"fmt"
@@ -11,7 +10,6 @@ import (
 	"os"
 	"os/exec"
 	"path"
-	"regexp"
 	"strconv"
 	"strings"
 	"text/tabwriter"
@@ -102,69 +100,10 @@ func query(host string, token string, query string, insecure bool) (time.Time, f
 	return time.Time{}, -1
 }
 
-func setupMetrics() (token []byte, thanosHost string) {
-	// wait for config map to be applied properly before executing command
-	secretOutput, err := exec.Command(
-		"kubectl", "get", "secret", "-n",
-		"openshift-user-workload-monitoring",
-	).CombinedOutput()
-	if err != nil || !strings.Contains(string(secretOutput), "prometheus-user-workload-token") {
-		klog.V(2).Info("Setting up secret for k8s metrics")
-
-		_, err = exec.Command(
-			"kubectl", "apply", "-f",
-			path.Join(performanceDir, "resources/setup/metrics-configmap.yaml"),
-		).CombinedOutput()
-		if err != nil {
-			klog.Exitf("Error applying metrics configMap: %s", err)
-		}
-		// wait for secret to be created for 2 minutes
-		found := false
-
-		for i := 0; i < 120; i += 5 {
-			secretOutput, err = exec.Command(
-				"kubectl", "get", "secret", "-n",
-				"openshift-user-workload-monitoring",
-			).CombinedOutput()
-
-			if err == nil && strings.Contains(string(secretOutput), "prometheus-user-workload-token") {
-				found = true
-
-				klog.V(2).Info("Secret found! Waiting an additional 30 seconds for metrics setup to complete.")
-				time.Sleep(5 * time.Second)
-
-				break
-			}
-
-			klog.V(2).Info("Secret not found, waiting 5 seconds...")
-			time.Sleep(5 * time.Second)
-		}
-
-		if !found {
-			klog.Fatal("Error: Prometheus secret creation timed out")
-		}
-	}
-
-	secretFinder := regexp.MustCompile("prometheus-user-workload-token-[a-z0-9]{5}")
-
-	secret := secretFinder.FindString(string(secretOutput))
-	if secret == "" {
-		klog.Exit("Error getting Prometheus metrics secret: secret not found in "+
-			"openshift-user-workload-monitoring ns", err)
-	}
-
-	tokenB64, err := exec.Command(
-		"kubectl", "get", "secret", secret, "-n",
-		"openshift-user-workload-monitoring",
-		"-o=jsonpath='{.data.token}'",
-	).CombinedOutput()
+func setupMetrics() (token string, thanosHost string) {
+	tokenBytes, err := exec.Command("oc", "whoami", "--show-token").CombinedOutput()
 	if err != nil {
-		klog.Exitf("Error getting API token from secret: %s", err)
-	}
-
-	token, err = base64.StdEncoding.DecodeString(strings.Trim(string(tokenB64), "'"))
-	if err != nil {
-		klog.Exitf("Error decoding token from secret %s", err)
+		klog.Exitf("Error getting API token from `oc whoami --show-token`: %v", err)
 	}
 
 	thanosB64, err := exec.Command(
@@ -177,7 +116,7 @@ func setupMetrics() (token []byte, thanosHost string) {
 
 	klog.V(2).Info("Setup complete! Token and metrics route retrieved successfully")
 
-	return token, strings.Trim(string(thanosB64), "'")
+	return strings.TrimSpace(string(tokenBytes)), strings.Trim(string(thanosB64), "'")
 }
 
 func getMetrics(
@@ -186,7 +125,7 @@ func getMetrics(
 	insecure bool,
 ) metricData {
 	// print metrics
-	ts, avgController := query(
+	ts, controllerCPUAvg := query(
 		thanosHost,
 		token,
 		fmt.Sprintf(
@@ -195,7 +134,7 @@ func getMetrics(
 		),
 		insecure,
 	)
-	_, avgApiserver := query(
+	_, apiServerCPUAvg := query(
 		thanosHost,
 		token,
 		fmt.Sprintf(
@@ -204,7 +143,7 @@ func getMetrics(
 		),
 		insecure,
 	)
-	_, maxController := query(
+	_, controllerCPUMax := query(
 		thanosHost,
 		token,
 		fmt.Sprintf(
@@ -213,7 +152,7 @@ func getMetrics(
 		),
 		insecure,
 	)
-	_, maxApiserver := query(
+	_, apiServerCPUMax := query(
 		thanosHost,
 		token,
 		fmt.Sprintf(
@@ -223,18 +162,65 @@ func getMetrics(
 		insecure,
 	)
 
+	_, controllerMemAvg := query(
+		thanosHost,
+		token,
+		fmt.Sprintf(
+			"sum(avg_over_time(container_memory_working_set_bytes{container='config-policy-controller'}[%dm:30s])) "+
+				"* 0.000001",
+			perBatchSleep,
+		),
+		insecure,
+	)
+	_, apiServerMemAvg := query(
+		thanosHost,
+		token,
+		fmt.Sprintf(
+			"sum(avg_over_time(container_memory_working_set_bytes{container='kube-apiserver'}[%dm:30s])) * 0.000001",
+			perBatchSleep,
+		),
+		insecure,
+	)
+	_, controllerMemMax := query(
+		thanosHost,
+		token,
+		fmt.Sprintf(
+			"sum(max_over_time(container_memory_working_set_bytes{container='config-policy-controller'}[%dm:30s])) "+
+				"* 0.000001",
+			perBatchSleep,
+		),
+		insecure,
+	)
+	_, apiServerMemMax := query(
+		thanosHost,
+		token,
+		fmt.Sprintf(
+			"sum(max_over_time(container_memory_working_set_bytes{container='kube-apiserver'}[%dm:30s])) * 0.000001",
+			perBatchSleep,
+		),
+		insecure,
+	)
+
 	// log metrics
 	klog.V(2).Infof("CPU utilization over the past %d minutes:", perBatchSleep)
-	klog.V(2).Infof("config policy controller: %.5f / %.5f (avg/max)", avgController, maxController)
-	klog.V(2).Infof("kube API server: %.5f / %.5f (avg/max)", avgApiserver, maxApiserver)
+	klog.V(2).Infof("config policy controller: %.5f / %.5f (avg/max)", controllerCPUAvg, controllerCPUMax)
+	klog.V(2).Infof("kube API server: %.5f / %.5f (avg/max)", apiServerCPUAvg, apiServerCPUMax)
+
+	klog.V(2).Infof("Memory utilization over the past %d minutes:", perBatchSleep)
+	klog.V(2).Infof("config policy controller: %.5f MB / %.5f MB (avg/max)", controllerMemAvg, controllerMemMax)
+	klog.V(2).Infof("kube API server: %.5f MB / %.5f MB (avg/max)", apiServerMemAvg, apiServerMemMax)
 
 	return metricData{
-		timestamp:     ts.Format("15:04:05"),
-		numPolicies:   numPolicies,
-		controllerAvg: avgController,
-		controllerMax: maxController,
-		apiserverAvg:  avgApiserver,
-		apiserverMax:  maxApiserver,
+		timestamp:        ts.Format("15:04:05"),
+		numPolicies:      numPolicies,
+		controllerCPUAvg: controllerCPUAvg,
+		controllerCPUMax: controllerCPUMax,
+		apiServerCPUAvg:  apiServerCPUAvg,
+		apiServerCPUMax:  apiServerCPUMax,
+		controllerMemAvg: controllerMemAvg,
+		controllerMemMax: controllerMemMax,
+		apiServerMemAvg:  apiServerMemAvg,
+		apiServerMemMax:  apiServerMemMax,
 	}
 }
 
@@ -255,16 +241,20 @@ func genUniquePolicy(inFilename string, outFilename string) error {
 }
 
 type metricData struct {
-	timestamp     string
-	numPolicies   int
-	controllerAvg float64
-	controllerMax float64
-	apiserverAvg  float64
-	apiserverMax  float64
+	timestamp        string
+	numPolicies      int
+	controllerCPUAvg float64
+	controllerCPUMax float64
+	apiServerCPUAvg  float64
+	apiServerCPUMax  float64
+	controllerMemAvg float64
+	controllerMemMax float64
+	apiServerMemAvg  float64
+	apiServerMemMax  float64
 }
 
 // pretty print table of results to stdout
-func printCPUTable(data []metricData) {
+func printTable(data []metricData) {
 	table := tabwriter.NewWriter(os.Stdout, 1, 4, 1, ' ', tabwriter.Debug|tabwriter.AlignRight)
 	fmt.Fprintln(table, "========\t==========\t====================\t"+
 		"====================\t===================\t===================\t")
@@ -277,16 +267,39 @@ func printCPUTable(data []metricData) {
 		fmt.Fprintf(table, "%s\t%d\t%s\t%s\t%s\t%s\t\n",
 			data[i].timestamp,
 			data[i].numPolicies,
-			fmt.Sprintf("%.5f", data[i].controllerAvg),
-			fmt.Sprintf("%.5f", data[i].controllerMax),
-			fmt.Sprintf("%.5f", data[i].apiserverAvg),
-			fmt.Sprintf("%.5f", data[i].apiserverMax),
+			fmt.Sprintf("%.5f", data[i].controllerCPUAvg),
+			fmt.Sprintf("%.5f", data[i].controllerCPUMax),
+			fmt.Sprintf("%.5f", data[i].apiServerCPUAvg),
+			fmt.Sprintf("%.5f", data[i].apiServerCPUMax),
 		)
 	}
 
 	klog.V(5).Infof("============================================" +
 		"================================================================")
 	klog.V(5).Infof("CPU Data (core usage):")
+	table.Flush()
+
+	fmt.Fprintln(table, "========\t==========\t====================\t"+
+		"====================\t===================\t===================\t")
+	fmt.Fprintln(table, "time\t# policies\tavg memory (controller)\t"+
+		"max memory (controller)\tavg memory (apiserver)\tmax memory (apiserver)\t")
+	fmt.Fprintln(table, "========\t==========\t====================\t"+
+		"====================\t===================\t===================\t")
+
+	for i := 0; i < len(data); i++ {
+		fmt.Fprintf(table, "%s\t%d\t%s\t%s\t%s\t%s\t\n",
+			data[i].timestamp,
+			data[i].numPolicies,
+			fmt.Sprintf("%.5f MB", data[i].controllerMemAvg),
+			fmt.Sprintf("%.5f MB", data[i].controllerMemMax),
+			fmt.Sprintf("%.5f MB", data[i].apiServerMemAvg),
+			fmt.Sprintf("%.5f MB", data[i].apiServerMemMax),
+		)
+	}
+
+	klog.V(5).Infof("============================================" +
+		"================================================================")
+	klog.V(5).Infof("Memory Data:")
 	table.Flush()
 }
 
@@ -307,8 +320,8 @@ func exportTable(cpuData []metricData, filename string) {
 	defer w.Flush()
 
 	line := []string{
-		"time", "numPolicies", "avg_cpu_controller", "max_cpu_controller", "avg_cpu_apiserver",
-		"max_cpu_apiserver", "<1", "1-3", "3-9", "9-10.5", "10.5-15", "15-30", ">30",
+		"time", "numPolicies", "avg_cpu_controller", "max_cpu_controller", "avg_cpu_apiserver", "max_cpu_apiserver",
+		"avg_memory_controller", "max_memory_controller", "avg_memory_apiserver", "max_memory_apiserver",
 	}
 	if err := w.Write(line); err != nil {
 		klog.Exitf("Error writing headers to file; %s", err)
@@ -318,10 +331,14 @@ func exportTable(cpuData []metricData, filename string) {
 		line = []string{
 			entry.timestamp,
 			fmt.Sprintf("%d", entry.numPolicies),
-			fmt.Sprintf("%.5f", entry.controllerAvg),
-			fmt.Sprintf("%.5f", entry.controllerMax),
-			fmt.Sprintf("%.5f", entry.apiserverAvg),
-			fmt.Sprintf("%.5f", entry.apiserverMax),
+			fmt.Sprintf("%.5f", entry.controllerCPUAvg),
+			fmt.Sprintf("%.5f", entry.controllerCPUMax),
+			fmt.Sprintf("%.5f", entry.apiServerCPUAvg),
+			fmt.Sprintf("%.5f", entry.apiServerCPUMax),
+			fmt.Sprintf("%.5f MB", entry.controllerMemAvg),
+			fmt.Sprintf("%.5f MB", entry.controllerMemMax),
+			fmt.Sprintf("%.5f MB", entry.apiServerMemAvg),
+			fmt.Sprintf("%.5f MB", entry.apiServerMemMax),
 		}
 		if err := w.Write(line); err != nil {
 			klog.Exitf("Error writing data to file; %s", err)
@@ -358,9 +375,9 @@ func main() {
 
 	tableData := []metricData{}
 
-	cpuMetrics := getMetrics(thanosHost, string(token), perBatchSleep, 0, insecure)
+	allMetrics := getMetrics(thanosHost, token, perBatchSleep, 0, insecure)
 
-	tableData = append(tableData, cpuMetrics)
+	tableData = append(tableData, allMetrics)
 
 	// setup temp directory for auto-generated policy YAML to live in
 	policyDir, err := os.MkdirTemp(path.Join(performanceDir, "resources"), "policies")
@@ -419,12 +436,12 @@ func main() {
 
 		time.Sleep(bonusTime)
 
-		cpuMetrics := getMetrics(thanosHost, string(token), perBatchSleep, totalPlcs, insecure)
+		allMetrics := getMetrics(thanosHost, token, perBatchSleep, totalPlcs, insecure)
 
-		tableData = append(tableData, cpuMetrics)
+		tableData = append(tableData, allMetrics)
 	}
 
-	printCPUTable(tableData)
+	printTable(tableData)
 
 	wd, err := os.Getwd()
 	if err != nil {
