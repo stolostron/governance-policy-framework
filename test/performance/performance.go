@@ -3,7 +3,6 @@ package main
 import (
 	"context"
 	"crypto/tls"
-	"encoding/base64"
 	"encoding/csv"
 	"flag"
 	"fmt"
@@ -11,7 +10,6 @@ import (
 	"os"
 	"os/exec"
 	"path"
-	"regexp"
 	"strconv"
 	"strings"
 	"text/tabwriter"
@@ -102,69 +100,10 @@ func query(host string, token string, query string, insecure bool) (time.Time, f
 	return time.Time{}, -1
 }
 
-func setupMetrics() (token []byte, thanosHost string) {
-	// wait for config map to be applied properly before executing command
-	secretOutput, err := exec.Command(
-		"kubectl", "get", "secret", "-n",
-		"openshift-user-workload-monitoring",
-	).CombinedOutput()
-	if err != nil || !strings.Contains(string(secretOutput), "prometheus-user-workload-token") {
-		klog.V(2).Info("Setting up secret for k8s metrics")
-
-		_, err = exec.Command(
-			"kubectl", "apply", "-f",
-			path.Join(performanceDir, "resources/setup/metrics-configmap.yaml"),
-		).CombinedOutput()
-		if err != nil {
-			klog.Exitf("Error applying metrics configMap: %s", err)
-		}
-		// wait for secret to be created for 2 minutes
-		found := false
-
-		for i := 0; i < 120; i += 5 {
-			secretOutput, err = exec.Command(
-				"kubectl", "get", "secret", "-n",
-				"openshift-user-workload-monitoring",
-			).CombinedOutput()
-
-			if err == nil && strings.Contains(string(secretOutput), "prometheus-user-workload-token") {
-				found = true
-
-				klog.V(2).Info("Secret found! Waiting an additional 30 seconds for metrics setup to complete.")
-				time.Sleep(5 * time.Second)
-
-				break
-			}
-
-			klog.V(2).Info("Secret not found, waiting 5 seconds...")
-			time.Sleep(5 * time.Second)
-		}
-
-		if !found {
-			klog.Fatal("Error: Prometheus secret creation timed out")
-		}
-	}
-
-	secretFinder := regexp.MustCompile("prometheus-user-workload-token-[a-z0-9]{5}")
-
-	secret := secretFinder.FindString(string(secretOutput))
-	if secret == "" {
-		klog.Exit("Error getting Prometheus metrics secret: secret not found in "+
-			"openshift-user-workload-monitoring ns", err)
-	}
-
-	tokenB64, err := exec.Command(
-		"kubectl", "get", "secret", secret, "-n",
-		"openshift-user-workload-monitoring",
-		"-o=jsonpath='{.data.token}'",
-	).CombinedOutput()
+func setupMetrics() (token string, thanosHost string) {
+	tokenBytes, err := exec.Command("oc", "whoami", "--show-token").CombinedOutput()
 	if err != nil {
-		klog.Exitf("Error getting API token from secret: %s", err)
-	}
-
-	token, err = base64.StdEncoding.DecodeString(strings.Trim(string(tokenB64), "'"))
-	if err != nil {
-		klog.Exitf("Error decoding token from secret %s", err)
+		klog.Exitf("Error getting API token from `oc whoami --show-token`: %v", err)
 	}
 
 	thanosB64, err := exec.Command(
@@ -177,7 +116,7 @@ func setupMetrics() (token []byte, thanosHost string) {
 
 	klog.V(2).Info("Setup complete! Token and metrics route retrieved successfully")
 
-	return token, strings.Trim(string(thanosB64), "'")
+	return strings.TrimSpace(string(tokenBytes)), strings.Trim(string(thanosB64), "'")
 }
 
 func getMetrics(
