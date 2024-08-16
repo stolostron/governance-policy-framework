@@ -435,8 +435,7 @@ var _ = Describe("GRC: [P1][Sev1][policy-grc] Test the compliance history API", 
 			)
 			Expect(err).ToNot(HaveOccurred())
 
-			// Deleting the CSV from every namespace takes the ConfigurationPolicy quite a while (~5 min)
-			_ = verifyPolicyOnAllClusters(ctx, policyNS, uninstallGKPolicyName, "Compliant", defaultTimeoutSeconds*12)
+			_ = verifyPolicyOnAllClusters(ctx, policyNS, uninstallGKPolicyName, "Compliant", defaultTimeoutSeconds*2)
 
 			By("Delete the " + uninstallGKPolicyName + " policy")
 			_, err = common.OcHub(
