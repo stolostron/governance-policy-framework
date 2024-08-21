@@ -23,6 +23,8 @@ jobs:
     env:
       REGISTRY: localhost:5000
       KIND_VERSION: ${{ matrix.kind }}
+      HOSTED: ${{ matrix.hosted }}
+      deployOnHub: ${{ matrix.deployOnHub }}
     strategy:
       # Don't skip all tests if one fails - others may still have useful info
       fail-fast: false
@@ -99,8 +101,6 @@ jobs:
     - name: Bootstrap the KinD Cluster
       working-directory: framework
       env:
-        deployOnHub: ${{ matrix.deployOnHub }}
-        HOSTED: ${{ matrix.hosted }}
         CALLER_REPO: ${{ github.event.organization.login }}
       run: |
         echo "::group::make e2e-dependencies"
@@ -133,9 +133,7 @@ jobs:
       if: ${{ github.event.repository.name != 'governance-policy-framework' }}
       working-directory: component
       env:
-        deployOnHub: ${{ matrix.deployOnHub }}
         HUB_ONLY: ${{ inputs.hub_only_component }}
-        HOSTED: ${{ matrix.hosted }}
       run: |
         export MANAGED_CONFIG=${MANAGED_KUBECONFIG}
         export HUB_CONFIG=${HUB_KUBECONFIG}
@@ -174,7 +172,6 @@ jobs:
       working-directory: framework
       env:
         TEST_ARGS: --fail-fast --json-report=report.json --junit-report=report.xml --output-dir=test-output
-        HOSTED: ${{ matrix.hosted }}
         UPSTREAM_TEST: ${{ github.event.organization.login == 'open-cluster-management-io' }}
       run: |
         if [[ "${HOSTED}" == "hosted" ]]; then
