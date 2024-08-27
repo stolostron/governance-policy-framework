@@ -34,7 +34,7 @@ import (
 // Note that this is set to Serial since the cleanup involves restarting the propagator to clear its cache of database
 // IDs.
 var _ = Describe("GRC: [P1][Sev1][policy-grc] Test the compliance history API", Ordered, Serial, Label("BVT"), func() {
-	const policyNS = "open-cluster-management-global-set"
+	const policyNS = "policy-test"
 	var eventsEndpoint string
 	var csvEndpoint string
 	var token string

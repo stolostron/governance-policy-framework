@@ -1,7 +1,7 @@
 apiVersion: policy.open-cluster-management.io/v1
 kind: Policy
 metadata:
-  name: policy-multiline-template-nohub
+  name: policy-multiline-temp-hub
 spec:
   remediationAction: enforce
   disabled: false
@@ -10,42 +10,42 @@ spec:
         apiVersion: policy.open-cluster-management.io/v1
         kind: ConfigurationPolicy
         metadata:
-          name: policy-multiline-template-nohub
+          name: policy-multiline-temp-hub
         spec:
           remediationAction: enforce
           severity: low
           object-templates-raw: |
-            {{range (lookup "v1" "ConfigMap" "policy-test" "").items }}
-            {{- if .metadata.name | contains "templatization-config" }}
+            {{hub range (lookup "v1" "ConfigMap" "policy-test" "").items hub}}
+            {{hub- if .metadata.name | contains "templatization-config" hub}}
               - complianceType: musthave
                 objectDefinition:
                   apiVersion: v1
                   kind: ConfigMap
                   metadata:
-                    name: {{ .metadata.name }}-copy
-                    namespace: config-test
+                    name: {{hub .metadata.name hub}}
+                    namespace: policy-test
                   data:
                     extraData: exists!
-            {{- end }}
-            {{ end }}
+            {{hub- end hub}}
+            {{hub end hub}}
 ---
 apiVersion: policy.open-cluster-management.io/v1
 kind: PlacementBinding
 metadata:
-  name: policy-multiline-template-nohub-pb
+  name: policy-multiline-temp-hub-pb
 placementRef:
   apiGroup: apps.open-cluster-management.io
   kind: PlacementRule
-  name: policy-multiline-template-nohub-plr
+  name: policy-multiline-temp-hub-plr
 subjects:
-- apiGroup: policy.open-cluster-management.io
-  kind: Policy
-  name: policy-multiline-template-nohub
+  - apiGroup: policy.open-cluster-management.io
+    kind: Policy
+    name: policy-multiline-temp-hub
 ---
 apiVersion: apps.open-cluster-management.io/v1
 kind: PlacementRule
 metadata:
-  name: policy-multiline-template-nohub-plr
+  name: policy-multiline-temp-hub-plr
 spec:
   clusterSelector:
     matchExpressions: []

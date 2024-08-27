@@ -2,7 +2,7 @@ apiVersion: policy.open-cluster-management.io/v1
 kind: Policy
 metadata:
   name: compliance-api-configpolicy
-  namespace: open-cluster-management-global-set
+  namespace: policy-test
   annotations:
     policy.open-cluster-management.io/categories: CM Configuration Management
     policy.open-cluster-management.io/controls: CM-2 Baseline Configuration
@@ -45,7 +45,7 @@ apiVersion: cluster.open-cluster-management.io/v1beta1
 kind: Placement
 metadata:
   name: compliance-api-configpolicy
-  namespace: open-cluster-management-global-set
+  namespace: policy-test
 spec:
   predicates:
     - requiredClusterSelector:
@@ -58,7 +58,7 @@ apiVersion: policy.open-cluster-management.io/v1
 kind: PlacementBinding
 metadata:
   name: compliance-api-configpolicy
-  namespace: open-cluster-management-global-set
+  namespace: policy-test
 placementRef:
   name: compliance-api-configpolicy
   apiGroup: cluster.open-cluster-management.io

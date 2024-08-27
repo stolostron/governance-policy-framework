@@ -29,7 +29,7 @@ var _ = Describe("GRC: [P1][Sev1][policy-grc] Test the policy-role policy",
 		)
 		policyRoleURL := policyCollectACURL + policyRoleName + ".yaml"
 
-		It("stable/"+policyRoleName+" should be created on the Hub", func() {
+		It("stable/"+policyRoleName+" should be created on the Hub", func(ctx SpecContext) {
 			By("Creating policy on hub")
 			_, err := utils.KubectlWithOutput(
 				"apply", "-f", policyRoleURL, "-n", userNamespace, "--kubeconfig="+kubeconfigHub,
@@ -60,7 +60,7 @@ var _ = Describe("GRC: [P1][Sev1][policy-grc] Test the policy-role policy",
 			)
 			Expect(err).ToNot(HaveOccurred())
 
-			err = common.PatchPlacementRule(userNamespace, "placement-"+policyRoleName)
+			err = common.ApplyPlacement(ctx, userNamespace, policyRoleName)
 			Expect(err).ToNot(HaveOccurred())
 
 			By("Checking that " + policyRoleName + " exists on the Hub cluster")
@@ -154,5 +154,8 @@ var _ = Describe("GRC: [P1][Sev1][policy-grc] Test the policy-role policy",
 					Expect(err).ToNot(HaveOccurred())
 				}
 			}
+
+			err = common.DeletePlacement(userNamespace, policyRoleName)
+			Expect(err).ToNot(HaveOccurred())
 		})
 	})

@@ -2,7 +2,7 @@ apiVersion: policy.open-cluster-management.io/v1
 kind: Policy
 metadata:
   name: compliance-api-uninstall-gk
-  namespace: open-cluster-management-global-set
+  namespace: policy-test
 spec:
   disabled: false
   policy-templates:
@@ -47,7 +47,7 @@ apiVersion: cluster.open-cluster-management.io/v1beta1
 kind: Placement
 metadata:
   name: compliance-api-uninstall-gk
-  namespace: open-cluster-management-global-set
+  namespace: policy-test
 spec:
   predicates:
     - requiredClusterSelector:
@@ -60,7 +60,7 @@ apiVersion: policy.open-cluster-management.io/v1
 kind: PlacementBinding
 metadata:
   name: compliance-api-uninstall-gk
-  namespace: open-cluster-management-global-set
+  namespace: policy-test
 placementRef:
   name: compliance-api-uninstall-gk
   apiGroup: cluster.open-cluster-management.io

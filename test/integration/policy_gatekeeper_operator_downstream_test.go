@@ -29,7 +29,7 @@ var _ = Describe("RHACM4K-3055", Ordered, Label("policy-collection", "stable", "
 	)
 
 	Describe("GRC: [P1][Sev1][policy-grc] Test installing gatekeeper operator", func() {
-		It("stable/policy-gatekeeper-operator should be created on hub", func() {
+		It("stable/policy-gatekeeper-operator should be created on hub", func(ctx SpecContext) {
 			By("Creating policy on hub")
 			_, err := utils.KubectlWithOutput(
 				"apply", "-f",
@@ -44,15 +44,17 @@ var _ = Describe("RHACM4K-3055", Ordered, Label("policy-collection", "stable", "
 				"patch", "-n", userNamespace,
 				"policies.policy.open-cluster-management.io",
 				gatekeeperPolicyName,
-				"--type=json", "-p=[{\"op\": \"add\", \"path\": \"/spec/policy-templates/2/objectDefinition/"+
+				"--type=json", "-p=[{\"op\": \"add\", \"path\": \"/spec/policy-templates/1/objectDefinition/"+
 					"spec/object-templates/0/objectDefinition/spec/webhook/namespaceSelector\","+
 					" \"value\":{\"matchExpressions\":[{\"key\": \"grc\",\"operator\":\"In\","+
 					"\"values\":[\"true\"]}]}}]",
 				"--kubeconfig="+kubeconfigHub,
 			)
 			Expect(err).ToNot(HaveOccurred())
-			err = common.PatchPlacementRule(userNamespace, "placement-"+gatekeeperPolicyName)
+
+			err = common.ApplyPlacement(ctx, userNamespace, gatekeeperPolicyName)
 			Expect(err).ToNot(HaveOccurred())
+
 			By("Checking policy-gatekeeper-operator on hub cluster in ns " + userNamespace)
 			rootPlc := utils.GetWithTimeout(
 				clientHubDynamic,
@@ -355,6 +357,9 @@ var _ = Describe("RHACM4K-3055", Ordered, Label("policy-collection", "stable", "
 			"--timeout=180s",
 			"--kubeconfig="+kubeconfigManaged,
 		)
+		Expect(err).ToNot(HaveOccurred())
+
+		err = common.DeletePlacement(userNamespace, gatekeeperPolicyName)
 		Expect(err).ToNot(HaveOccurred())
 	})
 })

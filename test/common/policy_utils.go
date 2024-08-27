@@ -69,6 +69,99 @@ func PatchPlacementRule(namespace, name string) error {
 	return err
 }
 
+// ApplyPlacement function creates Placement and PlacementBinding so that it will
+// always only match the targetCluster.
+func ApplyPlacement(ctx SpecContext, namespace, policyName string) error {
+	By("Apply Placement and PlacementBinding" + namespace + "/" +
+		"placement-" + policyName + "/" + "placement-binding-" + "policyName" +
+		" with clusterSelector {name: " + ClusterNamespaceOnHub + "}")
+
+	placement := unstructured.Unstructured{
+		Object: map[string]interface{}{
+			"apiVersion": GvrPlacement.Group + "/" + GvrPlacement.Version,
+			"kind":       "Placement",
+			"metadata": map[string]interface{}{
+				"name": "placement-" + policyName,
+			},
+			"spec": map[string]interface{}{
+				"predicates": []interface{}{
+					map[string]interface{}{
+						"requiredClusterSelector": map[string]interface{}{
+							"labelSelector": map[string]interface{}{
+								"matchExpressions": []interface{}{
+									map[string]interface{}{
+										"key":      "name",
+										"operator": "In",
+										"values": []string{
+											ClusterNamespaceOnHub,
+										},
+									},
+								},
+							},
+						},
+					},
+				},
+			},
+		},
+	}
+
+	_, err := ClientHubDynamic.Resource(GvrPlacement).Namespace(namespace).Create(
+		ctx, &placement, metav1.CreateOptions{},
+	)
+	if err != nil {
+		return err
+	}
+
+	placementBinding := unstructured.Unstructured{
+		Object: map[string]interface{}{
+			"apiVersion": GvrPolicy.Group + "/" + GvrPolicy.Version,
+			"kind":       "PlacementBinding",
+			"metadata": map[string]interface{}{
+				"name": "placement-binding-" + policyName,
+			},
+			"placementRef": map[string]interface{}{
+				"name":     "placement-" + policyName,
+				"kind":     "Placement",
+				"apiGroup": GvrPlacement.Group,
+			},
+			"subjects": []interface{}{
+				map[string]interface{}{
+					"name":     policyName,
+					"kind":     "Policy",
+					"apiGroup": GvrPolicy.Group,
+				},
+			},
+		},
+	}
+
+	_, err = ClientHubDynamic.Resource(GvrPlacementBinding).Namespace(namespace).Create(
+		ctx, &placementBinding, metav1.CreateOptions{},
+	)
+
+	return err
+}
+
+// DeletePlacement delete applied Placement and PlacementBinding
+func DeletePlacement(namespace, policyName string) error {
+	By("Delete Placement and PlacementBinding" + namespace + "/" +
+		"placement-" + policyName + "/" + "placement-binding-" + "policyName")
+
+	_, err := OcHub(
+		"delete", "placement.cluster.open-cluster-management.io", "placement-"+policyName,
+		"-n", namespace, "--ignore-not-found",
+	)
+	if err != nil {
+		return err
+	}
+
+	_, err = OcHub(
+		"delete", "placementbinding.policy.open-cluster-management.io",
+		"placement-binding-"+policyName, "-n", namespace, "--ignore-not-found",
+	)
+
+	return err
+}
+
 // DoCreatePolicyTest runs usual assertions around creating a policy. It will
 // create the given policy file to the hub cluster, on the user namespace. It
 // also patches the PlacementRule with a PlacementDecision if required. It

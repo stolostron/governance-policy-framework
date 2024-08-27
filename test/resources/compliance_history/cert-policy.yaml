@@ -28,7 +28,7 @@ apiVersion: cluster.open-cluster-management.io/v1beta1
 kind: Placement
 metadata:
   name: compliance-history-test
-  namespace: open-cluster-management-global-set
+  namespace: policy-test
 spec:
   predicates:
     - requiredClusterSelector:
@@ -42,7 +42,7 @@ apiVersion: policy.open-cluster-management.io/v1
 kind: PlacementBinding
 metadata:
   name: compliance-history-test
-  namespace: open-cluster-management-global-set
+  namespace: policy-test
 placementRef:
   name: compliance-history-test
   apiGroup: cluster.open-cluster-management.io

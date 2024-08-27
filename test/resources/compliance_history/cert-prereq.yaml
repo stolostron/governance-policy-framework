@@ -2,7 +2,7 @@ apiVersion: policy.open-cluster-management.io/v1
 kind: Policy
 metadata:
   name: ch-cert-prereq-policy
-  namespace: open-cluster-management-global-set
+  namespace: policy-test
   annotations:
     policy.open-cluster-management.io/categories: CM Configuration Management
     policy.open-cluster-management.io/controls: CM-2 Baseline Configuration
@@ -19,12 +19,12 @@ spec:
         spec:
           pruneObjectBehavior: DeleteAll
           object-templates:
-          - complianceType: musthave
-            objectDefinition:
-              apiVersion: v1
-              kind: Namespace
-              metadata:
-                name: ch-cert-policy-test-ns
+            - complianceType: musthave
+              objectDefinition:
+                apiVersion: v1
+                kind: Namespace
+                metadata:
+                  name: ch-cert-policy-test-ns
           severity: critical
     - objectDefinition:
         apiVersion: policy.open-cluster-management.io/v1
@@ -34,19 +34,19 @@ spec:
         spec:
           pruneObjectBehavior: DeleteAll
           object-templates:
-          - complianceType: musthave
-            objectDefinition:
-              apiVersion: v1
-              kind: Secret
-              metadata:
-                name: ch-cert-secret
-                namespace: ch-cert-policy-test-ns
+            - complianceType: musthave
+              objectDefinition:
+                apiVersion: v1
+                kind: Secret
+                metadata:
+                  name: ch-cert-secret
+                  namespace: ch-cert-policy-test-ns
 ---
 apiVersion: cluster.open-cluster-management.io/v1beta1
 kind: Placement
 metadata:
   name: ch-cert-prereq
-  namespace: open-cluster-management-global-set
+  namespace: policy-test
 spec:
   predicates:
     - requiredClusterSelector:
@@ -60,7 +60,7 @@ apiVersion: policy.open-cluster-management.io/v1
 kind: PlacementBinding
 metadata:
   name: ch-cert-prereq
-  namespace: open-cluster-management-global-set
+  namespace: policy-test
 placementRef:
   name: ch-cert-prereq
   apiGroup: cluster.open-cluster-management.io

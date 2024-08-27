@@ -24,7 +24,7 @@ var _ = Describe("GRC: [P1][Sev1][policy-grc] Test "+
 	const subName = "container-security-operator"
 	const operatorNS = "openshift-operators"
 
-	It("stable/"+policyIMVName+" should be created on the Hub", func() {
+	It("stable/"+policyIMVName+" should be created on the Hub", func(ctx SpecContext) {
 		By("Creating deployment that has an image with vulnerabilities")
 		_, err := utils.KubectlWithOutput(
 			"apply", "-f", "../resources/image-vulnerabilities/vulnerable-pod.yaml", "--kubeconfig="+kubeconfigHub,
@@ -37,7 +37,7 @@ var _ = Describe("GRC: [P1][Sev1][policy-grc] Test "+
 		)
 		Expect(err).ToNot(HaveOccurred())
 
-		err = common.PatchPlacementRule(userNamespace, "placement-"+policyIMVName)
+		err = common.ApplyPlacement(ctx, userNamespace, policyIMVName)
 		Expect(err).ToNot(HaveOccurred())
 
 		By("Checking that " + policyIMVName + " exists on the Hub cluster")
@@ -109,18 +109,18 @@ var _ = Describe("GRC: [P1][Sev1][policy-grc] Test "+
 	})
 
 	It("stable/"+policyIMVName+" should detect imageManifestVulns", func() {
-		By("Checking if the status of the subscription config policy is Compliant")
+		By("Checking if the status of the OperatorPolicy is Compliant")
 		Eventually(
 			func() string {
-				cfgPol := utils.GetWithTimeout(
+				opPol := utils.GetWithTimeout(
 					clientManagedDynamic,
-					common.GvrConfigurationPolicy,
-					"policy-imagemanifestvuln-example-sub",
+					common.GvrOperatorPolicy,
+					"operatorpolicy-imagemanifestvuln",
 					clusterNamespace,
 					true,
 					defaultTimeoutSeconds,
 				).Object
-				if status, ok := cfgPol["status"]; ok {
+				if status, ok := opPol["status"]; ok {
 					if compliance, ok := status.(map[string]interface{})["compliant"]; ok {
 						return compliance.(string)
 					}
@@ -129,29 +129,6 @@ var _ = Describe("GRC: [P1][Sev1][policy-grc] Test "+
 				return ""
 			},
 			defaultTimeoutSeconds*2,
-			1,
-		).Should(Equal(string(policiesv1.Compliant)))
-
-		By("Checking if the status of the CSV config policy is Compliant")
-		Eventually(
-			func() string {
-				cfgPol := utils.GetWithTimeout(
-					clientManagedDynamic,
-					common.GvrConfigurationPolicy,
-					"policy-imagemanifestvuln-status",
-					clusterNamespace,
-					true,
-					defaultTimeoutSeconds,
-				).Object
-				if status, ok := cfgPol["status"]; ok {
-					if compliance, ok := status.(map[string]interface{})["compliant"]; ok {
-						return compliance.(string)
-					}
-				}
-
-				return ""
-			},
-			defaultTimeoutSeconds*4,
 			1,
 		).Should(Equal(string(policiesv1.Compliant)))
 
@@ -233,6 +210,9 @@ var _ = Describe("GRC: [P1][Sev1][policy-grc] Test "+
 			"nginx-deployment", "--kubeconfig="+kubeconfigHub,
 			"--ignore-not-found",
 		)
+		Expect(err).ToNot(HaveOccurred())
+
+		err = common.DeletePlacement(userNamespace, policyIMVName)
 		Expect(err).ToNot(HaveOccurred())
 	})
 })
