@@ -32,7 +32,7 @@ func complianceScanTest(scanPolicyName string, scanPolicyURL string, scanName st
 			)
 			Expect(err).ToNot(HaveOccurred())
 
-			err = common.PatchPlacementRule(userNamespace, "placement-"+scanPolicyName)
+			err = common.ApplyPlacement(userNamespace, scanPolicyName)
 			Expect(err).ToNot(HaveOccurred())
 
 			By("Checking policy on hub cluster in ns " + userNamespace)
@@ -210,6 +210,9 @@ func complianceScanTest(scanPolicyName string, scanPolicyURL string, scanName st
 			false,
 			defaultTimeoutSeconds,
 		)
+
+		err = common.DeletePlacement(userNamespace, scanPolicyName)
+		Expect(err).ToNot(HaveOccurred())
 	})
 }
 
@@ -250,8 +253,10 @@ var _ = Describe("RHACM4K-2222 GRC: [P1][Sev1][policy-grc] "+
 				"--kubeconfig="+kubeconfigHub,
 			)
 			Expect(err).ToNot(HaveOccurred())
-			err = common.PatchPlacementRule(userNamespace, "placement-"+compPolicyName)
+
+			err = common.ApplyPlacement(userNamespace, compPolicyName)
 			Expect(err).ToNot(HaveOccurred())
+
 			By("Checking " + compPolicyName + " on hub cluster in ns " + userNamespace)
 			rootPlc := utils.GetWithTimeout(
 				clientHubDynamic,
@@ -397,6 +402,9 @@ var _ = Describe("RHACM4K-2222 GRC: [P1][Sev1][policy-grc] "+
 			"--kubeconfig="+kubeconfigHub,
 			"--ignore-not-found",
 		)
+		Expect(err).ToNot(HaveOccurred())
+
+		err = common.DeletePlacement(userNamespace, compPolicyName)
 		Expect(err).ToNot(HaveOccurred())
 
 		utils.GetWithTimeout(

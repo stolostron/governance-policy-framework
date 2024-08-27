@@ -31,7 +31,7 @@ var _ = Describe("GRC: [P1][Sev1][policy-grc] Test the policy-namespace policy",
 			)
 			Expect(err).ToNot(HaveOccurred())
 
-			err = common.PatchPlacementRule(userNamespace, "placement-"+policyNamespaceName)
+			err = common.ApplyPlacement(userNamespace, policyNamespaceName)
 			Expect(err).ToNot(HaveOccurred())
 
 			By("Checking that " + policyNamespaceName + " exists on the Hub cluster")
@@ -112,6 +112,9 @@ var _ = Describe("GRC: [P1][Sev1][policy-grc] Test the policy-namespace policy",
 				userNamespace, "--kubeconfig="+kubeconfigHub,
 				"--ignore-not-found",
 			)
+			Expect(err).ToNot(HaveOccurred())
+
+			err = common.DeletePlacement(userNamespace, policyNamespaceName)
 			Expect(err).ToNot(HaveOccurred())
 
 			err = clientManaged.CoreV1().Namespaces().Delete(context.TODO(), "prod", metav1.DeleteOptions{})

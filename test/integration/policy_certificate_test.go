@@ -71,7 +71,7 @@ var _ = Describe(
 			)
 			Expect(err).ToNot(HaveOccurred())
 
-			err = common.PatchPlacementRule(userNamespace, "placement-"+policyCertificateName)
+			err = common.ApplyPlacement(userNamespace, policyCertificateName)
 			Expect(err).ToNot(HaveOccurred())
 
 			By("Checking that " + policyCertificateName + " exists on the Hub cluster")
@@ -157,6 +157,9 @@ var _ = Describe(
 			err = clientManaged.CoreV1().Namespaces().Delete(
 				context.TODO(), policyCertificateNSName, metav1.DeleteOptions{},
 			)
+			Expect(err).ToNot(HaveOccurred())
+
+			err = common.DeletePlacement(userNamespace, policyCertificateName)
 			Expect(err).ToNot(HaveOccurred())
 		})
 	})

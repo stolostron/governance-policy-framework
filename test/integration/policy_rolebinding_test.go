@@ -56,7 +56,7 @@ var _ = Describe("GRC: [P1][Sev1][policy-grc] Test the policy-rolebinding policy
 			)
 			Expect(err).ToNot(HaveOccurred())
 
-			err = common.PatchPlacementRule(userNamespace, "placement-"+policyRoleBindingName)
+			err = common.ApplyPlacement(userNamespace, policyRoleBindingName)
 			Expect(err).ToNot(HaveOccurred())
 
 			By("Checking that " + policyRoleBindingName + " exists on the Hub cluster")
@@ -150,5 +150,8 @@ var _ = Describe("GRC: [P1][Sev1][policy-grc] Test the policy-rolebinding policy
 					Expect(err).ToNot(HaveOccurred())
 				}
 			}
+
+			err = common.DeletePlacement(userNamespace, policyRoleBindingName)
+			Expect(err).ToNot(HaveOccurred())
 		})
 	})

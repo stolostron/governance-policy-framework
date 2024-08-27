@@ -20,7 +20,7 @@ var _ = Describe("GRC: [P1][Sev1][policy-grc] Test the policy-scc policy",
 	Ordered, Label("policy-collection", "stable"), func() {
 		rootPolicyURL := policyCollectSCURL + "policy-scc.yaml"
 		const (
-			rootPolicyName = "policy-securitycontextconstraints"
+			rootPolicyName = "policy-scc"
 			targetName     = "restricted"
 			targetKind     = "scc"
 		)
@@ -33,7 +33,7 @@ var _ = Describe("GRC: [P1][Sev1][policy-grc] Test the policy-scc policy",
 			)
 			Expect(err).ToNot(HaveOccurred())
 
-			err = common.PatchPlacementRule(userNamespace, "placement-"+rootPolicyName)
+			err = common.ApplyPlacement(userNamespace, rootPolicyName)
 			Expect(err).ToNot(HaveOccurred())
 
 			By("Checking that " + rootPolicyName + " exists on the Hub cluster")
@@ -108,6 +108,9 @@ var _ = Describe("GRC: [P1][Sev1][policy-grc] Test the policy-scc policy",
 				userNamespace, "--kubeconfig="+kubeconfigHub,
 				"--ignore-not-found",
 			)
+			Expect(err).ToNot(HaveOccurred())
+
+			err = common.DeletePlacement(userNamespace, rootPolicyName)
 			Expect(err).ToNot(HaveOccurred())
 		})
 	})

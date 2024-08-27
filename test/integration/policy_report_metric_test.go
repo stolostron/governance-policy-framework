@@ -31,9 +31,9 @@ var _ = Describe("GRC: [P1][Sev1][policy-grc] Test policyreport_info metric", Or
 		insightsMetricsSelector      = "component=insights-metrics"
 		insightsMetricName           = "policyreport_info"
 		noncompliantPolicyYamlReport = "../resources/policy_report_metric/noncompliant.yaml"
-		noncompliantPolicyNameReport = "policyreport-metric-noncompliant"
+		noncompliantPolicyNameReport = "policyreport-metric-nc"
 		compliantPolicyYamlReport    = "../resources/policy_report_metric/compliant.yaml"
-		compliantPolicyNameReport    = "policyreport-metric-noncompliant"
+		compliantPolicyNameReport    = "policyreport-metric-nc"
 	)
 
 	var (

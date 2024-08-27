@@ -26,10 +26,10 @@ var _ = Describe(
 	func() {
 		createdUserNamespace := false
 		const (
-			policyHubName   = "policy-multiline-template-hub"
-			policyHubYAML   = "../resources/policy_multiline_templatization/policy-multiline-template-hub.yaml"
-			policyNoHubName = "policy-multiline-template-nohub"
-			policyNoHubYAML = "../resources/policy_multiline_templatization/policy-multiline-template-nohub.yaml"
+			policyHubName   = "policy-mt-hub"
+			policyHubYAML   = "../resources/policy_multiline_templatization/policy-mt-hub.yaml"
+			policyNoHubName = "policy-mt-nohub"
+			policyNoHubYAML = "../resources/policy_multiline_templatization/policy-mt-nohub.yaml"
 			configMapName1  = "templatization-config1"
 			configMapName2  = "templatization-config2"
 			configNamespace = "config-test"

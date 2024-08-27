@@ -36,7 +36,7 @@ var _ = Describe(
 			)
 			Expect(err).ToNot(HaveOccurred())
 
-			err = common.PatchPlacementRule(userNamespace, "placement-"+policyEtcdEncryptionName)
+			err = common.ApplyPlacement(userNamespace, policyEtcdEncryptionName)
 			Expect(err).ToNot(HaveOccurred())
 
 			By("Checking that " + policyEtcdEncryptionName + " exists on the Hub cluster")
@@ -153,6 +153,9 @@ var _ = Describe(
 				[]byte(`[{"op": "remove", "path": "/spec/encryption"}]`),
 				metav1.PatchOptions{},
 			)
+			Expect(err).ToNot(HaveOccurred())
+
+			err = common.DeletePlacement(userNamespace, policyEtcdEncryptionName)
 			Expect(err).ToNot(HaveOccurred())
 		})
 	})

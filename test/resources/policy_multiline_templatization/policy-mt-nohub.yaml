@@ -1,7 +1,7 @@
 apiVersion: policy.open-cluster-management.io/v1
 kind: Policy
 metadata:
-  name: policy-multiline-template-hub
+  name: policy-mt-nohub
 spec:
   remediationAction: enforce
   disabled: false
@@ -10,42 +10,42 @@ spec:
         apiVersion: policy.open-cluster-management.io/v1
         kind: ConfigurationPolicy
         metadata:
-          name: policy-multiline-template-hub
+          name: policy-mt-nohub
         spec:
           remediationAction: enforce
           severity: low
           object-templates-raw: |
-            {{hub range (lookup "v1" "ConfigMap" "policy-test" "").items hub}}
-            {{hub- if .metadata.name | contains "templatization-config" hub}}
+            {{range (lookup "v1" "ConfigMap" "open-cluster-management-global-set" "").items }}
+            {{- if .metadata.name | contains "templatization-config" }}
               - complianceType: musthave
                 objectDefinition:
                   apiVersion: v1
                   kind: ConfigMap
                   metadata:
-                    name: {{hub .metadata.name hub}}
-                    namespace: policy-test
+                    name: {{ .metadata.name }}-copy
+                    namespace: config-test
                   data:
                     extraData: exists!
-            {{hub- end hub}}
-            {{hub end hub}}
+            {{- end }}
+            {{ end }}
 ---
 apiVersion: policy.open-cluster-management.io/v1
 kind: PlacementBinding
 metadata:
-  name: policy-multiline-template-hub-pb
+  name: policy-mt-nohub-pb
 placementRef:
   apiGroup: apps.open-cluster-management.io
   kind: PlacementRule
-  name: policy-multiline-template-hub-plr
+  name: policy-mt-nohub-plr
 subjects:
-- apiGroup: policy.open-cluster-management.io
-  kind: Policy
-  name: policy-multiline-template-hub
+  - apiGroup: policy.open-cluster-management.io
+    kind: Policy
+    name: policy-mt-nohub
 ---
 apiVersion: apps.open-cluster-management.io/v1
 kind: PlacementRule
 metadata:
-  name: policy-multiline-template-hub-plr
+  name: policy-mt-nohub-plr
 spec:
   clusterSelector:
     matchExpressions: []

@@ -69,7 +69,8 @@ func InitFlags(flagset *flag.FlagSet) {
 		&IsHosted, "is_hosted", false,
 		"Whether is hosted mode or not",
 	)
-	flagset.StringVar(&UserNamespace, "user_namespace", "policy-test", "ns on hub to create root policy")
+	flagset.StringVar(&UserNamespace, "user_namespace",
+		"open-cluster-management-global-set", "ns on hub to create root policy")
 	flagset.StringVar(&ClusterNamespace, "cluster_namespace", "local-cluster", "cluster ns name")
 	flagset.StringVar(&ClusterNamespaceOnHub, "cluster_namespace_on_hub", "", "cluster ns name on hub")
 	flagset.StringVar(&OCMNamespace, "ocm_namespace", "open-cluster-management", "ns of ocm installation")

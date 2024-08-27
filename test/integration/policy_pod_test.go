@@ -62,7 +62,8 @@ var _ = Describe("GRC: [P1][Sev1][policy-grc] Test the policy-pod policy",
 			)
 			Expect(err).ToNot(HaveOccurred())
 
-			err = common.PatchPlacementRule(userNamespace, "placement-"+policyPodName)
+			// policyPodName is policy name
+			err = common.ApplyPlacement(userNamespace, policyPodName)
 			Expect(err).ToNot(HaveOccurred())
 
 			By("Checking that " + policyPodName + " exists on the Hub cluster")
@@ -149,5 +150,8 @@ var _ = Describe("GRC: [P1][Sev1][policy-grc] Test the policy-pod policy",
 					Expect(err).ToNot(HaveOccurred())
 				}
 			}
+
+			err = common.DeletePlacement(userNamespace, policyPodName)
+			Expect(err).ToNot(HaveOccurred())
 		})
 	})

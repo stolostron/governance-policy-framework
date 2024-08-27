@@ -1,7 +1,7 @@
 apiVersion: policy.open-cluster-management.io/v1
 kind: Policy
 metadata:
-  name: policyreport-metric-noncompliant
+  name: policyreport-metric-nc
 spec:
   remediationAction: inform
   disabled: false
@@ -10,7 +10,7 @@ spec:
         apiVersion: policy.open-cluster-management.io/v1
         kind: ConfigurationPolicy
         metadata:
-          name: policyreport-metric-noncompliant-policy-ns
+          name: policyreport-metric-nc-cp
         spec:
           remediationAction: inform
           severity: low
@@ -30,20 +30,20 @@ spec:
 apiVersion: policy.open-cluster-management.io/v1
 kind: PlacementBinding
 metadata:
-  name: binding-policyreport-metric-noncompliant
+  name: binding-policyreport-metric-nc
 placementRef:
-  name: placement-policyreport-metric-noncompliant
+  name: placement-policyreport-metric-nc
   kind: PlacementRule
   apiGroup: apps.open-cluster-management.io
 subjects:
-  - name: policyreport-metric-noncompliant
+  - name: policyreport-metric-nc
     kind: Policy
     apiGroup: policy.open-cluster-management.io
 ---
 apiVersion: apps.open-cluster-management.io/v1
 kind: PlacementRule
 metadata:
-  name: placement-policyreport-metric-noncompliant
+  name: placement-policyreport-metric-nc
 spec:
   clusterSelector:
     matchExpressions: []

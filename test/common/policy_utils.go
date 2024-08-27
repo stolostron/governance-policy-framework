@@ -6,6 +6,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"os"
 	"path/filepath"
 	"strings"
 
@@ -64,6 +65,77 @@ func PatchPlacementRule(namespace, name string) error {
 			"path": "/spec/clusterSelector",
 			"value":{"matchExpressions":[{"key": "name", "operator": "In", "values": ["`+ClusterNamespaceOnHub+`"]}]}
 		}]`,
+	)
+
+	return err
+}
+
+// ApplyPlacement function creates Placement and PlacementBinding so that it will
+// always only match the targetCluster.
+func ApplyPlacement(namespace, policyName string) error {
+	By("Apply Placement and PlacementBinding" + namespace + "/" +
+		"placement-" + policyName + "/" + "placement-binding-" + "policyName" +
+		" with clusterSelector {name: " + ClusterNamespaceOnHub + "}")
+
+	yaml := `
+apiVersion: policy.open-cluster-management.io/v1
+kind: PlacementBinding
+metadata:
+  name: placement-binding-$policyName
+placementRef:
+  name: placement-$policyName
+  kind: Placement
+  apiGroup: cluster.open-cluster-management.io
+subjects:
+  - name: $policyName
+    kind: Policy
+    apiGroup: policy.open-cluster-management.io
+---
+apiVersion: cluster.open-cluster-management.io/v1beta1
+kind: Placement
+metadata:
+  name: placement-$policyName
+spec:
+  predicates:
+    - requiredClusterSelector:
+        labelSelector:
+          matchExpressions:
+            - { key: name, operator: In, values: ["$clusterNamespaceOnHub"] }
+`
+
+	r := strings.NewReplacer("$policyName", policyName, "$clusterNamespaceOnHub", ClusterNamespaceOnHub)
+	completeYaml := r.Replace(yaml)
+
+	tmpDir := GinkgoT().TempDir()
+	path := filepath.Join(tmpDir, policyName+".yaml")
+
+	err := os.WriteFile(path, []byte(completeYaml), 0o666)
+	if err != nil {
+		return err
+	}
+
+	_, err = OcHub(
+		"apply", "-f", path, "-n", namespace,
+	)
+
+	return err
+}
+
+// DeletePlacement delete applied Placement and PlacementBinding
+func DeletePlacement(namespace, policyName string) error {
+	By("Delete Placement and PlacementBinding" + namespace + "/" +
+		"placement-" + policyName + "/" + "placement-binding-" + "policyName")
+
+	_, err := OcHub(
+		"delete", "placement.cluster.open-cluster-management.io", "placement-"+policyName, "-n", namespace,
+	)
+	if err != nil {
+		return err
+	}
+
+	_, err = OcHub(
+		"delete", "placementbinding.policy.open-cluster-management.io",
+		"placement-binding-"+policyName, "-n", namespace,
 	)
 
 	return err

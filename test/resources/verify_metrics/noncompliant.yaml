@@ -1,7 +1,7 @@
 apiVersion: policy.open-cluster-management.io/v1
 kind: Policy
 metadata:
-  name: policy-verify-metrics-noncompliant
+  name: policy-vm-non
 spec:
   remediationAction: inform
   disabled: false
@@ -10,7 +10,7 @@ spec:
         apiVersion: policy.open-cluster-management.io/v1
         kind: ConfigurationPolicy
         metadata:
-          name: policy-verify-metrics-noncompliant
+          name: policy-vm-non
         spec:
           remediationAction: inform
           severity: low
@@ -25,20 +25,20 @@ spec:
 apiVersion: policy.open-cluster-management.io/v1
 kind: PlacementBinding
 metadata:
-  name: binding-policy-verify-metrics-noncompliant
+  name: binding-policy-vm-non
 placementRef:
-  name: placement-policy-verify-metrics-noncompliant
+  name: placement-policy-vm-non
   kind: PlacementRule
   apiGroup: apps.open-cluster-management.io
 subjects:
-  - name: policy-verify-metrics-noncompliant
+  - name: policy-vm-non
     kind: Policy
     apiGroup: policy.open-cluster-management.io
 ---
 apiVersion: apps.open-cluster-management.io/v1
 kind: PlacementRule
 metadata:
-  name: placement-policy-verify-metrics-noncompliant
+  name: placement-policy-vm-non
 spec:
   clusterSelector:
     matchExpressions: []

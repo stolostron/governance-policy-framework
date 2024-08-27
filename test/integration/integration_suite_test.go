@@ -107,14 +107,16 @@ var _ = BeforeSuite(func(ctx SpecContext) {
 })
 
 var _ = AfterSuite(func(ctx SpecContext) {
-	By("Delete Namespace if needed")
-	_, err := common.OcHub(
-		"delete", "namespace", userNamespace,
-		"--ignore-not-found",
-	)
-	Expect(err).ToNot(HaveOccurred())
+	if userNamespace != "open-cluster-management-global-set" {
+		By("Delete Namespace if needed")
+		_, err := common.OcHub(
+			"delete", "namespace", userNamespace,
+			"--ignore-not-found",
+		)
+		Expect(err).ToNot(HaveOccurred())
+	}
 
-	_, err = common.OcHub(
+	_, err := common.OcHub(
 		"delete", "pod", "default",
 		"pod-that-does-not-exist", "--ignore-not-found",
 	)
