@@ -12,6 +12,7 @@ import (
 	corev1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"k8s.io/client-go/dynamic"
 	"k8s.io/client-go/kubernetes"
 	"k8s.io/klog"
@@ -102,19 +103,31 @@ var _ = BeforeSuite(func(ctx SpecContext) {
 	}
 	Expect(namespaces.Get(ctx, userNamespace, metav1.GetOptions{})).NotTo(BeNil())
 
+	By("Create ManagedClusterSetBinding")
+	err := applyManagedClusterSetBinding(ctx)
+	Expect(err).ToNot(HaveOccurred())
+
 	By("Setting up GitOps user")
 	common.GitOpsUserSetup(ctx, &gitopsUser)
 })
 
 var _ = AfterSuite(func(ctx SpecContext) {
-	By("Delete Namespace if needed")
-	_, err := common.OcHub(
-		"delete", "namespace", userNamespace,
-		"--ignore-not-found",
-	)
-	Expect(err).ToNot(HaveOccurred())
+	if userNamespace != "open-cluster-management-global-set" {
+		By("Delete Namespace if needed")
+		_, err := common.OcHub(
+			"delete", "namespace", userNamespace,
+			"--ignore-not-found",
+		)
+		Expect(err).ToNot(HaveOccurred())
 
-	_, err = common.OcHub(
+		_, err = common.OcHub(
+			"delete", "managedclustersetbinding", "global", "-n",
+			userNamespace, "--ignore-not-found",
+		)
+		Expect(err).ToNot(HaveOccurred())
+	}
+
+	_, err := common.OcHub(
 		"delete", "pod", "default",
 		"pod-that-does-not-exist", "--ignore-not-found",
 	)
@@ -156,4 +169,27 @@ func canCreateOpenshiftNamespaces() bool {
 	}
 
 	return canCreateOpenshiftNamespacesResult
+}
+
+func applyManagedClusterSetBinding(ctx SpecContext) error {
+	managedClusterSetBinding := unstructured.Unstructured{
+		Object: map[string]interface{}{
+			"apiVersion": common.GvrManagedClusterSetBinding.Group +
+				"/" + common.GvrManagedClusterSetBinding.Version,
+			"kind": "ManagedClusterSetBinding",
+			"metadata": map[string]interface{}{
+				"name": "global",
+			},
+			"spec": map[string]interface{}{
+				"clusterSet": "global",
+			},
+		},
+	}
+
+	_, err := common.ClientHubDynamic.Resource(common.GvrManagedClusterSetBinding).
+		Namespace(common.UserNamespace).Create(
+		ctx, &managedClusterSetBinding, metav1.CreateOptions{},
+	)
+
+	return err
 }

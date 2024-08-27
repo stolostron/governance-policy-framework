@@ -29,14 +29,14 @@ var _ = Describe(
 		)
 		policyEtcdEncryptionURL := policyCollectSCURL + policyEtcdEncryptionName + ".yaml"
 
-		It("stable/"+policyEtcdEncryptionName+" should be created on the Hub", func() {
+		It("stable/"+policyEtcdEncryptionName+" should be created on the Hub", func(ctx SpecContext) {
 			By("Creating the policy on the Hub")
 			_, err := utils.KubectlWithOutput(
 				"apply", "-f", policyEtcdEncryptionURL, "-n", userNamespace, "--kubeconfig="+kubeconfigHub,
 			)
 			Expect(err).ToNot(HaveOccurred())
 
-			err = common.PatchPlacementRule(userNamespace, "placement-"+policyEtcdEncryptionName)
+			err = common.ApplyPlacement(ctx, userNamespace, policyEtcdEncryptionName)
 			Expect(err).ToNot(HaveOccurred())
 
 			By("Checking that " + policyEtcdEncryptionName + " exists on the Hub cluster")
@@ -153,6 +153,9 @@ var _ = Describe(
 				[]byte(`[{"op": "remove", "path": "/spec/encryption"}]`),
 				metav1.PatchOptions{},
 			)
+			Expect(err).ToNot(HaveOccurred())
+
+			err = common.DeletePlacement(userNamespace, policyEtcdEncryptionName)
 			Expect(err).ToNot(HaveOccurred())
 		})
 	})

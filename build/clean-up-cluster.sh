@@ -38,7 +38,8 @@ function hub() {
             oc delete placements.cluster.open-cluster-management.io -n $ns --all --ignore-not-found
         done
     oc delete ns -l e2e=true --ignore-not-found
-    oc delete ns policy-test duplicatetest --ignore-not-found
+    oc delete ns policy-test --ignore-not-found
+    oc delete ns duplicatetest --ignore-not-found
 }
 
 function managed() {

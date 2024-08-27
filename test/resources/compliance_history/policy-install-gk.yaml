@@ -2,7 +2,7 @@ apiVersion: policy.open-cluster-management.io/v1
 kind: Policy
 metadata:
   name: compliance-api-install-gk
-  namespace: open-cluster-management-global-set
+  namespace: policy-test
 spec:
   disabled: false
   policy-templates:
@@ -29,20 +29,20 @@ spec:
           name: compliance-api-configure-gk
         spec:
           object-templates:
-          - complianceType: musthave
-            objectDefinition:
-              apiVersion: operator.gatekeeper.sh/v1alpha1
-              kind: Gatekeeper
-              metadata:
-                name: gatekeeper
-              spec:
-                validatingWebhook: Disabled
-                mutatingWebhook: Disabled
-                audit:
-                  auditInterval: 10s
-                  resources:
-                    limits:
-                      memory: 1Gi
+            - complianceType: musthave
+              objectDefinition:
+                apiVersion: operator.gatekeeper.sh/v1alpha1
+                kind: Gatekeeper
+                metadata:
+                  name: gatekeeper
+                spec:
+                  validatingWebhook: Disabled
+                  mutatingWebhook: Disabled
+                  audit:
+                    auditInterval: 10s
+                    resources:
+                      limits:
+                        memory: 1Gi
           remediationAction: enforce
           severity: critical
     - objectDefinition:
@@ -69,7 +69,7 @@ apiVersion: cluster.open-cluster-management.io/v1beta1
 kind: Placement
 metadata:
   name: compliance-api-install-gk
-  namespace: open-cluster-management-global-set
+  namespace: policy-test
 spec:
   predicates:
     - requiredClusterSelector:
@@ -82,7 +82,7 @@ apiVersion: policy.open-cluster-management.io/v1
 kind: PlacementBinding
 metadata:
   name: compliance-api-install-gk
-  namespace: open-cluster-management-global-set
+  namespace: policy-test
 placementRef:
   name: compliance-api-install-gk
   apiGroup: cluster.open-cluster-management.io

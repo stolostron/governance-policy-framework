@@ -15,7 +15,7 @@ import (
 
 var _ = Describe("GRC: [P1][Sev1][policy-grc] Test recreateOption", Ordered, Label("BVT"), func() {
 	const (
-		ns                  = "open-cluster-management-global-set"
+		ns                  = "policy-test"
 		policyInitialYAML   = "../resources/recreate_option/policy-initial-deployment.yaml"
 		policyUpdateYAML    = "../resources/recreate_option/policy-update-deployment.yaml"
 		policyConfigMapYAML = "../resources/recreate_option/policy-configmap.yaml"

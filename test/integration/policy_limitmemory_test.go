@@ -29,7 +29,7 @@ var _ = Describe("GRC: [P1][Sev1][policy-grc] Test the policy-limitmemory policy
 		)
 		policyLimitMemoryURL := policyCollectSCURL + policyLimitMemoryName + ".yaml"
 
-		It("stable/"+policyLimitMemoryName+" should be created on the Hub", func() {
+		It("stable/"+policyLimitMemoryName+" should be created on the Hub", func(ctx SpecContext) {
 			By("Creating the policy on the Hub")
 			_, err := utils.KubectlWithOutput(
 				"apply", "-f", policyLimitMemoryURL, "-n", userNamespace, "--kubeconfig="+kubeconfigHub,
@@ -62,7 +62,7 @@ var _ = Describe("GRC: [P1][Sev1][policy-grc] Test the policy-limitmemory policy
 			)
 			Expect(err).ToNot(HaveOccurred())
 
-			err = common.PatchPlacementRule(userNamespace, "placement-"+policyLimitMemoryName)
+			err = common.ApplyPlacement(ctx, userNamespace, policyLimitMemoryName)
 			Expect(err).ToNot(HaveOccurred())
 
 			By("Checking that " + policyLimitMemoryName + " exists on the Hub cluster")
@@ -155,5 +155,8 @@ var _ = Describe("GRC: [P1][Sev1][policy-grc] Test the policy-limitmemory policy
 					Expect(err).ToNot(HaveOccurred())
 				}
 			}
+
+			err = common.DeletePlacement(userNamespace, policyLimitMemoryName)
+			Expect(err).ToNot(HaveOccurred())
 		})
 	})

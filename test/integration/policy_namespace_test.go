@@ -24,14 +24,14 @@ var _ = Describe("GRC: [P1][Sev1][policy-grc] Test the policy-namespace policy",
 		const policyNamespaceName = "policy-namespace"
 		policyNamespaceURL := policyCollectCMURL + policyNamespaceName + ".yaml"
 
-		It("stable/"+policyNamespaceName+" should be created on the Hub", func() {
+		It("stable/"+policyNamespaceName+" should be created on the Hub", func(ctx SpecContext) {
 			By("Creating policy on hub")
 			_, err := utils.KubectlWithOutput(
 				"apply", "-f", policyNamespaceURL, "-n", userNamespace, "--kubeconfig="+kubeconfigHub,
 			)
 			Expect(err).ToNot(HaveOccurred())
 
-			err = common.PatchPlacementRule(userNamespace, "placement-"+policyNamespaceName)
+			err = common.ApplyPlacement(ctx, userNamespace, policyNamespaceName)
 			Expect(err).ToNot(HaveOccurred())
 
 			By("Checking that " + policyNamespaceName + " exists on the Hub cluster")
@@ -112,6 +112,9 @@ var _ = Describe("GRC: [P1][Sev1][policy-grc] Test the policy-namespace policy",
 				userNamespace, "--kubeconfig="+kubeconfigHub,
 				"--ignore-not-found",
 			)
+			Expect(err).ToNot(HaveOccurred())
+
+			err = common.DeletePlacement(userNamespace, policyNamespaceName)
 			Expect(err).ToNot(HaveOccurred())
 
 			err = clientManaged.CoreV1().Namespaces().Delete(context.TODO(), "prod", metav1.DeleteOptions{})

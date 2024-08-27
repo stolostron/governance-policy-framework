@@ -37,7 +37,7 @@ var _ = Describe(
 		)
 		policyCertificateURL := policyCollectSCURL + policyCertificateName + ".yaml"
 
-		It("stable/"+policyCertificateName+" should be created on the Hub", func() {
+		It("stable/"+policyCertificateName+" should be created on the Hub", func(ctx SpecContext) {
 			By("Creating the policy on the Hub")
 			_, err := utils.KubectlWithOutput(
 				"apply",
@@ -71,7 +71,7 @@ var _ = Describe(
 			)
 			Expect(err).ToNot(HaveOccurred())
 
-			err = common.PatchPlacementRule(userNamespace, "placement-"+policyCertificateName)
+			err = common.ApplyPlacement(ctx, userNamespace, policyCertificateName)
 			Expect(err).ToNot(HaveOccurred())
 
 			By("Checking that " + policyCertificateName + " exists on the Hub cluster")
@@ -157,6 +157,9 @@ var _ = Describe(
 			err = clientManaged.CoreV1().Namespaces().Delete(
 				context.TODO(), policyCertificateNSName, metav1.DeleteOptions{},
 			)
+			Expect(err).ToNot(HaveOccurred())
+
+			err = common.DeletePlacement(userNamespace, policyCertificateName)
 			Expect(err).ToNot(HaveOccurred())
 		})
 	})

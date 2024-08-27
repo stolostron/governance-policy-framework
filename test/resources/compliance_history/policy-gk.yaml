@@ -2,7 +2,7 @@ apiVersion: policy.open-cluster-management.io/v1
 kind: Policy
 metadata:
   name: compliance-api-gk
-  namespace: open-cluster-management-global-set
+  namespace: policy-test
   annotations:
     policy.open-cluster-management.io/categories: CM Configuration Management
     policy.open-cluster-management.io/controls: CM-2 Baseline Configuration
@@ -104,13 +104,13 @@ spec:
           parameters:
             message: "All configmaps must have a 'my-gk-test' label"
             labels:
-            - key: "my-gk-test"
+              - key: "my-gk-test"
 ---
 apiVersion: cluster.open-cluster-management.io/v1beta1
 kind: Placement
 metadata:
   name: compliance-api-gk
-  namespace: open-cluster-management-global-set
+  namespace: policy-test
 spec:
   predicates:
     - requiredClusterSelector:
@@ -123,7 +123,7 @@ apiVersion: policy.open-cluster-management.io/v1
 kind: PlacementBinding
 metadata:
   name: compliance-api-gk
-  namespace: open-cluster-management-global-set
+  namespace: policy-test
 placementRef:
   name: compliance-api-gk
   apiGroup: cluster.open-cluster-management.io

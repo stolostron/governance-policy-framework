@@ -43,9 +43,9 @@ placementRef:
   kind: PlacementRule
   name: dep-policy-deppol-plr
 subjects:
-- apiGroup: policy.open-cluster-management.io
-  kind: Policy
-  name: dep-policy-deppol
+  - apiGroup: policy.open-cluster-management.io
+    kind: Policy
+    name: dep-policy-deppol
 ---
 apiVersion: apps.open-cluster-management.io/v1
 kind: PlacementRule
