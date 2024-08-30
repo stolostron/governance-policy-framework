@@ -6,13 +6,14 @@ package integration
 import (
 	. "github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	policiesv1 "open-cluster-management.io/governance-policy-propagator/api/v1"
 
 	"github.com/stolostron/governance-policy-framework/test/common"
 )
 
-var _ = Describe("GRC: [P1][Sev1][policy-grc] Test .ManagedClusterLabels in hub templates", Ordered, func() {
-	const resourcesPath = "../resources/hub_templates_managedclusterlabels/"
+var _ = Describe("GRC: [P1][Sev1][policy-grc] Test hub template variables", Ordered, func() {
+	const resourcesPath = "../resources/hub_templates_variables/"
 
 	Describe("A single-value lookup should work", Ordered, Label("BVT"), func() {
 		const (
@@ -36,11 +37,15 @@ var _ = Describe("GRC: [P1][Sev1][policy-grc] Test .ManagedClusterLabels in hub 
 			common.DoRootComplianceTest(policyName, policiesv1.Compliant)
 		})
 
-		It("Checks that the configmap was created correctly on the managed cluster", func() {
-			value, err := common.OcManaged("get", "configmap", createdConfigmapName, "-n=default",
-				"-o=jsonpath={.data.testvalue}")
+		It("Checks that the configmap was created correctly on the managed cluster", func(ctx SpecContext) {
+			cm, err := clientManaged.CoreV1().ConfigMaps("default").Get(ctx, createdConfigmapName, metav1.GetOptions{})
 			Expect(err).ToNot(HaveOccurred())
-			Expect(value).To(MatchRegexp("Test Success"))
+
+			Expect(cm.Data["testvalue"]).To(Equal("Test Success"))
+			Expect(cm.Data["label"]).To(Equal("raleigh"))
+			Expect(cm.Data["annotation"]).To(Equal("NC"))
+			Expect(cm.Data["name"]).To(Equal(policyName))
+			Expect(cm.Data["namespace"]).To(Equal(common.UserNamespace))
 		})
 
 		AfterAll(func() {
