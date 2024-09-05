@@ -11,7 +11,6 @@ import (
 	. "github.com/onsi/gomega"
 	admissionv1 "k8s.io/api/admissionregistration/v1"
 	corev1 "k8s.io/api/core/v1"
-	k8serrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	policiesv1 "open-cluster-management.io/governance-policy-propagator/api/v1"
 	"open-cluster-management.io/governance-policy-propagator/test/utils"
@@ -257,74 +256,40 @@ var _ = Describe("RHACM4K-3055", Ordered, Label("policy-collection", "stable", "
 			return managedPlc
 		}, defaultTimeoutSeconds, 1).Should(BeNil())
 
-		utils.Pause(20)
-		out, err := utils.KubectlWithOutput(
-			"delete",
-			"Gatekeeper",
-			"gatekeeper",
-			"--kubeconfig="+kubeconfigManaged,
-			"--ignore-not-found",
-		)
-		if err != nil {
-			Expect(strings.TrimSpace(out)).To(Equal("error: the server doesn't have a resource type \"Gatekeeper\""))
-		}
+		const uninstallGKPolicyName = "uninstall-gk"
 
-		Eventually(func() interface{} {
-			out, _ := utils.KubectlWithOutput(
-				"get", "pods",
-				"-n", gatekeeperNamespace,
-				"--kubeconfig="+kubeconfigManaged,
-			)
-
-			return out
-			// k8s will respond with this even if the ns was deleted.
-		}, defaultTimeoutSeconds*4, 1).Should(ContainSubstring("No resources found"))
-
-		_, err = utils.KubectlWithOutput(
-			"delete",
-			"-n", "openshift-operators",
-			"subscriptions.operators.coreos.com",
-			"gatekeeper-operator-product",
-			"--kubeconfig="+kubeconfigManaged,
-			"--ignore-not-found",
+		By("Creating the " + uninstallGKPolicyName + " policy to uninstall Gatekeeper")
+		_, err = common.OcHub(
+			"apply",
+			"-n",
+			userNamespace,
+			"-f",
+			"../resources/gatekeeper/policy-uninstall-gk.yaml",
 		)
 		Expect(err).ToNot(HaveOccurred())
 
-		csvClient := clientManagedDynamic.Resource(common.GvrClusterServiceVersion)
-		csvList, err := csvClient.List(ctx, metav1.ListOptions{})
-		Expect(err).ToNot(HaveOccurred())
+		_ = verifyPolicyOnAllClusters(ctx, userNamespace, uninstallGKPolicyName, "Compliant", defaultTimeoutSeconds*2)
 
-		for _, csv := range csvList.Items {
-			csvName := csv.GetName()
-			if strings.HasPrefix(csvName, "gatekeeper-operator-product.") {
-				err := csvClient.Namespace(csv.GetNamespace()).Delete(ctx, csvName, metav1.DeleteOptions{})
-				if !k8serrors.IsNotFound(err) {
-					Expect(err).ToNot(HaveOccurred())
-				}
-			}
-		}
-
-		_, err = utils.KubectlWithOutput(
+		By("Delete the " + uninstallGKPolicyName + " policy")
+		_, err = common.OcHub(
 			"delete",
-			"customresourcedefinitions",
-			"gatekeepers.operator.gatekeeper.sh",
-			"--kubeconfig="+kubeconfigManaged,
-			"--ignore-not-found",
+			"-n",
+			userNamespace,
+			"-f",
+			"../resources/gatekeeper/policy-uninstall-gk.yaml",
 		)
+
 		Expect(err).ToNot(HaveOccurred())
 
-		out, _ = utils.KubectlWithOutput(
+		utils.Kubectl(
 			"delete",
 			"namespace",
 			gatekeeperNamespace,
 			"--kubeconfig="+kubeconfigManaged,
+			"--ignore-not-found",
 		)
-		Expect(out).To(Or(
-			ContainSubstring("namespace \""+gatekeeperNamespace+"\" deleted"),
-			ContainSubstring("namespaces \""+gatekeeperNamespace+"\" not found"),
-		))
 
-		_, err = utils.KubectlWithOutput(
+		utils.Kubectl(
 			"delete",
 			"events",
 			"-n", clusterNamespace,
@@ -332,32 +297,6 @@ var _ = Describe("RHACM4K-3055", Ordered, Label("policy-collection", "stable", "
 			"--kubeconfig="+kubeconfigManaged,
 			"--ignore-not-found",
 		)
-		Expect(err).ToNot(HaveOccurred())
-
-		// Restart the governance-policy-framework addon after Gatekeeper is uninstalled to disable the Gatekeeper
-		// status controller. This would happen automatically, but it can take a while since it relies on the health
-		// endpoint.
-		_, err = utils.KubectlWithOutput(
-			"-n",
-			ocmAddonNS,
-			"rollout",
-			"restart",
-			"deployment/governance-policy-framework",
-			"--kubeconfig="+kubeconfigManaged,
-		)
-		Expect(err).ToNot(HaveOccurred())
-
-		// Wait for the restart to complete.
-		_, err = utils.KubectlWithOutput(
-			"-n",
-			ocmAddonNS,
-			"rollout",
-			"status",
-			"deployment/governance-policy-framework",
-			"--timeout=180s",
-			"--kubeconfig="+kubeconfigManaged,
-		)
-		Expect(err).ToNot(HaveOccurred())
 
 		err = common.DeletePlacement(userNamespace, gatekeeperPolicyName)
 		Expect(err).ToNot(HaveOccurred())
