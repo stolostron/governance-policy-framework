@@ -1,8 +1,7 @@
 apiVersion: policy.open-cluster-management.io/v1
 kind: Policy
 metadata:
-  name: compliance-api-uninstall-gk
-  namespace: policy-test
+  name: uninstall-gk
 spec:
   disabled: false
   policy-templates:
@@ -10,7 +9,7 @@ spec:
         apiVersion: policy.open-cluster-management.io/v1
         kind: ConfigurationPolicy
         metadata:
-          name: compliance-api-uninstall-gk
+          name: uninstall-gk
         spec:
           object-templates-raw: |
             {{ if ne (default "" (lookup "apiextensions.k8s.io/v1" "CustomResourceDefinition" "" "gatekeepers.operator.gatekeeper.sh").metadata.name) "" }}
@@ -46,8 +45,7 @@ spec:
 apiVersion: cluster.open-cluster-management.io/v1beta1
 kind: Placement
 metadata:
-  name: compliance-api-uninstall-gk
-  namespace: policy-test
+  name: uninstall-gk
 spec:
   predicates:
     - requiredClusterSelector:
@@ -59,13 +57,12 @@ spec:
 apiVersion: policy.open-cluster-management.io/v1
 kind: PlacementBinding
 metadata:
-  name: compliance-api-uninstall-gk
-  namespace: policy-test
+  name: uninstall-gk
 placementRef:
-  name: compliance-api-uninstall-gk
+  name: uninstall-gk
   apiGroup: cluster.open-cluster-management.io
   kind: Placement
 subjects:
-  - name: compliance-api-uninstall-gk
+  - name: uninstall-gk
     apiGroup: policy.open-cluster-management.io
     kind: Policy

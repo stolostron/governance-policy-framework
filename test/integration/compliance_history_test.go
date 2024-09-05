@@ -27,6 +27,7 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	k8stypes "k8s.io/apimachinery/pkg/types"
+	"open-cluster-management.io/governance-policy-propagator/test/utils"
 
 	"github.com/stolostron/governance-policy-framework/test/common"
 )
@@ -197,7 +198,7 @@ var _ = Describe("GRC: [P1][Sev1][policy-grc] Test the compliance history API", 
 		_, err := common.OcHub(
 			"delete",
 			"-f",
-			"../resources/compliance_history/policy-uninstall-gk.yaml",
+			"../resources/gatekeeper/policy-uninstall-gk.yaml",
 			"--ignore-not-found",
 		)
 		Expect(err).ToNot(HaveOccurred())
@@ -405,7 +406,7 @@ var _ = Describe("GRC: [P1][Sev1][policy-grc] Test the compliance history API", 
 
 	It("Creates a policy with a Gatekeeper constraint", func(ctx context.Context) {
 		const installGKPolicyName = "compliance-api-install-gk"
-		const uninstallGKPolicyName = "compliance-api-uninstall-gk"
+		const uninstallGKPolicyName = "uninstall-gk"
 		const gkPrereqPolicyName = "compliance-api-gk-prereq"
 		const gkPolicyName = "compliance-api-gk"
 
@@ -430,8 +431,10 @@ var _ = Describe("GRC: [P1][Sev1][policy-grc] Test the compliance history API", 
 			By("Creating the " + uninstallGKPolicyName + " policy to uninstall Gatekeeper")
 			_, err = common.OcHub(
 				"apply",
+				"-n",
+				userNamespace,
 				"-f",
-				"../resources/compliance_history/policy-uninstall-gk.yaml",
+				"../resources/gatekeeper/policy-uninstall-gk.yaml",
 			)
 			Expect(err).ToNot(HaveOccurred())
 
@@ -440,10 +443,20 @@ var _ = Describe("GRC: [P1][Sev1][policy-grc] Test the compliance history API", 
 			By("Delete the " + uninstallGKPolicyName + " policy")
 			_, err = common.OcHub(
 				"delete",
+				"-n",
+				userNamespace,
 				"-f",
-				"../resources/compliance_history/policy-uninstall-gk.yaml",
+				"../resources/gatekeeper/policy-uninstall-gk.yaml",
 			)
 			Expect(err).ToNot(HaveOccurred())
+
+			utils.Kubectl(
+				"delete",
+				"namespace",
+				"openshift-gatekeeper-system",
+				"--kubeconfig="+kubeconfigManaged,
+				"--ignore-not-found",
+			)
 		})
 
 		By("Creating an invalid ConfigMap with a policy")
