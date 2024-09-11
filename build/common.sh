@@ -2,7 +2,7 @@
 
 BUILD_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" >/dev/null 2>&1 && pwd)"
 
-CHECK_RELEASES="$(cat ${DIR}/../CURRENT_VERSION; echo; cat ${DIR}/../CURRENT_SUPPORTED_VERSIONS)"
+CHECK_RELEASES="$(cat ${BUILD_DIR}/../CURRENT_VERSION; echo; cat ${BUILD_DIR}/../CURRENT_SUPPORTED_VERSIONS)"
 COMPONENT_ORG=stolostron
 DEFAULT_BRANCH=${DEFAULT_BRANCH:-"main"}
 UTIL_REPOS="pipeline multiclusterhub-operator"
