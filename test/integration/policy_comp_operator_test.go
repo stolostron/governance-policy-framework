@@ -157,20 +157,18 @@ func complianceScanTest(scanPolicyName string, scanPolicyURL string, scanName st
 		)
 
 		By("Removing ScanSettingBinding")
-		out, _ := utils.KubectlWithOutput(
+		utils.Kubectl(
 			"delete",
 			"-n",
 			"openshift-compliance",
 			"ScanSettingBinding",
 			scanName,
 			"--kubeconfig="+kubeconfigManaged,
+			"--ignore-not-found",
 		)
-		Expect(out).To(Or(
-			ContainSubstring("scansettingbinding.compliance.openshift.io \""+scanName+"\" deleted"),
-			ContainSubstring("scansettingbinding.compliance.openshift.io \""+scanName+"\" not found"),
-		))
+
 		By("Wait for ComplianceSuite to be deleted")
-		_, err = utils.KubectlWithOutput(
+		utils.Kubectl(
 			"delete",
 			"-n",
 			"openshift-compliance",
@@ -179,7 +177,6 @@ func complianceScanTest(scanPolicyName string, scanPolicyURL string, scanName st
 			"--kubeconfig="+kubeconfigManaged,
 			"--ignore-not-found",
 		)
-		Expect(err).ToNot(HaveOccurred())
 
 		utils.ListWithTimeoutByNamespace(
 			clientManagedDynamic,
