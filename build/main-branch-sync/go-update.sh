@@ -13,9 +13,8 @@
 
 set -e
 
-RELEASES="$(cat ${DIR}/../CURRENT_SUPPORTED_VERSIONS)"
-
 path="$(cd "$(dirname "${BASH_SOURCE[0]}")" >/dev/null 2>&1 && pwd)"
+RELEASES="$(cat ${path}/../../CURRENT_SUPPORTED_VERSIONS)"
 source ${path}/../common.sh
 exit_code=0
 URLS=""
@@ -35,10 +34,10 @@ RELEASE_BRANCHES="$(for BRANCH in ${RELEASES}; do echo release-${BRANCH}; done)"
 DEFAULT_BRANCH="${DEFAULT_BRANCH:-"main"}"
 
 # Fetch and parse lastest major Go version
-GO_VERSION="$(curl -s https://go.dev/VERSION?m=text | head -1)"
+GO_VERSION="${GO_VERSION:-"$(curl -s https://go.dev/VERSION?m=text | head -1)"}"
 GO_VERSION="${GO_VERSION#go}"
 GO_VERSION="${GO_VERSION%\.[0-9]}"
-if [[ "${GO_VERSION}" =~ "[0-9]+\.[0-9]+" ]]; then
+if ! [[ "${GO_VERSION}" =~ ^[0-9]+\.[0-9]+$ ]]; then
   echo "Failed to parse Go version. Found '${GO_VERSION}'."
   exit 1
 fi
@@ -76,7 +75,7 @@ for repo in $(
     ${GIT} checkout --quiet ${branch} || continue
 
     # Check relevant files for Go version
-    for FILE in ${p}/go.mod ${p}/.ci-operator.yaml ${p}/build/Dockerfile* ${p}/Dockerfile*; do
+    for FILE in ${p}/go.mod ${p}/.ci-operator.yaml "${p}"/build/Dockerfile* "${p}"/Dockerfile*; do
       if [[ ! -f "${FILE}" ]] || [[ -L "${FILE}" ]]; then
         echo "WARN: Skipping check for ${FILE} because it wasn't found"
         continue
