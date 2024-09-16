@@ -81,7 +81,19 @@ for repo in $(
         continue
       fi
       echo "INFO: Checking version in ${FILE}"
-      ${SED} -i -E "s/${GO_PATTERN}/\1${GO_VERSION}/" ${FILE}
+      ###### Set old releases to Go 1.21 due to controller-gen incompatibility with 1.22 #####
+      if [[ "$(basename ${FILE})" == "go.mod" ]]; then
+        if [[ "${branch##*-}" == "2.10" || "${branch##*-}" == "2.9" || "${branch##*-}" == "2.8" ]]; then
+          echo "WARN: Setting go.mod to 1.21 for ${branch}"
+          ${SED} -i -E "s/${GO_PATTERN}/\11.21.0/" ${p}/go.mod
+          ${SED} -i '/make coverage-verify/d' ${p}/.github/workflows/kind.yml || true
+        else
+          ${SED} -i -E "s/${GO_PATTERN}/\1${GO_VERSION}.0/" ${p}/go.mod
+        fi
+        ########################################
+      else
+        ${SED} -i -E "s/${GO_PATTERN}/\1${GO_VERSION}/" ${FILE}
+      fi
     done
 
     # Continue if no updates were made
