@@ -3,3 +3,5 @@ stolostron/kubernetes-dependency-watches
 stolostron/gatekeeper
 stolostron/gatekeeper-operator
 stolostron/iam-policy-controller
+stolostron/policy-cli
+stolostron/acm-cli
