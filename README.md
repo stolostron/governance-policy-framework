@@ -111,5 +111,5 @@ You can find installation instructions from [Open Cluster Management](https://op
 You can find more policies or contribute to the open repository, [policy-collection](https://github.com/stolostron/policy-collection).
 
 <!---
-Date: 07/03/2024
+Date: 09/18/2024
 -->
