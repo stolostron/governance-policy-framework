@@ -102,6 +102,7 @@ jobs:
         HOSTED: ${{ matrix.hosted }}
       run: |
         echo "::group::make e2e-dependencies"
+        ./build/download-clis.sh
         make e2e-dependencies
         echo "::endgroup::"
 
