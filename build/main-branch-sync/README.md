@@ -8,6 +8,7 @@
 
 1. Export the new `vX.Y.Z` version to be released to `NEW_RELEASE`.
 2. Run `upstream-release.sh`.
+3. Follow the directions printed to the screen by the script. 
 
 ## Refreshing builds with a no-op PR
 
@@ -25,21 +26,22 @@
   - `yq` installed
   - Write access to the repos
 
-1. Add or remove an owner to the `OWNERS` files of all repos (these can both be exported on the same run of the script):
+1. Add or remove an owner to the `OWNERS` files of all repos (these can both be exported on the same
+   run of the script):
    - To add an owner to all repos: `export NEW_OWNER=<github-user-id>`
    - To remove an owner from all repos: `export DELETE_OWNER=<github-user-id>`
 2. Change to the `main-branch-sync/` directory.
 3. Either:
    - Verify the repos listed in `repo.txt`
-   - Use the `fetch-repo-list.sh` script to dynamically fetch a list of repos for a team (the script defaults to team
-     `sig-policy` in org `open-cluster-management-io`):
+   - Use the `fetch-repo-list.sh` script to dynamically fetch a list of repos for a team (the script
+     defaults to team `sig-policy` in org `open-cluster-management-io`):
      ```shell
      export GITHUB_TOKEN=<github-token>
      export GITHUB_ORG=<org-name>       # Exporting this is mandatory for `update-owners.sh` if the value is not "stolostron"
      export REPOS=$(./fetch-repo-list.sh)
      ```
-4. Run the `update-owners.sh` script. (It will update the files in each repo and push a new branch to the repo with the
-   updates and then provide a URL to open the PRs.)
+4. Run the `update-owners.sh` script. (It will update the files in each repo and push a new branch
+   to the repo with the updates and then provide a URL to open the PRs.)
 
 ## Rotating CI secrets
 
