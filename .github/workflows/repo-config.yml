@@ -151,6 +151,9 @@ jobs:
             echo "::endgroup::"
           done
 
+          echo "List pods in all namespaces:"
+          kubectl get pods --all-namespaces
+
   slack:
     name: Post result to Slack
     needs: [checks, clusteradm]
@@ -163,8 +166,8 @@ jobs:
           SLACK_WEBHOOK_TYPE: INCOMING_WEBHOOK
           SLACK_WEBHOOK_URL: ${{ secrets.CODE_HEALTH_SLACK_WEBHOOK }}
           OCM_RESULT:
-            ${{ contains(needs.clusteradm.result, 'failure') && 'no_entry' || contains(needs.cluster.result,
-            'cancelled') && 'warning' || 'white_check_mark' }}
+            ${{ contains(needs.clusteradm.result, 'failure') && 'no_entry' ||
+            contains(needs.cluster.result, 'cancelled') && 'warning' || 'white_check_mark' }}
         with:
           payload: |
             {
