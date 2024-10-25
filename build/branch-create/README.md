@@ -7,10 +7,11 @@
   - SSH access to GitHub
   - Write access to the repos
   - Fork and clone your fork of the [`release`](https://github.com/openshift/release) repo
-- To disable fast-forwarding for GRC, set the `FAST_FORWARD` GitHub Actions variable in this repository 
-  to "false". (This is not necessary when moving to a new release version.)
+- To disable fast-forwarding for GRC, set the `FAST_FORWARD` GitHub Actions variable in this
+  repository to "false". (This is not necessary when moving to a new release version.)
 
-1. Update the version information at the base of the repo (Do not merge this until step 2 is merged.):
+1. Update the version information at the base of the repo (Do not merge this until step 2 is
+   merged.):
    ```shell
    OLD_VERSION=$(cat CURRENT_VERSION)
    printf X.Y > CURRENT_VERSION
@@ -23,8 +24,7 @@
    - Update the `CURRENT_VERSION` file to the new release version
    - Update `CURRENT_SUPPORTED_VERSION` with the new set of supported versions
 2. Update existing and create new Prow configurations for the new version (see
-   [CICD docs](https://github.com/stolostron/cicd-docs/blob/main/prow) for details on
-   Prow):
+   [CICD docs](https://github.com/stolostron/cicd-docs/blob/main/prow) for details on Prow):
    - Copy the absolute path to `update-release.sh`: `ls $PWD/build/branch-create/update-release.sh`
    - Change to the local directory for the [`release`](https://github.com/openshift/release) repo
    - Run the `update-release.sh` script using the path you copied.
@@ -41,11 +41,11 @@
        but applies them to the target repo, where they don't match up. These failures can be
        ignored, and failures that appear to be environmental should be re-run. Other failures (like
        if a unit test fails) should be investigated and resolved before approving and merging.
-   - Once all PRs are validated and merged, delete each repo's `release` branches that were created
-     (or delete your fork of the `release` repo) to prevent conflict with the next run of the
-     script.
-3. **After the prow configurations are updated, so that the prow jobs are triggered on the new branches**, 
-   merge the `CURRENT_VERSION` update. `sync.sh` will create the new `release-*` branches and pick up the 
-   new Prow configurations.
-4. Check that fast-forwarding is re-enabled (the `FAST_FORWARD` GitHub Actions variable in this 
+   - Once all PRs are validated and merged, delete the `ocm-new-grc-release-X.Y` branch for the
+     `release` repo that was created (or delete your fork of the `release` repo) to prevent conflict
+     with the next run of the script.
+3. **After the prow configurations are updated, so that the prow jobs are triggered on the new
+   branches**, merge the `CURRENT_VERSION` update. `sync.sh` will create the new `release-*`
+   branches and pick up the new Prow configurations.
+4. Check that fast-forwarding is re-enabled (the `FAST_FORWARD` GitHub Actions variable in this
    repository should be set to "true")
