@@ -33,10 +33,7 @@ if [[ -z "$(which yq)" ]]; then
   exit 1
 fi
 # Check for dependencies
-if [[ -z "$(which docker)" ]] || [[ "$(
-  docker ps &>/dev/null
-  echo $?
-)" != "0" ]]; then
+if [[ -z "$(which docker)" ]] || ! docker ps &>/dev/null; then
   echo "WARNING: You must have 'docker' installed and running to run 'make update'."
 fi
 
@@ -49,6 +46,14 @@ fi
 # Check Git status for current changes
 if [[ -n "$(git diff)" ]]; then
   echo "ERROR: Stash or commit the current changes to prevent losing your work."
+  exit 1
+fi
+
+# Check that the release repo is up-to-date
+RELEASE_UPSTREAM="$(git remote -v | grep push | awk '/openshift\/release/ {print $1}')"
+git fetch ${RELEASE_UPSTREAM} master
+if [[ "$(git rev-parse ${RELEASE_UPSTREAM}/master)" != "$(git rev-parse HEAD)" ]]; then
+  echo "ERROR: The current commit SHA doesn't match the latest upstream SHA. Update your local branch and switch to the latest commit to continue."
   exit 1
 fi
 
@@ -100,8 +105,7 @@ for dirpath in ${COMPONENT_LIST}; do
   NEW_FILENAME="${FILE_PREFIX}-release-${NEW_VERSION}.yaml"
 
   # Copy old release configuration to new release configuration
-  cp ${OLD_FILENAME} ${NEW_FILENAME}
-  if [[ "$?" == "0" ]]; then
+  if cp ${OLD_FILENAME} ${NEW_FILENAME}; then
     # Detect code type ("go" or "nodejs")
     CODE_TYPE=$(yq e '.build_root.image_stream_tag.tag' ${NEW_FILENAME} | grep -o '^[[:alpha:]]*')
 
@@ -127,7 +131,9 @@ for dirpath in ${COMPONENT_LIST}; do
 
     # Handle UI version tag in 'e2e-tests'
     oldver="${OLD_VERSION}" newver="${NEW_VERSION}" \
-      yq e '.tests[] |= select(.as=="e2e-tests").steps.test[].commands |= sub("latest-"+strenv(oldver), "latest-"+strenv(newver))' -i ${NEW_FILENAME}
+      yq e '.tests[] 
+      |= select(.as=="e2e-tests").steps.test[].commands 
+      |= sub("latest-"+strenv(oldver), "latest-"+strenv(newver))' -i ${NEW_FILENAME}
 
     # Add custom YAML to 'tests' stanza (uncomment code below and add the YAML strings to it)
     # if [[ "${CODE_TYPE}" == "go" ]]; then
@@ -146,6 +152,10 @@ for dirpath in ${COMPONENT_LIST}; do
   if [ -f "${RULES_CONFIG_FILE}" ] && [ "${EXISTING_CONFIG}" != "null" ]; then
     oldconfig="${EXISTING_CONFIG}" newver="${NEW_VERSION}" component="${COMPONENT}" \
       yq e '.branch-protection.orgs.stolostron.repos[strenv(component)] |= .branches["release-"+strenv(newver)]=env(oldconfig)' -i ${RULES_CONFIG_FILE}
+    oldver="${OLD_VERSION//./}" newver=${NEW_VERSION} newverclean="${NEW_VERSION//./}" component="${COMPONENT}" \
+      yq e '.branch-protection.orgs.stolostron.repos[strenv(component)].branches["release-"+strenv(newver)].required_status_checks.contexts[] 
+      |= select(contains("Red Hat Konflux")) 
+      |= sub("acm-"+strenv(oldver),"acm-"+strenv(newverclean))' -i ${RULES_CONFIG_FILE}
   else
     echo "* Skipping update for _prowconfig.yaml"
   fi
@@ -156,10 +166,7 @@ echo ""
 
 echo "===== Prow update / Create new branches ====="
 # Check for dependencies
-if [[ "$(
-  docker ps &>/dev/null
-  echo $?
-)" != "0" ]]; then
+if ! docker ps &>/dev/null; then
   echo "ERROR: Docker must be running to continue."
   exit 1
 fi
@@ -178,11 +185,19 @@ while read -r -p "Would you like to continue to run 'make update' and create bra
 done
 
 echo "* Running 'make update'"
-make update
-if [ $? -ne 0 ]; then
+
+# Set up Python virtual environment
+python3 -m venv venv/
+source venv/bin/activate
+python3 -m pip install pyyaml
+
+if ! make update; then
   echo "* 'make update' exited with an error. Check the output above."
   exit 1
 fi
+
+# Exit Python virtual environment
+deactivate
 echo ""
 
 # Create new PR with each component as a separate commit
