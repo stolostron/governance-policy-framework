@@ -147,8 +147,9 @@ jobs:
           for idx in {1..5}; do
             echo "::group::Wait for ManagedClusterAddons to be available (${idx}/5)"
             kubectl get managedclusteraddons --all-namespaces
-            kubectl wait managedclusteraddons --all-namespaces --all --for condition=Available=True && break || { [[ ${idx} == 5 ]] && exit 1; }
-            echo "::endgroup::"
+            kubectl wait managedclusteraddons --all-namespaces --all --for condition=Available=True &&
+              { echo "::endgroup::"; break; } || 
+              { [[ ${idx} == 5 ]] && exit 1; }
           done
 
           echo "List pods in all namespaces:"
