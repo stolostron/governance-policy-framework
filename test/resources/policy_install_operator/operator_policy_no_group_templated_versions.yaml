@@ -1,0 +1,28 @@
+apiVersion: policy.open-cluster-management.io/v1
+kind: Policy
+metadata:
+  name: test-op-43544
+  annotations:
+    policy.open-cluster-management.io/description: Test rhacm4k-43544
+spec:
+  disabled: false
+  remediationAction: inform
+  policy-templates:
+    - objectDefinition:
+        apiVersion: policy.open-cluster-management.io/v1beta1
+        kind: OperatorPolicy
+        metadata:
+          name: operator-policy-43544
+        spec:
+          remediationAction: inform
+          severity: medium
+          complianceType: musthave
+          subscription:
+            channel: stable-3.8
+            name: quay-operator
+            namespace: grcqeoptest-ns-43544
+            source: redhat-operators
+            sourceNamespace: openshift-marketplace
+          upgradeApproval: Automatic
+          versions:
+            - '{{ (lookup "operators.coreos.com/v1alpha1" "Subscription" "grcqeoptest-ns-43544" "quay-operator").status.installedCSV | default "no-value" }}'

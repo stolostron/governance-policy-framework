@@ -24,6 +24,8 @@ var _ = Describe("GRC: [P1][Sev1][policy-grc] Test install Operator",
 		const (
 			testNS                = "grcqeoptest-ns"
 			policyNoGroupYAML     = "../resources/policy_install_operator/operator_policy_no_group.yaml"
+			policyNoGroupTmplYAML = "../resources/policy_install_operator/" +
+				"operator_policy_no_group_templated_versions.yaml"
 			policyWithGroupYAML   = "../resources/policy_install_operator/operator_policy_with_group.yaml"
 			policyAllDefaultsYAML = "../resources/policy_install_operator/operator_policy_all_defaults.yaml"
 			cleanupPolicyYAML     = "../resources/policy_install_operator/clean-up-grcqeoptest-ns.yaml"
@@ -245,6 +247,58 @@ var _ = Describe("GRC: [P1][Sev1][policy-grc] Test install Operator",
 					)
 					g.Expect(opDeployment).NotTo(BeNil())
 				}, defaultTimeoutSeconds*4, 5).Should(Succeed())
+			})
+
+			It("RHACM4K-53812: Should be compliant with a templated versions array", func() {
+				By("Updating the OperatorPolicy to be inform and include the templated versions array")
+				_, err := common.OcHub("apply", "-f", policyNoGroupTmplYAML, "-n", userNamespace)
+				Expect(err).ToNot(HaveOccurred())
+
+				var opPolicy *unstructured.Unstructured
+
+				By("Waiting for the OperatorPolicy update to be processed")
+				Eventually(func(g Gomega) {
+					opPolicy = utils.GetWithTimeout(
+						clientManagedDynamic,
+						common.GvrOperatorPolicy,
+						"operator-policy"+noGroupSuffix,
+						clusterNamespace,
+						true,
+						defaultTimeoutSeconds,
+					)
+					g.Expect(opPolicy).NotTo(BeNil())
+
+					observedGeneration, _, _ := unstructured.NestedInt64(
+						opPolicy.Object, "status", "observedGeneration",
+					)
+					g.Expect(observedGeneration).To(Equal(opPolicy.GetGeneration()))
+				}, defaultTimeoutSeconds, 1).Should(Succeed())
+
+				By("Verifying the ClusterServiceVersionCompliant condition is true")
+				found := false
+				conditions, _, _ := unstructured.NestedSlice(opPolicy.Object, "status", "conditions")
+
+				for _, condition := range conditions {
+					conditionTyped, ok := condition.(map[string]interface{})
+					if !ok {
+						continue
+					}
+
+					conditionType, ok := conditionTyped["type"].(string)
+					if !ok || conditionType != "ClusterServiceVersionCompliant" {
+						continue
+					}
+
+					conditionStatus, ok := conditionTyped["status"].(string)
+					Expect(ok).To(BeTrue(), "Expected the condition status to be a string")
+					Expect(conditionStatus).To(Equal("True"))
+
+					found = true
+
+					break
+				}
+
+				Expect(found).To(BeTrue(), "Expected to find a ClusterServiceVersionCompliant condition")
 			})
 		})
 
