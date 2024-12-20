@@ -1,0 +1,58 @@
+apiVersion: policy.open-cluster-management.io/v1
+kind: Policy
+metadata:
+  name: policy-message-obj-selector
+spec:
+  disabled: false
+  remediationAction: inform
+  policy-templates:
+    - objectDefinition:
+        apiVersion: policy.open-cluster-management.io/v1
+        kind: ConfigurationPolicy
+        metadata:
+          name: policy-message-obj-selector-config
+        spec:
+          remediationAction: inform
+          pruneObjectBehavior: DeleteAll
+          object-templates:
+            - complianceType: musthave
+              objectSelector:
+                matchExpressions:
+                  - key: policy-message
+                    operator: Exists
+              objectDefinition:
+                apiVersion: v1
+                kind: Pod
+                metadata:
+                  namespace: policy-message-ns
+                spec:
+                  containers:
+                    - image: nginx:1.7.9
+                      name: nginx
+                      ports:
+                        - containerPort: 80
+---
+apiVersion: cluster.open-cluster-management.io/v1beta1
+kind: Placement
+metadata:
+  name: policy-message-obj-selector-p
+spec:
+  predicates:
+    - requiredClusterSelector:
+        labelSelector:
+          matchLabels:
+            feature.open-cluster-management.io/addon-config-policy-controller: "available"
+            feature.open-cluster-management.io/addon-governance-policy-framework: "available"
+---
+apiVersion: policy.open-cluster-management.io/v1
+kind: PlacementBinding
+metadata:
+  name: policy-message-obj-selector-pb
+placementRef:
+  name: policy-message-obj-selector-p
+  apiGroup: cluster.open-cluster-management.io
+  kind: Placement
+subjects:
+  - name: policy-message-obj-selector
+    apiGroup: policy.open-cluster-management.io
+    kind: Policy
