@@ -1,0 +1,54 @@
+apiVersion: policy.open-cluster-management.io/v1
+kind: Policy
+metadata:
+  name: policy-message-namespace-selector
+spec:
+  disabled: false
+  remediationAction: inform
+  policy-templates:
+    - objectDefinition:
+        apiVersion: policy.open-cluster-management.io/v1
+        kind: ConfigurationPolicy
+        metadata:
+          name: policy-message-ns-config
+        spec:
+          remediationAction: inform
+          namespaceSelector:
+            exclude: ["kube-*"]
+            include: ["policy-message-ns-1"]
+          object-templates:
+            - complianceType: musthave
+              objectDefinition:
+                apiVersion: v1
+                kind: Pod
+                spec:
+                  containers:
+                    - image: nginx:1.7.9
+                      name: nginx
+                      ports:
+                        - containerPort: 80
+---
+apiVersion: cluster.open-cluster-management.io/v1beta1
+kind: Placement
+metadata:
+  name: policy-message-namespace-selector-p
+spec:
+  predicates:
+    - requiredClusterSelector:
+        labelSelector:
+          matchLabels:
+            feature.open-cluster-management.io/addon-config-policy-controller: "available"
+            feature.open-cluster-management.io/addon-governance-policy-framework: "available"
+---
+apiVersion: policy.open-cluster-management.io/v1
+kind: PlacementBinding
+metadata:
+  name: policy-message-namespace-selector-pb
+placementRef:
+  name: policy-message-namespace-selector-p
+  apiGroup: cluster.open-cluster-management.io
+  kind: Placement
+subjects:
+  - name: policy-message-namespace-selector
+    apiGroup: policy.open-cluster-management.io
+    kind: Policy
