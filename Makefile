@@ -242,7 +242,6 @@ kind-delete-cluster:
 .PHONY: install-crds
 install-crds:
 	@echo installing crds on hub
-	kubectl apply -f https://raw.githubusercontent.com/$(CALLER_REPO)/multicloud-operators-subscription/$(RELEASE_BRANCH)/deploy/hub-common/apps.open-cluster-management.io_placementrules_crd.yaml --kubeconfig=$(PWD)/kubeconfig_$(HUB_CLUSTER_NAME)
 	kubectl apply -f https://raw.githubusercontent.com/open-cluster-management-io/api/$(OCM_API_COMMIT)/cluster/v1/0000_00_clusters.open-cluster-management.io_managedclusters.crd.yaml --kubeconfig=$(PWD)/kubeconfig_$(HUB_CLUSTER_NAME)
 	kubectl apply -f https://raw.githubusercontent.com/open-cluster-management-io/api/$(OCM_API_COMMIT)/cluster/v1beta1/0000_02_clusters.open-cluster-management.io_placements.crd.yaml --kubeconfig=$(PWD)/kubeconfig_$(HUB_CLUSTER_NAME)
 	kubectl apply -f https://raw.githubusercontent.com/open-cluster-management-io/api/$(OCM_API_COMMIT)/cluster/v1beta1/0000_03_clusters.open-cluster-management.io_placementdecisions.crd.yaml --kubeconfig=$(PWD)/kubeconfig_$(HUB_CLUSTER_NAME)
@@ -269,15 +268,17 @@ e2e-dependencies:
 K8SCLIENT ?= oc
 GINKGO = $(LOCAL_BIN)/ginkgo
 IS_HOSTED ?= false
+PATCH_DECISIONS ?= true
 MANAGED_CLUSTER_NAMESPACE ?= $(MANAGED_CLUSTER_NAME)
 
 .PHONY: e2e-test
 e2e-test: e2e-dependencies
-	$(GINKGO) -v $(TEST_ARGS) test/e2e -- -cluster_namespace=$(MANAGED_CLUSTER_NAMESPACE) -k8s_client=$(K8SCLIENT) -is_hosted=$(IS_HOSTED) -cluster_namespace_on_hub=$(CLUSTER_NAMESPACE_ON_HUB)
+	$(GINKGO) -v $(TEST_ARGS) test/e2e -- -cluster_namespace=$(MANAGED_CLUSTER_NAMESPACE) -k8s_client=$(K8SCLIENT) -is_hosted=$(IS_HOSTED) -patch_decisions=$(PATCH_DECISIONS) -cluster_namespace_on_hub=$(CLUSTER_NAMESPACE_ON_HUB)
 
 .PHONY: e2e-test-hosted
-e2e-test-hosted: CLUSTER_NAMESPACE_ON_HUB=cluster2 
-e2e-test-hosted: IS_HOSTED=true 
+e2e-test-hosted: CLUSTER_NAMESPACE_ON_HUB=cluster2
+e2e-test-hosted: IS_HOSTED=true
+e2e-test-hosted: PATCH_DECISIONS=false
 e2e-test-hosted: MANAGED_CLUSTER_NAMESPACE=cluster2-hosted
 e2e-test-hosted: e2e-test
 

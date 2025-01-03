@@ -29,8 +29,8 @@ func TemplateSyncErrors(labels ...string) bool {
 				)
 				Expect(err).ToNot(HaveOccurred())
 			})
-			It("Should be noncompliant with a mapping not found status", func() {
-				DoCreatePolicyTest(nonexistentPolicyKindYaml)
+			It("Should be noncompliant with a mapping not found status", func(ctx SpecContext) {
+				DoCreatePolicyTest(ctx, nonexistentPolicyKindYaml)
 				DoRootComplianceTest(nonexistentPolicyKindName, policiesv1.NonCompliant)
 
 				Eventually(
@@ -72,8 +72,8 @@ func TemplateSyncErrors(labels ...string) bool {
 				)
 				Expect(err).ToNot(HaveOccurred())
 			})
-			It("Should be noncompliant and report the reason the CR is invalid", func() {
-				DoCreatePolicyTest(invalidCRPolicyYaml)
+			It("Should be noncompliant and report the reason the CR is invalid", func(ctx SpecContext) {
+				DoCreatePolicyTest(ctx, invalidCRPolicyYaml)
 				DoRootComplianceTest(invalidCRPolicyName, policiesv1.NonCompliant)
 
 				Eventually(

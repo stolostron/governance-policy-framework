@@ -29,8 +29,8 @@ var _ = Describe("GRC: [P1][Sev1][policy-grc] Test hub template variables", Orde
 			Expect(err).ToNot(HaveOccurred())
 		})
 
-		It(policyName+" should be created on the Hub", func() {
-			common.DoCreatePolicyTest(policyYAML, common.GvrConfigurationPolicy)
+		It(policyName+" should be created on the Hub", func(ctx SpecContext) {
+			common.DoCreatePolicyTest(ctx, policyYAML, common.GvrConfigurationPolicy)
 		})
 
 		It(policyName+" should be Compliant", func() {
@@ -77,8 +77,8 @@ var _ = Describe("GRC: [P1][Sev1][policy-grc] Test hub template variables", Orde
 			createdConfigmapName = "mclabels-range-created"
 		)
 
-		It(policyName+" should be created on the Hub", func() {
-			common.DoCreatePolicyTest(policyYAML, common.GvrConfigurationPolicy)
+		It(policyName+" should be created on the Hub", func(ctx SpecContext) {
+			common.DoCreatePolicyTest(ctx, policyYAML, common.GvrConfigurationPolicy)
 		})
 
 		It(policyName+" should be Compliant", func() {

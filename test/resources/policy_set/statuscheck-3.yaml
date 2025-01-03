@@ -9,5 +9,5 @@ status:
   compliant: Compliant
   placement:
   - placementBinding: test-policyset-pb
-    placementRule: test-policyset-plr
+    placement: test-policyset-plr
   statusMessage: "All policies are reporting status"

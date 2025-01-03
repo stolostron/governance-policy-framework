@@ -30,23 +30,27 @@ kind: PlacementBinding
 metadata:
   name: cleanup-grcqeoptest-ns
 placementRef:
-  apiGroup: apps.open-cluster-management.io
-  kind: PlacementRule
+  apiGroup: cluster.open-cluster-management.io
+  kind: Placement
   name: cleanup-grcqeoptest-ns
 subjects:
   - apiGroup: policy.open-cluster-management.io
     kind: Policy
     name: cleanup-grcqeoptest-ns
 ---
-apiVersion: apps.open-cluster-management.io/v1
-kind: PlacementRule
+apiVersion: cluster.open-cluster-management.io/v1beta1
+kind: Placement
 metadata:
   name: cleanup-grcqeoptest-ns
 spec:
-  clusterSelector:
-    matchLabels:
-      feature.open-cluster-management.io/addon-config-policy-controller: "available"
-      feature.open-cluster-management.io/addon-governance-policy-framework: "available"
-  clusterConditions:
-    - type: ManagedClusterConditionAvailable
-      status: "True"
+  predicates:
+  - requiredClusterSelector:
+      labelSelector:
+        matchLabels:
+          feature.open-cluster-management.io/addon-config-policy-controller: "available"
+          feature.open-cluster-management.io/addon-governance-policy-framework: "available"
+  tolerations:
+    - key: cluster.open-cluster-management.io/unreachable
+      operator: Exists
+    - key: cluster.open-cluster-management.io/unavailable
+      operator: Exists

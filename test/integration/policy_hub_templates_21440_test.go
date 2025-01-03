@@ -62,7 +62,7 @@ var _ = Describe(
 		})
 
 		It(policyName+" should be created on the Hub", func() {
-			common.DoCreatePolicyTest(policyYAML, common.GvrConfigurationPolicy)
+			common.DoCreatePolicyTest(ctx, policyYAML, common.GvrConfigurationPolicy)
 		})
 
 		It(policyName+" should be Compliant", func() {
