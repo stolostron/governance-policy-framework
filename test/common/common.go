@@ -86,8 +86,8 @@ func InitFlags(flagset *flag.FlagSet) {
 	flagset.IntVar(&DefaultTimeoutSeconds, "timeout_seconds", 30, "Timeout seconds for assertion")
 	flagset.BoolVar(
 		&ManuallyPatchDecisions, "patch_decisions", true,
-		"Whether to 'manually' patch PlacementRules with PlacementDecisions "+
-			"(set to false if the PlacementRule controller is running)",
+		"Whether to 'manually' patch Placements with PlacementDecisions "+
+			"(set to false if the Placement controller is running)",
 	)
 	flagset.StringVar(
 		&K8sClient, "k8s_client", "oc",
@@ -199,7 +199,9 @@ func oc(args ...string) (string, error) {
 		}
 	}
 
-	output, err := exec.Command(K8sClient, args...).Output()
+	k8sCmd := exec.Command(K8sClient, args...)
+
+	output, err := k8sCmd.Output()
 	if len(args) > 0 && printOutput {
 		klog.V(2).Infof("OC command output %s\n", output)
 	}
@@ -212,7 +214,25 @@ func oc(args ...string) (string, error) {
 			return string(output), nil
 		}
 
-		return string(output), errors.New(string(exitError.Stderr))
+		// Reformat error to include command and stderr output
+		err = fmt.Errorf(
+			"error running command '%s':\n %s: %s",
+			strings.Join(k8sCmd.Args, " "),
+			output,
+			exitError.Stderr,
+		)
+
+		return string(output), err
+	}
+
+	if err != nil {
+		// Reformat error to include command and stderr output
+		err = fmt.Errorf(
+			"error running command '%s':\n %s: %s",
+			strings.Join(k8sCmd.Args, " "),
+			output,
+			err.Error(),
+		)
 	}
 
 	return string(output), err
@@ -253,7 +273,6 @@ func OutputDebugInfo(testName string, kubeconfig string, additionalResources ...
 
 	resources := []string{
 		"policies.policy.open-cluster-management.io",
-		"placementrules.apps.open-cluster-management.io",
 		"placements.cluster.open-cluster-management.io",
 		"placementbindings.policy.open-cluster-management.io",
 	}
@@ -320,4 +339,27 @@ func CleanupHubNamespace(namespace string) {
 		DefaultTimeoutSeconds*6,
 		1,
 	).Should(BeTrue(), fmt.Sprintf("Namespace %s should be deleted.", namespace))
+}
+
+func ApplyManagedClusterSetBinding(ctx SpecContext) error {
+	managedClusterSetBinding := unstructured.Unstructured{
+		Object: map[string]interface{}{
+			"apiVersion": GvrManagedClusterSetBinding.Group +
+				"/" + GvrManagedClusterSetBinding.Version,
+			"kind": "ManagedClusterSetBinding",
+			"metadata": map[string]interface{}{
+				"name": "global",
+			},
+			"spec": map[string]interface{}{
+				"clusterSet": "global",
+			},
+		},
+	}
+
+	_, err := ClientHubDynamic.Resource(GvrManagedClusterSetBinding).
+		Namespace(UserNamespace).Create(
+		ctx, &managedClusterSetBinding, metav1.CreateOptions{},
+	)
+
+	return err
 }

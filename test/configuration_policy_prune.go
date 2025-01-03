@@ -4,6 +4,7 @@
 package test
 
 import (
+	"context"
 	"errors"
 
 	. "github.com/onsi/ginkgo/v2"
@@ -57,7 +58,7 @@ func ConfigPruneBehavior(labels ...string) bool {
 		}
 	}
 
-	pruneTestCreatedByPolicy := func(policyName, policyYaml string, cmShouldBeDeleted bool) {
+	pruneTestCreatedByPolicy := func(ctx context.Context, policyName, policyYaml string, cmShouldBeDeleted bool) {
 		clientManagedDynamic := NewKubeClientDynamic("", KubeconfigManaged, "")
 
 		var clientHostingDynamic dynamic.Interface
@@ -68,7 +69,7 @@ func ConfigPruneBehavior(labels ...string) bool {
 			clientHostingDynamic = NewKubeClientDynamic("", KubeconfigManaged, "")
 		}
 
-		DoCreatePolicyTest(policyYaml, GvrConfigurationPolicy)
+		DoCreatePolicyTest(ctx, policyYaml, GvrConfigurationPolicy)
 
 		DoRootComplianceTest(policyName, policiesv1.Compliant)
 
@@ -131,7 +132,7 @@ func ConfigPruneBehavior(labels ...string) bool {
 		)
 	}
 
-	pruneTestForegroundDeletion := func(policyName, policyYaml string) {
+	pruneTestForegroundDeletion := func(ctx context.Context, policyName, policyYaml string) {
 		clientManagedDynamic := NewKubeClientDynamic("", KubeconfigManaged, "")
 		clientHubDynamic := NewKubeClientDynamic("", KubeconfigHub, "")
 
@@ -143,7 +144,7 @@ func ConfigPruneBehavior(labels ...string) bool {
 			clientHostingDynamic = NewKubeClientDynamic("", KubeconfigManaged, "")
 		}
 
-		DoCreatePolicyTest(policyYaml, GvrConfigurationPolicy)
+		DoCreatePolicyTest(ctx, policyYaml, GvrConfigurationPolicy)
 
 		DoRootComplianceTest(policyName, policiesv1.Compliant)
 
@@ -242,7 +243,7 @@ func ConfigPruneBehavior(labels ...string) bool {
 		)
 	}
 
-	pruneTestInformPolicy := func(policyName, policyYaml string, cmShouldBeDeleted bool) {
+	pruneTestInformPolicy := func(ctx context.Context, policyName, policyYaml string, cmShouldBeDeleted bool) {
 		clientManagedDynamic := NewKubeClientDynamic("", KubeconfigManaged, "")
 
 		var clientHostingDynamic dynamic.Interface
@@ -253,7 +254,7 @@ func ConfigPruneBehavior(labels ...string) bool {
 			clientHostingDynamic = NewKubeClientDynamic("", KubeconfigManaged, "")
 		}
 
-		DoCreatePolicyTest(policyYaml, GvrConfigurationPolicy)
+		DoCreatePolicyTest(ctx, policyYaml, GvrConfigurationPolicy)
 
 		DoRootComplianceTest(policyName, policiesv1.Compliant)
 
@@ -328,7 +329,7 @@ func ConfigPruneBehavior(labels ...string) bool {
 		)
 	}
 
-	pruneTestEditedByPolicy := func(policyName, policyYaml string, cmShouldBeDeleted bool) {
+	pruneTestEditedByPolicy := func(ctx context.Context, policyName, policyYaml string, cmShouldBeDeleted bool) {
 		clientManagedDynamic := NewKubeClientDynamic("", KubeconfigManaged, "")
 
 		var clientHostingDynamic dynamic.Interface
@@ -365,7 +366,7 @@ func ConfigPruneBehavior(labels ...string) bool {
 			g.Expect(initialValue).ToNot(BeEmpty())
 		}, DefaultTimeoutSeconds, 1).Should(Succeed())
 
-		DoCreatePolicyTest(policyYaml, GvrConfigurationPolicy)
+		DoCreatePolicyTest(ctx, policyYaml, GvrConfigurationPolicy)
 
 		DoRootComplianceTest(policyName, policiesv1.Compliant)
 
@@ -447,18 +448,22 @@ func ConfigPruneBehavior(labels ...string) bool {
 			BeforeEach(cleanPolicy(policyName, policyYaml))
 			AfterAll(cleanPolicy(policyName, policyYaml))
 
-			It("Should delete the configmap created by a DeleteAll policy when the policy is deleted", func() {
-				pruneTestCreatedByPolicy(policyName, policyYaml, true)
-			})
-			It("Should not remove the ConfigurationPolicy while a relatedObject is terminating", func() {
-				pruneTestForegroundDeletion(policyName, policyYaml)
-			})
-			It("Should not delete the configmap when the policy is in inform mode", func() {
-				pruneTestInformPolicy(policyName, policyYaml, false)
-			})
-			It("Should delete the configmap edited by a DeleteAll policy when the policy is deleted", func() {
-				pruneTestEditedByPolicy(policyName, policyYaml, true)
-			})
+			It("Should delete the configmap created by a DeleteAll policy when the policy is deleted",
+				func(ctx SpecContext) {
+					pruneTestCreatedByPolicy(ctx, policyName, policyYaml, true)
+				})
+			It("Should not remove the ConfigurationPolicy while a relatedObject is terminating",
+				func(ctx SpecContext) {
+					pruneTestForegroundDeletion(ctx, policyName, policyYaml)
+				})
+			It("Should not delete the configmap when the policy is in inform mode",
+				func(ctx SpecContext) {
+					pruneTestInformPolicy(ctx, policyName, policyYaml, false)
+				})
+			It("Should delete the configmap edited by a DeleteAll policy when the policy is deleted",
+				func(ctx SpecContext) {
+					pruneTestEditedByPolicy(ctx, policyName, policyYaml, true)
+				})
 		})
 
 		Describe("Test DeleteIfCreated pruning", func() {
@@ -469,12 +474,12 @@ func ConfigPruneBehavior(labels ...string) bool {
 			AfterAll(cleanPolicy(policyName, policyYaml))
 
 			It("Should delete the configmap created by "+
-				"a DeleteIfCreated policy when the policy is deleted", func() {
-				pruneTestCreatedByPolicy(policyName, policyYaml, true)
+				"a DeleteIfCreated policy when the policy is deleted", func(ctx SpecContext) {
+				pruneTestCreatedByPolicy(ctx, policyName, policyYaml, true)
 			})
 			It("Should not delete the configmap edited by "+
-				"a DeleteIfCreated policy when the policy is deleted", func() {
-				pruneTestEditedByPolicy(policyName, policyYaml, false)
+				"a DeleteIfCreated policy when the policy is deleted", func(ctx SpecContext) {
+				pruneTestEditedByPolicy(ctx, policyName, policyYaml, false)
 			})
 		})
 
@@ -485,12 +490,14 @@ func ConfigPruneBehavior(labels ...string) bool {
 			BeforeEach(cleanPolicy(policyName, policyYaml))
 			AfterAll(cleanPolicy(policyName, policyYaml))
 
-			It("Should not delete the configmap created by a None policy when the policy is deleted", func() {
-				pruneTestCreatedByPolicy(policyName, policyYaml, false)
-			})
-			It("Should not delete the configmap edited by a None policy when the policy is deleted", func() {
-				pruneTestEditedByPolicy(policyName, policyYaml, false)
-			})
+			It("Should not delete the configmap created by a None policy when the policy is deleted",
+				func(ctx SpecContext) {
+					pruneTestCreatedByPolicy(ctx, policyName, policyYaml, false)
+				})
+			It("Should not delete the configmap edited by a None policy when the policy is deleted",
+				func(ctx SpecContext) {
+					pruneTestEditedByPolicy(ctx, policyName, policyYaml, false)
+				})
 		})
 
 		Describe("Test default pruning", func() {
@@ -501,12 +508,12 @@ func ConfigPruneBehavior(labels ...string) bool {
 			AfterAll(cleanPolicy(policyName, policyYaml))
 
 			It("Should not delete the configmap created by a policy that "+
-				"doesn't specify a Prune behavior when the policy is deleted", func() {
-				pruneTestCreatedByPolicy(policyName, policyYaml, false)
+				"doesn't specify a Prune behavior when the policy is deleted", func(ctx SpecContext) {
+				pruneTestCreatedByPolicy(ctx, policyName, policyYaml, false)
 			})
 			It("Should not delete the configmap edited by a policy that "+
-				"doesn't specify a Prune behavior when the policy is deleted", func() {
-				pruneTestEditedByPolicy(policyName, policyYaml, false)
+				"doesn't specify a Prune behavior when the policy is deleted", func(ctx SpecContext) {
+				pruneTestEditedByPolicy(ctx, policyName, policyYaml, false)
 			})
 		})
 	})

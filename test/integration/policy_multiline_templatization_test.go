@@ -4,7 +4,6 @@
 package integration
 
 import (
-	"context"
 	"fmt"
 
 	. "github.com/onsi/ginkgo/v2"
@@ -34,9 +33,7 @@ var _ = Describe(
 			configNamespace = "config-test"
 		)
 
-		ctx := context.TODO()
-
-		It("The ConfigMaps should be created on the Hub and Managed clusters", func() {
+		It("The ConfigMaps should be created on the Hub and Managed clusters", func(ctx SpecContext) {
 			for cluster, client := range map[string]kubernetes.Interface{
 				"hub":     clientHub,
 				"managed": clientManaged,
@@ -47,7 +44,7 @@ var _ = Describe(
 						ObjectMeta: metav1.ObjectMeta{Name: nsName},
 					}
 
-					_, err := client.CoreV1().Namespaces().Create(context.TODO(), namespace, metav1.CreateOptions{})
+					_, err := client.CoreV1().Namespaces().Create(ctx, namespace, metav1.CreateOptions{})
 					if !k8serrors.IsAlreadyExists(err) {
 						if nsName == userNamespace && cluster == "managed" {
 							createdUserNamespace = true
@@ -74,15 +71,15 @@ var _ = Describe(
 			}
 		})
 
-		It(policyHubName+" should be created on the Hub", func() {
-			common.DoCreatePolicyTest(policyHubYAML, common.GvrConfigurationPolicy)
+		It(policyHubName+" should be created on the Hub", func(ctx SpecContext) {
+			common.DoCreatePolicyTest(ctx, policyHubYAML, common.GvrConfigurationPolicy)
 		})
 
 		It(policyHubName+" should be Compliant", func() {
 			common.DoRootComplianceTest(policyHubName, policiesv1.Compliant)
 		})
 
-		It("The ConfigMaps on should be patched with the correct data", func() {
+		It("The ConfigMaps on should be patched with the correct data", func(ctx SpecContext) {
 			for cluster, client := range map[string]kubernetes.Interface{
 				"hub":     clientHub,
 				"managed": clientManaged,
@@ -109,15 +106,15 @@ var _ = Describe(
 			}
 		})
 
-		It(policyNoHubName+" should be created on the Hub", func() {
-			common.DoCreatePolicyTest(policyNoHubYAML, common.GvrConfigurationPolicy)
+		It(policyNoHubName+" should be created on the Hub", func(ctx SpecContext) {
+			common.DoCreatePolicyTest(ctx, policyNoHubYAML, common.GvrConfigurationPolicy)
 		})
 
 		It(policyNoHubName+" should be Compliant", func() {
 			common.DoRootComplianceTest(policyNoHubName, policiesv1.Compliant)
 		})
 
-		It("The ConfigMaps should be copied to the new namespace with the correct data", func() {
+		It("The ConfigMaps should be copied to the new namespace with the correct data", func(ctx SpecContext) {
 			for cluster, client := range map[string]kubernetes.Interface{
 				"hub":     clientHub,
 				"managed": clientManaged,
@@ -144,7 +141,7 @@ var _ = Describe(
 			}
 		})
 
-		AfterAll(func() {
+		AfterAll(func(ctx SpecContext) {
 			By("Deleting policies")
 			common.DoCleanupPolicy(policyHubYAML, common.GvrConfigurationPolicy)
 			common.DoCleanupPolicy(policyNoHubYAML, common.GvrConfigurationPolicy)

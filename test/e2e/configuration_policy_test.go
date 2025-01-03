@@ -9,7 +9,6 @@ import (
 	. "github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	"k8s.io/klog"
 	policiesv1 "open-cluster-management.io/governance-policy-propagator/api/v1"
 	"open-cluster-management.io/governance-policy-propagator/test/utils"
 
@@ -55,8 +54,8 @@ var _ = Describe("Test configuration policy inform", Ordered, func() {
 		const rolePolicyName string = "role-policy-musthave"
 		const rolePolicyYaml string = "../resources/configuration_policy/role-policy-musthave.yaml"
 		expectedStatusMsgs := []string{}
-		It("should be created on managed cluster", func() {
-			common.DoCreatePolicyTest(rolePolicyYaml, common.GvrConfigurationPolicy)
+		It("should be created on managed cluster", func(ctx SpecContext) {
+			common.DoCreatePolicyTest(ctx, rolePolicyYaml, common.GvrConfigurationPolicy)
 		})
 		It("the policy should be noncompliant", func() {
 			common.DoRootComplianceTest(rolePolicyName, policiesv1.NonCompliant)
@@ -168,8 +167,8 @@ var _ = Describe("Test configuration policy inform", Ordered, func() {
 		const rolePolicyName string = "role-policy-mustnothave"
 		const rolePolicyYaml string = "../resources/configuration_policy/role-policy-mustnothave.yaml"
 		expectedStatusMsgs := []string{}
-		It("should be created on managed cluster", func() {
-			common.DoCreatePolicyTest(rolePolicyYaml, common.GvrConfigurationPolicy)
+		It("should be created on managed cluster", func(ctx SpecContext) {
+			common.DoCreatePolicyTest(ctx, rolePolicyYaml, common.GvrConfigurationPolicy)
 		})
 		It("the policy should be compliant", func() {
 			common.DoRootComplianceTest(rolePolicyName, policiesv1.Compliant)
@@ -217,8 +216,8 @@ var _ = Describe("Test configuration policy inform", Ordered, func() {
 		const rolePolicyName string = "role-policy-mustonlyhave"
 		const rolePolicyYaml string = "../resources/configuration_policy/role-policy-mustonlyhave.yaml"
 		expectedStatusMsgs := []string{}
-		It("should be created on managed cluster", func() {
-			common.DoCreatePolicyTest(rolePolicyYaml, common.GvrConfigurationPolicy)
+		It("should be created on managed cluster", func(ctx SpecContext) {
+			common.DoCreatePolicyTest(ctx, rolePolicyYaml, common.GvrConfigurationPolicy)
 		})
 		It("the policy should be noncompliant", func() {
 			common.DoRootComplianceTest(rolePolicyName, policiesv1.NonCompliant)
@@ -349,8 +348,8 @@ var _ = Describe("Test configuration policy enforce", Ordered, func() {
 		const rolePolicyName string = "role-policy-musthave"
 		const rolePolicyYaml string = "../resources/configuration_policy/role-policy-musthave.yaml"
 		expectedStatusMsgs := []string{}
-		It("should be created on managed cluster", func() {
-			common.DoCreatePolicyTest(rolePolicyYaml, common.GvrConfigurationPolicy)
+		It("should be created on managed cluster", func(ctx SpecContext) {
+			common.DoCreatePolicyTest(ctx, rolePolicyYaml, common.GvrConfigurationPolicy)
 		})
 		It("the policy should be noncompliant", func() {
 			common.DoRootComplianceTest(rolePolicyName, policiesv1.NonCompliant)
@@ -374,25 +373,20 @@ var _ = Describe("Test configuration policy enforce", Ordered, func() {
 		})
 		It("should recreate the role if manually deleted", func() {
 			By("Deleting the role in default namespace on managed cluster")
-			klog.Info("deleting role")
 			del, err := common.OcManaged(
 				"delete", "role", "-n", "default", roleName,
 				"--ignore-not-found",
 			)
-			klog.Info(del)
+			GinkgoWriter.Println(del)
 			Expect(err).ToNot(HaveOccurred())
 
 			By("Checking if the role has been recreated")
-			klog.Info("checking for role")
 			Eventually(func() interface{} {
 				role, _ := clientManagedDynamic.Resource(common.GvrRole).Namespace("default").Get(
 					context.TODO(),
 					roleName,
 					metav1.GetOptions{},
 				)
-				if role != nil {
-					klog.Info(role)
-				}
 
 				return role
 			}, defaultTimeoutSeconds, 1).ShouldNot(BeNil())
@@ -416,8 +410,7 @@ var _ = Describe("Test configuration policy enforce", Ordered, func() {
 				"../resources/configuration_policy/role-policy-e2e-more.yaml",
 				"-n", "default",
 			)
-			klog.Info("patch more")
-			klog.Info(mismatch)
+			GinkgoWriter.Println(mismatch)
 			Expect(err).ToNot(HaveOccurred())
 			By("Checking if the role is not patched to match in 30s")
 			yamlRole := utils.ParseYaml("../resources/configuration_policy/role-policy-e2e-more.yaml")
@@ -430,7 +423,6 @@ var _ = Describe("Test configuration policy enforce", Ordered, func() {
 					true,
 					defaultTimeoutSeconds,
 				)
-				klog.Info(managedRole)
 
 				return managedRole.Object["rules"]
 			}, 30, 1).Should(utils.SemanticEqual(yamlRole.Object["rules"]))
@@ -445,8 +437,7 @@ var _ = Describe("Test configuration policy enforce", Ordered, func() {
 				"../resources/configuration_policy/role-policy-e2e-less.yaml",
 				"-n", "default",
 			)
-			klog.Info("patch less")
-			klog.Info(mismatch)
+			GinkgoWriter.Println(mismatch)
 			Expect(err).ToNot(HaveOccurred())
 			By("Checking if the role has been patched to match")
 			yamlRole := utils.ParseYaml("../resources/configuration_policy/role-policy-e2e.yaml")
@@ -459,7 +450,6 @@ var _ = Describe("Test configuration policy enforce", Ordered, func() {
 					true,
 					defaultTimeoutSeconds,
 				)
-				klog.Info(managedRole)
 
 				return managedRole.Object["rules"]
 			}, defaultTimeoutSeconds, 1).Should(utils.SemanticEqual(yamlRole.Object["rules"]))
@@ -484,8 +474,8 @@ var _ = Describe("Test configuration policy enforce", Ordered, func() {
 		const rolePolicyName string = "role-policy-mustnothave"
 		const rolePolicyYaml string = "../resources/configuration_policy/role-policy-mustnothave.yaml"
 		expectedStatusMsgs := []string{}
-		It("should be created on managed cluster", func() {
-			common.DoCreatePolicyTest(rolePolicyYaml, common.GvrConfigurationPolicy)
+		It("should be created on managed cluster", func(ctx SpecContext) {
+			common.DoCreatePolicyTest(ctx, rolePolicyYaml, common.GvrConfigurationPolicy)
 		})
 		It("the policy should be compliant", func() {
 			common.DoRootComplianceTest(rolePolicyName, policiesv1.Compliant)
@@ -562,8 +552,8 @@ var _ = Describe("Test configuration policy enforce", Ordered, func() {
 		const rolePolicyName string = "role-policy-mustonlyhave"
 		const rolePolicyYaml string = "../resources/configuration_policy/role-policy-mustonlyhave.yaml"
 		expectedStatusMsgs := []string{}
-		It("should be created on managed cluster", func() {
-			common.DoCreatePolicyTest(rolePolicyYaml, common.GvrConfigurationPolicy)
+		It("should be created on managed cluster", func(ctx SpecContext) {
+			common.DoCreatePolicyTest(ctx, rolePolicyYaml, common.GvrConfigurationPolicy)
 			expectedStatusMsgs = append(
 				[]string{"NonCompliant; violation - roles [role-policy-e2e] not found in namespace default"},
 				expectedStatusMsgs...,

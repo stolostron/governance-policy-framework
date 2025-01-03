@@ -12,6 +12,7 @@ import (
 
 	. "github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
+	k8serrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"k8s.io/apimachinery/pkg/runtime"
@@ -47,22 +48,22 @@ func GetClusterComplianceState(policyName, clusterName string) func(Gomega) inte
 	}
 }
 
-// Patches the clusterSelector of the specified PlacementRule so that it will
+// Patches the requiredClusterSelector of the specified Placement so that it will
 // always only match the targetCluster.
-func PatchPlacementRule(namespace, name string) error {
-	By("Patching PlacementRule " + namespace + "/" + name +
-		" with clusterSelector {name: " + ClusterNamespaceOnHub + "}")
+func PatchPlacement(namespace, name string) error {
+	By("Patching Placement " + namespace + "/" + name +
+		" with requiredClusterSelector {name: " + ClusterNamespaceOnHub + "}")
 
 	_, err := OcHub(
 		"patch",
 		"-n",
 		namespace,
-		"placementrule.apps.open-cluster-management.io",
+		"placements.cluster.open-cluster-management.io",
 		name,
 		"--type=json",
 		`-p=[{
 			"op": "replace",
-			"path": "/spec/clusterSelector",
+			"path": "/spec/predicates/0/requiredClusterSelector/labelSelector",
 			"value":{"matchExpressions":[{"key": "name", "operator": "In", "values": ["`+ClusterNamespaceOnHub+`"]}]}
 		}]`,
 	)
@@ -70,11 +71,50 @@ func PatchPlacementRule(namespace, name string) error {
 	return err
 }
 
+// CreatePlacementDecisionStatus creates a PlacementDecision for the specified
+// Placement and returns the created decision.
+func CreatePlacementDecision(ctx context.Context, namespace, placementName string) (*unstructured.Unstructured, error) {
+	pldName := placementName + "-1"
+
+	By("Creating PlacementDecision for Placement " + namespace + "/" + placementName)
+	placementDecision := unstructured.Unstructured{
+		Object: map[string]interface{}{
+			"apiVersion": GvrPlacementDecision.Group + "/" + GvrPlacementDecision.Version,
+			"kind":       "PlacementDecision",
+			"metadata": map[string]interface{}{
+				"name": pldName,
+				"labels": map[string]string{
+					"generated-by-policy-test":                     "",
+					"cluster.open-cluster-management.io/placement": placementName,
+				},
+			},
+		},
+	}
+
+	err := ClientHubDynamic.Resource(GvrPlacementDecision).Namespace(namespace).Delete(
+		ctx,
+		pldName,
+		metav1.DeleteOptions{},
+	)
+	if err != nil && !k8serrors.IsNotFound(err) {
+		return nil, err
+	}
+
+	decision, err := ClientHubDynamic.Resource(GvrPlacementDecision).Namespace(namespace).Create(
+		ctx, &placementDecision, metav1.CreateOptions{},
+	)
+	if err != nil {
+		return nil, err
+	}
+
+	return decision, nil
+}
+
 // ApplyPlacement function creates Placement and PlacementBinding so that it will
 // always only match the targetCluster.
 func ApplyPlacement(ctx SpecContext, namespace, policyName string) error {
-	By("Apply Placement and PlacementBinding" + namespace + "/" +
-		"placement-" + policyName + "/" + "placement-binding-" + "policyName" +
+	By("Apply Placement and PlacementBinding " + namespace + "/" +
+		"placement-" + policyName + "/" + "placement-binding-" + policyName +
 		" with clusterSelector {name: " + ClusterNamespaceOnHub + "}")
 
 	placement := unstructured.Unstructured{
@@ -144,11 +184,11 @@ func ApplyPlacement(ctx SpecContext, namespace, policyName string) error {
 
 // DeletePlacement delete applied Placement and PlacementBinding
 func DeletePlacement(namespace, policyName string) error {
-	By("Delete Placement and PlacementBinding" + namespace + "/" +
+	By("Delete Placement and PlacementBinding " + namespace + "/" +
 		"placement-" + policyName + "/" + "placement-binding-" + "policyName")
 
 	_, err := OcHub(
-		"delete", "placement.cluster.open-cluster-management.io", "placement-"+policyName,
+		"delete", "placements.cluster.open-cluster-management.io", "placement-"+policyName,
 		"-n", namespace, "--ignore-not-found",
 	)
 	if err != nil {
@@ -156,7 +196,7 @@ func DeletePlacement(namespace, policyName string) error {
 	}
 
 	_, err = OcHub(
-		"delete", "placementbinding.policy.open-cluster-management.io",
+		"delete", "placementbindings.policy.open-cluster-management.io",
 		"placement-binding-"+policyName, "-n", namespace, "--ignore-not-found",
 	)
 
@@ -165,16 +205,16 @@ func DeletePlacement(namespace, policyName string) error {
 
 // DoCreatePolicyTest runs usual assertions around creating a policy. It will
 // create the given policy file to the hub cluster, on the user namespace. It
-// also patches the PlacementRule with a PlacementDecision if required. It
+// also patches the Placement with a PlacementDecision if required. It
 // asserts that the policy was distributed to the managed cluster, and for any
 // templateGVRs supplied, it asserts that a policy template of that type (for
 // example ConfigurationPolicy) and the same name was created on the managed
 // cluster.
 //
 // It assumes that the given filename (stripped of an extension) matches the
-// name of the policy, and that the PlacementRule has the same name, with '-plr'
+// name of the policy, and that the Placement has the same name, with '-plr'
 // appended.
-func DoCreatePolicyTest(policyFile string, templateGVRs ...schema.GroupVersionResource) {
+func DoCreatePolicyTest(ctx context.Context, policyFile string, templateGVRs ...schema.GroupVersionResource) {
 	GinkgoHelper()
 
 	policyName := strings.TrimSuffix(filepath.Base(policyFile), filepath.Ext(policyFile))
@@ -190,13 +230,13 @@ func DoCreatePolicyTest(policyFile string, templateGVRs ...schema.GroupVersionRe
 	if ManuallyPatchDecisions {
 		plrName := policyName + "-plr"
 		By("Patching " + plrName + " with decision of cluster " + ClusterNamespaceOnHub)
-		plr := utils.GetWithTimeout(
-			ClientHubDynamic, GvrPlacementRule, plrName, UserNamespace, true, DefaultTimeoutSeconds,
-		)
-		plr.Object["status"] = utils.GeneratePlrStatus(ClusterNamespaceOnHub)
-		_, err := ClientHubDynamic.Resource(GvrPlacementRule).Namespace(UserNamespace).UpdateStatus(
-			context.TODO(),
-			plr,
+		pld, err := CreatePlacementDecision(ctx, UserNamespace, plrName)
+		Expect(err).ToNot(HaveOccurred())
+
+		pld.Object["status"] = utils.GeneratePldStatus("", "", ClusterNamespaceOnHub)
+		_, err = ClientHubDynamic.Resource(GvrPlacementDecision).Namespace(UserNamespace).UpdateStatus(
+			ctx,
+			pld,
 			metav1.UpdateOptions{},
 		)
 		Expect(err).ToNot(HaveOccurred())

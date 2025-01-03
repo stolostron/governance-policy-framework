@@ -12,7 +12,6 @@ import (
 	corev1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"k8s.io/client-go/dynamic"
 	"k8s.io/client-go/kubernetes"
 	"k8s.io/klog"
@@ -104,7 +103,7 @@ var _ = BeforeSuite(func(ctx SpecContext) {
 	Expect(namespaces.Get(ctx, userNamespace, metav1.GetOptions{})).NotTo(BeNil())
 
 	By("Create ManagedClusterSetBinding")
-	err := applyManagedClusterSetBinding(ctx)
+	err := common.ApplyManagedClusterSetBinding(ctx)
 	Expect(err).ToNot(HaveOccurred())
 
 	By("Setting up GitOps user")
@@ -112,6 +111,14 @@ var _ = BeforeSuite(func(ctx SpecContext) {
 })
 
 var _ = AfterSuite(func(ctx SpecContext) {
+	By("Cleaning up generated PlacementDecisions")
+	Expect(clientHubDynamic.Resource(common.GvrPlacementDecision).Namespace(userNamespace).DeleteCollection(
+		ctx,
+		metav1.DeleteOptions{},
+		metav1.ListOptions{
+			LabelSelector: "generated-by-policy-test",
+		})).To(Succeed())
+
 	if userNamespace != "open-cluster-management-global-set" {
 		By("Delete Namespace if needed")
 		_, err := common.OcHub(
@@ -169,27 +176,4 @@ func canCreateOpenshiftNamespaces() bool {
 	}
 
 	return canCreateOpenshiftNamespacesResult
-}
-
-func applyManagedClusterSetBinding(ctx SpecContext) error {
-	managedClusterSetBinding := unstructured.Unstructured{
-		Object: map[string]interface{}{
-			"apiVersion": common.GvrManagedClusterSetBinding.Group +
-				"/" + common.GvrManagedClusterSetBinding.Version,
-			"kind": "ManagedClusterSetBinding",
-			"metadata": map[string]interface{}{
-				"name": "global",
-			},
-			"spec": map[string]interface{}{
-				"clusterSet": "global",
-			},
-		},
-	}
-
-	_, err := common.ClientHubDynamic.Resource(common.GvrManagedClusterSetBinding).
-		Namespace(common.UserNamespace).Create(
-		ctx, &managedClusterSetBinding, metav1.CreateOptions{},
-	)
-
-	return err
 }

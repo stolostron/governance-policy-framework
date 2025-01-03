@@ -71,20 +71,22 @@ spec:
                     culpa qui officia deserunt mollit anim id est laborum.
 
 ---
-apiVersion: apps.open-cluster-management.io/v1
-kind: PlacementRule
+apiVersion: cluster.open-cluster-management.io/v1beta1
+kind: Placement
 metadata:
   name: policy-config-[ID]-placement
   namespace: default
   labels:
     grc-test: config-policy-performance
 spec:
-  clusterSelector:
-    matchExpressions:
-      - key: local-cluster
-        operator: In
-        values:
-          - "true"
+  predicates:
+  - requiredClusterSelector:
+      labelSelector:
+        matchExpressions:
+        - key: local-cluster
+          operator: In
+          values:
+            - "true"
 ---
 apiVersion: policy.open-cluster-management.io/v1
 kind: PlacementBinding
@@ -95,8 +97,8 @@ metadata:
     grc-test: config-policy-performance
 placementRef:
   name: policy-config-[ID]-placement
-  apiGroup: apps.open-cluster-management.io
-  kind: PlacementRule
+  apiGroup: cluster.open-cluster-management.io
+  kind: Placement
 subjects:
   - name: policy-config-[ID]
     apiGroup: policy.open-cluster-management.io

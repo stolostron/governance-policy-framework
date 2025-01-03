@@ -53,6 +53,12 @@ spec:
           matchLabels:
             feature.open-cluster-management.io/addon-config-policy-controller: "available"
             feature.open-cluster-management.io/addon-governance-policy-framework: "available"
+  tolerations:
+    - key: cluster.open-cluster-management.io/unreachable
+      operator: Exists
+    - key: cluster.open-cluster-management.io/unavailable
+      operator: Exists
+
 ---
 apiVersion: policy.open-cluster-management.io/v1
 kind: PlacementBinding

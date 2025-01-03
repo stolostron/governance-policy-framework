@@ -39,18 +39,25 @@ kind: PlacementBinding
 metadata:
   name: mclabels-fromcm-pol-pb
 placementRef:
-  apiGroup: apps.open-cluster-management.io
-  kind: PlacementRule
+  apiGroup: cluster.open-cluster-management.io
+  kind: Placement
   name: mclabels-fromcm-pol-plr
 subjects:
 - apiGroup: policy.open-cluster-management.io
   kind: Policy
   name: mclabels-fromcm-pol
 ---
-apiVersion: apps.open-cluster-management.io/v1
-kind: PlacementRule
+apiVersion: cluster.open-cluster-management.io/v1beta1
+kind: Placement
 metadata:
   name: mclabels-fromcm-pol-plr
 spec:
-  clusterSelector:
-    matchExpressions: []
+  predicates:
+  - requiredClusterSelector:
+      labelSelector:
+        matchExpressions: []
+  tolerations:
+    - key: cluster.open-cluster-management.io/unreachable
+      operator: Exists
+    - key: cluster.open-cluster-management.io/unavailable
+      operator: Exists

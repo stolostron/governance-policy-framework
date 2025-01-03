@@ -34,18 +34,25 @@ kind: PlacementBinding
 metadata:
   name: policy-multiline-temp-nohub-pb
 placementRef:
-  apiGroup: apps.open-cluster-management.io
-  kind: PlacementRule
+  apiGroup: cluster.open-cluster-management.io
+  kind: Placement
   name: policy-multiline-temp-nohub-plr
 subjects:
   - apiGroup: policy.open-cluster-management.io
     kind: Policy
     name: policy-multiline-temp-nohub
 ---
-apiVersion: apps.open-cluster-management.io/v1
-kind: PlacementRule
+apiVersion: cluster.open-cluster-management.io/v1beta1
+kind: Placement
 metadata:
   name: policy-multiline-temp-nohub-plr
 spec:
-  clusterSelector:
-    matchExpressions: []
+  predicates:
+  - requiredClusterSelector:
+      labelSelector:
+        matchExpressions: []
+  tolerations:
+    - key: cluster.open-cluster-management.io/unreachable
+      operator: Exists
+    - key: cluster.open-cluster-management.io/unavailable
+      operator: Exists

@@ -31,7 +31,6 @@ function hub() {
     echo "Hub: clean up"
     oc delete policies.policy.open-cluster-management.io --all-namespaces --all --ignore-not-found
     oc delete placementbindings.policy.open-cluster-management.io  --all-namespaces --all --ignore-not-found
-    oc delete placementrules.apps.open-cluster-management.io --all-namespaces --all --ignore-not-found
     # Don't clean up in all namespaces because the global-set placement shouldn't be deleted
     for ns in default policy-test e2e-rbac-test-1 e2e-rbac-test-2
         do
@@ -50,8 +49,8 @@ function managed() {
     oc delete secret -n default rsa-ca-sample-secret --ignore-not-found 
     oc delete clusterrolebinding -l e2e=true --ignore-not-found
     oc delete subscriptions.operators.coreos.com container-security-operator -n openshift-operators --ignore-not-found
-    oc delete csv -n openshift-operators `oc get -n openshift-operators csv -o jsonpath='{.items[?(@.spec.displayName=="Quay Container Security")].metadata.name}'` --ignore-not-found || true  # csv might not exist
-    oc delete csv -n openshift-operators `oc get -n openshift-operators csv -o jsonpath='{.items[?(@.spec.displayName=="Red Hat Quay Container Security Operator")].metadata.name}'` --ignore-not-found || true  # csv might not exist
+    oc delete csv -n openshift-operators "$(oc get -n openshift-operators csv -o jsonpath='{.items[?(@.spec.displayName=="Quay Container Security")].metadata.name}')" --ignore-not-found || true  # csv might not exist
+    oc delete csv -n openshift-operators "$(oc get -n openshift-operators csv -o jsonpath='{.items[?(@.spec.displayName=="Red Hat Quay Container Security Operator")].metadata.name}')" --ignore-not-found || true  # csv might not exist
     oc delete crd imagemanifestvulns.secscan.quay.redhat.com --ignore-not-found
     oc delete operatorgroup awx-resource-operator-operatorgroup -n default --ignore-not-found
     oc delete subscriptions.operators.coreos.com awx-resource-operator -n default --ignore-not-found
@@ -71,7 +70,7 @@ function managed() {
     delete_all_and_wait pods openshift-gatekeeper-system 0
     oc delete ns openshift-gatekeeper-system gatekeeper-system --ignore-not-found
     oc delete subscriptions.operators.coreos.com gatekeeper-operator-product -n openshift-operators --ignore-not-found
-    oc delete csv -n openshift-operators `oc get -n openshift-operators csv -o jsonpath='{.items[?(@.spec.displayName=="Gatekeeper Operator")].metadata.name}'` --ignore-not-found || true  # csv might not exist
+    oc delete csv -n openshift-operators "$(oc get -n openshift-operators csv -o jsonpath='{.items[?(@.spec.displayName=="Gatekeeper Operator")].metadata.name}')" --ignore-not-found || true  # csv might not exist
     oc delete ns openshift-gatekeeper-operator --ignore-not-found
     oc delete crd gatekeepers.operator.gatekeeper.sh --ignore-not-found
     oc delete validatingwebhookconfigurations.admissionregistration.k8s.io gatekeeper-validating-webhook-configuration --ignore-not-found
@@ -79,7 +78,7 @@ function managed() {
     # Compliance Operator clean up
     oc delete ScanSettingBinding -n openshift-compliance --all --ignore-not-found || true # ScanSettingBinding CRD might not exist
     RESOURCES=(ComplianceSuite ComplianceCheckResult ComplianceScan)
-    for RESOURCE in ${RESOURCES[@]}; do
+    for RESOURCE in "${RESOURCES[@]}"; do
         delete_all_and_wait $RESOURCE openshift-compliance 0
     done
     # only three pods should be left
@@ -87,7 +86,7 @@ function managed() {
     delete_all_and_wait ProfileBundle openshift-compliance 0
     oc delete subscriptions.operators.coreos.com compliance-operator -n openshift-compliance --ignore-not-found
     oc delete operatorgroup compliance-operator -n openshift-compliance --ignore-not-found
-    oc delete csv -n openshift-compliance `oc get -n openshift-compliance csv -o jsonpath='{.items[?(@.spec.displayName=="Compliance Operator")].metadata.name}'` --ignore-not-found || true  # csv might not exist
+    oc delete csv -n openshift-compliance "$(oc get -n openshift-compliance csv -o jsonpath='{.items[?(@.spec.displayName=="Compliance Operator")].metadata.name}')" --ignore-not-found || true  # csv might not exist
     oc delete ns openshift-compliance --ignore-not-found
     oc delete crd -l operators.coreos.com/compliance-operator.openshift-compliance --ignore-not-found
     # Clean up events in cluster ns
