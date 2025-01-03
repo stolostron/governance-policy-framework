@@ -4,8 +4,6 @@
 package test
 
 import (
-	"context"
-
 	. "github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -62,13 +60,13 @@ func PolicyOrdering(labels ...string) bool {
 
 	Describe("GRC: [P1][Sev1][policy-grc] Test policy ordering", Ordered, Label(labels...), func() {
 		Describe("Ordering via a dependency on a Policy", Ordered, func() {
-			BeforeAll(func() {
+			BeforeAll(func(ctx SpecContext) {
 				By("Creating the initial policy to use as a dependency")
-				DoCreatePolicyTest(initialPolicyYaml, GvrConfigurationPolicy)
+				DoCreatePolicyTest(ctx, initialPolicyYaml, GvrConfigurationPolicy)
 				DoRootComplianceTest(initialPolicyName, policiesv1.NonCompliant)
 
 				By("Creating the policy that depends on the initial policy")
-				DoCreatePolicyTest(policyWithDepYaml)
+				DoCreatePolicyTest(ctx, policyWithDepYaml)
 			})
 			It("Should be pending while the initial policy is non-compliant", func() {
 				DoRootComplianceTest(policyWithDepName, policiesv1.Pending)
@@ -85,13 +83,13 @@ func PolicyOrdering(labels ...string) bool {
 			AfterAll(cleanup)
 		})
 		Describe("Ordering via an extraDependency on a ConfigurationPolicy", Ordered, func() {
-			BeforeAll(func() {
+			BeforeAll(func(ctx SpecContext) {
 				By("Creating the initial policy to use as a dependency")
-				DoCreatePolicyTest(initialPolicyYaml, GvrConfigurationPolicy)
+				DoCreatePolicyTest(ctx, initialPolicyYaml, GvrConfigurationPolicy)
 				DoRootComplianceTest(initialPolicyName, policiesv1.NonCompliant)
 
 				By("Creating the policy that depends on the initial policy")
-				DoCreatePolicyTest(policyWithExtraDepYaml)
+				DoCreatePolicyTest(ctx, policyWithExtraDepYaml)
 			})
 			It("Should be pending while the initial policy is non-compliant", func() {
 				DoRootComplianceTest(policyWithExtraDepName, policiesv1.Pending)
@@ -108,13 +106,13 @@ func PolicyOrdering(labels ...string) bool {
 			AfterAll(cleanup)
 		})
 		Describe("IgnorePending should allow policies to be compliant when one template is pending", Ordered, func() {
-			BeforeAll(func() {
+			BeforeAll(func(ctx SpecContext) {
 				By("Creating the initial policy to use as a dependency")
-				DoCreatePolicyTest(initialPolicyYaml, GvrConfigurationPolicy)
+				DoCreatePolicyTest(ctx, initialPolicyYaml, GvrConfigurationPolicy)
 				DoRootComplianceTest(initialPolicyName, policiesv1.NonCompliant)
 
 				By("Creating the policy that depends on the initial policy")
-				DoCreatePolicyTest(ignorePendingYaml)
+				DoCreatePolicyTest(ctx, ignorePendingYaml)
 			})
 			It("Should be compliant overall", func() {
 				DoRootComplianceTest(ignorePendingName, policiesv1.Compliant)
@@ -128,7 +126,7 @@ func PolicyOrdering(labels ...string) bool {
 			AfterAll(cleanup)
 		})
 		Describe("Ordering via a dependency on a PolicySet", Ordered, func() {
-			It("Should create policyset with noncompliant status", func() {
+			It("Should create policyset with noncompliant status", func(ctx SpecContext) {
 				By("Creating the initial policy set to use as a dependency")
 
 				_, err := OcHub("apply", "-f", testPolicySetYaml, "-n", UserNamespace)
@@ -139,18 +137,17 @@ func PolicyOrdering(labels ...string) bool {
 				)
 				Expect(rootPolicy).NotTo(BeNil())
 
-				err = PatchPlacementRule(UserNamespace, testPolicySetName+"-plr")
+				err = PatchPlacement(UserNamespace, testPolicySetName+"-plr")
 				Expect(err).ToNot(HaveOccurred())
 
 				if ManuallyPatchDecisions {
 					By("Patching " + testPolicySetName + "-plr with decision of cluster " + ClusterNamespaceOnHub)
-					plr := utils.GetWithTimeout(
-						ClientHubDynamic, GvrPlacementRule, testPolicySetName+"-plr", UserNamespace,
-						true, DefaultTimeoutSeconds,
-					)
-					plr.Object["status"] = utils.GeneratePlrStatus(ClusterNamespaceOnHub)
-					_, err = ClientHubDynamic.Resource(GvrPlacementRule).Namespace(UserNamespace).UpdateStatus(
-						context.TODO(), plr, metav1.UpdateOptions{},
+					pld, err := CreatePlacementDecision(ctx, UserNamespace, testPolicySetName+"-plr")
+					Expect(err).ToNot(HaveOccurred())
+
+					pld.Object["status"] = utils.GeneratePldStatus("", "", ClusterNamespaceOnHub)
+					_, err = ClientHubDynamic.Resource(GvrPlacementDecision).Namespace(UserNamespace).UpdateStatus(
+						ctx, pld, metav1.UpdateOptions{},
 					)
 					Expect(err).ToNot(HaveOccurred())
 				}
@@ -184,9 +181,9 @@ func PolicyOrdering(labels ...string) bool {
 					return rootPlcSet.Object["status"]
 				}, DefaultTimeoutSeconds, 1).Should(utils.SemanticEqual(yamlPlc.Object["status"]))
 			})
-			It("Should be pending while the initial policy is non-compliant", func() {
+			It("Should be pending while the initial policy is non-compliant", func(ctx SpecContext) {
 				By("Creating the policy that depends on the initial policy")
-				DoCreatePolicyTest(plcWithDepOnSetYaml)
+				DoCreatePolicyTest(ctx, plcWithDepOnSetYaml)
 				DoRootComplianceTest(plcWithDepOnSetName, policiesv1.Pending)
 			})
 			It("Should become active after the initial policy is enforced", func() {

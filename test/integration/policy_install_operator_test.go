@@ -100,7 +100,7 @@ var _ = Describe("GRC: [P1][Sev1][policy-grc] Test install Operator",
 				_, err := common.OcHub("apply", "-f", policyNoGroupYAML, "-n", userNamespace)
 				Expect(err).ToNot(HaveOccurred())
 
-				err = common.PatchPlacementRule(userNamespace, policyNamePrefix+noGroupSuffix+"-plr")
+				err = common.PatchPlacement(userNamespace, policyNamePrefix+noGroupSuffix+"-plr")
 				Expect(err).ToNot(HaveOccurred())
 
 				By("Checking that it exists on the hub cluster")
@@ -358,7 +358,7 @@ var _ = Describe("GRC: [P1][Sev1][policy-grc] Test install Operator",
 			It(policyNamePrefix+withGroupSuffix+" should be created on the hub", func() {
 				_, err := common.OcHub("apply", "-f", policyWithGroupYAML, "-n", userNamespace)
 				Expect(err).ToNot(HaveOccurred())
-				err = common.PatchPlacementRule(userNamespace, policyNamePrefix+withGroupSuffix+"-plr")
+				err = common.PatchPlacement(userNamespace, policyNamePrefix+withGroupSuffix+"-plr")
 				Expect(err).ToNot(HaveOccurred())
 
 				By("Checking that it exists on the hub cluster")

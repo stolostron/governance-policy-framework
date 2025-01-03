@@ -8,5 +8,5 @@ spec:
 status:
   placement:
   - placementBinding: test-policyset-pb
-    placementRule: test-policyset-plr
+    placement: test-policyset-plr
   statusMessage: "Disabled policies: test-policy"

@@ -37,7 +37,7 @@ var _ = Describe("GRC: [P1][Sev1][policy-grc] Test diff generation",
 			)
 			Expect(err).ToNot(HaveOccurred())
 
-			err = common.PatchPlacementRule(userNamespace, "placement-"+policyConfigMapName)
+			err = common.PatchPlacement(userNamespace, "placement-"+policyConfigMapName)
 			Expect(err).ToNot(HaveOccurred())
 
 			By("Checking that " + policyConfigMapName + " exists on the Hub cluster")

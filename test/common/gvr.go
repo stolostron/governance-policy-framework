@@ -77,11 +77,6 @@ var (
 		Version:  "v1",
 		Resource: "placementbindings",
 	}
-	GvrPlacementRule = schema.GroupVersionResource{
-		Group:    "apps.open-cluster-management.io",
-		Version:  "v1",
-		Resource: "placementrules",
-	}
 	GvrSubscription = schema.GroupVersionResource{
 		Group:    "apps.open-cluster-management.io",
 		Version:  "v1",
@@ -171,5 +166,10 @@ var (
 		Group:    "cluster.open-cluster-management.io",
 		Version:  "v1beta1",
 		Resource: "placements",
+	}
+	GvrPlacementDecision = schema.GroupVersionResource{
+		Group:    "cluster.open-cluster-management.io",
+		Version:  "v1beta1",
+		Resource: "placementdecisions",
 	}
 )

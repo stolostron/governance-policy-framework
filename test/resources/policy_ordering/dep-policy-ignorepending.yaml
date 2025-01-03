@@ -57,18 +57,25 @@ kind: PlacementBinding
 metadata:
   name: dep-policy-ignorepending-pb
 placementRef:
-  apiGroup: apps.open-cluster-management.io
-  kind: PlacementRule
+  apiGroup: cluster.open-cluster-management.io
+  kind: Placement
   name: dep-policy-ignorepending-plr
 subjects:
 - apiGroup: policy.open-cluster-management.io
   kind: Policy
   name: dep-policy-ignorepending
 ---
-apiVersion: apps.open-cluster-management.io/v1
-kind: PlacementRule
+apiVersion: cluster.open-cluster-management.io/v1beta1
+kind: Placement
 metadata:
   name: dep-policy-ignorepending-plr
 spec:
-  clusterSelector:
-    matchExpressions: []
+  predicates:
+  - requiredClusterSelector:
+      labelSelector:
+        matchExpressions: []
+  tolerations:
+    - key: cluster.open-cluster-management.io/unreachable
+      operator: Exists
+    - key: cluster.open-cluster-management.io/unavailable
+      operator: Exists

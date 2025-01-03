@@ -37,17 +37,18 @@ metadata:
   name: binding-policy-pod-kind-field-filter
 placementRef:
   name: placement-policy-pod-kind-field-filter
-  kind: PlacementRule
-  apiGroup: apps.open-cluster-management.io
+  kind: Placement
+  apiGroup: cluster.open-cluster-management.io
 subjects:
   - name: policy-pod-kind-field-filter
     kind: Policy
     apiGroup: policy.open-cluster-management.io
 ---
-apiVersion: apps.open-cluster-management.io/v1
-kind: PlacementRule
+apiVersion: cluster.open-cluster-management.io/v1beta1
+kind: Placement
 metadata:
   name: placement-policy-pod-kind-field-filter
 spec:
-  clusterSelector:
-    matchExpressions: []
+  predicates:
+    - requiredLabelSelector:
+        matchExpressions: []

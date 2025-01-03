@@ -58,8 +58,8 @@ var _ = Describe(
 			Expect(err).ToNot(HaveOccurred())
 		})
 
-		It(policyName+" should be created on the Hub", func() {
-			common.DoCreatePolicyTest(policyYAML, common.GvrConfigurationPolicy)
+		It(policyName+" should be created on the Hub", func(ctx SpecContext) {
+			common.DoCreatePolicyTest(ctx, policyYAML, common.GvrConfigurationPolicy)
 		})
 
 		It(policyName+" should be Compliant", func() {

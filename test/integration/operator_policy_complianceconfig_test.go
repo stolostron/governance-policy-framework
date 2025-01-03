@@ -22,9 +22,9 @@ var _ = Describe("RHACM4K-48381 GRC: [P1][Sev1][policy-grc] Test OperatorPolicy 
 			operatorVersionInitial = "quay-operator.v3.8.14"
 		)
 
-		BeforeAll(func() {
+		BeforeAll(func(ctx SpecContext) {
 			By("Create policy " + policyName + " which contains " + operatorPolicyName)
-			common.DoCreatePolicyTest(policyPath, common.GvrOperatorPolicy)
+			common.DoCreatePolicyTest(ctx, policyPath, common.GvrOperatorPolicy)
 		})
 
 		AfterAll(func() {
@@ -133,9 +133,9 @@ var _ = Describe("RHACM4K-48382 GRC: [P1][Sev1][policy-grc] Test OperatorPolicy 
 			subscriptionNamespace = "grcqeoptest-ns-48382"
 		)
 
-		BeforeAll(func() {
+		BeforeAll(func(ctx SpecContext) {
 			By("Create policy " + policyName + " which contains " + operatorPolicyName)
-			common.DoCreatePolicyTest(policyPath, common.GvrOperatorPolicy)
+			common.DoCreatePolicyTest(ctx, policyPath, common.GvrOperatorPolicy)
 		})
 
 		AfterAll(func() {

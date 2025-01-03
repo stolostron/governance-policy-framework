@@ -108,17 +108,19 @@ metadata:
   name: binding-policy-gatekeeper-sample
 placementRef:
   name: placement-policy-gatekeeper-sample
-  kind: PlacementRule
-  apiGroup: apps.open-cluster-management.io
+  kind: Placement
+  apiGroup: cluster.open-cluster-management.io
 subjects:
 - name: policy-gatekeeper-sample
   kind: Policy
   apiGroup: policy.open-cluster-management.io
 ---
-apiVersion: apps.open-cluster-management.io/v1
-kind: PlacementRule
+apiVersion: cluster.open-cluster-management.io/v1beta1
+kind: Placement
 metadata:
   name: placement-policy-gatekeeper-sample
 spec:
-  clusterSelector:
-    matchExpressions: []
+  predicates:
+  - requiredClusterSelector:
+      labelSelector:
+        matchExpressions: []

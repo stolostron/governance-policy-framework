@@ -77,8 +77,8 @@ var _ = Describe(
 			}
 		})
 
-		BeforeEach(func() {
-			common.DoCreatePolicyTest(policyYAML, common.GvrConfigurationPolicy)
+		BeforeEach(func(ctx SpecContext) {
+			common.DoCreatePolicyTest(ctx, policyYAML, common.GvrConfigurationPolicy)
 		})
 
 		// Test parameter struct
