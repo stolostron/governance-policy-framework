@@ -1,0 +1,9 @@
+contentOrigin:
+  repofiles:
+    - /etc/yum.repos.d/ubi.repo
+packages: []
+arches:
+  - aarch64
+  - x86_64
+  - s390x
+  - ppc64le

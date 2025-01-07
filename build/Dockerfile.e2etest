@@ -40,7 +40,6 @@ RUN ./build/download-clis.sh
 
 RUN make e2e-dependencies
 
-RUN go mod vendor
 
 # Give write permissions for the directory
 RUN chmod -R go+w $GOPATH/src/github.com/stolostron/governance-policy-framework
