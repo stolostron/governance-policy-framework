@@ -119,12 +119,13 @@ for dirpath in ${COMPONENT_LIST}; do
       yq e '.promotion.to[0].disabled=true' -i ${NEW_FILENAME}
       # - For the 'main' branch:
       ver="${NEW_VERSION}" yq e '.promotion.to[0].name=strenv(ver)' -i ${FILE_PREFIX}-main.yaml
-      ver="${NEW_VERSION}" \
-        yq e '.tests[] |= select(.as=="git-fast-forward").steps.env.DESTINATION_BRANCH = "release-"+strenv(ver)' -i ${FILE_PREFIX}-main.yaml
-
       # - For the old version, re-enable promotion:
       yq e 'del(.promotion.to[0].disabled)' -i ${OLD_FILENAME}
     fi
+
+    # Update fast-forwarding on the main branch
+    ver="${NEW_VERSION}" \
+      yq e '.tests[] |= select(.as=="git-fast-forward").steps.env.DESTINATION_BRANCH = "release-"+strenv(ver)' -i ${FILE_PREFIX}-main.yaml
 
     # Update the 'latest-image-mirror' tests item
     ver="${NEW_VERSION}" yq e '.tests[] |= select(.as=="latest-image-mirror").steps.env.IMAGE_TAG="latest-"+env(ver)' -i ${NEW_FILENAME}
