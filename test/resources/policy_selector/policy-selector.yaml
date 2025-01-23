@@ -1,0 +1,49 @@
+apiVersion: policy.open-cluster-management.io/v1
+kind: Policy
+metadata:
+  name: policy-selector
+spec:
+  remediationAction: inform
+  disabled: false
+  policy-templates:
+    - objectDefinition:
+        apiVersion: policy.open-cluster-management.io/v1
+        kind: ConfigurationPolicy
+        metadata:
+          name: policy-selector
+        spec:
+          remediationAction: inform
+          severity: low
+          object-templates:
+            - objectSelector:
+                matchExpressions: []
+              complianceType: musthave
+              objectDefinition:
+                apiVersion: v1
+                kind: ConfigMap
+                metadata:
+                  name: '{{ if (contains "selector-config" .ObjectName) }}{{ .ObjectName }}{{ else }}{{ skipObject }}{{ end }}'
+                  namespace: policy-selector-test
+                data:
+                  this-is-me: '{{ .ObjectName }}'
+---
+apiVersion: policy.open-cluster-management.io/v1
+kind: PlacementBinding
+metadata:
+  name: policy-selector-pb
+placementRef:
+  apiGroup: apps.open-cluster-management.io
+  kind: PlacementRule
+  name: policy-selector-plr
+subjects:
+  - apiGroup: policy.open-cluster-management.io
+    kind: Policy
+    name: policy-selector
+---
+apiVersion: apps.open-cluster-management.io/v1
+kind: PlacementRule
+metadata:
+  name: policy-selector-plr
+spec:
+  clusterSelector:
+    matchExpressions: []
