@@ -34,7 +34,6 @@ func cleanupConfig(ctx context.Context, configMapName string, configMapCopyName 
 var _ = Describe(
 	"GRC: [P1][Sev2][policy-grc] Test that the text/template backport is included (21440)",
 	Ordered,
-	Label("policy-collection", "stable"),
 	func() {
 		const (
 			policyName        = "policy-hub-templates-21440"
@@ -43,9 +42,7 @@ var _ = Describe(
 			configMapCopyName = policyName + "-copy"
 		)
 
-		ctx := context.TODO()
-
-		It("The ConfigMap "+configMapName+" should be created on the Hub", func() {
+		It("The ConfigMap "+configMapName+" should be created on the Hub", func(ctx SpecContext) {
 			cleanupConfig(ctx, configMapName, configMapCopyName)
 
 			configMap := &corev1.ConfigMap{
@@ -69,7 +66,8 @@ var _ = Describe(
 			common.DoRootComplianceTest(policyName, policiesv1.Compliant)
 		})
 
-		It("The ConfigMap "+configMapCopyName+" should have been created on the managed cluster", func() {
+		It("The ConfigMap "+configMapCopyName+
+			" should have been created on the managed cluster", func(ctx SpecContext) {
 			By("Checking the copied ConfigMap")
 			Eventually(
 				func() string {
@@ -87,7 +85,7 @@ var _ = Describe(
 			).Should(Equal("redhat.com"))
 		})
 
-		AfterAll(func() {
+		AfterAll(func(ctx SpecContext) {
 			common.DoCleanupPolicy(policyYAML, common.GvrConfigurationPolicy)
 			cleanupConfig(ctx, configMapName, configMapCopyName)
 		})
