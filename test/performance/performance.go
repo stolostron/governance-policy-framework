@@ -470,7 +470,7 @@ func main() {
 	}
 
 	prDeletionOutput, err := exec.Command(
-		"kubectl", "delete", "placementrules", "-l",
+		"kubectl", "delete", "placement", "-l",
 		"grc-test=config-policy-performance",
 		"--ignore-not-found",
 	).CombinedOutput()

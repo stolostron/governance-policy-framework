@@ -21,9 +21,9 @@ var _ = Describe("GRC: [P1][Sev1][policy-grc] Test operatorpolicy errors",
 			subscriptionNamespace = "grcqeoptest-ns-43568"
 		)
 
-		BeforeAll(func() {
+		BeforeAll(func(ctx SpecContext) {
 			By("Create policy " + policyName + " which contains " + operatorPolicyName)
-			common.DoCreatePolicyTest(policyPath, common.GvrOperatorPolicy)
+			common.DoCreatePolicyTest(ctx, policyPath, common.GvrOperatorPolicy)
 		})
 
 		AfterAll(func() {

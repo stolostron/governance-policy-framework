@@ -36,18 +36,25 @@ kind: PlacementBinding
 metadata:
   name: cm-policy-prune-if-created-pb
 placementRef:
-  apiGroup: apps.open-cluster-management.io
-  kind: PlacementRule
+  apiGroup: cluster.open-cluster-management.io
+  kind: Placement
   name: cm-policy-prune-if-created-plr
 subjects:
 - apiGroup: policy.open-cluster-management.io
   kind: Policy
   name: cm-policy-prune-if-created
 ---
-apiVersion: apps.open-cluster-management.io/v1
-kind: PlacementRule
+apiVersion: cluster.open-cluster-management.io/v1beta1
+kind: Placement
 metadata:
   name: cm-policy-prune-if-created-plr
 spec:
-  clusterSelector:
-    matchExpressions: []
+  predicates:
+  - requiredClusterSelector:
+      labelSelector:
+        matchExpressions: []
+  tolerations:
+    - key: cluster.open-cluster-management.io/unreachable
+      operator: Exists
+    - key: cluster.open-cluster-management.io/unavailable
+      operator: Exists
