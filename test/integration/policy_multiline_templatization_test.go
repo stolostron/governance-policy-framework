@@ -22,7 +22,6 @@ import (
 var _ = Describe(
 	"GRC: [P1][Sev1][policy-grc] Test multiline templatization with the object-templates-raw field",
 	Ordered,
-	Label("policy-collection", "stable"),
 	func() {
 		createdUserNamespace := false
 		const (
