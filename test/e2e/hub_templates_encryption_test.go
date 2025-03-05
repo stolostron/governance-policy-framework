@@ -56,7 +56,7 @@ var _ = Describe("Test Hub Template Encryption", Ordered, func() {
 			_, err = common.OcHub("apply", "-f", configMapYAML, "-n", userNamespace)
 			Expect(err).ToNot(HaveOccurred())
 
-			common.DoCreatePolicyTest(policyYAML, common.GvrConfigurationPolicy)
+			common.DoCreatePolicyTest(ctx, policyYAML, common.GvrConfigurationPolicy)
 		})
 
 		It("Should be compliant after enforcing it", func() {
@@ -210,6 +210,32 @@ var _ = Describe("Test Hub Template Encryption", Ordered, func() {
 		AfterAll(func() {
 			err := clientHubDynamic.Resource(common.GvrPolicy).Namespace(userNamespace).Delete(
 				ctx, policyName, metav1.DeleteOptions{},
+			)
+			if !k8serrors.IsNotFound(err) {
+				var exitError *exec.ExitError
+				ok := errors.As(err, &exitError)
+				if ok {
+					Expect(exitError.Stderr).To(BeNil())
+				} else {
+					Expect(err).ToNot(HaveOccurred())
+				}
+			}
+
+			err = clientHubDynamic.Resource(common.GvrPlacementBinding).Namespace(userNamespace).Delete(
+				ctx, policyName+"-pb", metav1.DeleteOptions{},
+			)
+			if !k8serrors.IsNotFound(err) {
+				var exitError *exec.ExitError
+				ok := errors.As(err, &exitError)
+				if ok {
+					Expect(exitError.Stderr).To(BeNil())
+				} else {
+					Expect(err).ToNot(HaveOccurred())
+				}
+			}
+
+			err = clientHubDynamic.Resource(common.GvrPlacement).Namespace(userNamespace).Delete(
+				ctx, policyName+"-plr", metav1.DeleteOptions{},
 			)
 			if !k8serrors.IsNotFound(err) {
 				var exitError *exec.ExitError

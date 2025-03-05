@@ -33,18 +33,25 @@ kind: PlacementBinding
 metadata:
   name: cert-policy-pb
 placementRef:
-  apiGroup: apps.open-cluster-management.io
-  kind: PlacementRule
+  apiGroup: cluster.open-cluster-management.io
+  kind: Placement
   name: cert-policy-plr
 subjects:
 - apiGroup: policy.open-cluster-management.io
   kind: Policy
   name: cert-policy
 ---
-apiVersion: apps.open-cluster-management.io/v1
-kind: PlacementRule
+apiVersion: cluster.open-cluster-management.io/v1beta1
+kind: Placement
 metadata:
   name: cert-policy-plr
 spec:
-  clusterSelector:
-    matchExpressions: []
+  predicates:
+  - requiredClusterSelector:
+      labelSelector:
+        matchExpressions: []
+  tolerations:
+    - key: cluster.open-cluster-management.io/unreachable
+      operator: Exists
+    - key: cluster.open-cluster-management.io/unavailable
+      operator: Exists
