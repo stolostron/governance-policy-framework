@@ -157,6 +157,11 @@ var (
 		Version:  "v1alpha1",
 		Resource: "clustermanagementaddons",
 	}
+	GvrManagedClusterAddOn = schema.GroupVersionResource{
+		Group:    "addon.open-cluster-management.io",
+		Version:  "v1alpha1",
+		Resource: "managedclusteraddons",
+	}
 	GvrManagedClusterSetBinding = schema.GroupVersionResource{
 		Group:    "cluster.open-cluster-management.io",
 		Version:  "v1beta2",

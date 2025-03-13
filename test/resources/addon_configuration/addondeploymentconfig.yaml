@@ -1,0 +1,20 @@
+apiVersion: addon.open-cluster-management.io/v1alpha1
+kind: AddOnDeploymentConfig
+metadata:
+  name: grc-addon-config
+spec:
+  nodePlacement:
+    nodeSelector:
+      "kubernetes.io/os": "linux"
+    tolerations:
+    - key: "dedicated"
+      operator: "Equal"
+      value: "something-else"
+      effect: "NoSchedule"
+  resourceRequirements:
+  - containerID: "*:*:*"
+    resources:
+      requests:
+        memory: 512Mi
+      limits:
+        memory: 1Gi

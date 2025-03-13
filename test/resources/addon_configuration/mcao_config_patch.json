@@ -1,0 +1,14 @@
+[
+  {
+    "op": "replace",
+    "path": "/spec/configs",
+    "value": [
+      {
+        "group": "addon.open-cluster-management.io",
+        "resource": "addondeploymentconfigs",
+        "name": "grc-addon-config",
+        "namespace": "grc-addon-config-test"
+      }
+    ]
+  }
+]
