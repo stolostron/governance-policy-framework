@@ -5,7 +5,6 @@ package integration
 
 import (
 	"context"
-	"fmt"
 
 	. "github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
@@ -22,6 +21,7 @@ func complianceScanTest(scanPolicyName string, scanPolicyURL string, scanName st
 	Describe("create and enforce the stable/"+scanPolicyName+" policy", Ordered, Label("BVT"), func() {
 		It("stable/"+scanPolicyName+" should be created on hub", func(ctx SpecContext) {
 			By("Creating policy on hub")
+
 			_, err := utils.KubectlWithOutput(
 				"apply",
 				"-f",
@@ -136,6 +136,7 @@ func complianceScanTest(scanPolicyName string, scanPolicyURL string, scanName st
 	})
 	AfterAll(func() {
 		By("Removing policy")
+
 		_, err := utils.KubectlWithOutput(
 			"delete",
 			"-f",
@@ -289,7 +290,7 @@ var _ = Describe("RHACM4K-2222 GRC: [P1][Sev1][policy-grc] "+
 			i := 0
 			Eventually(func(g Gomega) []corev1.Pod {
 				if i == 60*2 || i == 60*4 {
-					fmt.Println("compliance operator pod still not created, "+
+					GinkgoWriter.Println("compliance operator pod still not created, "+
 						"deleting subscription and let it recreate", i)
 					_, err := utils.KubectlWithOutput(
 						"get", "-n",
@@ -420,7 +421,7 @@ var _ = Describe("RHACM4K-2222 GRC: [P1][Sev1][policy-grc] "+
 			"--ignore-not-found",
 		)
 		if err != nil {
-			Expect(err).To(Equal("error: the server doesn't have a resource type \"ProfileBundle\""))
+			Expect(err.Error()).To(Equal("error: the server doesn't have a resource type \"ProfileBundle\""))
 		} else {
 			Expect(err).ToNot(HaveOccurred())
 		}

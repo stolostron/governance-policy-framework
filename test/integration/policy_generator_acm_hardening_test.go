@@ -4,7 +4,7 @@ package integration
 
 import (
 	"context"
-	"fmt"
+	"errors"
 
 	. "github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
@@ -110,9 +110,9 @@ var _ = Describe("GRC: [P1][Sev1][policy-grc] Test the ACM Hardening "+
 						return myerr
 					}
 					if !found {
-						return fmt.Errorf("failed to find the compliant field of the policy status")
+						return errors.New("failed to find the compliant field of the policy status")
 					} else if compliant != "Compliant" {
-						return fmt.Errorf("The policy is not compliant")
+						return errors.New("The policy is not compliant")
 					}
 				}
 

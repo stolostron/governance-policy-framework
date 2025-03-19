@@ -116,7 +116,7 @@ func ConfigPruneBehavior(labels ...string) bool {
 			g.Expect(err).ToNot(HaveOccurred())
 
 			return createdByPolicy
-		}, DefaultTimeoutSeconds, 5).Should(Equal(true), "createdByPolicy should be true")
+		}, DefaultTimeoutSeconds, 5).Should(BeTrue(), "createdByPolicy should be true")
 
 		DoCleanupPolicy(policyYaml, GvrConfigurationPolicy)
 
@@ -425,6 +425,7 @@ func ConfigPruneBehavior(labels ...string) bool {
 		"Test configuration policy pruning", Ordered, Label(labels...), func() {
 		cleanConfigMap := func() {
 			By("Removing any finalizers from the configmap")
+
 			_, _ = OcManaged("patch", "configmap", pruneConfigMapName, "-n", "default",
 				"--type=json", "-p", `[{"op":"remove", "path":"/metadata/finalizers"}]`)
 
