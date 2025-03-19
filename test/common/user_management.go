@@ -6,6 +6,7 @@ import (
 	"context"
 	cryptoRand "crypto/rand"
 	"encoding/hex"
+	"errors"
 	"fmt"
 	"math/rand"
 	"os"
@@ -66,14 +67,14 @@ func GetKubeConfig(server, username, password string) (string, error) {
 	// Create a temporary file for the kubeconfig that the `oc login` command will generate
 	f, err := os.CreateTemp("", "e2e-kubeconfig")
 	if err != nil {
-		return "", fmt.Errorf("failed to create the temporary kubeconfig")
+		return "", errors.New("failed to create the temporary kubeconfig")
 	}
 
 	kubeconfigPath := f.Name()
 	// Close the file immediately so that the `oc login` command can use the file
 	err = f.Close()
 	if err != nil {
-		return "", fmt.Errorf("failed to close the temporary kubeconfig")
+		return "", errors.New("failed to close the temporary kubeconfig")
 	}
 
 	ctx, cancel := context.WithTimeout(context.Background(), time.Second*20)

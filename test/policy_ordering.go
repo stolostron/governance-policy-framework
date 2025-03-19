@@ -130,6 +130,7 @@ func PolicyOrdering(labels ...string) bool {
 		Describe("Ordering via a dependency on a PolicySet", Ordered, func() {
 			It("Should create policyset with noncompliant status", func() {
 				By("Creating the initial policy set to use as a dependency")
+
 				_, err := OcHub("apply", "-f", testPolicySetYaml, "-n", UserNamespace)
 				Expect(err).ToNot(HaveOccurred())
 
@@ -167,6 +168,7 @@ func PolicyOrdering(labels ...string) bool {
 				Expect(plcSet).NotTo(BeNil())
 
 				By("Checking the status of policy set - NonCompliant")
+
 				yamlPlc := utils.ParseYaml("../resources/policy_ordering/dep-plcset-statuscheck.yaml")
 
 				Eventually(func() interface{} {
