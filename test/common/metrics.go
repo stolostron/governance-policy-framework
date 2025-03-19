@@ -39,6 +39,7 @@ func GetWithToken(url, authToken string) (body, status string, err error) {
 	if err != nil {
 		return "", "", err
 	}
+
 	defer resp.Body.Close()
 	bodyBytes, err := io.ReadAll(resp.Body)
 
