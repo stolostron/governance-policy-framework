@@ -7,6 +7,7 @@ import (
 	"errors"
 	"fmt"
 	"path/filepath"
+	"strconv"
 	"strings"
 
 	. "github.com/onsi/ginkgo/v2"
@@ -389,12 +390,12 @@ func DoHistoryUpdatedTest(policyName string, messages ...string) {
 		g.Expect(err).ShouldNot(HaveOccurred())
 		lenMessage := len(messages)
 		historyMsgs := []string{}
-		fmt.Println("Returned policy history:")
+		GinkgoWriter.Println("Returned policy history:")
 		for i, h := range history {
 			historyItem, _ := h.(map[string]interface{})
 			m, _, _ := unstructured.NestedString(historyItem, "message")
 			historyMsgs = append(historyMsgs, m)
-			fmt.Println(fmt.Sprint(i) + ": " + m)
+			GinkgoWriter.Println(strconv.Itoa(i) + ": " + m)
 		}
 		By("Check history length is same")
 		g.Expect(history).Should(HaveLen(lenMessage))
