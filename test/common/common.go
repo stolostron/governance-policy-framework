@@ -183,7 +183,7 @@ func LoadConfig(url, kubeconfig, context string) (*rest.Config, error) {
 		}
 	}
 
-	return nil, fmt.Errorf("could not create a valid kubeconfig")
+	return nil, errors.New("could not create a valid kubeconfig")
 }
 
 func oc(args ...string) (string, error) {
@@ -211,7 +211,7 @@ func oc(args ...string) (string, error) {
 			return string(output), nil
 		}
 
-		return string(output), fmt.Errorf(string(exitError.Stderr))
+		return string(output), errors.New(string(exitError.Stderr))
 	}
 
 	return string(output), err
@@ -286,8 +286,8 @@ func IsAtLeastVersion(minVersion string) bool {
 	klog.V(5).Info("OCP Version " + version)
 
 	// Convert to valid semantic versions by adding the "v" prefix
-	minSemVer := fmt.Sprintf("v%s", minVersion)
-	ocpSemVer := semver.MajorMinor(fmt.Sprintf("v%s", version))
+	minSemVer := "v" + minVersion
+	ocpSemVer := semver.MajorMinor("v" + version)
 
 	// Compare returns: 0 if ver1 == ver2, -1 if ver1 < ver2, or +1 if ver1 > ver2
 	return semver.Compare(ocpSemVer, minSemVer) >= 0
