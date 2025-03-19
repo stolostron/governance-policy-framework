@@ -289,13 +289,13 @@ var _ = Describe("GRC: [P1][Sev1][policy-grc] Test policyreport_info metric", Or
 				strings.TrimSpace(insightsToken),
 			)
 			if err != nil {
-				fmt.Println("ERROR GETTING METRIC:")
-				fmt.Println(err)
+				GinkgoWriter.Println("ERROR GETTING METRIC:")
+				GinkgoWriter.Println(err)
 
 				return err
 			}
-			fmt.Println("metric response received:")
-			fmt.Println(resp)
+			GinkgoWriter.Println("metric response received:")
+			GinkgoWriter.Println(resp)
 
 			return resp
 		}, 10*time.Minute, 1).Should(common.MatchMetricValue(insightsMetricName, policyLabel, "1"))
@@ -322,13 +322,14 @@ var _ = Describe("GRC: [P1][Sev1][policy-grc] Test policyreport_info metric", Or
 				strings.TrimSpace(insightsToken),
 			)
 			if err != nil {
-				fmt.Println("ERROR GETTING METRIC:")
-				fmt.Println(err)
+				GinkgoWriter.Println("ERROR GETTING METRIC:")
+				GinkgoWriter.Println(err)
 
 				return err
 			}
-			fmt.Println("metric response received:")
-			fmt.Println(resp)
+
+			GinkgoWriter.Println("metric response received:")
+			GinkgoWriter.Println(resp)
 
 			return resp
 		}, 10*time.Minute, 1).ShouldNot(common.MatchMetricValue(insightsMetricName, policyLabel, "1"))

@@ -60,12 +60,12 @@ func query(host string, token string, query string, insecure bool) (time.Time, f
 	}
 
 	trHeader := NewWithHeader(tr)
-	trHeader.Set("Authorization", fmt.Sprintf("Bearer %s", token))
+	trHeader.Set("Authorization", "Bearer "+token)
 
 	cl := &http.Client{Transport: trHeader}
 
 	client, err := api.NewClient(api.Config{
-		Address: fmt.Sprintf("https://%s", host),
+		Address: "https://" + host,
 		Client:  cl,
 	})
 	if err != nil {
@@ -353,7 +353,7 @@ func printCPUTable(data []metricData) {
 	fmt.Fprintln(table, "========\t==========\t====================\t"+
 		"====================\t===================\t===================\t")
 
-	for i := 0; i < len(data); i++ {
+	for i := range data {
 		fmt.Fprintf(table, "%s\t%d\t%s\t%s\t%s\t%s\t\n",
 			data[i].timestamp,
 			data[i].numPolicies,
@@ -380,7 +380,7 @@ func printSaturationTable(data []saturationData) {
 	fmt.Fprintln(table, "========\t==========\t=============\t=======\t"+
 		"=======\t==========\t===========\t=========\t=========\t===========\t")
 
-	for i := 0; i < len(data); i++ {
+	for i := range data {
 		fmt.Fprintf(table, "%s\t%d\t%d\t%d\t%d\t%d\t%d\t%d\t%d\t%d\t\n",
 			data[i].timestamp,
 			data[i].numPolicies,
@@ -467,19 +467,19 @@ func exportTable(cpuData []metricData, satData []saturationData, filename string
 	for i, entry := range cpuData {
 		line = []string{
 			entry.timestamp,
-			fmt.Sprintf("%d", entry.numPolicies),
+			strconv.Itoa(entry.numPolicies),
 			fmt.Sprintf("%.5f", entry.controllerAvg),
 			fmt.Sprintf("%.5f", entry.controllerMax),
 			fmt.Sprintf("%.5f", entry.apiserverAvg),
 			fmt.Sprintf("%.5f", entry.apiserverMax),
-			fmt.Sprint(satData[i].le1),
-			fmt.Sprint(satData[i].g1le3),
-			fmt.Sprint(satData[i].g3le9),
-			fmt.Sprint(satData[i].g9le10),
-			fmt.Sprint(satData[i].g10le15),
-			fmt.Sprint(satData[i].g15le30),
-			fmt.Sprint(satData[i].g30le60),
-			fmt.Sprint(satData[i].g60),
+			strconv.Itoa(satData[i].le1),
+			strconv.Itoa(satData[i].g1le3),
+			strconv.Itoa(satData[i].g3le9),
+			strconv.Itoa(satData[i].g9le10),
+			strconv.Itoa(satData[i].g10le15),
+			strconv.Itoa(satData[i].g15le30),
+			strconv.Itoa(satData[i].g30le60),
+			strconv.Itoa(satData[i].g60),
 		}
 		if err := w.Write(line); err != nil {
 			klog.Exitf("Error writing data to file; %s", err)
@@ -539,7 +539,7 @@ func main() {
 
 		batchFails := 0
 
-		for batchPlcs := 0; batchPlcs < nPerBatch; batchPlcs++ {
+		for range nPerBatch {
 			err = genUniquePolicy(path.Join(performanceDir, plcFilename), path.Join(policyDir, "current_policy.yaml"))
 			if err != nil {
 				klog.Exitf("Error patching policy with unique name: %s", err)
@@ -556,12 +556,13 @@ func main() {
 
 					tries--
 					if tries == 0 {
-						os.Exit(1)
+						klog.Fatal()
 					}
 				} else {
 					break
 				}
 			}
+
 			totalPlcs++
 		}
 

@@ -5,7 +5,7 @@
 # https://github.com/kubernetes-sigs/controller-tools/releases/latest
 CONTROLLER_GEN_VERSION := v0.14.0
 # https://github.com/kubernetes-sigs/kustomize/releases/latest
-KUSTOMIZE_VERSION := v5.3.0
+KUSTOMIZE_VERSION := v5.6.0
 # https://github.com/golangci/golangci-lint/releases/latest
 GOLANGCI_VERSION := v1.64.8
 # https://github.com/mvdan/gofumpt/releases/latest
@@ -13,7 +13,7 @@ GOFUMPT_VERSION := v0.6.0
 # https://github.com/daixiang0/gci/releases/latest
 GCI_VERSION := v0.13.4
 # https://github.com/securego/gosec/releases/latest
-GOSEC_VERSION := v2.19.0
+GOSEC_VERSION := v2.22.2
 # https://github.com/kubernetes-sigs/kubebuilder/releases/latest
 KBVERSION := 3.14.1
 # https://github.com/kubernetes/kubernetes/releases/latest
