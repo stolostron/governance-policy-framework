@@ -1,0 +1,62 @@
+apiVersion: policy.open-cluster-management.io/v1
+kind: Policy
+metadata:
+  name: config-standalone-addon
+  namespace: policy-test
+spec:
+  disabled: false
+  policy-templates:
+    - objectDefinition:
+        apiVersion: policy.open-cluster-management.io/v1
+        kind: ConfigurationPolicy
+        metadata:
+          name: config-standalone-addon
+        spec:
+          pruneObjectBehavior: DeleteAll
+          remediationAction: enforce
+          object-templates:
+            - complianceType: musthave
+              objectDefinition:
+                apiVersion: addon.open-cluster-management.io/v1alpha1
+                kind: ManagedClusterAddOn
+                metadata:
+                  name: governance-standalone-hub-templating
+                  namespace: local-cluster
+                spec:
+                  installNamespace: open-cluster-management-agent-addon
+---
+apiVersion: cluster.open-cluster-management.io/v1beta1
+kind: Placement
+metadata:
+  name: config-standalone-addon
+  namespace: policy-test
+spec:
+  tolerations:
+    - key: cluster.open-cluster-management.io/unreachable
+      operator: Exists
+    - key: cluster.open-cluster-management.io/unavailable
+      operator: Exists
+  clusterSets:
+    - global
+  predicates:
+    - requiredClusterSelector:
+        labelSelector:
+          matchExpressions:
+            - key: name
+              operator: In
+              values:
+                - local-cluster
+---
+apiVersion: policy.open-cluster-management.io/v1
+kind: PlacementBinding
+metadata:
+  name: config-standalone-addon
+  namespace: policy-test
+placementRef:
+  name: config-standalone-addon
+  apiGroup: cluster.open-cluster-management.io
+  kind: Placement
+subjects:
+  - name: config-standalone-addon
+    apiGroup: policy.open-cluster-management.io
+    kind: Policy

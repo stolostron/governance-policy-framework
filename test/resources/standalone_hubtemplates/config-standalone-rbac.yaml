@@ -1,0 +1,93 @@
+apiVersion: policy.open-cluster-management.io/v1
+kind: Policy
+metadata:
+  name: config-standalone-rbac
+  namespace: policy-test
+spec:
+  disabled: false
+  policy-templates:
+    - objectDefinition:
+        apiVersion: policy.open-cluster-management.io/v1
+        kind: ConfigurationPolicy
+        metadata:
+          name: config-standalone-rbac
+        spec:
+          pruneObjectBehavior: DeleteAll
+          remediationAction: enforce
+          object-templates:
+            - complianceType: musthave
+              objectDefinition:
+                apiVersion: v1
+                kind: ConfigMap
+                metadata:
+                  name: standalone-hubtemplates-test
+                  namespace: local-cluster
+                data:
+                  foo: bar
+            - complianceType: musthave
+              objectDefinition:
+                apiVersion: rbac.authorization.k8s.io/v1
+                kind: Role
+                metadata:
+                  name: cm-reader
+                  namespace: local-cluster
+                rules:
+                - apiGroups:
+                  - ""
+                  resources:
+                  - configmaps
+                  verbs:
+                  - get
+                  - list
+                  - watch
+            - complianceType: musthave
+              objectDefinition:
+                apiVersion: rbac.authorization.k8s.io/v1
+                kind: RoleBinding
+                metadata:
+                  name: cm-reader-binding
+                  namespace: local-cluster
+                roleRef:
+                  apiGroup: rbac.authorization.k8s.io
+                  kind: Role
+                  name: cm-reader
+                subjects:
+                - apiGroup: rbac.authorization.k8s.io
+                  kind: Group
+                  name: system:open-cluster-management:cluster:local-cluster:addon:governance-standalone-hub-templating
+---
+apiVersion: cluster.open-cluster-management.io/v1beta1
+kind: Placement
+metadata:
+  name: config-standalone-rbac
+  namespace: policy-test
+spec:
+  tolerations:
+    - key: cluster.open-cluster-management.io/unreachable
+      operator: Exists
+    - key: cluster.open-cluster-management.io/unavailable
+      operator: Exists
+  clusterSets:
+    - global
+  predicates:
+    - requiredClusterSelector:
+        labelSelector:
+          matchExpressions:
+            - key: name
+              operator: In
+              values:
+                - local-cluster
+---
+apiVersion: policy.open-cluster-management.io/v1
+kind: PlacementBinding
+metadata:
+  name: config-standalone-rbac
+  namespace: policy-test
+placementRef:
+  name: config-standalone-rbac
+  apiGroup: cluster.open-cluster-management.io
+  kind: Placement
+subjects:
+  - name: config-standalone-rbac
+    apiGroup: policy.open-cluster-management.io
+    kind: Policy
