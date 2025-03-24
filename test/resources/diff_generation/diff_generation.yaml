@@ -36,18 +36,25 @@ metadata:
   name: binding-policy-diff-gen-configmap
 placementRef:
   name: placement-policy-diff-gen-configmap
-  kind: PlacementRule
-  apiGroup: apps.open-cluster-management.io
+  kind: Placement
+  apiGroup: cluster.open-cluster-management.io
 subjects:
 - name: policy-diff-gen-configmap
   kind: Policy
   apiGroup: policy.open-cluster-management.io
 ---
-apiVersion: apps.open-cluster-management.io/v1
-kind: PlacementRule
+apiVersion: cluster.open-cluster-management.io/v1beta1
+kind: Placement
 metadata:
   name: placement-policy-diff-gen-configmap
 spec:
-  clusterSelector:
-    matchExpressions:
-      - {key: name, operator: In, values: ["to-be-replaced"]}
+  predicates:
+  - requiredClusterSelector:
+      labelSelector:
+        matchExpressions:
+        - {key: name, operator: In, values: ["to-be-replaced"]}
+  tolerations:
+    - key: cluster.open-cluster-management.io/unreachable
+      operator: Exists
+    - key: cluster.open-cluster-management.io/unavailable
+      operator: Exists

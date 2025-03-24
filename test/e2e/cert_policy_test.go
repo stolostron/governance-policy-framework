@@ -20,8 +20,8 @@ var _ = Describe("Test cert policy", func() {
 	Describe("Test cert policy inform", Ordered, func() {
 		const certPolicyName string = "cert-policy"
 		const certPolicyYaml string = "../resources/cert_policy/cert-policy.yaml"
-		It("should be created on managed cluster", func() {
-			common.DoCreatePolicyTest(certPolicyYaml, common.GvrCertPolicy)
+		It("should be created on managed cluster", func(ctx SpecContext) {
+			common.DoCreatePolicyTest(ctx, certPolicyYaml, common.GvrCertPolicy)
 		})
 		It("the policy should be compliant as there is no certificate", func() {
 			common.DoRootComplianceTest(certPolicyName, policiesv1.Compliant)

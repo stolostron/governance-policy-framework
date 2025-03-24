@@ -39,17 +39,24 @@ metadata:
   name: binding-policy-role-audit-single-ns
 placementRef:
   name: placement-policy-role-audit-single-ns
-  kind: PlacementRule
-  apiGroup: apps.open-cluster-management.io
+  kind: Placement
+  apiGroup: cluster.open-cluster-management.io
 subjects:
   - name: policy-role-audit-single-ns
     kind: Policy
     apiGroup: policy.open-cluster-management.io
 ---
-apiVersion: apps.open-cluster-management.io/v1
-kind: PlacementRule
+apiVersion: cluster.open-cluster-management.io/v1beta1
+kind: Placement
 metadata:
   name: placement-policy-role-audit-single-ns
 spec:
-  clusterSelector:
-    matchExpressions: []
+  predicates:
+  - requiredClusterSelector:
+      labelSelector:
+        matchExpressions: []
+  tolerations:
+    - key: cluster.open-cluster-management.io/unreachable
+      operator: Exists
+    - key: cluster.open-cluster-management.io/unavailable
+      operator: Exists

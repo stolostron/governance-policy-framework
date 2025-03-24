@@ -4,8 +4,6 @@
 package e2e
 
 import (
-	"context"
-
 	. "github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -25,7 +23,7 @@ const (
 
 var _ = Describe("Test policy set", func() {
 	Describe("Create policy, policyset, and placement in ns: "+userNamespace, Ordered, func() {
-		It("Should create and process policy and policyset", func() {
+		It("Should create and process policy and policyset", func(ctx SpecContext) {
 			By("Creating " + testPolicySetYaml)
 			_, err := common.OcHub("apply", "-f", testPolicySetYaml, "-n", userNamespace)
 			Expect(err).ToNot(HaveOccurred())
@@ -35,18 +33,17 @@ var _ = Describe("Test policy set", func() {
 			)
 			Expect(rootPolicy).NotTo(BeNil())
 
-			err = common.PatchPlacementRule(userNamespace, testPolicySetName+"-plr")
+			err = common.PatchPlacement(userNamespace, testPolicySetName+"-plr")
 			Expect(err).ToNot(HaveOccurred())
 
 			if common.ManuallyPatchDecisions {
 				By("Patching " + testPolicySetName + "-plr with decision of cluster " + clusterNamespaceOnHub)
-				plr := utils.GetWithTimeout(
-					clientHubDynamic, common.GvrPlacementRule, testPolicySetName+"-plr", userNamespace,
-					true, defaultTimeoutSeconds,
-				)
-				plr.Object["status"] = utils.GeneratePlrStatus(clusterNamespaceOnHub)
-				_, err = clientHubDynamic.Resource(common.GvrPlacementRule).Namespace(userNamespace).UpdateStatus(
-					context.TODO(), plr, metav1.UpdateOptions{},
+				pld, err := common.CreatePlacementDecision(ctx, userNamespace, testPolicySetName+"-plr")
+				Expect(err).ToNot(HaveOccurred())
+
+				pld.Object["status"] = utils.GeneratePldStatus("", "", clusterNamespaceOnHub)
+				_, err = clientHubDynamic.Resource(common.GvrPlacementDecision).Namespace(userNamespace).UpdateStatus(
+					ctx, pld, metav1.UpdateOptions{},
 				)
 				Expect(err).ToNot(HaveOccurred())
 			}

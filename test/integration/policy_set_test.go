@@ -56,7 +56,7 @@ var _ = Describe("GRC: [P1][Sev1][policy-grc] Test policy set", Ordered, Label("
 			Expect(found).Should(BeTrue())
 			Expect(templates).Should(HaveLen(1))
 
-			err = testcommon.PatchPlacementRule(userNamespace, testPolicySetName+"-plr")
+			err = testcommon.PatchPlacement(userNamespace, testPolicySetName+"-plr")
 			Expect(err).ToNot(HaveOccurred())
 
 			By("Checking " + testPolicyName + " on managed cluster in ns " + clusterNamespace)
