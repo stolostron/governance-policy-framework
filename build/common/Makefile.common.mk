@@ -7,7 +7,7 @@ CONTROLLER_GEN_VERSION := v0.16.3
 # https://github.com/kubernetes-sigs/kustomize/releases/latest
 KUSTOMIZE_VERSION := v5.4.3
 # https://github.com/golangci/golangci-lint/releases/latest
-GOLANGCI_VERSION := v1.52.2
+GOLANGCI_VERSION := v1.60.3
 # https://github.com/mvdan/gofumpt/releases/latest
 GOFUMPT_VERSION := v0.7.0
 # https://github.com/daixiang0/gci/releases/latest
