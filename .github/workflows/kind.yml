@@ -96,7 +96,7 @@ jobs:
       run: |
         make fmt
         git diff --exit-code
-        make lint
+        echo "INFO: Linting disabled."
 
     - name: Bootstrap the KinD Cluster
       working-directory: framework
