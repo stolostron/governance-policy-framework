@@ -536,8 +536,8 @@ var _ = Describe("GRC: [P1][Sev1][policy-grc] Test the compliance history API", 
 				// last `policyToEventDetails` in order to try and understand the current state.
 				*debugMsg = fmt.Sprintf("Current 'policyToEventDetails': %v", policyToEventDetails)
 
-				// Ensure the ConstraintTemplate has 1 event
-				g.Expect(policyToEventDetails["complianceapitest"]).To(HaveLen(1))
+				// Ensure the ConstraintTemplate has 3 events
+				g.Expect(policyToEventDetails["complianceapitest"]).To(HaveLen(3))
 				msg := policyToEventDetails["complianceapitest"][0]["message"]
 				g.Expect(policyToEventDetails["complianceapitest"][0]["compliance"]).To(
 					Equal("Compliant"),
