@@ -1,0 +1,19 @@
+apiVersion: policy.open-cluster-management.io/v1
+kind: ConfigurationPolicy
+metadata:
+  name: standalone-hubtemplates-test
+  namespace: open-cluster-management-policies
+spec:
+  pruneObjectBehavior: DeleteAll
+  remediationAction: enforce
+  severity: low
+  object-templates:
+    - complianceType: musthave
+      objectDefinition:
+        kind: ConfigMap
+        apiVersion: v1
+        metadata:
+          name: standalone-hubtemplates-test
+          namespace: default
+        data:
+          cloud: '{{hub .ManagedClusterLabels.cloud hub}}'
