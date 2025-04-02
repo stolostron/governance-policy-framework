@@ -44,11 +44,11 @@ metadata:
   name: cleanup-grcqeoptest-ns
 spec:
   predicates:
-  - requiredClusterSelector:
-      labelSelector:
-        matchLabels:
-          feature.open-cluster-management.io/addon-config-policy-controller: "available"
-          feature.open-cluster-management.io/addon-governance-policy-framework: "available"
+    - requiredClusterSelector:
+        labelSelector:
+          matchLabels:
+            feature.open-cluster-management.io/addon-config-policy-controller: "available"
+            feature.open-cluster-management.io/addon-governance-policy-framework: "available"
   tolerations:
     - key: cluster.open-cluster-management.io/unreachable
       operator: Exists

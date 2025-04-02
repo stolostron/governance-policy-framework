@@ -7,7 +7,7 @@ metadata:
     policy.open-cluster-management.io/categories: PR.AC Identity Management and Access Control
     policy.open-cluster-management.io/controls: PR.AC-4 Access Control
 spec:
-  remediationAction: enforce             # enforce to merge patch
+  remediationAction: enforce # enforce to merge patch
   disabled: false
   policy-templates:
     - objectDefinition:
@@ -16,7 +16,7 @@ spec:
         metadata:
           name: policy-role-merge-patch-deployments-role
         spec:
-          remediationAction: inform      
+          remediationAction: inform
           severity: high
           object-templates:
             - complianceType: musthave
@@ -26,7 +26,7 @@ spec:
                 metadata:
                   name: deployments-role
                   namespace: default
-                rules:                 # specify rules to merge patch
+                rules: # specify rules to merge patch
                   - verbs:
                       - get
                     apiGroups:
@@ -53,9 +53,9 @@ metadata:
   name: placement-policy-role-merge-patch
 spec:
   predicates:
-  - requiredClusterSelector:
-      labelSelector:
-        matchExpressions: []
+    - requiredClusterSelector:
+        labelSelector:
+          matchExpressions: []
   tolerations:
     - key: cluster.open-cluster-management.io/unreachable
       operator: Exists

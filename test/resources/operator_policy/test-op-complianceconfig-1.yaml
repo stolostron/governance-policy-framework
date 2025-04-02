@@ -44,9 +44,9 @@ placementRef:
   kind: Placement
   apiGroup: cluster.open-cluster-management.io
 subjects:
-- name: test-op-complianceconfig-1
-  kind: Policy
-  apiGroup: policy.open-cluster-management.io
+  - name: test-op-complianceconfig-1
+    kind: Policy
+    apiGroup: policy.open-cluster-management.io
 ---
 apiVersion: cluster.open-cluster-management.io/v1beta1
 kind: Placement
@@ -54,9 +54,9 @@ metadata:
   name: test-op-complianceconfig-1-plr
 spec:
   predicates:
-  - requiredClusterSelector:
-      labelSelector:
-        matchExpressions: []
+    - requiredClusterSelector:
+        labelSelector:
+          matchExpressions: []
   tolerations:
     - key: cluster.open-cluster-management.io/unreachable
       operator: Exists

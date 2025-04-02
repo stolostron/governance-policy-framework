@@ -39,9 +39,9 @@ placementRef:
   kind: Placement
   apiGroup: cluster.open-cluster-management.io
 subjects:
-- name: policy-diff-gen-configmap
-  kind: Policy
-  apiGroup: policy.open-cluster-management.io
+  - name: policy-diff-gen-configmap
+    kind: Policy
+    apiGroup: policy.open-cluster-management.io
 ---
 apiVersion: cluster.open-cluster-management.io/v1beta1
 kind: Placement
@@ -49,10 +49,10 @@ metadata:
   name: placement-policy-diff-gen-configmap
 spec:
   predicates:
-  - requiredClusterSelector:
-      labelSelector:
-        matchExpressions:
-        - {key: name, operator: In, values: ["to-be-replaced"]}
+    - requiredClusterSelector:
+        labelSelector:
+          matchExpressions:
+            - {key: name, operator: In, values: ["to-be-replaced"]}
   tolerations:
     - key: cluster.open-cluster-management.io/unreachable
       operator: Exists

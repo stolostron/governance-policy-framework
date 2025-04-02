@@ -4,10 +4,10 @@ metadata:
   name: test-policyset
 spec:
   policies:
-  - test-policy
+    - test-policy
 status:
   compliant: NonCompliant
   placement:
-  - placementBinding: test-policyset-pb
-    placement: test-policyset-plr
+    - placementBinding: test-policyset-pb
+      placement: test-policyset-plr
   statusMessage: "All policies are reporting status"

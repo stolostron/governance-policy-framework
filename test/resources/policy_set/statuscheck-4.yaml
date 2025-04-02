@@ -4,9 +4,9 @@ metadata:
   name: test-policyset
 spec:
   policies:
-  - test-policy
+    - test-policy
 status:
   placement:
-  - placementBinding: test-policyset-pb
-    placement: test-policyset-plr
+    - placementBinding: test-policyset-pb
+      placement: test-policyset-plr
   statusMessage: "Disabled policies: test-policy"

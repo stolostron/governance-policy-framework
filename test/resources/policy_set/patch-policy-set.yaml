@@ -4,5 +4,5 @@ metadata:
   name: test-policyset
 spec:
   policies:
-  - test-policy
-  - policyset-does-not-exist
+    - test-policy
+    - policyset-does-not-exist

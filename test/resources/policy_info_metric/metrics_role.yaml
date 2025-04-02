@@ -3,7 +3,7 @@ kind: ClusterRole
 metadata:
   name: grc-framework-metrics-reader
 rules:
-- nonResourceURLs:
-  - "/metrics"
-  verbs:
-  - get
+  - nonResourceURLs:
+      - "/metrics"
+    verbs:
+      - get

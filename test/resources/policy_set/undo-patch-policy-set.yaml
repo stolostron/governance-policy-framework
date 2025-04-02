@@ -4,4 +4,4 @@ metadata:
   name: test-policyset
 spec:
   policies:
-  - test-policy
+    - test-policy

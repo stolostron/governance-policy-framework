@@ -4,11 +4,11 @@ metadata:
   name: test-policyset
 spec:
   policies:
-  - test-policy
-  - policyset-does-not-exist
+    - test-policy
+    - policyset-does-not-exist
 status:
   compliant: NonCompliant
   placement:
-  - placementBinding: test-policyset-pb
-    placement: test-policyset-plr
+    - placementBinding: test-policyset-pb
+      placement: test-policyset-plr
   statusMessage: "Deleted policies: policyset-does-not-exist"

@@ -18,7 +18,6 @@ metadata:
 spec:
   installNamespace: cluster2-hosted
 ---
-
 apiVersion: addon.open-cluster-management.io/v1alpha1
 kind: ManagedClusterAddOn
 metadata:
@@ -28,4 +27,3 @@ metadata:
     addon.open-cluster-management.io/values: '{"args": {"frequency": 10}, "global":{"imageOverrides":{"cert_policy_controller":"quay.io/stolostron/cert-policy-controller:imagetag"}}}'
 spec:
   installNamespace: cluster2-hosted
-

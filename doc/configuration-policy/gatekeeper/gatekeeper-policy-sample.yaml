@@ -7,7 +7,7 @@ metadata:
     policy.open-cluster-management.io/categories: CM Configuration Management
     policy.open-cluster-management.io/controls: CM-2 Baseline Configuration
 spec:
-  remediationAction: enforce     # enforce to create
+  remediationAction: enforce # enforce to create
   disabled: false
   policy-templates:
     - objectDefinition:
@@ -16,7 +16,7 @@ spec:
         metadata:
           name: policy-gatekeeper-sample-k8srequiredlabels
         spec:
-          remediationAction: enforce  
+          remediationAction: enforce
           severity: low
           object-templates:
             - complianceType: musthave
@@ -70,7 +70,7 @@ spec:
         metadata:
           name: policy-gatekeeper-sample-audit
         spec:
-          remediationAction: inform 
+          remediationAction: inform
           severity: low
           object-templates:
             - complianceType: musthave
@@ -87,7 +87,7 @@ spec:
         metadata:
           name: policy-gatekeeper-sample-admission
         spec:
-          remediationAction: inform 
+          remediationAction: inform
           severity: low
           object-templates:
             - complianceType: mustnothave
@@ -111,9 +111,9 @@ placementRef:
   kind: Placement
   apiGroup: cluster.open-cluster-management.io
 subjects:
-- name: policy-gatekeeper-sample
-  kind: Policy
-  apiGroup: policy.open-cluster-management.io
+  - name: policy-gatekeeper-sample
+    kind: Policy
+    apiGroup: policy.open-cluster-management.io
 ---
 apiVersion: cluster.open-cluster-management.io/v1beta1
 kind: Placement
@@ -121,6 +121,6 @@ metadata:
   name: placement-policy-gatekeeper-sample
 spec:
   predicates:
-  - requiredClusterSelector:
-      labelSelector:
-        matchExpressions: []
+    - requiredClusterSelector:
+        labelSelector:
+          matchExpressions: []
