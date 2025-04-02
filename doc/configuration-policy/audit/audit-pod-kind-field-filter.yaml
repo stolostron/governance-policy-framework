@@ -28,7 +28,7 @@ spec:
               objectDefinition:
                 apiVersion: v1
                 kind: Pod
-                status:                    #specify fields for additional filtering
+                status: #specify fields for additional filtering
                   phase: Running
 ---
 apiVersion: policy.open-cluster-management.io/v1

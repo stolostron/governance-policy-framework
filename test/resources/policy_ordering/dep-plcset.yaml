@@ -39,7 +39,7 @@ metadata:
   name: test-policyset
 spec:
   policies:
-  - test-policy
+    - test-policy
 ---
 apiVersion: policy.open-cluster-management.io/v1
 kind: PlacementBinding
@@ -50,9 +50,9 @@ placementRef:
   kind: Placement
   name: test-policyset-plr
 subjects:
-- apiGroup: policy.open-cluster-management.io
-  kind: PolicySet
-  name: test-policyset
+  - apiGroup: policy.open-cluster-management.io
+    kind: PolicySet
+    name: test-policyset
 ---
 apiVersion: cluster.open-cluster-management.io/v1beta1
 kind: Placement
@@ -60,9 +60,9 @@ metadata:
   name: test-policyset-plr
 spec:
   predicates:
-  - requiredClusterSelector:
-      labelSelector:
-        matchExpressions: []
+    - requiredClusterSelector:
+        labelSelector:
+          matchExpressions: []
   tolerations:
     - key: cluster.open-cluster-management.io/unreachable
       operator: Exists

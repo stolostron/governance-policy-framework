@@ -43,9 +43,9 @@ placementRef:
   kind: Placement
   name: dep-policy-dep-on-plcset-plr
 subjects:
-- apiGroup: policy.open-cluster-management.io
-  kind: Policy
-  name: dep-policy-dep-on-plcset
+  - apiGroup: policy.open-cluster-management.io
+    kind: Policy
+    name: dep-policy-dep-on-plcset
 ---
 apiVersion: cluster.open-cluster-management.io/v1beta1
 kind: Placement
@@ -53,9 +53,9 @@ metadata:
   name: dep-policy-dep-on-plcset-plr
 spec:
   predicates:
-  - requiredClusterSelector:
-      labelSelector:
-        matchExpressions: []
+    - requiredClusterSelector:
+        labelSelector:
+          matchExpressions: []
   tolerations:
     - key: cluster.open-cluster-management.io/unreachable
       operator: Exists

@@ -48,9 +48,9 @@ metadata:
   name: policy-multiline-temp-nohub-plr
 spec:
   predicates:
-  - requiredClusterSelector:
-      labelSelector:
-        matchExpressions: []
+    - requiredClusterSelector:
+        labelSelector:
+          matchExpressions: []
   tolerations:
     - key: cluster.open-cluster-management.io/unreachable
       operator: Exists

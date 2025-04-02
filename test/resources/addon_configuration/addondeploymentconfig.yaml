@@ -7,14 +7,14 @@ spec:
     nodeSelector:
       "kubernetes.io/os": "linux"
     tolerations:
-    - key: "dedicated"
-      operator: "Equal"
-      value: "something-else"
-      effect: "NoSchedule"
+      - key: "dedicated"
+        operator: "Equal"
+        value: "something-else"
+        effect: "NoSchedule"
   resourceRequirements:
-  - containerID: "*:*:*"
-    resources:
-      requests:
-        memory: 512Mi
-      limits:
-        memory: 1Gi
+    - containerID: "*:*:*"
+      resources:
+        requests:
+          memory: 512Mi
+        limits:
+          memory: 1Gi

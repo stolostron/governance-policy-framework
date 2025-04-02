@@ -31,9 +31,9 @@ placementRef:
   kind: Placement
   apiGroup: cluster.open-cluster-management.io
 subjects:
-- name: test-op-47229
-  kind: Policy
-  apiGroup: policy.open-cluster-management.io
+  - name: test-op-47229
+    kind: Policy
+    apiGroup: policy.open-cluster-management.io
 ---
 apiVersion: cluster.open-cluster-management.io/v1beta1
 kind: Placement
@@ -41,11 +41,11 @@ metadata:
   name: test-op-47229
 spec:
   predicates:
-  - requiredClusterSelector:
-      labelSelector:
-        matchLabels:
-          feature.open-cluster-management.io/addon-config-policy-controller: "available"
-          feature.open-cluster-management.io/addon-governance-policy-framework: "available"
+    - requiredClusterSelector:
+        labelSelector:
+          matchLabels:
+            feature.open-cluster-management.io/addon-config-policy-controller: "available"
+            feature.open-cluster-management.io/addon-governance-policy-framework: "available"
   tolerations:
     - key: cluster.open-cluster-management.io/unreachable
       operator: Exists

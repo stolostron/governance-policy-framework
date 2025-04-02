@@ -37,9 +37,9 @@ placementRef:
   kind: Placement
   name: dep-policy-initial-plr
 subjects:
-- apiGroup: policy.open-cluster-management.io
-  kind: Policy
-  name: dep-policy-initial
+  - apiGroup: policy.open-cluster-management.io
+    kind: Policy
+    name: dep-policy-initial
 ---
 apiVersion: cluster.open-cluster-management.io/v1beta1
 kind: Placement
@@ -47,9 +47,9 @@ metadata:
   name: dep-policy-initial-plr
 spec:
   predicates:
-  - requiredClusterSelector:
-      labelSelector:
-        matchExpressions: []
+    - requiredClusterSelector:
+        labelSelector:
+          matchExpressions: []
   tolerations:
     - key: cluster.open-cluster-management.io/unreachable
       operator: Exists

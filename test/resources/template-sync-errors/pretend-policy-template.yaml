@@ -30,7 +30,6 @@ spec:
                   name: test-pretend-policy-configmap
                 data:
                   testvalue: caterpie
-
 ---
 apiVersion: policy.open-cluster-management.io/v1
 kind: PlacementBinding
@@ -41,9 +40,9 @@ placementRef:
   kind: Placement
   name: pretend-policy-template-plr
 subjects:
-- apiGroup: policy.open-cluster-management.io
-  kind: Policy
-  name: pretend-policy-template
+  - apiGroup: policy.open-cluster-management.io
+    kind: Policy
+    name: pretend-policy-template
 ---
 apiVersion: cluster.open-cluster-management.io/v1beta1
 kind: Placement
@@ -51,9 +50,9 @@ metadata:
   name: pretend-policy-template-plr
 spec:
   predicates:
-  - requiredClusterSelector:
-      labelSelector:
-        matchExpressions: []
+    - requiredClusterSelector:
+        labelSelector:
+          matchExpressions: []
   tolerations:
     - key: cluster.open-cluster-management.io/unreachable
       operator: Exists

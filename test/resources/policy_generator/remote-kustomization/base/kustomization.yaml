@@ -1,2 +1,2 @@
 resources:
-- https://github.com/stolostron/grc-e2e-policy-generator-test/remote-kustomize/base/?ref=main
+  - https://github.com/stolostron/grc-e2e-policy-generator-test/remote-kustomize/base/?ref=main

@@ -57,10 +57,10 @@ metadata:
   name: grc-e2e-helm-policy-generator-placement
 spec:
   predicates:
-  - requiredClusterSelector:
-      labelSelector:
-        matchExpressions:
-        - key: local-cluster
-          operator: In
-          values:
-            - "true"
+    - requiredClusterSelector:
+        labelSelector:
+          matchExpressions:
+            - key: local-cluster
+              operator: In
+              values:
+                - "true"

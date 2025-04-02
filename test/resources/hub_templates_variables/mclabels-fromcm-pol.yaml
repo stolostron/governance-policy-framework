@@ -43,9 +43,9 @@ placementRef:
   kind: Placement
   name: mclabels-fromcm-pol-plr
 subjects:
-- apiGroup: policy.open-cluster-management.io
-  kind: Policy
-  name: mclabels-fromcm-pol
+  - apiGroup: policy.open-cluster-management.io
+    kind: Policy
+    name: mclabels-fromcm-pol
 ---
 apiVersion: cluster.open-cluster-management.io/v1beta1
 kind: Placement
@@ -53,9 +53,9 @@ metadata:
   name: mclabels-fromcm-pol-plr
 spec:
   predicates:
-  - requiredClusterSelector:
-      labelSelector:
-        matchExpressions: []
+    - requiredClusterSelector:
+        labelSelector:
+          matchExpressions: []
   tolerations:
     - key: cluster.open-cluster-management.io/unreachable
       operator: Exists

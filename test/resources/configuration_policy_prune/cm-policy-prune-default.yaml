@@ -39,9 +39,9 @@ placementRef:
   kind: Placement
   name: cm-policy-prune-default-plr
 subjects:
-- apiGroup: policy.open-cluster-management.io
-  kind: Policy
-  name: cm-policy-prune-default
+  - apiGroup: policy.open-cluster-management.io
+    kind: Policy
+    name: cm-policy-prune-default
 ---
 apiVersion: cluster.open-cluster-management.io/v1beta1
 kind: Placement
@@ -49,9 +49,9 @@ metadata:
   name: cm-policy-prune-default-plr
 spec:
   predicates:
-  - requiredClusterSelector:
-      labelSelector:
-        matchExpressions: []
+    - requiredClusterSelector:
+        labelSelector:
+          matchExpressions: []
   tolerations:
     - key: cluster.open-cluster-management.io/unreachable
       operator: Exists
