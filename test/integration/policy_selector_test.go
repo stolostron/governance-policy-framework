@@ -87,7 +87,7 @@ var _ = Describe(
 			status   string
 		}
 
-		DescribeTable("Reporting the correct status", func(test selectorTest) {
+		selectorTestRun := func(test selectorTest) {
 			By("Patching the objectSelector")
 			selector, err := json.Marshal(test.selector)
 			Expect(err).NotTo(HaveOccurred())
@@ -104,7 +104,10 @@ var _ = Describe(
 			By("Checking the status")
 			Eventually(common.GetLatestStatusMessage(policyName, 0),
 				defaultTimeoutSeconds, 1).Should(Equal(test.status))
-		},
+		}
+
+		DescribeTable("Reporting the correct status",
+			selectorTestRun,
 			Entry("With objectSelector with an empty selector", selectorTest{
 				selector: []v1.LabelSelectorRequirement{},
 				status:   generateStatus(configMapNames),
@@ -129,6 +132,24 @@ var _ = Describe(
 					"were matched from the policy objectSelector",
 			}),
 		)
+
+		Describe("Using skipObject with an argument", func() {
+			It("should report the correct status", func() {
+				By("Patching skipObject to use an argument")
+				_, err := common.OcHub(
+					"patch", "policies.policy.open-cluster-management.io", policyName,
+					"-n", userNamespace, "--type=json", "-p", `[{
+						"op":"replace", 
+						"path":"/spec/policy-templates/0/objectDefinition/`+
+						`spec/object-templates/0/objectDefinition/metadata/name",
+						"value": '{{ not (contains "2" .ObjectName) | skipObject }}{{ .ObjectName }}'}]`)
+				Expect(err).ToNot(HaveOccurred())
+				selectorTestRun(selectorTest{
+					selector: []v1.LabelSelectorRequirement{},
+					status:   generateStatus([]string{"selector-config2"}),
+				})
+			})
+		})
 
 		Describe("Reporting correct status with object updates", func() {
 			// Test definition for adding/removing matching ConfigMaps
