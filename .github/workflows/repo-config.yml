@@ -162,7 +162,7 @@ jobs:
     if: ${{ always() }}
     steps:
       - name: Send result to Slack
-        uses: slackapi/slack-github-action@v2.0.0
+        uses: slackapi/slack-github-action@v2.1.0
         env:
           OCM_RESULT:
             ${{ contains(needs.clusteradm.result, 'failure') && 'no_entry' ||
