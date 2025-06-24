@@ -125,7 +125,7 @@ for dirpath in ${COMPONENT_LIST}; do
 
     # Update fast-forwarding on the main branch
     ver="${NEW_VERSION}" \
-      yq e '.tests[] |= select(.as=="git-fast-forward").steps.env.DESTINATION_BRANCH = "release-"+strenv(ver)' -i ${FILE_PREFIX}-main.yaml
+      yq e '.tests[] |= select(.as=="fast-forward").steps.env.DESTINATION_BRANCH = "release-"+strenv(ver)' -i ${FILE_PREFIX}-main.yaml
 
     # Update the 'latest-image-mirror' tests item
     ver="${NEW_VERSION}" yq e '.tests[] |= select(.as=="latest-image-mirror").steps.env.IMAGE_TAG="latest-"+env(ver)' -i ${NEW_FILENAME}
