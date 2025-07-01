@@ -2,7 +2,7 @@
 
 BUILD_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" >/dev/null 2>&1 && pwd)"
 
-CHECK_RELEASES="$(cat ${BUILD_DIR}/../CURRENT_VERSION; echo; cat ${BUILD_DIR}/../CURRENT_SUPPORTED_VERSIONS)"
+CHECK_RELEASES="$(cat "${BUILD_DIR}/../CURRENT_VERSION"; echo; cat "${BUILD_DIR}/../CURRENT_SUPPORTED_VERSIONS")"
 COMPONENT_ORG=stolostron
 DEFAULT_BRANCH=${DEFAULT_BRANCH:-"main"}
 UTIL_REPOS="pipeline multiclusterhub-operator"
@@ -21,20 +21,20 @@ cloneRepos() {
 	: "${GITHUB_TOKEN:?GITHUB_TOKEN must be set}"
 
 	for prereqrepo in ${UTIL_REPOS}; do
-		if [ ! -d ${prereqrepo} ]; then
+		if [ ! -d "${prereqrepo}" ]; then
 			echo "Cloning ${prereqrepo} ..."
-			git clone --quiet https://${GITHUB_USER}:${GITHUB_TOKEN}@github.com/${COMPONENT_ORG}/${prereqrepo}.git ${prereqrepo} || exit 1
+			git clone --quiet "https://${GITHUB_USER}:${GITHUB_TOKEN}@github.com/${COMPONENT_ORG}/${prereqrepo}.git" "${prereqrepo}" || exit 1
 		fi
 	done
 	if [ ! -d "${COMPONENT_ORG}" ]; then
 		# Collect repos from main-branch-sync/repo.txt
-		REPOS=$(cat ${REPO_PATH})
+		REPOS=$(cat "${REPO_PATH}")
 		# Manually append deprecated/additional repos
 		REPOS="${REPOS}
 			stolostron/must-gather"
 		for repo in ${REPOS}; do
-			echo "Cloning $repo ...."
-			git clone --quiet https://github.com/${repo}.git ${repo} || exit 1
+			echo "Cloning ${repo} ...."
+			git clone --quiet "https://github.com/${repo}.git" "${repo}" || exit 1
 		done
 	fi
 }
@@ -45,7 +45,7 @@ cleanup() {
 	fi
 
 	for repo_dir in ${UTIL_REPOS}; do
-		rm -rf ${repo_dir}
+		rm -rf "${repo_dir}"
 	done
 	rm -rf "${COMPONENT_ORG}"
 }

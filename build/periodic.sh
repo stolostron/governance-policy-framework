@@ -3,7 +3,7 @@
 # Validate the pipeline is up to date and that no failed prow jobs exist
 
 DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" >/dev/null 2>&1 && pwd )"
-source ${DIR}/common.sh
+source "${DIR}/common.sh"
 
 # This list can include all postsubmit jobs for all repos--if a job doesn't exist it's filtered to empty and skipped
 CHECK_JOBS=${CHECK_JOBS:-"publish publish-test images latest-image-mirror latest-test-image-mirror git-fast-forward"}
@@ -11,7 +11,7 @@ CHECK_JOBS=${CHECK_JOBS:-"publish publish-test images latest-image-mirror latest
 # return URL of open sync issues (uses authenticated API to prevent rate limiting)
 getSyncIssues() {
 	component=$1
-	issues="$(curl -s -H "Authorization: token ${GITHUB_TOKEN}" https://api.github.com/repos/${COMPONENT_ORG}/${component}/issues \
+	issues="$(curl -s -H "Authorization: token ${GITHUB_TOKEN}" "https://api.github.com/repos/${COMPONENT_ORG}/${component}/issues" \
 	| jq -r '.[] | select(.pull_request == null) | select(.title|match(".*Failed to sync the upstream PR.*")) | .html_url')"
 	echo "${issues}"
 }
@@ -21,9 +21,9 @@ getSyncIssues() {
 getGitSha() {
 	component=$1
 	release=release-$2
-	git -C $COMPONENT_ORG/$component checkout --quiet $release || return
-	GITSHA=$(git -C $COMPONENT_ORG/$component log -n 1 --no-decorate --pretty=oneline | awk '{print $1}')
-	echo "$GITSHA"
+	git -C "${COMPONENT_ORG}/${component}" checkout --quiet "${release}" || return
+	GITSHA=$(git -C "${COMPONENT_ORG}/${component}" log -n 1 --no-decorate --pretty=oneline | awk '{print $1}')
+	echo "${GITSHA}"
 }
 
 # Fetch a value from the Pipeline manifest
@@ -33,9 +33,9 @@ getPipelineValue() {
 	release="${2}-integration"
 	key="$3"
 
-	git -C pipeline/ checkout --quiet "$release" || return
-	value=$(jq -r '.[] |select(.["image-name"] == "'$component'") | .["'$key'"]' pipeline/manifest.json)
-	echo "$value"
+	git -C pipeline/ checkout --quiet "${release}" || return
+	value=$(jq -r ".[] |select(.[\"image-name\"] == \"${component}\") | .[\"${key}\"]" pipeline/manifest.json)
+	echo "${value}"
 }
 
 # Check for Prow job failures
@@ -44,7 +44,7 @@ checkProwJob() {
 	component="$1"
 	check_publish="$3"
 
-	if [ "$release" = "$DEFAULT_BRANCH" ]; then
+	if [ "${release}" = "${DEFAULT_BRANCH}" ]; then
 		BRANCH="$2"
 	else
 		BRANCH="release-$2"
@@ -64,25 +64,25 @@ checkProwJob() {
 				# 		 "base_ref":"release-2.5","base_sha":"567b3597e8324a4c56ec8f1d717ae15d9671e4a8",
 				# 		 "base_link":"https://github.com/open-cluster-management/iam-policy-controller/compare/d544db4214b4...567b3597e832"
 				# 		}}];
-	for job in $CHECK_JOBS; do
+	for job in ${CHECK_JOBS}; do
 		# Skip checking the publish job(s) if there are no images in case it was removed mid-release and the most recent job failed
-		if [ "$BRANCH" != "$DEFAULT_BRANCH" ] && [[ "$check_publish" != *":$release:"* ]] && [[ "$job" == "publish"* ]]; then
-			echo "WARN: Not checking job $job for $BRANCH"
+		if [ "${BRANCH}" != "${DEFAULT_BRANCH}" ] && [[ "${check_publish}" != *":${release}:"* ]] && [[ "${job}" == "publish"* ]]; then
+			echo "WARN: Not checking job ${job} for ${BRANCH}"
 			continue
 		fi
-		OUTPUT=$(curl -s https://prow.ci.openshift.org/job-history/gs/origin-ci-test/logs/branch-ci-${COMPONENT_ORG}-${component}-${BRANCH}-${job})
-		JSON=$(echo "$OUTPUT" | grep "var allBuilds" | sed 's/  var allBuilds =//' | sed 's/;$//' | jq '.[0]')
-		STATUS=$(echo "$JSON" | jq -r '.Result')
-		if [ "$STATUS" = "FAILURE" ] || [ "$STATUS" = "ABORTED" ]; then
-			LINK=https://prow.ci.openshift.org$(echo "$JSON" | jq -r '.SpyglassLink')
+		OUTPUT=$(curl -s "https://prow.ci.openshift.org/job-history/gs/origin-ci-test/logs/branch-ci-${COMPONENT_ORG}-${component}-${BRANCH}-${job}")
+		JSON=$(echo "${OUTPUT}" | grep "var allBuilds" | sed 's/  var allBuilds =//' | sed 's/;$//' | jq '.[0]')
+		STATUS=$(echo "${JSON}" | jq -r '.Result')
+		if [ "${STATUS}" = "FAILURE" ] || [ "${STATUS}" = "ABORTED" ]; then
+			LINK=https://prow.ci.openshift.org$(echo "${JSON}" | jq -r '.SpyglassLink')
 			echo "****"
-			echo "ERROR: Prow job failure: $repo $release" | tee -a ${ERROR_FILE}
-			echo "   Link: $LINK" | tee -a ${ERROR_FILE}
+			echo "ERROR: Prow job failure: ${repo} ${release}" | tee -a "${ERROR_FILE}"
+			echo "   Link: ${LINK}" | tee -a "${ERROR_FILE}"
 			echo "***"
 			rcode=1
 		fi
 	done
-	return $rcode
+	return ${rcode}
 }
 
 rc=0
@@ -92,41 +92,41 @@ ERROR_FILE_NAME="ci-errors.log"
 ERROR_FILE="${ARTIFACT_DIR}/${ERROR_FILE_NAME}"
 
 # Clean up error file if it exists
-if [ -f ${ERROR_FILE} ]; then
-	rm ${ERROR_FILE}
+if [ -f "${ERROR_FILE}" ]; then
+	rm "${ERROR_FILE}"
 fi
 
 # Limit repositories to our repositories that create images which means they have prow jobs
 cloneRepos
 
-REPOS=`ls "$COMPONENT_ORG"`
-for repo in $REPOS; do
+REPOS=$(ls "${COMPONENT_ORG}")
+for repo in ${REPOS}; do
 	# Special handling if repo name differs from image name or repo has more than one image
-	case $repo in
+	case ${repo} in
 		governance-policy-framework)
 			IMAGES="grc-policy-framework-tests";;
 		*)
-			IMAGES=$repo;;
+			IMAGES=${repo};;
 	esac
 	HAS_IMAGE=""
-	for release in $DEFAULT_BRANCH $CHECK_RELEASES; do
-		echo "Checking for failures with component $repo $release ..."
+	for release in ${DEFAULT_BRANCH} ${CHECK_RELEASES}; do
+		echo "Checking for failures with component ${repo} ${release} ..."
 
 		# Don't check the SHA for the default branch since it's not a release
-		if [ "$release" != "$DEFAULT_BRANCH" ]; then
+		if [ "${release}" != "${DEFAULT_BRANCH}" ]; then
 			# for each release and each image name, check the Git SHA
-			gitsha=$(getGitSha "$repo" "$release")
+			gitsha=$(getGitSha "${repo}" "${release}")
 			for imageName in ${IMAGES}; do
-				pipelinesha=$(getPipelineValue "$imageName" "$release" "git-sha256")
+				pipelinesha=$(getPipelineValue "${imageName}" "${release}" "git-sha256")
 
-				if [ -z "$pipelinesha" ]; then
-					echo "WARN: Pipeline SHA not found for $repo $release repository for $imageName. Continuing."
-				elif [ "$gitsha" != "$pipelinesha" ]; then
+				if [ -z "${pipelinesha}" ]; then
+					echo "WARN: Pipeline SHA not found for ${repo} ${release} repository for ${imageName}. Continuing."
+				elif [ "${gitsha}" != "${pipelinesha}" ]; then
 					echo "****"
-					echo "ERROR: SHA mismatch in pipeline and $repo $release repositories." | tee -a ${ERROR_FILE}
-								echo "   imageName: $imageName" | tee -a ${ERROR_FILE}
-								echo "   pipeline: $pipelinesha" | tee -a ${ERROR_FILE}
-								echo "   $repo: $gitsha" | tee -a ${ERROR_FILE}
+					echo "ERROR: SHA mismatch in pipeline and ${repo} ${release} repositories." | tee -a "${ERROR_FILE}"
+					echo "   imageName: ${imageName}" | tee -a "${ERROR_FILE}"
+					echo "   pipeline: ${pipelinesha}" | tee -a "${ERROR_FILE}"
+					echo "   ${repo}: ${gitsha}" | tee -a "${ERROR_FILE}"
 					echo "***"
 					rc=1
 				fi
@@ -134,9 +134,9 @@ for repo in $REPOS; do
 
 			# for each release and each image name, check the tag in Quay
 			for imageName in ${IMAGES}; do
-				imagetag=$(getPipelineValue "$imageName" "$release" "image-tag")
+				imagetag=$(getPipelineValue "${imageName}" "${release}" "image-tag")
 				# If the tag wasn't found in pipeline, skip checking for it in Quay
-				if [ -z "$imagetag" ]; then
+				if [ -z "${imagetag}" ]; then
 					continue
 				fi
 				# make sure the quay image is available
@@ -145,30 +145,30 @@ for repo in $REPOS; do
 				FOUND=$(echo "${QUAY_RESPONSE}" | jq '.tags | length')
 				if [ "${QUAY_STATUS}" != "null" ]; then
 					echo "****"
-					echo "ERROR: Error '${QUAY_STATUS}' querying $repo $release image in quay: $imageName:${imagetag}" | tee -a ${ERROR_FILE}
+					echo "ERROR: Error '${QUAY_STATUS}' querying ${repo} ${release} image in quay: ${imageName}:${imagetag}" | tee -a "${ERROR_FILE}"
 					echo "***"
 					rc=1
 				elif [ "${FOUND}" != "1" ]; then
 					echo "****"
-					echo "ERROR: Tag not found for image in quay: $repo:${imagetag}" | tee -a ${ERROR_FILE}
+					echo "ERROR: Tag not found for image in quay: ${repo}:${imagetag}" | tee -a "${ERROR_FILE}"
 					echo "***"
 					rc=1
 				fi
-				HAS_IMAGE="$HAS_IMAGE:$release:"
+				HAS_IMAGE="${HAS_IMAGE}:${release}:"
 			done
 		else
-			syncIssue=$(getSyncIssues "$repo")
+			syncIssue=$(getSyncIssues "${repo}")
 			if [[ -n "${syncIssue}" ]]; then
 				echo "****"
-				echo "ERROR: Syncing is paused for $repo" | tee -a ${ERROR_FILE}
-				echo "   Issue: ${syncIssue}" | tee -a ${ERROR_FILE}
+				echo "ERROR: Syncing is paused for ${repo}" | tee -a "${ERROR_FILE}"
+				echo "   Issue: ${syncIssue}" | tee -a "${ERROR_FILE}"
 				echo "****"
 				rc=1
 			fi
 		fi
 
 		# check the prow job history
-		checkProwJob "$repo" "$release" "$HAS_IMAGE"
+		checkProwJob "${repo}" "${release}" "${HAS_IMAGE}"
 		if [ $? -eq 1 ]; then
 			rc=1
 		fi
@@ -181,9 +181,9 @@ echo ""
 echo "****"
 echo "CI STATUS REPORT"
 echo "***"
-if [ -f ${ERROR_FILE} ]; then
+if [ -f "${ERROR_FILE}" ]; then
 	# Print the error log to stdout with duplicate lines removed
-	awk '!a[$0]++' ${ERROR_FILE} | tee "${ARTIFACT_DIR}/summary-${ERROR_FILE_NAME}"
+	awk '!a[$0]++' "${ERROR_FILE}" | tee "${ARTIFACT_DIR}/summary-${ERROR_FILE_NAME}"
 else
 	echo "All checks PASSED!"
 fi
