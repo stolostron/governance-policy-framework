@@ -1,7 +1,7 @@
 #! /bin/bash
 
 DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" >/dev/null 2>&1 && pwd)"
-source ${DIR}/common.sh
+source "${DIR}/common.sh"
 
 # Compare the .ci-operator.yaml file across the repos
 CI_OPERATOR_FILE=".ci-operator.yaml"
@@ -10,7 +10,6 @@ CI_OP_PATH="${DIR}/../${CI_OPERATOR_FILE}"
 currentReleaseProw() {
 	echo "Checking that the framework Prow config is set to the latest available dev version ..."
 	rawURL="https://raw.githubusercontent.com/openshift/release/master/"
-	ghURL="https://github.com/openshift/release/blob/master/"
 	configPath="ci-operator/config/stolostron/governance-policy-framework/stolostron-governance-policy-framework-main.yaml"
 
 	FRAMEWORK_VERSION="$(curl -s ${rawURL}${configPath} |
@@ -22,8 +21,8 @@ currentReleaseProw() {
 
 	if [[ -n "${FRAMEWORK_VERSION}" ]] && [[ "release-$(cat CURRENT_VERSION)" != "${FRAMEWORK_VERSION}" ]]; then
 		echo "****"
-		echo "ERROR: Found ${FRAMEWORK_VERSION}" in Prow framework config, but release-$(cat CURRENT_VERSION) is current. | tee -a ${OUTPUT_FILES}
-		echo "  Link: ${rawURL}${configPath}" | tee -a ${ERROR_FILE}
+		echo "ERROR: Found ${FRAMEWORK_VERSION} in Prow framework config, but release-$(cat CURRENT_VERSION) is current." | tee -a "${OUTPUT_FILES}"
+		echo "  Link: ${rawURL}${configPath}" | tee -a "${ERROR_FILE}"
 		echo "***"
 		return 1
 	fi
@@ -38,11 +37,11 @@ ciopDiff() {
 		return 0
 	fi
 
-	CI_OP_DIFF=$(diff ${CI_OP_PATH} ${REPO_CI_OP_PATH})
+	CI_OP_DIFF=$(diff "${CI_OP_PATH}" "${REPO_CI_OP_PATH}")
 	if [[ -n "${CI_OP_DIFF}" ]]; then
 		echo "****"
-		echo "ERROR: ${CI_OPERATOR_FILE} is not synced to $repo" | tee -a ${OUTPUT_FILES}
-		echo "${CI_OP_DIFF}" | sed 's/^/   /' | tee -a ${ERROR_FILE}
+		echo "ERROR: ${CI_OPERATOR_FILE} is not synced to ${repo}" | tee -a "${OUTPUT_FILES}"
+		echo "${CI_OP_DIFF}" | sed 's/^/   /' | tee -a "${ERROR_FILE}"
 		echo "***"
 		return 1
 	fi
@@ -61,11 +60,11 @@ makefileDiff() {
 		return 0
 	fi
 
-	MAKEFILE_DIFF=$(diff ${COMMON_MAKEFILE_PATH} ${REPO_MAKEFILE_PATH})
+	MAKEFILE_DIFF=$(diff "${COMMON_MAKEFILE_PATH}" "${REPO_MAKEFILE_PATH}")
 	if [[ -n "${MAKEFILE_DIFF}" ]]; then
 		echo "****"
-		echo "ERROR: Common Makefile is not synced to $repo" | tee -a ${OUTPUT_FILES}
-		echo "${MAKEFILE_DIFF}" | sed 's/^/   /' | tee -a ${ERROR_FILE}
+		echo "ERROR: Common Makefile is not synced to ${repo}" | tee -a "${OUTPUT_FILES}"
+		echo "${MAKEFILE_DIFF}" | sed 's/^/   /' | tee -a "${ERROR_FILE}"
 		echo "***"
 		return 1
 	fi
@@ -84,11 +83,11 @@ dockerfileDiff() {
 		return 0
 	fi
 
-	DOCKERFILE_DIFF=$(diff <(grep "^FROM " ${COMMON_DOCKERFILE_PATH}) <(grep "^FROM " ${REPO_DOCKER_PATH}))
+	DOCKERFILE_DIFF=$(diff <(grep "^FROM " "${COMMON_DOCKERFILE_PATH}") <(grep "^FROM " "${REPO_DOCKER_PATH}"))
 	if [[ -n "${DOCKERFILE_DIFF}" ]]; then
 		echo "****"
-		echo "ERROR: Dockerfile images are not synced to $repo" | tee -a ${OUTPUT_FILES}
-		echo "${DOCKERFILE_DIFF}" | sed 's/^/   /' | tee -a ${ERROR_FILE}
+		echo "ERROR: Dockerfile images are not synced to ${repo}" | tee -a "${OUTPUT_FILES}"
+		echo "${DOCKERFILE_DIFF}" | sed 's/^/   /' | tee -a "${ERROR_FILE}"
 		echo "***"
 		rc=1
 	fi
@@ -110,8 +109,8 @@ packageVersioning() {
 
 	rcode=0
 	for pkg in ${PACKAGES}; do
-		FRAMEWORK_VERSION="$(awk '/'${pkg//\//\\\/}'/ {print $2}' ${DIR}/../${GOMOD_NAME})"
-		REPO_VERSION="$(awk '/'${pkg//\//\\\/}'/ {print $2}' ${REPO_GOMOD_PATH})"
+		FRAMEWORK_VERSION="$(awk "/${pkg//\//\\/}/ {print \$2}" "${DIR}/../${GOMOD_NAME}")"
+		REPO_VERSION="$(awk "/${pkg//\//\\/}/ {print \$2}" "${REPO_GOMOD_PATH}")"
 
 		# If the package wasn't found, assume it's not needed
 		if [[ -z "${REPO_VERSION}" ]]; then
@@ -120,7 +119,7 @@ packageVersioning() {
 
 		if [[ "${FRAMEWORK_VERSION}" != "${REPO_VERSION}" ]]; then
 			echo "****"
-			echo "ERROR: ${pkg/^/} version ${REPO_VERSION} in $repo does not match ${FRAMEWORK_VERSION}" | tee -a ${OUTPUT_FILES}
+			echo "ERROR: ${pkg/^/} version ${REPO_VERSION} in ${repo} does not match ${FRAMEWORK_VERSION}" | tee -a "${OUTPUT_FILES}"
 			echo "***"
 			rcode=1
 		fi
@@ -131,7 +130,7 @@ packageVersioning() {
 
 # Get the diff of CRDs across RHACM
 crdDiff() {
-	if [ "${1}" = "$DEFAULT_BRANCH" ]; then
+	if [ "${1}" = "${DEFAULT_BRANCH}" ]; then
 		BRANCH="${1}"
 	else
 		BRANCH="release-${1}"
@@ -142,33 +141,33 @@ crdDiff() {
 	mch_path="${mch_repo}/pkg/templates/crds/grc"
 
 	# Check out the target release branch in the repos
-	git -C ${COMPONENT_ORG}/${propagator_repo}/ checkout --quiet $BRANCH
-	git -C ${mch_repo}/ checkout --quiet $BRANCH
+	git -C "${COMPONENT_ORG}/${propagator_repo}/" checkout --quiet "${BRANCH}"
+	git -C "${mch_repo}/" checkout --quiet "${BRANCH}"
 
 	echo "Checking that all CRDs are present in the MultiClusterHub GRC chart for ${BRANCH} ..."
 	PROPAGATOR_CRD_FILES=$(ls -p -1 ${propagator_path} | grep -v /)
 	CRD_LIST=$(diff <(echo "${PROPAGATOR_CRD_FILES}") <(ls -p -1 ${mch_path} | sed 's/_crd//' | grep -v OWNERS))
 	if [[ -n "${CRD_LIST}" ]]; then
 		echo "****"
-		echo "ERROR: CRDs are not synced to ${mch_repo} for ${BRANCH}" | tee -a ${OUTPUT_FILES}
-		echo "${CRD_LIST}" | sed 's/^/   /' | tee -a ${ERROR_FILE}
+		echo "ERROR: CRDs are not synced to ${mch_repo} for ${BRANCH}" | tee -a "${OUTPUT_FILES}"
+		echo "${CRD_LIST}" | sed 's/^/   /' | tee -a "${ERROR_FILE}"
 		echo "***"
 		return 1
 	fi
 
 	rcode=0
 	for crd_file in ${PROPAGATOR_CRD_FILES}; do
-		CRD_DIFF="$(diff ${propagator_path}/${crd_file} ${mch_path}/${crd_file})"
+		CRD_DIFF="$(diff "${propagator_path}/${crd_file}" "${mch_path}/${crd_file}")"
 		if [[ -n "${CRD_DIFF}" ]]; then
 			echo "****"
-			echo "ERROR: CRD $crd_file is not synced to $mch_repo for $BRANCH" | tee -a ${OUTPUT_FILES}
-			echo "${CRD_DIFF}" | sed 's/^/   /' | tee -a ${ERROR_FILE}
+			echo "ERROR: CRD ${crd_file} is not synced to ${mch_repo} for ${BRANCH}" | tee -a "${OUTPUT_FILES}"
+			echo "${CRD_DIFF}" | sed 's/^/   /' | tee -a "${ERROR_FILE}"
 			echo "***"
 			rcode=1
 		fi
 	done
 
-	return $rcode
+	return ${rcode}
 }
 
 # Check whether the crd-sync job in the addon controller is passing
@@ -180,8 +179,8 @@ crdSyncCheck() {
 	if [[ "${WORKFLOW_CONCLUSION}" != "success" ]] && [[ "${WORKFLOW_URL}" != "null" ]]; then
 		echo "WORKFLOW_CONCLUSION=${WORKFLOW_CONCLUSION}"
 		echo "****"
-		echo "ERROR: CRD sync action is failing in governance-policy-addon-controller" | tee -a ${OUTPUT_FILES}
-		echo "   Link: ${WORKFLOW_URL}" | tee -a ${OUTPUT_FILES}
+		echo "ERROR: CRD sync action is failing in governance-policy-addon-controller" | tee -a "${OUTPUT_FILES}"
+		echo "   Link: ${WORKFLOW_URL}" | tee -a "${OUTPUT_FILES}"
 		echo "***"
 		return 1
 	fi
@@ -196,11 +195,11 @@ SUMMARY_FILE="${ARTIFACT_DIR}/summary-${ERROR_FILE_NAME}"
 OUTPUT_FILES="${ERROR_FILE} ${SUMMARY_FILE}"
 
 # Clean up error file if it exists
-if [ -f ${ERROR_FILE} ]; then
-	rm ${ERROR_FILE}
+if [ -f "${ERROR_FILE}" ]; then
+	rm "${ERROR_FILE}"
 fi
-if [ -f ${SUMMARY_FILE} ]; then
-	rm ${SUMMARY_FILE}
+if [ -f "${SUMMARY_FILE}" ]; then
+	rm "${SUMMARY_FILE}"
 fi
 
 # Check for consistency across repos
@@ -208,7 +207,7 @@ cloneRepos
 
 REPOS=$(ls "${COMPONENT_ORG}")
 for repo in ${REPOS}; do
-	if ! (git -C ${COMPONENT_ORG}/${repo} checkout --quiet ${DEFAULT_BRANCH}); then
+	if ! (git -C "${COMPONENT_ORG}/${repo}" checkout --quiet "${DEFAULT_BRANCH}"); then
 		echo "WARN: ${repo} doesn't have a ${DEFAULT_BRANCH} branch. Skipping."
 
 		continue
@@ -265,8 +264,8 @@ echo ""
 echo "****"
 echo "CODEBASE STATUS REPORT"
 echo "***"
-if [ -f ${SUMMARY_FILE} ]; then
-	cat ${SUMMARY_FILE}
+if [ -f "${SUMMARY_FILE}" ]; then
+	cat "${SUMMARY_FILE}"
 else
 	echo "All checks PASSED!"
 fi
