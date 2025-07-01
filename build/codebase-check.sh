@@ -28,6 +28,31 @@ currentReleaseProw() {
 	fi
 }
 
+currentReleaseRefs() {
+	echo "Checking that acm-cli submodules are set to the correct release branch..."
+
+	# Get the current version from CURRENT_VERSION file
+	CURRENT_VERSION="$(cat CURRENT_VERSION)"
+	EXPECTED_BRANCH="release-${CURRENT_VERSION}"
+	EXPECTED_OUTPUT=$(printf "%s\n%s" "${EXPECTED_BRANCH}" "${EXPECTED_BRANCH}")
+
+	# Fetch the .gitmodules file from acm-cli repository
+	GITMODULES_URL="https://raw.githubusercontent.com/stolostron/acm-cli/main/.gitmodules"
+	GITMODULES=$(curl -s "${GITMODULES_URL}")
+
+	# Extract submodule information and check branch references
+	rcode=0
+	branch_output=$(echo "${GITMODULES}" | grep -o "release-.*")
+	if [[ "${EXPECTED_OUTPUT}" != "${branch_output}" ]]; then
+		echo "****"
+		echo "ERROR: acm-cli submodule branches are set to '${branch_output//$'\n'//}', expected '${EXPECTED_OUTPUT//$'\n'//}'" | tee -a "${OUTPUT_FILES}"
+		echo "***"
+		rcode=1
+	fi
+
+	return ${rcode}
+}
+
 ciopDiff() {
 	repo="${1}"
 
@@ -254,6 +279,11 @@ if [ $? -eq 1 ]; then
 fi
 
 currentReleaseProw
+if [ $? -eq 1 ]; then
+	rc=2
+fi
+
+currentReleaseRefs
 if [ $? -eq 1 ]; then
 	rc=2
 fi
