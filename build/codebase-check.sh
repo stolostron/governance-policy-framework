@@ -21,7 +21,7 @@ currentReleaseProw() {
 
 	if [[ -n "${FRAMEWORK_VERSION}" ]] && [[ "release-$(cat CURRENT_VERSION)" != "${FRAMEWORK_VERSION}" ]]; then
 		echo "****"
-		echo "ERROR: Found ${FRAMEWORK_VERSION} in Prow framework config, but release-$(cat CURRENT_VERSION) is current." | tee -a "${OUTPUT_FILES}"
+		echo "ERROR: Found ${FRAMEWORK_VERSION} in Prow framework config, but release-$(cat CURRENT_VERSION) is current." | tee -a "${OUTPUT_FILES[@]}"
 		echo "  Link: ${rawURL}${configPath}" | tee -a "${ERROR_FILE}"
 		echo "***"
 		return 1
@@ -45,7 +45,7 @@ currentReleaseRefs() {
 	branch_output=$(echo "${GITMODULES}" | grep -o "release-.*")
 	if [[ "${EXPECTED_OUTPUT}" != "${branch_output}" ]]; then
 		echo "****"
-		echo "ERROR: acm-cli submodule branches are set to '${branch_output//$'\n'//}', expected '${EXPECTED_OUTPUT//$'\n'//}'" | tee -a "${OUTPUT_FILES}"
+		echo "ERROR: acm-cli submodule branches are set to '${branch_output//$'\n'//}', expected '${EXPECTED_OUTPUT//$'\n'//}'" | tee -a "${OUTPUT_FILES[@]}"
 		echo "***"
 		rcode=1
 	fi
@@ -65,7 +65,7 @@ ciopDiff() {
 	CI_OP_DIFF=$(diff "${CI_OP_PATH}" "${REPO_CI_OP_PATH}")
 	if [[ -n "${CI_OP_DIFF}" ]]; then
 		echo "****"
-		echo "ERROR: ${CI_OPERATOR_FILE} is not synced to ${repo}" | tee -a "${OUTPUT_FILES}"
+		echo "ERROR: ${CI_OPERATOR_FILE} is not synced to ${repo}" | tee -a "${OUTPUT_FILES[@]}"
 		echo "${CI_OP_DIFF}" | sed 's/^/   /' | tee -a "${ERROR_FILE}"
 		echo "***"
 		return 1
@@ -88,7 +88,7 @@ makefileDiff() {
 	MAKEFILE_DIFF=$(diff "${COMMON_MAKEFILE_PATH}" "${REPO_MAKEFILE_PATH}")
 	if [[ -n "${MAKEFILE_DIFF}" ]]; then
 		echo "****"
-		echo "ERROR: Common Makefile is not synced to ${repo}" | tee -a "${OUTPUT_FILES}"
+		echo "ERROR: Common Makefile is not synced to ${repo}" | tee -a "${OUTPUT_FILES[@]}"
 		echo "${MAKEFILE_DIFF}" | sed 's/^/   /' | tee -a "${ERROR_FILE}"
 		echo "***"
 		return 1
@@ -111,7 +111,7 @@ dockerfileDiff() {
 	DOCKERFILE_DIFF=$(diff <(grep "^FROM " "${COMMON_DOCKERFILE_PATH}") <(grep "^FROM " "${REPO_DOCKER_PATH}"))
 	if [[ -n "${DOCKERFILE_DIFF}" ]]; then
 		echo "****"
-		echo "ERROR: Dockerfile images are not synced to ${repo}" | tee -a "${OUTPUT_FILES}"
+		echo "ERROR: Dockerfile images are not synced to ${repo}" | tee -a "${OUTPUT_FILES[@]}"
 		echo "${DOCKERFILE_DIFF}" | sed 's/^/   /' | tee -a "${ERROR_FILE}"
 		echo "***"
 		rc=1
@@ -144,7 +144,7 @@ packageVersioning() {
 
 		if [[ "${FRAMEWORK_VERSION}" != "${REPO_VERSION}" ]]; then
 			echo "****"
-			echo "ERROR: ${pkg/^/} version ${REPO_VERSION} in ${repo} does not match ${FRAMEWORK_VERSION}" | tee -a "${OUTPUT_FILES}"
+			echo "ERROR: ${pkg/^/} version ${REPO_VERSION} in ${repo} does not match ${FRAMEWORK_VERSION}" | tee -a "${OUTPUT_FILES[@]}"
 			echo "***"
 			rcode=1
 		fi
@@ -174,7 +174,7 @@ crdDiff() {
 	CRD_LIST=$(diff <(echo "${PROPAGATOR_CRD_FILES}") <(ls -p -1 ${mch_path} | sed 's/_crd//' | grep -v OWNERS))
 	if [[ -n "${CRD_LIST}" ]]; then
 		echo "****"
-		echo "ERROR: CRDs are not synced to ${mch_repo} for ${BRANCH}" | tee -a "${OUTPUT_FILES}"
+		echo "ERROR: CRDs are not synced to ${mch_repo} for ${BRANCH}" | tee -a "${OUTPUT_FILES[@]}"
 		echo "${CRD_LIST}" | sed 's/^/   /' | tee -a "${ERROR_FILE}"
 		echo "***"
 		return 1
@@ -185,7 +185,7 @@ crdDiff() {
 		CRD_DIFF="$(diff "${propagator_path}/${crd_file}" "${mch_path}/${crd_file}")"
 		if [[ -n "${CRD_DIFF}" ]]; then
 			echo "****"
-			echo "ERROR: CRD ${crd_file} is not synced to ${mch_repo} for ${BRANCH}" | tee -a "${OUTPUT_FILES}"
+			echo "ERROR: CRD ${crd_file} is not synced to ${mch_repo} for ${BRANCH}" | tee -a "${OUTPUT_FILES[@]}"
 			echo "${CRD_DIFF}" | sed 's/^/   /' | tee -a "${ERROR_FILE}"
 			echo "***"
 			rcode=1
@@ -204,8 +204,8 @@ crdSyncCheck() {
 	if [[ "${WORKFLOW_CONCLUSION}" != "success" ]] && [[ "${WORKFLOW_URL}" != "null" ]]; then
 		echo "WORKFLOW_CONCLUSION=${WORKFLOW_CONCLUSION}"
 		echo "****"
-		echo "ERROR: CRD sync action is failing in governance-policy-addon-controller" | tee -a "${OUTPUT_FILES}"
-		echo "   Link: ${WORKFLOW_URL}" | tee -a "${OUTPUT_FILES}"
+		echo "ERROR: CRD sync action is failing in governance-policy-addon-controller" | tee -a "${OUTPUT_FILES[@]}"
+		echo "   Link: ${WORKFLOW_URL}" | tee -a "${OUTPUT_FILES[@]}"
 		echo "***"
 		return 1
 	fi
@@ -217,7 +217,7 @@ ARTIFACT_DIR=${ARTIFACT_DIR:-${PWD}}
 ERROR_FILE_NAME="codebase-errors.log"
 ERROR_FILE="${ARTIFACT_DIR}/${ERROR_FILE_NAME}"
 SUMMARY_FILE="${ARTIFACT_DIR}/summary-${ERROR_FILE_NAME}"
-OUTPUT_FILES="${ERROR_FILE} ${SUMMARY_FILE}"
+OUTPUT_FILES=("${ERROR_FILE}" "${SUMMARY_FILE}")
 
 # Clean up error file if it exists
 if [ -f "${ERROR_FILE}" ]; then
