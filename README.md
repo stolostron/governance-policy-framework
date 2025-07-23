@@ -22,20 +22,22 @@ View the following functions of the policy framework:
 
 ![architecture](images/policy-framework-architecture-diagram.png)
 
-The governance policy framework consists of following components:
+The governance policy framework consists of the following components:
 
 - Govenance policy framework: A framework to distribute various supported policies to managed
-  clusters and collect results to be sent to the hub cluster.
+  clusters and collect results to be sent to the hub cluster. The framework replicates `Policy` Custom Resources (CRs) from the "user namespace" to the "cluster namespace" on the hub cluster. The `Policy` CRs in the "cluster namespace" are further replicated to the managed clusters.
   - [Policy propagator](https://github.com/stolostron/governance-policy-propagator)
   - [Governance policy framework addon](https://github.com/stolostron/governance-policy-framework-addon)
 - Policy controllers: Policy engines that run on managed clusters to evaluate policy rules
-  distributed by the policy framework and generate results.
+  distributed by the policy framework and generate results. The results are reported back to the hub cluster.
   - [Configuration policy controller](https://github.com/stolostron/config-policy-controller)
     - [Usage examples](./doc/configuration-policy/README.md)
   - [Certificate policy controller](https://github.com/stolostron/cert-policy-controller)
-  - Third-party
+  - Third-party (optional)
     - [Gatekeeper](https://github.com/open-policy-agent/gatekeeper)
     - [Kyverno](https://github.com/kyverno/kyverno/)
+
+If desired, users can request automated actions to perform when a policy is violated. These automated actions consist of `PolicyAutomation` CRs and `AnsibleJob` CRs as shown in the hub cluster.
 
 ## The Policy CRDs
 
