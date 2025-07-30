@@ -1,11 +1,11 @@
 #!/usr/bin/env bash
 
-USERS=(dhaiducek gparvin JustinKuli mprahl yiraeChristineKim JeffeyL zyjjay)
+USERS=$(yq '.reviewers[]' OWNERS)
 ORGS=(open-cluster-management-io stolostron openshift)
 
 query="is:pr+is:open+draft:false"
 
-for name in "${USERS[@]}"; do
+for name in ${USERS}; do
   query+="+author:${name}"
 done
 
