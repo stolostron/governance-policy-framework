@@ -20,7 +20,7 @@ jobs:
       CODEBASE_SUMMARY: ${{ steps.results.outputs.CODEBASE_SUMMARY }}
     steps:
       - name: Checkout Policy Framework
-        uses: actions/checkout@v4
+        uses: actions/checkout@v5
 
       - name: CI Check
         continue-on-error: true
