@@ -79,7 +79,7 @@ jobs:
         # `ref` is inferred as the new commit
 
     - name: Set up Go
-      uses: actions/setup-go@v5
+      uses: actions/setup-go@v6
       with:
         go-version-file: framework/go.mod
         cache-dependency-path: framework/go.sum
