@@ -13,7 +13,6 @@ import (
 	corev1 "k8s.io/api/core/v1"
 	k8serrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	policiesv1 "open-cluster-management.io/governance-policy-propagator/api/v1"
 
 	"github.com/stolostron/governance-policy-framework/test/common"
@@ -83,7 +82,7 @@ var _ = Describe(
 
 		// Test parameter struct
 		type selectorTest struct {
-			selector []v1.LabelSelectorRequirement
+			selector []metav1.LabelSelectorRequirement
 			status   string
 		}
 
@@ -109,23 +108,23 @@ var _ = Describe(
 		DescribeTable("Reporting the correct status",
 			selectorTestRun,
 			Entry("With objectSelector with an empty selector", selectorTest{
-				selector: []v1.LabelSelectorRequirement{},
+				selector: []metav1.LabelSelectorRequirement{},
 				status:   generateStatus(configMapNames),
 			}),
 			Entry("With objectSelector with label exists", selectorTest{
-				selector: []v1.LabelSelectorRequirement{
+				selector: []metav1.LabelSelectorRequirement{
 					{Key: selectorKey, Operator: "Exists", Values: []string{}},
 				},
 				status: generateStatus(configMapNames),
 			}),
 			Entry("With objectSelector with a label value", selectorTest{
-				selector: []v1.LabelSelectorRequirement{
+				selector: []metav1.LabelSelectorRequirement{
 					{Key: selectorKey, Operator: "In", Values: []string{"selector-config1"}},
 				},
 				status: generateStatus([]string{"selector-config1"}),
 			}),
 			Entry("With objectSelector with a non-matching label", selectorTest{
-				selector: []v1.LabelSelectorRequirement{
+				selector: []metav1.LabelSelectorRequirement{
 					{Key: "doesnt-match-anything", Operator: "Exists", Values: []string{}},
 				},
 				status: "Compliant; notification - No objects of kind ConfigMap " +
@@ -145,7 +144,7 @@ var _ = Describe(
 						"value": '{{ not (contains "2" .ObjectName) | skipObject }}{{ .ObjectName }}'}]`)
 				Expect(err).ToNot(HaveOccurred())
 				selectorTestRun(selectorTest{
-					selector: []v1.LabelSelectorRequirement{},
+					selector: []metav1.LabelSelectorRequirement{},
 					status:   generateStatus([]string{"selector-config2"}),
 				})
 			})
