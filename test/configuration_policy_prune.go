@@ -14,7 +14,6 @@ import (
 	policiesv1 "open-cluster-management.io/governance-policy-propagator/api/v1"
 	"open-cluster-management.io/governance-policy-propagator/test/utils"
 
-	"github.com/stolostron/governance-policy-framework/test/common"
 	. "github.com/stolostron/governance-policy-framework/test/common"
 )
 
@@ -63,7 +62,7 @@ func ConfigPruneBehavior(labels ...string) bool {
 
 		var clientHostingDynamic dynamic.Interface
 
-		if common.IsHosted {
+		if IsHosted {
 			clientHostingDynamic = NewKubeClientDynamic("", KubeconfigHub, "")
 		} else {
 			clientHostingDynamic = NewKubeClientDynamic("", KubeconfigManaged, "")
@@ -119,6 +118,7 @@ func ConfigPruneBehavior(labels ...string) bool {
 			return createdByPolicy
 		}, DefaultTimeoutSeconds, 5).Should(BeTrue(), "createdByPolicy should be true")
 
+		//nolint:contextcheck
 		DoCleanupPolicy(policyYaml, GvrConfigurationPolicy)
 
 		By("Checking if the configmap was deleted")
@@ -138,7 +138,7 @@ func ConfigPruneBehavior(labels ...string) bool {
 
 		var clientHostingDynamic dynamic.Interface
 
-		if common.IsHosted {
+		if IsHosted {
 			clientHostingDynamic = NewKubeClientDynamic("", KubeconfigHub, "")
 		} else {
 			clientHostingDynamic = NewKubeClientDynamic("", KubeconfigManaged, "")
@@ -178,6 +178,7 @@ func ConfigPruneBehavior(labels ...string) bool {
 
 		By("Applying a finalizer to the configmap")
 
+		//nolint:contextcheck
 		_, err := OcManaged(
 			"patch",
 			"configmap",
@@ -191,6 +192,7 @@ func ConfigPruneBehavior(labels ...string) bool {
 
 		By("Deleting the root policy")
 
+		//nolint:contextcheck
 		_, err = OcHub(
 			"delete", "-f", policyYaml,
 			"-n", UserNamespace,
@@ -218,6 +220,7 @@ func ConfigPruneBehavior(labels ...string) bool {
 
 		By("Removing any finalizers from the configmap")
 
+		//nolint:contextcheck
 		_, err = OcManaged("patch", "configmap", pruneConfigMapName, "-n", "default",
 			"--type=json", "-p", `[{"op":"remove", "path":"/metadata/finalizers"}]`)
 		Expect(err).ToNot(HaveOccurred())
@@ -248,7 +251,7 @@ func ConfigPruneBehavior(labels ...string) bool {
 
 		var clientHostingDynamic dynamic.Interface
 
-		if common.IsHosted {
+		if IsHosted {
 			clientHostingDynamic = NewKubeClientDynamic("", KubeconfigHub, "")
 		} else {
 			clientHostingDynamic = NewKubeClientDynamic("", KubeconfigManaged, "")
@@ -289,6 +292,7 @@ func ConfigPruneBehavior(labels ...string) bool {
 
 		By("Changing the policy to inform")
 
+		//nolint:contextcheck
 		_, err := OcHub(
 			"patch",
 			"policies.policy.open-cluster-management.io",
@@ -316,6 +320,7 @@ func ConfigPruneBehavior(labels ...string) bool {
 			return remAction
 		}, DefaultTimeoutSeconds, 1).Should(MatchRegexp(".nform"))
 
+		//nolint:contextcheck
 		DoCleanupPolicy(policyYaml, GvrConfigurationPolicy)
 
 		By("Checking if the configmap was deleted")
@@ -334,7 +339,7 @@ func ConfigPruneBehavior(labels ...string) bool {
 
 		var clientHostingDynamic dynamic.Interface
 
-		if common.IsHosted {
+		if IsHosted {
 			clientHostingDynamic = NewKubeClientDynamic("", KubeconfigHub, "")
 		} else {
 			clientHostingDynamic = NewKubeClientDynamic("", KubeconfigManaged, "")
@@ -342,6 +347,7 @@ func ConfigPruneBehavior(labels ...string) bool {
 
 		By("Creating the configmap before the policy")
 
+		//nolint:contextcheck
 		_, err := OcManaged("apply", "-f", pruneConfigMapYaml, "-n", "default")
 		Expect(err).ToNot(HaveOccurred())
 		By("Checking the configmap's initial data")
@@ -409,6 +415,7 @@ func ConfigPruneBehavior(labels ...string) bool {
 			g.Expect(newValue).To(Not(Equal(initialValue)))
 		}, DefaultTimeoutSeconds, 1).Should(Succeed())
 
+		//nolint:contextcheck
 		DoCleanupPolicy(policyYaml, GvrConfigurationPolicy)
 
 		By("Checking if the configmap was deleted")

@@ -199,7 +199,7 @@ func oc(args ...string) (string, error) {
 		}
 	}
 
-	k8sCmd := exec.Command(K8sClient, args...)
+	k8sCmd := exec.CommandContext(context.TODO(), K8sClient, args...)
 
 	output, err := k8sCmd.Output()
 	if len(args) > 0 && printOutput {

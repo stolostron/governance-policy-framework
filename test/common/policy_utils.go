@@ -220,6 +220,7 @@ func DoCreatePolicyTest(ctx context.Context, policyFile string, templateGVRs ...
 	policyName := strings.TrimSuffix(filepath.Base(policyFile), filepath.Ext(policyFile))
 
 	By("DoCreatePolicyTest creates " + policyFile + " on namespace " + UserNamespace)
+	//nolint:contextcheck
 	output, err := OcHub("apply", "-f", policyFile, "-n", UserNamespace)
 	Expect(err).ToNot(HaveOccurred())
 	By("DoCreatePolicyTest OcHub apply output: " + output)

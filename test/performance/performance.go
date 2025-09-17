@@ -100,13 +100,13 @@ func query(host string, token string, query string, insecure bool) (time.Time, f
 	return time.Time{}, -1
 }
 
-func setupMetrics() (token string, thanosHost string) {
-	tokenBytes, err := exec.Command("oc", "whoami", "--show-token").CombinedOutput()
+func setupMetrics(ctx context.Context) (token string, thanosHost string) {
+	tokenBytes, err := exec.CommandContext(ctx, "oc", "whoami", "--show-token").CombinedOutput()
 	if err != nil {
 		klog.Exitf("Error getting API token from `oc whoami --show-token`: %v", err)
 	}
 
-	thanosB64, err := exec.Command(
+	thanosB64, err := exec.CommandContext(ctx,
 		"kubectl", "get", "route", "thanos-querier", "-n",
 		"openshift-monitoring", "-o=jsonpath='{.spec.host}'",
 	).CombinedOutput()
@@ -369,7 +369,9 @@ func main() {
 
 	pflag.Parse()
 
-	token, thanosHost := setupMetrics()
+	ctx := context.Background()
+
+	token, thanosHost := setupMetrics(ctx)
 
 	klog.Info("Starting the Config Policy Controller performance test :)")
 
@@ -404,7 +406,7 @@ func main() {
 
 			tries := 2
 			for tries > 0 {
-				creationOutput, err := exec.Command(
+				creationOutput, err := exec.CommandContext(ctx,
 					"kubectl", "apply", "-f",
 					path.Join(policyDir, "current_policy.yaml"),
 				).CombinedOutput()
@@ -460,7 +462,7 @@ func main() {
 
 	klog.Info("Performance test completed! Cleaning up...")
 
-	deletionOutput, err := exec.Command(
+	deletionOutput, err := exec.CommandContext(ctx,
 		"kubectl", "delete",
 		"policies.policy.open-cluster-management.io", "-l",
 		"grc-test=config-policy-performance",
@@ -470,7 +472,7 @@ func main() {
 		klog.Errorf("Error deleting policies: %s, %s", err, string(deletionOutput))
 	}
 
-	prDeletionOutput, err := exec.Command(
+	prDeletionOutput, err := exec.CommandContext(ctx,
 		"kubectl", "delete", "placement", "-l",
 		"grc-test=config-policy-performance",
 		"--ignore-not-found",
@@ -479,7 +481,7 @@ func main() {
 		klog.Errorf("Error deleting config maps: %s, %s", err, string(prDeletionOutput))
 	}
 
-	pbDeletionOutput, err := exec.Command(
+	pbDeletionOutput, err := exec.CommandContext(ctx,
 		"kubectl", "delete", "placementbindings", "-l",
 		"grc-test=config-policy-performance",
 		"--ignore-not-found",
