@@ -18,6 +18,8 @@ GOSEC_VERSION := v2.22.2
 KBVERSION := 3.15.1
 # https://github.com/kubernetes/kubernetes/releases/latest
 ENVTEST_K8S_VERSION := 1.30.x
+# https://github.com/alexfalkowski/gocovmerge/releases/latest
+GOCOVMERGE_VERSION := v2.15.0
 
 LOCAL_BIN ?= $(error LOCAL_BIN is not set.)
 ifneq ($(findstring $(LOCAL_BIN), $(PATH)), $(LOCAL_BIN))
@@ -180,4 +182,4 @@ e2e-dependencies:
 GOCOVMERGE = $(LOCAL_BIN)/gocovmerge
 .PHONY: coverage-dependencies
 coverage-dependencies:
-	$(call go-get-tool,github.com/wadey/gocovmerge@v0.0.0-20160331181800-b5bfa59ec0ad)
+	$(call go-get-tool,github.com/alexfalkowski/gocovmerge/v2@$(GOCOVMERGE_VERSION))
