@@ -1,5 +1,5 @@
 {
   "$schema": "https://docs.renovatebot.com/renovate-schema.json",
-  "schedule": "before 8am on Monday",
-  "timezone": "America/New_York"
+  "timezone": "America/New_York",
+  "extends": ["github>stolostron/governance-policy-framework//.github/renovate_default"]
 }
