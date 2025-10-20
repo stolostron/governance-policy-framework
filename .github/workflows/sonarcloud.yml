@@ -30,7 +30,7 @@ jobs:
           git checkout ${{ github.event.workflow_run.head_commit.id }}
 
       - name: Download the artifacts
-        uses: actions/github-script@v7
+        uses: actions/github-script@v8
         with:
           # Taken from https://docs.github.com/en/actions/using-workflows/events-that-trigger-workflows#workflow_run
           script: |
@@ -74,7 +74,7 @@ jobs:
           echo "sonar.scm.revision=${{ github.event.workflow_run.head_commit.id }}" >> sonar-project.properties
 
       - name: SonarCloud Analysis
-        uses: sonarsource/sonarqube-scan-action@v5
+        uses: sonarsource/sonarqube-scan-action@v6
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
