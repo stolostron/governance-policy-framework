@@ -97,16 +97,23 @@ done
 
 # Update GitHub tokens for GitHub Actions
 echo "Setting GitHub token on GitHub repos..."
-for REPO in stolostron/governance-policy-framework stolostron/gatekeeper-operator stolostron/policy-cli; do
-  gh secret set WORKFLOW_USER -b ${GITHUB_BOT_USER} --repo ${REPO}
-  gh secret set WORKFLOW_TOKEN -b ${BUILDS_GH_TOKEN} --repo ${REPO}
+workflow_repos="
+  stolostron/governance-policy-framework
+  stolostron/gatekeeper-operator
+  stolostron/policy-cli
+  stolostron/governance-policy-addon-controller
+  open-cluster-management-io/governance-policy-addon-controller
+"
+for REPO in ${workflow_repos}; do
+  gh secret set WORKFLOW_USER -b "${GITHUB_BOT_USER}" --repo "${REPO}"
+  gh secret set WORKFLOW_TOKEN -b "${BUILDS_GH_TOKEN}" --repo "${REPO}"
 done
 
 while read -r -p "This script is going to print the new secrets to the screen. Is your screen secure? (Press 'y' to continue) " response; do
   case "$response" in
   Y | y)
     break
-            ;;
+    ;;
   esac
 done
 
