@@ -2,7 +2,7 @@
 
 set -e
 
-SCRIPT_DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" >/dev/null 2>&1 && pwd )"
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" >/dev/null 2>&1 && pwd)"
 
 GITHUB_BOT_USER="acm-grc-security"
 AWS_BOT_USER="ocm-grc-aws-kind-bot"
@@ -19,7 +19,7 @@ done
 # Verify the oc version
 MAJOR_OC=$(oc version -o json | jq -r '.clientVersion.gitVersion' | grep -o "[0-9]\+\.[0-9]\+" | sed 's/\.[0-9]*$//')
 MINOR_OC=$(oc version -o json | jq -r '.clientVersion.gitVersion' | grep -o "[0-9]\+\.[0-9]\+" | sed 's/^[0-9]*\.//')
-if (( ${MAJOR_OC} < 4 )) || (( ${MAJOR_OC} == 4 )) && (( ${MINOR_OC} < 11 )); then
+if ((MAJOR_OC < 4)) || ((MAJOR_OC == 4)) && ((MINOR_OC < 11)); then
   echo "The openshift CLI must be at version 4.11 or later. Current version: $(oc version -o json | jq -r '.clientVersion.gitVersion')"
   exit 1
 fi
@@ -61,7 +61,7 @@ echo ""
 echo "Generating new AWS token..."
 OLD_AWS_TOKEN=$(aws iam list-access-keys --user-name ${AWS_BOT_USER} | jq -r '.AccessKeyMetadata | sort_by(.CreateDate)[0].AccessKeyId')
 # Delete oldest AWS token to make space for creation
-aws iam delete-access-key --user-name ${AWS_BOT_USER} --access-key-id ${OLD_AWS_TOKEN}
+aws iam delete-access-key --user-name ${AWS_BOT_USER} --access-key-id "${OLD_AWS_TOKEN}"
 # Create and store new AWS token
 NEW_AWS_TOKEN_JSON=$(aws iam create-access-key --user-name ${AWS_BOT_USER})
 AWS_ACCESS_KEY_ID=$(echo "${NEW_AWS_TOKEN_JSON}" | jq -r '.AccessKey.AccessKeyId')
@@ -70,29 +70,29 @@ AWS_SECRET_ACCESS_KEY=$(echo "${NEW_AWS_TOKEN_JSON}" | jq -r '.AccessKey.SecretA
 # Regenerate ServiceAccount tokens on Collective by deleting old Secrets
 echo "Regenerating secrets on Collective in the ${COLLECTIVE_NS} namespace..."
 SERVICE_ACCT_NAME="policy-grc-sa"
-oc delete secret $(oc get sa ${SERVICE_ACCT_NAME} -n ${COLLECTIVE_NS} -o jsonpath='{.secrets[*].name}')
+oc delete secret "$(oc get sa "${SERVICE_ACCT_NAME}" -n "${COLLECTIVE_NS}" -o jsonpath='{.secrets[*].name}')"
 SERVICE_ACCT_NAME="policy-grc-prow-sa"
-oc delete secret $(oc get sa ${SERVICE_ACCT_NAME} -n ${COLLECTIVE_NS} -o jsonpath='{.secrets[*].name}')
+oc delete secret "$(oc get sa "${SERVICE_ACCT_NAME}" -n "${COLLECTIVE_NS}" -o jsonpath='{.secrets[*].name}')"
 
 # Update credentials on Collective using regenerated tokens
-oc delete secret rhacmstackem-github-secret policy-grc-aws-creds -n ${COLLECTIVE_NS}
-oc create secret generic rhacmstackem-github-secret -n ${COLLECTIVE_NS} --from-literal=user=acm-grc-security --from-literal=token="${COLLECTIVE_GH_TOKEN}"
-oc create secret generic policy-grc-aws-creds -n ${COLLECTIVE_NS} --from-literal=aws_access_key_id="${AWS_ACCESS_KEY_ID}" --from-literal=aws_secret_access_key="${AWS_SECRET_ACCESS_KEY}"
+oc delete secret rhacmstackem-github-secret policy-grc-aws-creds -n "${COLLECTIVE_NS}"
+oc create secret generic rhacmstackem-github-secret -n "${COLLECTIVE_NS}" --from-literal=user=acm-grc-security --from-literal=token="${COLLECTIVE_GH_TOKEN}"
+oc create secret generic policy-grc-aws-creds -n "${COLLECTIVE_NS}" --from-literal=aws_access_key_id="${AWS_ACCESS_KEY_ID}" --from-literal=aws_secret_access_key="${AWS_SECRET_ACCESS_KEY}"
 
 # Update credentials for each existing cluster deployment
 for CLUSTER_DEPLOYMENT in $(oc get clusterdeployments -l cluster.open-cluster-management.io/clusterset=acm-grc-security -A --no-headers | awk '{ print $1 }'); do
   echo "Updating secrets on Collective for ClusterDeployment ${CLUSTER_DEPLOYMENT}..."
-  oc delete secret -n ${CLUSTER_DEPLOYMENT} ${CLUSTER_DEPLOYMENT}-aws-creds
-  oc create secret generic ${CLUSTER_DEPLOYMENT}-aws-creds -n ${CLUSTER_DEPLOYMENT} --from-literal=aws_access_key_id=${AWS_ACCESS_KEY_ID} --from-literal=aws_secret_access_key=${AWS_SECRET_ACCESS_KEY}
+  oc delete secret -n "${CLUSTER_DEPLOYMENT}" "${CLUSTER_DEPLOYMENT}-aws-creds"
+  oc create secret generic "${CLUSTER_DEPLOYMENT}-aws-creds" -n "${CLUSTER_DEPLOYMENT}" --from-literal=aws_access_key_id="${AWS_ACCESS_KEY_ID}" --from-literal=aws_secret_access_key="${AWS_SECRET_ACCESS_KEY}"
 done
 
 # Get new token from Collective
-COLLECTIVE_SECRET=$(oc create token ${SERVICE_ACCT_NAME} -n ${COLLECTIVE_NS} --duration 2160h)
+COLLECTIVE_SECRET=$(oc create token "${SERVICE_ACCT_NAME}" -n "${COLLECTIVE_NS}" --duration 2160h)
 
 # Update SonarCloud tokens in GitHub repos
 echo "Setting SonarCloud token on GitHub repos..."
-for REPO in $(cat ${SCRIPT_DIR}/repo.txt && cat ${SCRIPT_DIR}/repo-extra.txt); do
-  gh secret set SONAR_TOKEN -b ${SONAR_TOKEN} --repo ${REPO}
+for REPO in $(cat "${SCRIPT_DIR}/repo.txt" && cat "${SCRIPT_DIR}/repo-extra.txt"); do
+  gh secret set SONAR_TOKEN -b "${SONAR_TOKEN}" --repo "${REPO}"
 done
 
 # Update GitHub tokens for GitHub Actions
@@ -104,7 +104,8 @@ done
 
 while read -r -p "This script is going to print the new secrets to the screen. Is your screen secure? (Press 'y' to continue) " response; do
   case "$response" in
-     Y|y )  break
+  Y | y)
+    break
             ;;
   esac
 done
