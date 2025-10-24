@@ -8,7 +8,7 @@ VERSION_TAG=${VERSION_TAG:-"latest"}
 DOCKER_URI="quay.io/stolostron"
 
 echo "* Patching hub cluster to ${VERSION_TAG}"
-oc annotate MultiClusterHub multiclusterhub -n ${acm_installed_namespace} mch-pause=true --overwrite
+oc annotate MultiClusterHub multiclusterhub -n ${acm_installed_namespace} operator.open-cluster-management.io/pause=true --overwrite
 
 # Patch the propagator on the hub
 COMPONENT="governance-policy-propagator"
