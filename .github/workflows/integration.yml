@@ -67,6 +67,12 @@ jobs:
       run: |
         make integration-test
 
+    - name: Cluster cleanup
+      if: ${{ always() }}
+      run: |
+        acm_installed_namespace=$(oc get subscriptions.operators.coreos.com --all-namespaces | grep advanced-cluster-management | awk '{print $1}')
+        oc annotate MultiClusterHub multiclusterhub -n ${acm_installed_namespace} installer.open-cluster-management.io/pause- --overwrite
+
     - name: Upload Test Reports
       if: ${{ !cancelled() }}
       uses: actions/upload-artifact@v4
