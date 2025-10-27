@@ -197,14 +197,14 @@ jobs:
 
     - name: Upload Debug Artifacts
       if: ${{ failure() }}
-      uses: actions/upload-artifact@v4
+      uses: actions/upload-artifact@v5
       with:
         name: fw-kind-debug-${{ matrix.kind }}-${{ matrix.deployOnHub }}${{ matrix.hosted == 'hosted' && '-hosted' || '' }}
         path: framework/e2e-debug.tar.gz
 
     - name: Upload Test Reports
       if: ${{ !cancelled() }}
-      uses: actions/upload-artifact@v4
+      uses: actions/upload-artifact@v5
       with:
         name: fw-kind-report-${{ matrix.kind }}-${{ matrix.deployOnHub }}${{ matrix.hosted == 'hosted' && '-hosted' || '' }}
         path: |
