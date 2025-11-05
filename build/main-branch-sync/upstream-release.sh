@@ -11,13 +11,13 @@ if [[ -z "${NEW_RELEASE}" ]]; then
 fi
 
 echo "=== Tagging upstream repos with ${NEW_RELEASE}"
-REPOS="$(${SCRIPT_PATH}/fetch-repo-list.sh | grep -v 'collection\|generator\|nucleus')"
+REPOS="$(cat "${SCRIPT_PATH}/repo-upstream.txt" | grep -v 'collection\|generator\|nucleus')"
 for REPO in ${REPOS}; do
   echo "* Handling ${REPO} ..."
-  git clone --quiet https://github.com/${REPO}.git ${SCRIPT_PATH}/${REPO}
+  git clone --quiet "https://github.com/${REPO}.git" "${SCRIPT_PATH}/${REPO}"
   GIT="git -C ${SCRIPT_PATH}/${REPO}"
-  ${GIT} tag -a ${NEW_RELEASE} -m "${NEW_RELEASE}"
-  ${GIT} push origin ${NEW_RELEASE}
+  ${GIT} tag -a "${NEW_RELEASE}" -m "${NEW_RELEASE}"
+  ${GIT} push origin "${NEW_RELEASE}"
 done
 
 echo "=== Review and submit the new releases (GitHub Actions may still be running to create them)"

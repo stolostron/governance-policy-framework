@@ -14,8 +14,8 @@
 set -e
 
 path="$(cd "$(dirname "${BASH_SOURCE[0]}")" >/dev/null 2>&1 && pwd)"
-RELEASES="$(cat ${path}/../../CURRENT_SUPPORTED_VERSIONS)"
-source ${path}/../common.sh
+RELEASES="$(cat "${path}/../../CURRENT_SUPPORTED_VERSIONS")"
+source "${path}/../common.sh"
 exit_code=0
 URLS=""
 
@@ -24,13 +24,13 @@ if [[ -z "${JIRA_ISSUE}" ]]; then
   exit 1
 fi
 
-UPSTREAM_REPOS="$(${BUILD_DIR}/main-branch-sync/fetch-repo-list.sh)"
+UPSTREAM_REPOS="$(cat "${path}/repo-upstream.txt")"
 if [[ -z "${UPSTREAM_REPOS}" ]]; then
   echo "error: Failed to retrieve upstream repos."
   exit 1
 fi
 
-RELEASE_BRANCHES="$(for BRANCH in ${RELEASES}; do echo release-${BRANCH}; done)"
+RELEASE_BRANCHES="$(for BRANCH in ${RELEASES}; do echo "release-${BRANCH}"; done)"
 DEFAULT_BRANCH="${DEFAULT_BRANCH:-"main"}"
 
 # Fetch and parse lastest major Go version
@@ -58,21 +58,21 @@ fi
 echo "* Updating Golang to ${GO_VERSION} for ACM ${RELEASES}"
 
 for repo in $(
-  echo ${UPSTREAM_REPOS}
-  cat ${REPO_PATH}
-  cat ${EXTRA_REPO_PATH}
+  cat "${UPSTREAM_REPO_PATH}"
+  cat "${REPO_PATH}"
+  cat "${EXTRA_REPO_PATH}"
 ); do
   # Clone repo
   echo "* Handling ${repo}"
   p="${path}/${repo}"
-  git clone --quiet https://github.com/${repo} ${p}
+  git clone --quiet "https://github.com/${repo}" "${p}"
   GIT="git -C ${p}"
 
   # Iterate over release branches
   for branch in ${DEFAULT_BRANCH} ${RELEASE_BRANCHES}; do
     commit_msg="Update to Go v${GO_VERSION}"
     echo "* Checking out branch ${branch}"
-    ${GIT} checkout --quiet ${branch} || continue
+    ${GIT} checkout --quiet "${branch}" || continue
 
     # Check relevant files for Go version
     for FILE in ${p}/go.mod ${p}/.ci-operator.yaml "${p}"/build/Dockerfile* "${p}"/Dockerfile*; do
@@ -82,17 +82,17 @@ for repo in $(
       fi
       echo "INFO: Checking version in ${FILE}"
       ###### Set old releases to Go 1.21 due to controller-gen incompatibility with 1.22 #####
-      if [[ "$(basename ${FILE})" == "go.mod" ]]; then
+      if [[ "$(basename "${FILE}")" == "go.mod" ]]; then
         if [[ "${branch##*-}" == "2.10" || "${branch##*-}" == "2.9" || "${branch##*-}" == "2.8" ]]; then
           echo "WARN: Setting go.mod to 1.21 for ${branch}"
-          ${SED} -i -E "s/${GO_PATTERN}/\11.21.0/" ${p}/go.mod
-          ${SED} -i '/make coverage-verify/d' ${p}/.github/workflows/kind.yml || true
+          ${SED} -i -E "s/${GO_PATTERN}/\11.21.0/" "${p}/go.mod"
+          ${SED} -i '/make coverage-verify/d' "${p}/.github/workflows/kind.yml" || true
         else
-          ${SED} -i -E "s/${GO_PATTERN}/\1${GO_VERSION}.0/" ${p}/go.mod
+          ${SED} -i -E "s/${GO_PATTERN}/\1${GO_VERSION}.0/" "${p}/go.mod"
         fi
         ########################################
       else
-        ${SED} -i -E "s/${GO_PATTERN}/\1${GO_VERSION}/" ${FILE}
+        ${SED} -i -E "s/${GO_PATTERN}/\1${GO_VERSION}/" "${FILE}"
       fi
     done
 
@@ -115,14 +115,14 @@ for repo in $(
     echo "INFO: Pushing updates to git"
     refresh_branch="go-update-${branch}"
     if (${GIT} branch --remotes | grep "origin/${refresh_branch}" 1>/dev/null); then
-      ${GIT} push --delete origin ${refresh_branch}
+      ${GIT} push --delete origin "${refresh_branch}"
     fi
-    ${GIT} checkout -b ${refresh_branch}
+    ${GIT} checkout -b "${refresh_branch}"
     if [[ "${branch}" == "release-"* ]]; then
       commit_msg="[${branch}] ${commit_msg}"
     fi
     ${GIT} commit -s -am "${commit_msg}" -m "ref: ${JIRA_ISSUE}" &&
-      OUTPUT=$(${GIT} push origin ${refresh_branch} 2>&1) || {
+      OUTPUT=$(${GIT} push origin "${refresh_branch}" 2>&1) || {
       echo "${OUTPUT}"
       exit 1
     }

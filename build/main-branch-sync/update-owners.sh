@@ -17,11 +17,9 @@ script_path="$(cd "$(dirname "${BASH_SOURCE[0]}")" >/dev/null 2>&1 && pwd)"
 
 OWNERS_FILE_NAME="OWNERS"
 REPOS="${REPOS:-"$(
-  {
-    "${script_path}/fetch-repo-list.sh" || exit 1
-    cat "${script_path}/repo.txt"
-    cat "${script_path}/repo-extra.txt"
-  }
+  cat "${script_path}/repo-upstream.txt"
+  cat "${script_path}/repo.txt"
+  cat "${script_path}/repo-extra.txt"
   cat "${script_path}/repo-owners.txt"
 )"}"
 

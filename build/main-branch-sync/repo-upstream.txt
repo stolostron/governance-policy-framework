@@ -1,0 +1,6 @@
+open-cluster-management-io/config-policy-controller
+open-cluster-management-io/governance-policy-addon-controller
+open-cluster-management-io/governance-policy-framework-addon
+open-cluster-management-io/governance-policy-propagator
+open-cluster-management-io/policy-collection
+open-cluster-management-io/policy-generator-plugin
