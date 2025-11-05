@@ -2,6 +2,8 @@
 
 BUILD_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" >/dev/null 2>&1 && pwd)"
 
+export CHECK_RELEASES EXTRA_REPO_PATH UPSTREAM_REPO_PATH
+
 CHECK_RELEASES="$(cat "${BUILD_DIR}/../CURRENT_VERSION"; echo; cat "${BUILD_DIR}/../CURRENT_SUPPORTED_VERSIONS")"
 COMPONENT_ORG=stolostron
 DEFAULT_BRANCH=${DEFAULT_BRANCH:-"main"}
@@ -10,6 +12,7 @@ SKIP_CLONING="${SKIP_CLONING:-"false"}"
 SKIP_CLEANUP="${SKIP_CLEANUP:-"false"}"
 REPO_PATH="${BUILD_DIR}/main-branch-sync/repo.txt"
 EXTRA_REPO_PATH="${BUILD_DIR}/main-branch-sync/repo-extra.txt"
+UPSTREAM_REPO_PATH="${BUILD_DIR}/main-branch-sync/repo-upstream.txt"
 
 # Clone the repositories needed for this script to work
 cloneRepos() {
