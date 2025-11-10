@@ -1,4 +1,8 @@
-# Automation tools for policy-grc-squad
+# New release tools
+
+- [New release tools](#new-release-tools)
+  - [Updating the fast-forwarding version](#updating-the-fast-forwarding-version)
+  - [Handling new Konflux configurations](#handling-new-konflux-configurations)
 
 ## Updating the fast-forwarding version
 
@@ -12,6 +16,7 @@
 
 1. Update the version information at the base of the repo (Do not merge this until step 2 is
    merged.):
+
    ```shell
    OLD_VERSION=$(cat CURRENT_VERSION)
    printf X.Y > CURRENT_VERSION
@@ -19,10 +24,13 @@
    { echo "${OLD_VERSION}"; head -2 CURRENT_SUPPORTED_VERSIONS.bk; } > CURRENT_SUPPORTED_VERSIONS
    rm CURRENT_SUPPORTED_VERSIONS.bk
    ```
+
    These commands script will:
+
    - Export the previous release version (also used in step 2)
    - Update the `CURRENT_VERSION` file to the new release version
    - Update `CURRENT_SUPPORTED_VERSION` with the new set of supported versions
+
 2. Update existing and create new Prow configurations for the new version (see
    [CICD docs](https://github.com/stolostron/cicd-docs/blob/main/prow) for details on Prow):
    - Copy the absolute path to `update-release.sh`: `ls $PWD/build/branch-create/update-release.sh`
@@ -49,3 +57,16 @@
    branches and pick up the new Prow configurations.
 4. Check that fast-forwarding is re-enabled (the `FAST_FORWARD` GitHub Actions variable in this
    repository should be set to "true")
+
+## Handling new Konflux configurations
+
+Once Konflux PRs land in our repositories as a result of the creation of the new ACM Konflux
+application and components, run the [`migrate-konflux.sh`](./migrate-konflux.sh) script:
+
+```shell
+./build/branch-create/migrate-konflux.sh
+```
+
+The script will iterate over [`repo.txt`](./repo.txt), search for the newly created Konflux
+branches, update the configuration based on the existing release configuration, and create a new PR
+with a "closes" keyword to close the existing PR from Konflux on merge.

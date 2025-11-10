@@ -1,4 +1,11 @@
-# Automation tools for policy-grc-squad
+# Code maintenance tools
+
+- [Code maintenance tools](#code-maintenance-tools)
+  - [Releasing a new version upstream](#releasing-a-new-version-upstream)
+  - [Performing an update across all repos](#performing-an-update-across-all-repos)
+  - [Refreshing builds with a no-op PR](#refreshing-builds-with-a-no-op-pr)
+  - [Updating the OWNERS files](#updating-the-owners-files)
+  - [Rotating CI secrets](#rotating-ci-secrets)
 
 ## Releasing a new version upstream
 
