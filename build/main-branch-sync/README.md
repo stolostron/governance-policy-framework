@@ -26,12 +26,19 @@ build/main-branch-sync/repo-bulk-update.sh --upstream --commit-msg "chore: sync 
 ```
 
 Or, to run custom commands that may only be needed one time, update the
-[`sync-utils/custom-sync.sh`](./sync-utils/custom-sync.sh) script with the commands you'd like to
-run. You can test them out with the `--dry-run` flag to view the diff without committing changes.
-For example:
+[`sync-utils/custom-sync.sh`](./sync-utils/custom-sync.sh) script or, for the Konflux pipeline files
+the [`sync-utils/konflux-update.sh`](./sync-utils/konflux-update.sh) script, with the commands you'd
+like to run. You can test them out with the `--dry-run` flag to view the diff without committing
+changes. For example:
 
 ```bash
 build/main-branch-sync/repo-bulk-update.sh --dry-run custom-sync
+```
+
+Or, for Konflux pipeline file updates:
+
+```bash
+build/main-branch-sync/repo-bulk-update.sh --dry-run konflux-update
 ```
 
 You can view the help menu by passing the `--help` flag:

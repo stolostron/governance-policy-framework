@@ -151,6 +151,11 @@ if [[ -z "${commit_msg}" ]] && ! ${dry_run}; then
   exit 1
 fi
 
+if [[ ${branch} == "release-"* ]] || [[ ${branch} == "main" ]]; then
+  echo "error: Branch name cannot be main or a release branch. Did you mean to use --target-branch?" >&2
+  exit 1
+fi
+
 if [[ -z "${branch_suffix}" ]] && [[ -z "${branch}" ]]; then
   branch_suffix=${sync_util}
 fi
