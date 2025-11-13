@@ -1,3 +1,4 @@
+stolostron/acm-cli
 stolostron/cert-policy-controller
 stolostron/config-policy-controller
 stolostron/go-template-utils
@@ -5,5 +6,7 @@ stolostron/governance-policy-addon-controller
 stolostron/governance-policy-framework
 stolostron/governance-policy-framework-addon
 stolostron/governance-policy-propagator
+stolostron/must-gather
+stolostron/policy-cli
 stolostron/policy-collection
 stolostron/policy-generator-plugin
