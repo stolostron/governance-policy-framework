@@ -161,6 +161,11 @@ jobs:
 
         echo "Using TAG=${TAG}, WATCH_NAMESPACE=${WATCH_NAMESPACE}, KIND_NAME=${KIND_NAME}, KUBECONFIG=${KUBECONFIG}"
 
+        echo "::group::cleanup docker system"
+        docker system df
+        docker system prune -a -f
+        echo "::endgroup::"
+
         echo "::group::make build-images"
         make build-images
         echo "::endgroup::"
@@ -175,6 +180,11 @@ jobs:
         TEST_ARGS: --fail-fast --json-report=report.json --junit-report=report.xml --output-dir=test-output
         UPSTREAM_TEST: ${{ github.event.organization.login == 'open-cluster-management-io' }}
       run: |
+        echo "::group::cleanup docker system"
+        docker system df
+        docker system prune -a -f
+        echo "::endgroup::"
+
         if [[ "${HOSTED}" == "hosted" ]]; then
           make e2e-test-hosted
         else
@@ -185,6 +195,11 @@ jobs:
       if: ${{ failure() }}
       working-directory: framework
       run: |
+        echo "::group::cleanup docker system"
+        docker system df
+        docker system prune -a -f
+        echo "::endgroup::"
+
         if [[ "${HOSTED}" == "hosted" ]]; then
           KIND_MANAGED_NAMESPACE=cluster2-hosted \
             MANAGED_CLUSTER_NAME=hub \
