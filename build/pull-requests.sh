@@ -1,31 +1,65 @@
 #!/usr/bin/env bash
 
-USERS=$(yq '.reviewers[]' OWNERS)
-ORGS=(open-cluster-management-io stolostron openshift)
+script_dir="$(cd "$(dirname "${BASH_SOURCE[0]}")" >/dev/null 2>&1 && pwd)"
 
-query="is:pr+is:open+draft:false"
+get_prs() {
+  local users=${1}
+  local orgs=${2}
+  local repos=${3}
+  local query="is:pr+is:open+draft:false"
 
-for name in ${USERS}; do
-  query+="+author:${name}"
-done
+  for name in ${users}; do
+    query+="+author:${name}"
+  done
 
-for org in "${ORGS[@]}"; do
-  query+="+org:${org}"
-done
+  for org in ${orgs}; do
+    query+="+org:${org}"
+  done
 
-format='"\(if (.title | length) <= 40 then .title else (.title[0:37] + "...") end)\t'
-format+='\(.user.login[0:10])\t'
-format+='\(.created_at[0:10])\t'
-format+='\(.html_url)"'
+  for repo in ${repos}; do
+    query+="+repo:${repo}"
+  done
+
+  {
+    printf "TITLE\tUSER\tDATE\tURL\n"
+    curl -s -H 'Accept: application/vnd.github.text-match+json' \
+      "https://api.github.com/search/issues?q=${query}" |
+      jq -r '.items | reverse | .[] | '"${format}"
+  } | column -s "	" -t
+}
+
+format='
+  \(if (.title | length) <= 40 then .title else (.title[0:37] + "...") end)\t
+  \(.user.login[0:10])\t
+  \(.created_at[0:10])\t
+  \(.html_url)
+'
 
 title="# GRC PR report for $(date) #"
+# shellcheck disable=SC2001
 border=$(echo "${title}" | sed 's/./#/g')
 
 echo -e "${border}\n${title}\n${border}"
 
-{
-  printf "TITLE\tUSER\tDATE\tURL\n"
-  curl -s -H 'Accept: application/vnd.github.text-match+json' \
-    "https://api.github.com/search/issues?q=${query}" \
-    | jq -r '.items | reverse | .[] | '"${format}"
-} | column -s "	" -t
+users=$(yq '.reviewers[]' OWNERS)
+orgs='
+  open-cluster-management-io
+  stolostron
+  openshift
+'
+
+get_prs "${users}" "${orgs}"
+
+echo "${border}"
+
+users='
+  app/dependabot
+  app/red-hat-konflux
+  openshift-cherrypick-robot
+'
+repos=$(
+  cat "${script_dir}/main-branch-sync/repo.txt"
+  cat "${script_dir}/main-branch-sync/repo-extra.txt"
+)
+
+get_prs "${users}" "" "${repos}"
