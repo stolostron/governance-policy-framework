@@ -28,12 +28,10 @@ get_prs() {
   } | column -s "	" -t
 }
 
-format='
-  \(if (.title | length) <= 40 then .title else (.title[0:37] + "...") end)\t
-  \(.user.login[0:10])\t
-  \(.created_at[0:10])\t
-  \(.html_url)
-'
+format='"\(if (.title | length) <= 40 then .title else (.title[0:37] + "...") end)\t'
+format+='\(.user.login[0:10])\t'
+format+='\(.created_at[0:10])\t'
+format+='\(.html_url)"'
 
 title="# GRC PR report for $(date) #"
 # shellcheck disable=SC2001
