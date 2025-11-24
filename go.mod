@@ -10,9 +10,9 @@ require (
 	github.com/prometheus/common v0.67.2
 	github.com/spf13/pflag v1.0.10
 	golang.org/x/crypto v0.43.0
-	k8s.io/api v0.33.5
-	k8s.io/apimachinery v0.33.5
-	k8s.io/client-go v0.33.5
+	k8s.io/api v0.33.6
+	k8s.io/apimachinery v0.33.6
+	k8s.io/client-go v0.33.6
 	k8s.io/klog v1.0.0
 	open-cluster-management.io/governance-policy-propagator v0.14.0
 )
@@ -72,7 +72,7 @@ require (
 	gopkg.in/inf.v0 v0.9.1 // indirect
 	gopkg.in/yaml.v2 v2.4.0 // indirect
 	gopkg.in/yaml.v3 v3.0.1 // indirect
-	k8s.io/apiextensions-apiserver v0.33.5 // indirect
+	k8s.io/apiextensions-apiserver v0.33.6 // indirect
 	k8s.io/klog/v2 v2.130.1 // indirect
 	k8s.io/kube-openapi v0.0.0-20250318190949-c8a335a9a2ff // indirect
 	k8s.io/utils v0.0.0-20241104100929-3ea5e8cea738 // indirect
