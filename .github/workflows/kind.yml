@@ -54,7 +54,7 @@ jobs:
     - name: Checkout Component Repository
       # Checkout a specific component when called from another repository
       if: ${{ github.event.repository.name != 'governance-policy-framework' }}
-      uses: actions/checkout@v5
+      uses: actions/checkout@v6
       with:
         # `repository` is inferred as the "caller" repository 
         path: component
@@ -63,7 +63,7 @@ jobs:
     - name: Checkout Policy Framework
       # Checkout a stable branch when called from another repository
       if: ${{ github.event.repository.name != 'governance-policy-framework' }}
-      uses: actions/checkout@v5
+      uses: actions/checkout@v6
       with:
         repository: stolostron/governance-policy-framework
         path: framework
@@ -72,7 +72,7 @@ jobs:
     - name: Checkout Policy Framework
       # Checkout like "usual" when called from this repository
       if: ${{ github.event.repository.name == 'governance-policy-framework' }}
-      uses: actions/checkout@v5
+      uses: actions/checkout@v6
       with:
         # `repository` is inferred as the "caller" repository 
         path: framework

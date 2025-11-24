@@ -27,7 +27,7 @@ jobs:
         echo "START_TIME=$(date)" >> "$GITHUB_OUTPUT"
 
     - name: Checkout Policy Framework
-      uses: actions/checkout@v5
+      uses: actions/checkout@v6
 
     - name: Set up Go
       uses: actions/setup-go@v6
@@ -94,7 +94,7 @@ jobs:
       GITHUB_TOKEN: ${{ secrets.WORKFLOW_TOKEN }}
     steps:
     - name: Checkout Policy Framework
-      uses: actions/checkout@v5
+      uses: actions/checkout@v6
     - run: |
         COMMIT_TIME="${{ needs.integration.outputs.START_TIME }}" ./build/main-branch-sync/sync.sh
 
@@ -105,7 +105,7 @@ jobs:
     if: ${{ always() }}
     steps:
     - name: Checkout Policy Framework
-      uses: actions/checkout@v5
+      uses: actions/checkout@v6
       with:
         path: framework
 
