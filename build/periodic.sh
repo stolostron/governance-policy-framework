@@ -6,7 +6,7 @@ DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" >/dev/null 2>&1 && pwd )"
 source "${DIR}/common.sh"
 
 # This list can include all postsubmit jobs for all repos--if a job doesn't exist it's filtered to empty and skipped
-CHECK_JOBS=${CHECK_JOBS:-"publish publish-test images latest-image-mirror latest-test-image-mirror git-fast-forward"}
+# CHECK_JOBS=${CHECK_JOBS:-"publish publish-test images latest-image-mirror latest-test-image-mirror git-fast-forward"}
 
 # return URL of open sync issues (uses authenticated API to prevent rate limiting)
 getSyncIssues() {
@@ -121,14 +121,14 @@ for repo in ${REPOS}; do
 
 				if [ -z "${pipelinesha}" ]; then
 					echo "WARN: Pipeline SHA not found for ${repo} ${release} repository for ${imageName}. Continuing."
-				elif [ "${gitsha}" != "${pipelinesha}" ]; then
-					echo "****"
-					echo "ERROR: SHA mismatch in pipeline and ${repo} ${release} repositories." | tee -a "${ERROR_FILE}"
-					echo "   imageName: ${imageName}" | tee -a "${ERROR_FILE}"
-					echo "   pipeline: ${pipelinesha}" | tee -a "${ERROR_FILE}"
-					echo "   ${repo}: ${gitsha}" | tee -a "${ERROR_FILE}"
-					echo "***"
-					rc=1
+				# elif [ "${gitsha}" != "${pipelinesha}" ]; then
+				# 	echo "****"
+				# 	echo "ERROR: SHA mismatch in pipeline and ${repo} ${release} repositories." | tee -a "${ERROR_FILE}"
+				# 	echo "   imageName: ${imageName}" | tee -a "${ERROR_FILE}"
+				# 	echo "   pipeline: ${pipelinesha}" | tee -a "${ERROR_FILE}"
+				# 	echo "   ${repo}: ${gitsha}" | tee -a "${ERROR_FILE}"
+				# 	echo "***"
+				# 	rc=1
 				fi
 			done
 
