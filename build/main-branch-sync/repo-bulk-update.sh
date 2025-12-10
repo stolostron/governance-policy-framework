@@ -79,10 +79,6 @@ while [[ $# -gt 0 ]]; do
     branch_suffix="$2"
     shift 2
     ;;
-  --branch)
-    branch="$2"
-    shift 2
-    ;;
   --)
     shift
     break
@@ -121,13 +117,12 @@ Options:
   --upstream                   Use upstream repositories (default: false)
   --target-branch BRANCH       Target branch to update (default: main)
   --head-branch BRANCH         Name for the working branch
+  --branch-suffix SUFFIX       Suffix string for head branch name
   --delete-branch              Delete existing head branch before updating (default: false)
   --commit-msg MSG             Commit message (required unless --dry-run is passed)
   --commit-body BODY           Commit body (optional)
   --silent                     Do not ask for confirmation when committing (default: false)
   --dry-run                    Show what changes would be made without committing/pushing (default: false)
-  --branch-suffix SUFFIX       Suffix string for head branch name
-  --branch BRANCH              Use an explicit branch name instead of suffix
   --help, -h                   Show this help and exit
 
 Examples:
@@ -151,12 +146,12 @@ if [[ -z "${commit_msg}" ]] && ! ${dry_run}; then
   exit 1
 fi
 
-if [[ ${branch} == "release-"* ]] || [[ ${branch} == "main" ]]; then
+if [[ ${head_branch} == "release-"* ]] || [[ ${head_branch} == "main" ]]; then
   echo "error: Branch name cannot be main or a release branch. Did you mean to use --target-branch?" >&2
   exit 1
 fi
 
-if [[ -z "${branch_suffix}" ]] && [[ -z "${branch}" ]]; then
+if [[ -z "${branch_suffix}" ]] && [[ -z "${head_branch}" ]]; then
   branch_suffix=${sync_util}
 fi
 
@@ -196,7 +191,7 @@ for repo in ${repos}; do
   fi
 done
 
-head_branch="${branch:-"$(id -un)-${target_branch}-${branch_suffix}"}"
+head_branch="${head_branch:-"$(id -un)-${target_branch}-${branch_suffix}"}"
 
 echo "Running repo update with:
   Sync utility:              ${sync_util} ${sync_util_args[*]}
