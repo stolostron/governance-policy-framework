@@ -14,6 +14,16 @@ if [[ -z "${go_version}" ]]; then
   exit 1
 fi
 
+if [[ -f ${REPO_PATH}/go.mod ]]; then
+  GO="go -C ${REPO_PATH}"
+  ${GO} get "go@${go_version}.0"
+
+  ${GO} mod tidy || {
+    echo "error: Failed to tidy go.mod in ${REPO_PATH}" >&2
+    read -r -p "Take care of upgrade errors. Press enter to continue"
+  }
+fi
+
 if [[ -f ${REPO_PATH}/.ci-operator.yaml ]]; then
   yq '.build_root_image.tag = "go'"${go_version}"'-linux"' -i "${REPO_PATH}/.ci-operator.yaml"
 fi
