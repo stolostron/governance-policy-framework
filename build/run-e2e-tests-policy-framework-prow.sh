@@ -32,7 +32,6 @@ echo "* Set up cluster for test"
 # Set tag for images: Use `latest` for `main` and `latest-<version>` for `release-<version>`
 # branches. If the PR is in `openshift/release`, parse the job spec for the target branch.
 # Otherwise, use `PULL_BASE_REF`.
-VERSION_TAG="latest"
 if [[ "${REPO_OWNER}" == "openshift" ]] && [[ "${REPO_NAME}" == "release" ]]; then
   TARGET_BRANCH="$(echo "${JOB_SPEC}" | jq -r '.extra_refs[] | select(.workdir == true).base_ref')"
 else
@@ -40,11 +39,11 @@ else
 fi
 
 if [[ "${TARGET_BRANCH}" ]] && [[ "${TARGET_BRANCH}" != "main" ]]; then
-  VERSION_TAG="${VERSION_TAG}-${PULL_BASE_REF#*-}"
+  ACM_VERSION=${PULL_BASE_REF#*-}
 fi
 
 export KUBECONFIG=${HUB_KUBE}
-VERSION_TAG="${VERSION_TAG}" "${DIR}"/patch-cluster-prow.sh
+ACM_VERSION="${ACM_VERSION}" "${DIR}"/patch-cluster-prow.sh
 
 if [[ "${HUB_KUBE}" != "${MANAGED_KUBE}" ]]; then
   MANAGED_KUBE=${MANAGED_KUBE} MANAGED_CLUSTER_NAME=${MANAGED_CLUSTER_NAME} "${DIR}"/import-managed.sh
