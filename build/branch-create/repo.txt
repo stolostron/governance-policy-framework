@@ -10,3 +10,4 @@ stolostron/must-gather
 stolostron/policy-cli
 stolostron/policy-collection
 stolostron/policy-generator-plugin
+stolostron/mtv-integrations
