@@ -3,3 +3,4 @@ stolostron/kubernetes-dependency-watches
 stolostron/gatekeeper
 stolostron/gatekeeper-operator
 stolostron/gatekeeper-operator-fbc
+stolostron/mtv-integrations
