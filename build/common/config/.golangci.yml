@@ -135,7 +135,7 @@ formatters:
       sections:
         - standard
         - default
-        - prefix(github.com/stolostron/gatekeeper-operator)
+        - prefix(github.com/stolostron/governance-policy-framework)
     gofmt:
       simplify: true
   exclusions:

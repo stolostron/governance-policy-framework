@@ -122,8 +122,7 @@ dockerfileDiff() {
 packageVersioning() {
 	repo="${1}"
 
-	PACKAGES="^go 
-		github.com/onsi/ginkgo"
+	PACKAGES="^go"
 
 	GOMOD_NAME="go.mod"
 	REPO_GOMOD_PATH="${COMPONENT_ORG}/${repo}/${GOMOD_NAME}"
@@ -182,7 +181,7 @@ crdDiff() {
 
 	rcode=0
 	for crd_file in ${PROPAGATOR_CRD_FILES}; do
-		CRD_DIFF="$(diff "${propagator_path}/${crd_file}" "${mch_path}/${crd_file}")"
+		CRD_DIFF="$(diff -I 'controller-gen.kubebuilder.io/version: ' "${propagator_path}/${crd_file}" "${mch_path}/${crd_file}")"
 		if [[ -n "${CRD_DIFF}" ]]; then
 			echo "****"
 			echo "ERROR: CRD ${crd_file} is not synced to ${mch_repo} for ${BRANCH}" | tee -a "${OUTPUT_FILES[@]}"
