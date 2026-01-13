@@ -51,6 +51,12 @@ jobs:
             hosted: hosted
 
     steps:
+      - name: Clear some space
+        run: |
+          df -h /
+          sudo rm -rf /usr/local/lib/android || true
+          df -h /
+
       - name: Checkout Component Repository
         # Checkout a specific component when called from another repository
         if: ${{ github.event.repository.name != 'governance-policy-framework' }}
