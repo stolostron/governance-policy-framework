@@ -170,6 +170,7 @@ kind-controller-kubeconfig: install-resources
 		--server=$(shell kubectl config view --minify -o jsonpath='{.clusters[].cluster.server}' --kubeconfig=kubeconfig_$(CLUSTER_NAME)_e2e) \
 		--certificate-authority=temp-ca.crt --embed-certs=true
 	@rm -f temp-ca.crt
+	@kubectl wait --for='jsonpath={.data.token}' -n $(CONTROLLER_NAMESPACE) secret $(CONTROLLER_NAME) --timeout=60s --kubeconfig=$(PWD)/kubeconfig_$(CLUSTER_NAME)_e2e
 	@kubectl config set-credentials $(KIND_CLUSTER_NAME) --kubeconfig=$(PWD)/kubeconfig_$(CLUSTER_NAME) \
 		--token=$$(kubectl get secret -n $(CONTROLLER_NAMESPACE) $(CONTROLLER_NAME) -o jsonpath='{.data.token}' --kubeconfig=$(PWD)/kubeconfig_$(CLUSTER_NAME)_e2e | $(BASE64) --decode)
 	@kubectl config set-context $(KIND_CLUSTER_NAME) --kubeconfig=$(PWD)/kubeconfig_$(CLUSTER_NAME) \
