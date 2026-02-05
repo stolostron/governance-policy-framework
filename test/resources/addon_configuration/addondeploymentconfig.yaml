@@ -18,3 +18,6 @@ spec:
           memory: 512Mi
         limits:
           memory: 1Gi
+  customizedVariables:
+    - name: logLevel
+      value: "2"

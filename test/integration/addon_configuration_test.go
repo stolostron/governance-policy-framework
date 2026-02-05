@@ -43,6 +43,7 @@ var addonTest = func(ctx SpecContext, addOn string) {
 		expectedResources    = `{"limits":{"memory":"1Gi"},"requests":{"memory":"512Mi"}}`
 		expectedNodeSelector = `{"kubernetes.io/os":"linux"}`
 		expectedTolerations  = `[{"key":"dedicated","operator":"Equal","value":"something-else","effect":"NoSchedule"}]`
+		expectedLogLevelArg  = `--log-level=2`
 	)
 
 	// Restore AddOns regardless of test result
@@ -66,15 +67,38 @@ var addonTest = func(ctx SpecContext, addOn string) {
 
 	fetchDeployment := func(g Gomega) (*appsv1.Deployment, corev1.Container) {
 		deployment, err := clientManaged.AppsV1().Deployments(ocmAddonNS).Get(ctx, addOn, metav1.GetOptions{})
-		Expect(err).ToNot(HaveOccurred())
+		g.Expect(err).ToNot(HaveOccurred())
 		container := deployment.Spec.Template.Spec.Containers
 		g.Expect(container).To(HaveLen(1))
 
 		return deployment, container[0]
 	}
 
+	checkModified := func(g Gomega) {
+		deployment, container := fetchDeployment(g)
+		// Check Resources
+		g.Expect(json.Marshal(container.Resources)).Should(BeEquivalentTo(expectedResources))
+		// Check NodeSelector
+		g.Expect(json.Marshal(deployment.Spec.Template.Spec.NodeSelector)).Should(BeEquivalentTo(expectedNodeSelector))
+		// Check Tolerations
+		g.Expect(json.Marshal(deployment.Spec.Template.Spec.Tolerations)).Should(BeEquivalentTo(expectedTolerations))
+		// Check log-level
+		g.Expect(container.Args).Should(ContainElement(expectedLogLevelArg))
+	}
+
 	By("Fetching Deployment to determine default configuration")
 	baseDeployment, baseContainer := fetchDeployment(Default)
+	Expect(baseContainer.Args).NotTo(ContainElement(expectedLogLevelArg))
+
+	checkBase := func(g Gomega) {
+		deployment, container := fetchDeployment(g)
+		g.Expect(
+			deployment.Spec.Template.Spec.NodeSelector,
+		).Should(Equal(
+			baseDeployment.Spec.Template.Spec.NodeSelector,
+		))
+		g.Expect(container.Resources).Should(Equal(baseContainer.Resources))
+	}
 
 	By("Attaching the AddOnDeploymentConfig to the ManagedClusterAddOn for " + addOn)
 	_, err := common.OcHub(
@@ -86,15 +110,7 @@ var addonTest = func(ctx SpecContext, addOn string) {
 		"--patch-file=../resources/addon_configuration/mcao_config_patch.json",
 	)
 	Expect(err).ToNot(HaveOccurred())
-	Eventually(func(g Gomega) {
-		deployment, container := fetchDeployment(g)
-		// Check Resources
-		g.Expect(json.Marshal(container.Resources)).Should(BeEquivalentTo(expectedResources))
-		// Check NodeSelector
-		g.Expect(json.Marshal(deployment.Spec.Template.Spec.NodeSelector)).Should(BeEquivalentTo(expectedNodeSelector))
-		// Check Tolerations
-		g.Expect(json.Marshal(deployment.Spec.Template.Spec.Tolerations)).Should(BeEquivalentTo(expectedTolerations))
-	}, defaultTimeoutSeconds*2, 1).Should(Succeed())
+	Eventually(checkModified, defaultTimeoutSeconds*2, 1).Should(Succeed())
 
 	By("Restoring the ManagedClusterAddOn for " + addOn)
 	_, err = common.OcHub(
@@ -106,15 +122,7 @@ var addonTest = func(ctx SpecContext, addOn string) {
 		"--patch-file=../resources/addon_configuration/mcao_restore_patch.json",
 	)
 	Expect(err).ToNot(HaveOccurred())
-	Eventually(func(g Gomega) {
-		deployment, container := fetchDeployment(g)
-		g.Expect(
-			deployment.Spec.Template.Spec.NodeSelector,
-		).Should(Equal(
-			baseDeployment.Spec.Template.Spec.NodeSelector,
-		))
-		g.Expect(container.Resources).Should(Equal(baseContainer.Resources))
-	}, defaultTimeoutSeconds*2, 1).Should(Succeed())
+	Eventually(checkBase, defaultTimeoutSeconds*2, 1).Should(Succeed())
 
 	By("Attaching the AddOnDeploymentConfig to the ClusterManagementAddOn for " + addOn)
 	_, err = common.OcHub(
@@ -125,15 +133,7 @@ var addonTest = func(ctx SpecContext, addOn string) {
 		"--patch-file=../resources/addon_configuration/cmao_config_patch.json",
 	)
 	Expect(err).ToNot(HaveOccurred())
-	Eventually(func(g Gomega) {
-		deployment, container := fetchDeployment(g)
-		// Check Resources
-		g.Expect(json.Marshal(container.Resources)).Should(BeEquivalentTo(expectedResources))
-		// Check NodeSelector
-		g.Expect(json.Marshal(deployment.Spec.Template.Spec.NodeSelector)).Should(BeEquivalentTo(expectedNodeSelector))
-		// Check Tolerations
-		g.Expect(json.Marshal(deployment.Spec.Template.Spec.Tolerations)).Should(BeEquivalentTo(expectedTolerations))
-	}, defaultTimeoutSeconds*2, 1).Should(Succeed())
+	Eventually(checkModified, defaultTimeoutSeconds*2, 1).Should(Succeed())
 
 	By("Restoring the ManagedClusterAddOn for " + addOn)
 	_, err = common.OcHub(
@@ -144,13 +144,5 @@ var addonTest = func(ctx SpecContext, addOn string) {
 		"--patch-file=../resources/addon_configuration/cmao_restore_patch.json",
 	)
 	Expect(err).ToNot(HaveOccurred())
-	Eventually(func(g Gomega) {
-		deployment, container := fetchDeployment(g)
-		g.Expect(
-			deployment.Spec.Template.Spec.NodeSelector,
-		).Should(Equal(
-			baseDeployment.Spec.Template.Spec.NodeSelector,
-		))
-		g.Expect(container.Resources).Should(Equal(baseContainer.Resources))
-	}, defaultTimeoutSeconds*2, 1).Should(Succeed())
+	Eventually(checkBase, defaultTimeoutSeconds*2, 1).Should(Succeed())
 }
