@@ -32,9 +32,21 @@ if [[ -z "$(which yq)" ]]; then
   echo "ERROR: You must have 'yq' installed."
   exit 1
 fi
-# Check for dependencies
-if [[ -z "$(which docker)" ]] || ! docker ps &>/dev/null; then
-  echo "WARNING: You must have 'docker' installed and running to run 'make update'."
+
+if [[ -z "$(which podman)" ]] || ! podman ps &>/dev/null; then
+  echo "WARNING: You must have 'podman' installed and running to run 'make update'."
+fi
+
+# Fix sed issues on mac by using GSED
+OS=$(uname -s | tr '[:upper:]' '[:lower:]')
+SED="sed"
+if [ "${OS}" == "darwin" ]; then
+  SED="gsed"
+  if [ ! -x "$(command -v ${SED})" ]; then
+    echo "ERROR: ${SED} required, but not found."
+    echo 'Perform "brew install gnu-sed" and try again.'
+    exit 1
+  fi
 fi
 
 # Check for 'release' repo
@@ -106,9 +118,6 @@ for dirpath in ${COMPONENT_LIST}; do
 
   # Copy old release configuration to new release configuration
   if cp ${OLD_FILENAME} ${NEW_FILENAME}; then
-    # Detect code type ("go" or "nodejs")
-    CODE_TYPE=$(yq e '.build_root.image_stream_tag.tag' ${NEW_FILENAME} | grep -o '^[[:alpha:]]*')
-
     # Set 'zz_generated_metadata' to the new release branch
     branch="release-${NEW_VERSION}" yq e '.zz_generated_metadata.branch=strenv(branch)' -i ${NEW_FILENAME}
 
@@ -116,9 +125,8 @@ for dirpath in ${COMPONENT_LIST}; do
     if [ "$(yq e '.promotion.to[0].name' ${NEW_FILENAME})" != "null" ]; then
       # - For the new version:
       ver="${NEW_VERSION}" yq e '.promotion.to[0].name=strenv(ver)' -i ${NEW_FILENAME}
-      yq e '.promotion.to[0].disabled=true' -i ${NEW_FILENAME}
       # - For the 'main' branch:
-      ver="${NEW_VERSION}" yq e '.promotion.to[0].name=strenv(ver)' -i ${FILE_PREFIX}-main.yaml
+      ver="${NEW_VERSION}" yq e 'del(.promotion)' -i ${FILE_PREFIX}-main.yaml
       # - For the old version, re-enable promotion:
       yq e 'del(.promotion.to[0].disabled)' -i ${OLD_FILENAME}
     fi
@@ -135,14 +143,6 @@ for dirpath in ${COMPONENT_LIST}; do
       yq e '.tests[] 
       |= select(.as=="e2e-tests").steps.test[].commands 
       |= sub("latest-"+strenv(oldver), "latest-"+strenv(newver))' -i ${NEW_FILENAME}
-
-    # Add custom YAML to 'tests' stanza (uncomment code below and add the YAML strings to it)
-    # if [[ "${CODE_TYPE}" == "go" ]]; then
-    #   NEW_YAML=''
-    # else
-    #   NEW_YAML=''
-    # fi
-    # new_yaml="${NEW_YAML}" yq e '.tests += env(new_yaml)' -i ${NEW_FILENAME}
   else
     echo "* Copy failed. Skipping config update."
   fi
@@ -192,10 +192,16 @@ python3 -m venv venv/
 source venv/bin/activate
 python3 -m pip install pyyaml
 
+if [[ "$(uname -m)" != "x86_64" ]]; then
+  ${SED} -i -E "s%(--platform linux/)amd64$%\1$(uname -m)%" Makefile
+fi
+
 if ! make update; then
   echo "* 'make update' exited with an error. Check the output above."
   exit 1
 fi
+
+git restore Makefile
 
 # Exit Python virtual environment
 deactivate
