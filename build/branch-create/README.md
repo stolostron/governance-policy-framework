@@ -11,29 +11,40 @@
   - SSH access to GitHub
   - Write access to the repos
   - Fork and clone your fork of the [`release`](https://github.com/openshift/release) repo
-- To disable fast-forwarding for GRC, set the `FAST_FORWARD` GitHub Actions variable in this
-  repository to "false". (This is not necessary when moving to a new release version.)
 
 1. Update the version information at the base of the repo (Do not merge this until step 2 is
    merged.):
 
    ```shell
+   NEW_VERSION=X.Y
+   ```
+
+   ```shell
    OLD_VERSION=$(cat CURRENT_VERSION)
-   printf X.Y > CURRENT_VERSION
+   printf ${NEW_VERSION} > CURRENT_VERSION
    mv CURRENT_SUPPORTED_VERSIONS CURRENT_SUPPORTED_VERSIONS.bk
-   { echo "${OLD_VERSION}"; head -2 CURRENT_SUPPORTED_VERSIONS.bk; } > CURRENT_SUPPORTED_VERSIONS
+   { echo "${OLD_VERSION}"; cat CURRENT_SUPPORTED_VERSIONS.bk; } > CURRENT_SUPPORTED_VERSIONS
    rm CURRENT_SUPPORTED_VERSIONS.bk
    ```
 
    These commands script will:
-
-   - Export the previous release version (also used in step 2)
+   - Store the previous release version (also used in step 2)
    - Update the `CURRENT_VERSION` file to the new release version
    - Update `CURRENT_SUPPORTED_VERSION` with the new set of supported versions
 
-2. Update existing and create new Prow configurations for the new version (see
+2. Check the
+   [RHACM Lifecycle page](https://access.redhat.com/support/policy/updates/advanced-cluster-management#lifecycle-dates)
+   and remove any versions from the CURRENT_SUPPORTED_VERSIONS file that are not currently
+   supported.
+
+3. Update existing and create new Prow configurations for the new version (see
    [CICD docs](https://github.com/stolostron/cicd-docs/blob/main/prow) for details on Prow):
-   - Copy the absolute path to `update-release.sh`: `ls $PWD/build/branch-create/update-release.sh`
+   - Copy the absolute path to `update-release.sh`:
+
+     ```shell
+     ls ${PWD}/build/branch-create/update-release.sh
+     ```
+
    - Change to the local directory for the [`release`](https://github.com/openshift/release) repo
    - Run the `update-release.sh` script using the path you copied.
      - **Notes**: The `update-release.sh` script will:
@@ -52,11 +63,17 @@
    - Once all PRs are validated and merged, delete the `ocm-new-grc-release-X.Y` branch for the
      `release` repo that was created (or delete your fork of the `release` repo) to prevent conflict
      with the next run of the script.
-3. **After the prow configurations are updated, so that the prow jobs are triggered on the new
-   branches**, merge the `CURRENT_VERSION` update. `sync.sh` will create the new `release-*`
-   branches and pick up the new Prow configurations.
-4. Check that fast-forwarding is re-enabled (the `FAST_FORWARD` GitHub Actions variable in this
-   repository should be set to "true")
+
+4. Set the `FAST_FORWARD` GitHub Actions variable in this repository to "false" to disable
+   fast-forwarding for GRC so that the new Konflux configurations are not inadvertently
+   fast-forwarded to the previous release branch.
+5. Run the script in [Handling new Konflux configurations](#handling-new-konflux-configurations) to
+   create new PRs to update the Konflux configurations.
+6. **After the Prow and Konflux configurations are updated**, re-run the CI and merge the
+   `CURRENT_VERSION` update. `sync.sh` will create the new `release-*` branches and pick up the new
+   Prow configurations.
+7. Set the `FAST_FORWARD` GitHub Actions variable in this repository to "true" to re-enable
+   fast-forwarding.
 
 ## Handling new Konflux configurations
 
