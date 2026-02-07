@@ -53,6 +53,7 @@ echo "${border}"
 users='
   app/dependabot
   app/red-hat-konflux
+  app/magic-mirror-bot
   openshift-cherrypick-robot
 '
 repos=$(
