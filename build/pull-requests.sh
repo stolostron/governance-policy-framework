@@ -53,11 +53,13 @@ echo "${border}"
 users='
   app/dependabot
   app/red-hat-konflux
+  app/magic-mirror-bot
   openshift-cherrypick-robot
 '
 repos=$(
   cat "${script_dir}/main-branch-sync/repo.txt"
   cat "${script_dir}/main-branch-sync/repo-extra.txt"
+  cat "${script_dir}/main-branch-sync/repo-upstream.txt"
 )
 
 get_prs "${users}" "" "${repos}"
