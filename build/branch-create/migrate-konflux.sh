@@ -256,6 +256,13 @@ for repo in ${repos}; do
         continue
       fi
 
+      # Delete the Konflux-generated branch
+      if ${GIT} push origin --delete "${konflux_branch}"; then
+        echo "    Successfully deleted old branch ${konflux_branch}"
+      else
+        echo "    ERROR: Failed to delete old branch ${konflux_branch}"
+      fi
+
       # Open a new PR using gh CLI if it doesn't already exist for this new branch
       pr_exists=$(gh pr list --repo "https://github.com/${repo}.git" --state open --head "${new_branch}" --json number --jq '.[0].number' 2>/dev/null)
       if [[ -n "${pr_exists}" ]]; then
