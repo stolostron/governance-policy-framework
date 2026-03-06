@@ -23,6 +23,8 @@ GOCOVMERGE_VERSION := v2.16.0
 ENVTEST_VERSION ?= $(shell go list -mod=readonly -m -f "{{ .Version }}" sigs.k8s.io/controller-runtime 2>/dev/null | awk -F'[v.]' '{printf "release-%d.%d", $$2, $$3}')
 # Parse the Kubernetes API version from go.mod (which is v0.Y.Z) and convert to the corresponding v1.Y.Z format
 ENVTEST_K8S_VERSION := $(shell go list -mod=readonly -m -f "{{ .Version }}" k8s.io/api 2>/dev/null | awk -F'[v.]' '{printf "1.%d", $$3}')
+# https://github.com/gotestyourself/gotestsum/releases/latest
+GOTESTSUM_VERSION := v1.13.0
 
 LOCAL_BIN ?= $(error LOCAL_BIN is not set.)
 ifneq ($(findstring $(LOCAL_BIN), $(PATH)), $(LOCAL_BIN))
@@ -106,6 +108,7 @@ fmt: fmt-dependencies
 GOSEC = $(LOCAL_BIN)/gosec
 KUBEBUILDER = $(LOCAL_BIN)/kubebuilder
 ENVTEST = $(LOCAL_BIN)/setup-envtest
+GOTESTSUM = $(LOCAL_BIN)/gotestsum
 
 .PHONY: kubebuilder
 kubebuilder:
@@ -127,6 +130,10 @@ gosec:
 .PHONY: gosec-scan
 gosec-scan: gosec
 	$(GOSEC) -fmt sonarqube -out gosec.json -stdout -exclude-dir=.go -exclude-dir=test $(GOSEC_ARGS) ./...
+
+.PHONY: gotestsum
+gotestsum:
+	$(call go-get-tool,gotest.tools/gotestsum@$(GOTESTSUM_VERSION))
 
 ############################################################
 #  E2E Test
