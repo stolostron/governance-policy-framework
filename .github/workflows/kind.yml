@@ -87,7 +87,7 @@ jobs:
       - name: Set up Go
         uses: actions/setup-go@v6
         with:
-          go-version-file: framework/go.mod
+          go-version-file: ${{ github.event.repository.name == 'governance-policy-framework' && 'framework' || 'component' }}/go.mod
           cache-dependency-path: framework/go.sum
 
       - name: Verify modules
