@@ -6,6 +6,7 @@ get_prs() {
   local users=${1}
   local orgs=${2}
   local repos=${3}
+  local sort=${4:-".created_at"}
   local query="is:pr+is:open+draft:false"
 
   for name in ${users}; do
@@ -24,7 +25,7 @@ get_prs() {
     printf "TITLE\tUSER\tDATE\tURL\n"
     curl -s -H 'Accept: application/vnd.github.text-match+json' \
       "https://api.github.com/search/issues?q=${query}" |
-      jq -r '.items | reverse | .[] | '"${format}"
+    jq -r '.items | reverse | sort_by('"${sort}"') | .[] | '"${format}"
   } | column -s "	" -t
 }
 
@@ -60,6 +61,7 @@ repos=$(
   cat "${script_dir}/main-branch-sync/repo.txt"
   cat "${script_dir}/main-branch-sync/repo-extra.txt"
   cat "${script_dir}/main-branch-sync/repo-upstream.txt"
+  echo "stolostron/magic-mirror"
 )
 
-get_prs "${users}" "" "${repos}"
+get_prs "${users}" "" "${repos}" ".user.login,.html_url"
