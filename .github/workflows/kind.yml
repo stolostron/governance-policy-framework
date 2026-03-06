@@ -24,7 +24,7 @@ jobs:
       REGISTRY: localhost:5000
       KIND_VERSION: ${{ matrix.kind }}
       HOSTED: ${{ matrix.hosted }}
-      deployOnHub: ${{ matrix.deployOnHub }}
+      deployOnHub: ${{ matrix.deployOnHub && 'true' || 'false' }}
     strategy:
       # Don't skip all tests if one fails - others may still have useful info
       fail-fast: false
@@ -36,8 +36,8 @@ jobs:
           - minimum # defined in the common makefile
           - latest
         deployOnHub:
-          - "true"
-          - "false"
+          - deployOnHub
+          - ""
         hosted:
           - hosted
           - "" # empty strings won't appear in the check name
@@ -47,7 +47,7 @@ jobs:
           - hosted: hosted
         include:
           - kind: latest
-            deployOnHub: "false"
+            deployOnHub: ""
             hosted: hosted
 
     steps:
@@ -145,7 +145,7 @@ jobs:
         if: ${{ github.event.repository.name != 'governance-policy-framework' }}
         working-directory: component
         env:
-          HUB_ONLY: ${{ inputs.hub_only_component }}
+          HUB_ONLY: ${{ inputs.hub_only_component || !matrix.deployOnHub }}
         run: |
           export MANAGED_CONFIG=${MANAGED_KUBECONFIG}
           export HUB_CONFIG=${HUB_KUBECONFIG}
@@ -160,7 +160,7 @@ jobs:
             export WATCH_NAMESPACE=cluster2-hosted
             export KIND_NAME=policy-addon-ctrl1
             export KUBECONFIG=${HUB_KUBECONFIG}
-          elif [[ "${deployOnHub}" == "true" ]] || [[ "${HUB_ONLY}" == "true" ]]; then
+          elif [[ "${HUB_ONLY}" == "true" ]]; then
             export WATCH_NAMESPACE=managed
             export KIND_NAME=hub
             export KUBECONFIG=${HUB_KUBECONFIG}
@@ -225,14 +225,14 @@ jobs:
         if: ${{ failure() }}
         uses: actions/upload-artifact@v7
         with:
-          name: fw-kind-debug-${{ matrix.kind }}-${{ matrix.deployOnHub }}${{ matrix.hosted == 'hosted' && '-hosted' || '' }}
+          name: fw-kind-debug-${{ matrix.kind }}${{ matrix.deployOnHub && '-' }}${{ matrix.deployOnHub }}${{ matrix.hosted && '-' }}${{ matrix.hosted }}
           path: framework/e2e-debug.tar.gz
 
       - name: Upload Test Reports
         if: ${{ !cancelled() }}
         uses: actions/upload-artifact@v7
         with:
-          name: fw-kind-report-${{ matrix.kind }}-${{ matrix.deployOnHub }}${{ matrix.hosted == 'hosted' && '-hosted' || '' }}
+          name: fw-kind-report-${{ matrix.kind }}${{ matrix.deployOnHub && '-' }}${{ matrix.deployOnHub }}${{ matrix.hosted && '-' }}${{ matrix.hosted }}
           path: |
             framework/test-output/report.xml
             framework/test-output/report.json
