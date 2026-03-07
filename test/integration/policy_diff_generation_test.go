@@ -5,7 +5,6 @@ package integration
 
 import (
 	"regexp"
-	"strings"
 
 	. "github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
@@ -71,15 +70,11 @@ var _ = Describe("GRC: [P1][Sev1][policy-grc] Test diff generation",
 
 		It("should log the diff in the config-policy-controller", func() {
 			By("Parsing the logs of the config-policy-controller on the managed cluster")
-			configPolicyPodName, err := common.OcManaged("get", "pod", "-n", common.OCMAddOnNamespace,
-				"-l=app=config-policy-controller", "-o=name")
-			Expect(err).ToNot(HaveOccurred())
-
 			controllerLogs, err := common.OcManaged("logs", "-n", common.OCMAddOnNamespace,
-				strings.TrimSpace(configPolicyPodName))
+				"deployment/config-policy-controller")
 			Expect(err).ToNot(HaveOccurred())
 
-			diffLogRegEx := regexp.MustCompile("(?m)Logging the diff:\n([^\t].*\n)+\t{\"policy\":.*")
+			diffLogRegEx := regexp.MustCompile("(?m)Logging the diff:\n([^\t].*\n)+\t\\{\".*")
 			diffLogs := diffLogRegEx.FindAllString(controllerLogs, -1)
 			Expect(diffLogs).ToNot(BeEmpty(), "config-policy-controller logs should contain a diff")
 
@@ -95,8 +90,10 @@ var _ = Describe("GRC: [P1][Sev1][policy-grc] Test diff generation",
 +  fish: marlin
  kind: ConfigMap
  metadata:`,
-				`	{"policy": "` + policyConfigMapName + `", "name": "` + configMapName +
-					`", "namespace": "default", "resource": "configmaps"}`,
+				`"name": "` + policyConfigMapName + `"`,
+				`"objName": "` + configMapName + `"`,
+				`"objNamespace": "default"`,
+				`"resource": "configmaps"`,
 			}
 			for _, diff := range diffLog {
 				Expect(diffLogs[0]).To(ContainSubstring(diff))
