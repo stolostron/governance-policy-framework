@@ -32,15 +32,15 @@ echo "::group:: Tests Section"
 
 yq -i -pj -oj -I=0 '.blocks += {"type":"section","text":{"type":"mrkdwn","text":""}}' ./slack-payload.json
 
-prefixs=("./fw-kind-report-latest-false/" \
-         "./fw-kind-report-latest-true/" \
-         "./fw-kind-report-latest-false-hosted/" \
-         "./fw-kind-report-minimum-false/" \
-         "./fw-kind-report-minimum-true/" \
+prefixes=("./fw-kind-report-latest/" \
+         "./fw-kind-report-latest-deployOnHub/" \
+         "./fw-kind-report-latest-hosted/" \
+         "./fw-kind-report-minimum/" \
+         "./fw-kind-report-minimum-deployOnHub/" \
          "./integration-report/" \
          "./integration-report/etcd-")
 
-for prefix in "${prefixs[@]}"; do
+for prefix in "${prefixes[@]}"; do
   report="${prefix}report.json"
   echo "${report}"
 
