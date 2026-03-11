@@ -187,6 +187,43 @@ func LoadConfig(url, kubeconfig, context string) (*rest.Config, error) {
 	return nil, errors.New("could not create a valid kubeconfig")
 }
 
+func VerifyManagedCluster(ctx context.Context) {
+	GinkgoHelper()
+
+	managedClusterName := strings.TrimSuffix(ClusterNamespace, "-hosted")
+
+	By("Verify managed cluster '" + managedClusterName + "' exists")
+
+	managedClusterList, err := ClientHubDynamic.Resource(GvrManagedCluster).List(ctx, metav1.ListOptions{})
+	Expect(err).ToNot(HaveOccurred())
+
+	managedClusters := make([]string, len(managedClusterList.Items))
+	for i, managedCluster := range managedClusterList.Items {
+		managedClusters[i] = managedCluster.GetName()
+	}
+
+	Expect(managedClusters).To(
+		ContainElement(managedClusterName),
+		"Managed cluster '%s' not found. "+
+			"Set the MANAGED_CLUSTER_NAME environment variable to the name of the managed cluster.",
+		ClusterNamespace,
+	)
+}
+
+func VerifyMCE(ctx context.Context) {
+	GinkgoHelper()
+
+	By("Checking for MCE namespace multicluster-engine")
+
+	_, err := ClientHub.CoreV1().Namespaces().Get(ctx, "multicluster-engine", metav1.GetOptions{})
+	if err == nil && ManuallyPatchDecisions {
+		Fail("MCE namespace found, but ManuallyPatchDecisions is set to true. " +
+			"Set PATCH_DECISIONS environment variable to false to run the test.")
+	} else if err != nil && !k8serrors.IsNotFound(err) {
+		Expect(err).ToNot(HaveOccurred())
+	}
+}
+
 func oc(args ...string) (string, error) {
 	// Determine whether output should be logged
 	printOutput := true
