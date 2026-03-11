@@ -87,6 +87,9 @@ var _ = BeforeSuite(func(ctx SpecContext) {
 	clientManaged = common.ClientManaged
 	clientManagedDynamic = common.ClientManagedDynamic
 
+	common.VerifyManagedCluster(ctx)
+	common.VerifyMCE(ctx)
+
 	By("Create Namespace if needed")
 	namespaces := clientHub.CoreV1().Namespaces()
 	if _, err := namespaces.Get(
