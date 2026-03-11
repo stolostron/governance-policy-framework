@@ -80,6 +80,21 @@ func PolicyOrdering(labels ...string) bool {
 				DoCleanupPolicy(initialPolicyYaml)
 				DoRootComplianceTest(policyWithDepName, policiesv1.Pending)
 			})
+			It("Should become active when dependencies are removed", func() {
+				_, err := OcHub(
+					"patch",
+					"policy", policyWithDepName,
+					"-n", UserNamespace,
+					"--type=json",
+					"-p", `[{"op": "remove", "path": "/spec/dependencies"}]`,
+				)
+				Expect(err).ToNot(HaveOccurred())
+				DoRootComplianceTest(policyWithDepName, policiesv1.NonCompliant)
+			})
+			It("Should return to pending when dependencies are restored", func(ctx SpecContext) {
+				DoCreatePolicyTest(ctx, policyWithDepYaml)
+				DoRootComplianceTest(policyWithDepName, policiesv1.Pending)
+			})
 			AfterAll(cleanup)
 		})
 		Describe("Ordering via an extraDependency on a ConfigurationPolicy", Ordered, func() {
@@ -101,6 +116,21 @@ func PolicyOrdering(labels ...string) bool {
 			})
 			It("Should become pending again when the initial policy is deleted", func() {
 				DoCleanupPolicy(initialPolicyYaml)
+				DoRootComplianceTest(policyWithExtraDepName, policiesv1.Pending)
+			})
+			It("Should become active when extraDependencies are removed", func() {
+				_, err := OcHub(
+					"patch",
+					"policy", policyWithExtraDepName,
+					"-n", UserNamespace,
+					"--type=json",
+					"-p", `[{"op": "remove", "path": "/spec/policy-templates/0/extraDependencies"}]`,
+				)
+				Expect(err).ToNot(HaveOccurred())
+				DoRootComplianceTest(policyWithExtraDepName, policiesv1.NonCompliant)
+			})
+			It("Should return to pending when extraDependencies are restored", func(ctx SpecContext) {
+				DoCreatePolicyTest(ctx, policyWithExtraDepYaml)
 				DoRootComplianceTest(policyWithExtraDepName, policiesv1.Pending)
 			})
 			AfterAll(cleanup)
