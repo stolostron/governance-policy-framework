@@ -110,9 +110,14 @@ KUBEBUILDER = $(LOCAL_BIN)/kubebuilder
 ENVTEST = $(LOCAL_BIN)/setup-envtest
 GOTESTSUM = $(LOCAL_BIN)/gotestsum
 
+GOTST_FMT := --format=pkgname-and-test-fails --format-icons=text
+ifeq ($(GITHUB_ACTIONS), true)
+  GOTST_FMT := --format=github-actions
+endif
+
 .PHONY: kubebuilder
 kubebuilder:
-	@if [ "$$($(KUBEBUILDER) version 2>/dev/null | grep -o KubeBuilderVersion:\"[0-9]*\.[0-9]\.[0-9]*\")" != "KubeBuilderVersion:\"$(KBVERSION)\"" ]; then \
+	@if [ "$$($(KUBEBUILDER) version 2>/dev/null | grep -o KubeBuilderVersion:\"[0-9]*\.[0-9]*\.[0-9]*\")" != "KubeBuilderVersion:\"$(KBVERSION)\"" ]; then \
 		echo "Installing Kubebuilder"; \
 		curl -L https://github.com/kubernetes-sigs/kubebuilder/releases/download/v$(KBVERSION)/kubebuilder_$(GOOS)_$(GOARCH) -o $(KUBEBUILDER); \
 		chmod +x $(KUBEBUILDER); \
