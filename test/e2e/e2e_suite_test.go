@@ -4,7 +4,6 @@
 package e2e
 
 import (
-	"context"
 	"testing"
 
 	. "github.com/onsi/ginkgo/v2"
@@ -52,7 +51,7 @@ var _ = test.TemplateSyncErrors()
 
 var _ = test.PolicyOrdering()
 
-var _ = BeforeSuite(func() {
+var _ = BeforeSuite(func(ctx SpecContext) {
 	By("Setup hub and managed client")
 
 	common.InitInterfaces(common.KubeconfigHub, common.KubeconfigManaged, common.IsHosted)
@@ -70,18 +69,21 @@ var _ = BeforeSuite(func() {
 	clientHosting = common.ClientHosting
 	clientHostingDynamic = common.ClientHostingDynamic
 
+	common.VerifyManagedCluster(ctx)
+	common.VerifyMCE(ctx)
+
 	By("Create Namespace if needed")
 	namespaces := clientHub.CoreV1().Namespaces()
 	if _, err := namespaces.Get(
-		context.TODO(),
+		ctx,
 		userNamespace,
 		metav1.GetOptions{},
 	); err != nil && errors.IsNotFound(err) {
-		Expect(namespaces.Create(context.TODO(), &corev1.Namespace{
+		Expect(namespaces.Create(ctx, &corev1.Namespace{
 			ObjectMeta: metav1.ObjectMeta{
 				Name: userNamespace,
 			},
 		}, metav1.CreateOptions{})).NotTo(BeNil())
 	}
-	Expect(namespaces.Get(context.TODO(), userNamespace, metav1.GetOptions{})).NotTo(BeNil())
+	Expect(namespaces.Get(ctx, userNamespace, metav1.GetOptions{})).NotTo(BeNil())
 })
