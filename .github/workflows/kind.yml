@@ -145,7 +145,7 @@ jobs:
         if: ${{ github.event.repository.name != 'governance-policy-framework' }}
         working-directory: component
         env:
-          HUB_ONLY: ${{ inputs.hub_only_component || !matrix.deployOnHub }}
+          HUB_ONLY: ${{ (inputs.hub_only_component == 'true' || matrix.deployOnHub == 'deployOnHub') && 'true' || 'false' }}
         run: |
           export MANAGED_CONFIG=${MANAGED_KUBECONFIG}
           export HUB_CONFIG=${HUB_KUBECONFIG}
