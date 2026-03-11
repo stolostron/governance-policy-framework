@@ -69,6 +69,9 @@ var _ = BeforeSuite(func(ctx SpecContext) {
 	clientHosting = common.ClientHosting
 	clientHostingDynamic = common.ClientHostingDynamic
 
+	common.VerifyManagedCluster(ctx)
+	common.VerifyMCE(ctx)
+
 	By("Create Namespace if needed")
 	namespaces := clientHub.CoreV1().Namespaces()
 	if _, err := namespaces.Get(
@@ -99,4 +102,12 @@ var _ = AfterSuite(func(ctx SpecContext) {
 		metav1.ListOptions{
 			LabelSelector: "generated-by-policy-test",
 		})).To(Succeed())
+
+	if !common.ManuallyPatchDecisions {
+		By("Cleaning up ManagedClusterSetBinding")
+		_ = clientHubDynamic.Resource(common.GvrManagedClusterSetBinding).
+			Namespace(userNamespace).Delete(
+			ctx, "global", metav1.DeleteOptions{},
+		)
+	}
 })
