@@ -284,7 +284,7 @@ e2e-test: e2e-dependencies
 e2e-test-hosted: CLUSTER_NAMESPACE_ON_HUB=cluster2
 e2e-test-hosted: IS_HOSTED=true
 e2e-test-hosted: PATCH_DECISIONS=false
-e2e-test-hosted: MANAGED_CLUSTER_NAMESPACE=cluster2-hosted
+e2e-test-hosted: MANAGED_CLUSTER_NAMESPACE=klusterlet-cluster2
 e2e-test-hosted: e2e-test
 
 .PHONY: e2e-debug
@@ -389,7 +389,7 @@ $(ADDON_CONTROLLER):
 	git clone --depth=1 -b $(RELEASE_BRANCH) https://github.com/$(CALLER_REPO)/governance-policy-addon-controller.git $(ADDON_CONTROLLER)
 
 .PHONY: setup-managedcluster
-setup-managedcluster: MANAGED_CLUSTER_NAMESPACE=cluster2-hosted
+setup-managedcluster: MANAGED_CLUSTER_NAMESPACE=klusterlet-cluster2
 setup-managedcluster: 
 	-kubectl create ns $(MANAGED_CLUSTER_NAMESPACE) --kubeconfig=kubeconfig_$(HUB_CLUSTER_NAME)
 	-kubectl -n $(MANAGED_CLUSTER_NAMESPACE) create secret generic config-policy-controller-managed-kubeconfig --from-file=kubeconfig=$(PWD)/kubeconfig_managed_internal --kubeconfig=kubeconfig_$(HUB_CLUSTER_NAME)

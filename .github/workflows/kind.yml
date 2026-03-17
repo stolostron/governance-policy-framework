@@ -155,9 +155,9 @@ jobs:
             if [[ "${HUB_ONLY}" == "true" ]]; then
               export KIND_NAMESPACE=open-cluster-management
             else
-              export KIND_NAMESPACE=cluster2-hosted
+              export KIND_NAMESPACE=klusterlet-cluster2
             fi
-            export WATCH_NAMESPACE=cluster2-hosted
+            export WATCH_NAMESPACE=klusterlet-cluster2
             export KIND_NAME=policy-addon-ctrl1
             export KUBECONFIG=${HUB_KUBECONFIG}
           elif [[ "${HUB_ONLY}" == "true" ]]; then
@@ -212,7 +212,7 @@ jobs:
           echo "::endgroup::"
 
           if [[ "${HOSTED}" == "hosted" ]]; then
-            KIND_MANAGED_NAMESPACE=cluster2-hosted \
+            KIND_MANAGED_NAMESPACE=klusterlet-cluster2 \
               MANAGED_CLUSTER_NAME=hub \
               make e2e-debug-acm
           else
