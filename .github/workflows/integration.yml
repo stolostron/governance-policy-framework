@@ -123,7 +123,7 @@ jobs:
       run: |
         ./framework/build/periodic-slack-report.sh  
 
-    - uses: slackapi/slack-github-action@v2.1.1
+    - uses: slackapi/slack-github-action@v3.0.1
       with:
         webhook: ${{ secrets.E2E_SLACK_WEBHOOK }}
         webhook-type: incoming-webhook
