@@ -190,7 +190,11 @@ func LoadConfig(url, kubeconfig, context string) (*rest.Config, error) {
 func VerifyManagedCluster(ctx context.Context) {
 	GinkgoHelper()
 
-	managedClusterName := strings.TrimSuffix(ClusterNamespace, "-hosted")
+	managedClusterName := ClusterNamespace
+
+	if IsHosted {
+		managedClusterName = strings.TrimPrefix(managedClusterName, "klusterlet-")
+	}
 
 	By("Verify managed cluster '" + managedClusterName + "' exists")
 

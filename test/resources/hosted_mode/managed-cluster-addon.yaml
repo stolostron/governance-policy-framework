@@ -5,8 +5,7 @@ metadata:
   annotations:
     addon.open-cluster-management.io/hosting-cluster-name: cluster1
     addon.open-cluster-management.io/values: '{"global":{"imageOverrides":{"governance_policy_framework_addon":"quay.io/stolostron/governance-policy-framework-addon:imagetag"}}}'
-spec:
-  installNamespace: cluster2-hosted
+spec: {}
 ---
 apiVersion: addon.open-cluster-management.io/v1alpha1
 kind: ManagedClusterAddOn
@@ -15,8 +14,7 @@ metadata:
   annotations:
     addon.open-cluster-management.io/hosting-cluster-name: cluster1
     addon.open-cluster-management.io/values: '{"global":{"imageOverrides":{"config_policy_controller":"quay.io/stolostron/config-policy-controller:imagetag"}}}'
-spec:
-  installNamespace: cluster2-hosted
+spec: {}
 ---
 apiVersion: addon.open-cluster-management.io/v1alpha1
 kind: ManagedClusterAddOn
@@ -25,5 +23,4 @@ metadata:
   annotations:
     addon.open-cluster-management.io/hosting-cluster-name: cluster1
     addon.open-cluster-management.io/values: '{"args": {"frequency": 10}, "global":{"imageOverrides":{"cert_policy_controller":"quay.io/stolostron/cert-policy-controller:imagetag"}}}'
-spec:
-  installNamespace: cluster2-hosted
+spec: {}
