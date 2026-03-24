@@ -117,6 +117,11 @@ jobs:
           echo "::group::bootstrap"
           if [[ "${HOSTED}" == "hosted" ]]; then
             make kind-bootstrap-hosted
+            if [[ "${RELEASE_BRANCH}" =~ ^release-2\.1[0-6]$ ]]; then
+              echo "HOSTED_CLUSTER=cluster2-hosted" | tee -a $GITHUB_ENV
+            else
+              echo "HOSTED_CLUSTER=klusterlet-cluster2" | tee -a $GITHUB_ENV
+            fi
           else
             make kind-bootstrap-cluster
           fi
@@ -155,9 +160,9 @@ jobs:
             if [[ "${HUB_ONLY}" == "true" ]]; then
               export KIND_NAMESPACE=open-cluster-management
             else
-              export KIND_NAMESPACE=klusterlet-cluster2
+              export KIND_NAMESPACE=${HOSTED_CLUSTER}
             fi
-            export WATCH_NAMESPACE=klusterlet-cluster2
+            export WATCH_NAMESPACE=${HOSTED_CLUSTER}
             export KIND_NAME=policy-addon-ctrl1
             export KUBECONFIG=${HUB_KUBECONFIG}
           elif [[ "${HUB_ONLY}" == "true" ]]; then
@@ -212,7 +217,7 @@ jobs:
           echo "::endgroup::"
 
           if [[ "${HOSTED}" == "hosted" ]]; then
-            KIND_MANAGED_NAMESPACE=klusterlet-cluster2 \
+            KIND_MANAGED_NAMESPACE=${HOSTED_CLUSTER} \
               MANAGED_CLUSTER_NAME=hub \
               make e2e-debug-acm
           else
