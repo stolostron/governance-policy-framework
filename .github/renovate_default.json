@@ -25,6 +25,14 @@
         "enabled": true
       },
       "osvVulnerabilityAlerts": true
+    },
+    {
+      "matchManagers": ["git-submodules"],
+      "groupName": "Git submodules"
+    },
+    {
+      "matchManagers": ["github-actions"],
+      "groupName": "GitHub actions"
     }
   ]
 }
