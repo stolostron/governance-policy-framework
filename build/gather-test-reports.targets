@@ -1,0 +1,16 @@
+# Copy or rename to gather-test-reports.targets and pass to the script:
+#   ./build/gather-test-reports.sh -f ./build/gather-test-reports.targets
+# Format: one row per target. Separate columns with a TAB character:
+#   <owner/repo>	<workflow name as shown in GitHub Actions>
+# Lines starting with # are ignored. Empty lines are ignored.
+#
+stolostron/governance-policy-framework	GRC Integration Test
+stolostron/governance-policy-framework	E2E
+stolostron/governance-policy-framework-addon	Framework
+stolostron/governance-policy-framework-addon	KinD tests
+stolostron/governance-policy-propagator	Framework
+stolostron/governance-policy-propagator	KinD tests
+stolostron/config-policy-controller	Framework
+stolostron/config-policy-controller	KinD tests
+stolostron/cert-policy-controller	Framework
+stolostron/cert-policy-controller	KinD tests
