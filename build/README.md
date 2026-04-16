@@ -19,3 +19,5 @@
 | [main-branch-sync/](./main-branch-sync/)  | Scripts for maintaining cross-repo `main` branches and fast-forwarding to the current release branch |
 | [detect-modules.sh](./detect-modules.sh) | Script to build binaries and check for Go modules in the built binary across all repos               |
 | [pull-requests.sh](./pull-requests.sh) | Script to find open PRs for the squad |
+| [gather-test-reports.sh](./gather-test-reports.sh) | Download artifacts from GitHub Actions workflow runs, flatten JUnit XML for import elsewhere (see `./build/gather-test-reports.sh --help`) |
+| [upload-test-reports.sh](./upload-test-reports.sh) | Upload JUnit zip bundles to Report Portal and wait for each import to finish (see `./build/upload-test-reports.sh --help`) |
