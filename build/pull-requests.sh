@@ -78,6 +78,7 @@ bot_users='
 dependabot[bot]
 red-hat-konflux[bot]
 magic-mirror-bot[bot]
+acm-cicd-prow-bot
 acm-grc-security
 openshift-cherrypick-robot
 '
