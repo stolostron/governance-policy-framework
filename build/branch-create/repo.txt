@@ -11,4 +11,4 @@ stolostron/policy-cli
 stolostron/policy-collection
 stolostron/policy-generator-plugin
 stolostron/mtv-integrations
-stolotstron/multicluster-role-assignment
+stolostron/multicluster-role-assignment
