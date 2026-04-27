@@ -67,8 +67,9 @@
 4. Set the `FAST_FORWARD` GitHub Actions variable in this repository to "false" to disable
    fast-forwarding for GRC so that the new Konflux configurations are not inadvertently
    fast-forwarded to the previous release branch.
-5. Run the script in [Handling new Konflux configurations](#handling-new-konflux-configurations) to
-   create new PRs to update the Konflux configurations.
+5. ~~Run the script in [Handling new Konflux configurations](#handling-new-konflux-configurations) to
+   create new PRs to update the Konflux configurations.~~ This step is no longer required for
+   fast-forwarding. A new script now handles `.tekton` configuration updates directly.
 6. **After the Prow and Konflux configurations are updated**, re-run the CI and merge the
    `CURRENT_VERSION` update. `sync.sh` will create the new `release-*` branches and pick up the new
    Prow configurations.
@@ -76,6 +77,9 @@
    fast-forwarding.
 
 ## Handling new Konflux configurations
+
+> **Note**: `migrate-konflux.sh` is no longer required for fast-forwarding. There is a new script from Konflux team
+> that handles updating the `.tekton` configurations directly. See that script for details.
 
 Once Konflux PRs land in our repositories as a result of the creation of the new ACM Konflux
 application and components, run the [`migrate-konflux.sh`](./migrate-konflux.sh) script:
