@@ -63,8 +63,8 @@ fi
 
 # Check that the release repo is up-to-date
 RELEASE_UPSTREAM="$(git remote -v | grep push | awk '/openshift\/release/ {print $1}')"
-git fetch ${RELEASE_UPSTREAM} master
-if [[ "$(git rev-parse ${RELEASE_UPSTREAM}/master)" != "$(git rev-parse HEAD)" ]]; then
+git fetch ${RELEASE_UPSTREAM} main
+if [[ "$(git rev-parse ${RELEASE_UPSTREAM}/main)" != "$(git rev-parse HEAD)" ]]; then
   echo "ERROR: The current commit SHA doesn't match the latest upstream SHA. Update your local branch and switch to the latest commit to continue."
   exit 1
 fi
@@ -167,8 +167,8 @@ echo ""
 
 echo "===== Prow update / Create new branches ====="
 # Check for dependencies
-if ! docker ps &>/dev/null; then
-  echo "ERROR: Docker must be running to continue."
+if ! podman ps &>/dev/null; then
+  echo "ERROR: Podman must be running to continue."
   exit 1
 fi
 # Prompt to continue
