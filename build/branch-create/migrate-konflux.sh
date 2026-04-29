@@ -9,7 +9,7 @@ set -eo pipefail
 SCRIPT_PATH="$(cd "$(dirname "${BASH_SOURCE[0]}")" >/dev/null 2>&1 && pwd)"
 
 # Read current version from CURRENT_VERSION file
-CURRENT_VERSION=$(cat "${SCRIPT_PATH}/../../CURRENT_VERSION")
+CURRENT_VERSION=$(head -1 "${SCRIPT_PATH}/../../CURRENT_VERSION")
 VERSION_NO_DOTS="${CURRENT_VERSION//./}"
 
 repos=$(cat "${SCRIPT_PATH}/repo.txt")

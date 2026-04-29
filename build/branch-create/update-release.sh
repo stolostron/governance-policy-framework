@@ -75,7 +75,7 @@ RELEASE_RULES_PATH="${RELEASE_ROOT_PATH}/core-services/prow/02_config"
 
 echo "===== Checking for environment variables ====="
 # Version checks
-NEW_VERSION=$(cat ${SCRIPT_DIR}/../../CURRENT_VERSION)
+NEW_VERSION=$(head -1 ${SCRIPT_DIR}/../../CURRENT_VERSION)
 OLD_VERSION=$(head -1 ${SCRIPT_DIR}/../../CURRENT_SUPPORTED_VERSIONS)
 
 if [ -z "${OLD_VERSION}" ]; then

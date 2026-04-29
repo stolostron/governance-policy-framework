@@ -3,7 +3,7 @@ set -e
 
 path="$( cd "$( dirname "${BASH_SOURCE[0]}" )" >/dev/null 2>&1 && pwd )"
 exit_code=0
-CURRENT_VERSION=$(cat ${path}/../../CURRENT_VERSION)
+CURRENT_VERSION=$(head -1 ${path}/../../CURRENT_VERSION)
 COMMIT_TIME="${COMMIT_TIME:-"now"}"
 
 echo "* Fast-forwarding repos using commit time '${COMMIT_TIME}' ..."
