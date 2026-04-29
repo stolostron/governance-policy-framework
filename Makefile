@@ -5,7 +5,7 @@ LOCAL_BIN ?= $(PWD)/bin
 deployOnHub ?= false
 RELEASE_BRANCH ?= main
 ifeq ($(RELEASE_BRANCH), main)
-  ACM_VERSION = $(shell cat CURRENT_VERSION)
+  ACM_VERSION = $(shell head -1 CURRENT_VERSION)
 else
   ACM_VERSION = $(subst release-,,$(RELEASE_BRANCH))
 endif
