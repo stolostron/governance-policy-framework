@@ -10,7 +10,7 @@ set -euxo pipefail
 : "${ORIGIN:?ORIGIN must be set}"
 
 path="$( cd "$( dirname "${BASH_SOURCE[0]}" )" >/dev/null 2>&1 && pwd )"
-CURRENT_VERSION=$(cat ${path}/../CURRENT_VERSION)
+CURRENT_VERSION=$(head -1 "${path}/../CURRENT_VERSION")
 
 cd "${ARTIFACTS_PATH}"
 
