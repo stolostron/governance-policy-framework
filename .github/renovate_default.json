@@ -1,7 +1,9 @@
 {
   "$schema": "https://docs.renovatebot.com/renovate-schema.json",
   "timezone": "America/New_York",
-  "schedule": "weekly",
+  "schedule": [
+    "* 0-9 1-7,15-21 * 1"
+  ],
   "dockerfile": {
     "enabled": false
   },
