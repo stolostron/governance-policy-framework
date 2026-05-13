@@ -1,6 +1,21 @@
 #! /bin/bash
 
+################################################################################
+#
+# Description: This repo-bulk-update subcommand syncs the common build files in
+# a repository.
+#   - It will copy the common build and repo configuration files from the local
+#     repository to the repository at REPO_PATH.
+#   - After copying, it runs build and generation commands.
+# 
+################################################################################
+
 set -e
+
+if [[ -z "${SCRIPT_PATH}" ]]; then
+  echo "error: SCRIPT_PATH is not set" >&2
+  exit 1
+fi
 
 if [[ -z "${REPO_PATH}" ]]; then
   echo "error: REPO_PATH is not set" >&2

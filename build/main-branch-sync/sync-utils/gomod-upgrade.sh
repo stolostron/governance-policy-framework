@@ -1,5 +1,16 @@
 #! /bin/bash
 
+################################################################################
+#
+# Description: This repo-bulk-update subcommand upgrades the Go version and
+# packages in a repository, respecting the Go version of each package for
+# compatibility.
+#   - It will upgrade the Go version in the repository at REPO_PATH to the
+#     desired Go version in go.mod find the latest version of each package also
+#     at that Go version.
+#
+################################################################################
+
 set -e
 
 if [[ -z "${REPO_PATH}" ]]; then
@@ -23,6 +34,10 @@ if [[ -f ${REPO_PATH}/go.mod ]]; then
     echo "error: Failed to tidy go.mod in ${REPO_PATH}" >&2
     read -r -p "Take care of upgrade errors. Press enter to continue"
   }
+
+  if [[ -d ${REPO_PATH}/vendor ]]; then
+    go mod vendor
+  fi
 
   make fmt || true
   make lint || {
@@ -86,6 +101,9 @@ go mod tidy || {
   echo "error: Failed to tidy go.mod in ${REPO_PATH}" >&2
   read -r -p "Take care of upgrade errors. Press enter to continue"
 }
+if [[ -d ${REPO_PATH}/vendor ]]; then
+  go mod vendor
+fi
 make fmt || true
 make lint || {
   echo "error: Failed to lint in ${REPO_PATH}" >&2

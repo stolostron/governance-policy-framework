@@ -1,5 +1,14 @@
 #! /bin/bash
 
+################################################################################
+#
+# Description: This repo-bulk-update subcommand upgrades the Kubernetes package
+# version in a repository.
+#   - It will upgrade the Kubernetes version in the repository at REPO_PATH to
+#     the desired Kubernetes version.
+#
+################################################################################
+
 set -e
 
 if [[ -z "${REPO_PATH}" ]]; then
@@ -41,6 +50,10 @@ done
 
 go mod tidy
 
+if [[ -d ${REPO_PATH}/vendor ]]; then
+  go mod vendor
+fi
+
 packages=$(go list -m all | awk '/^k8s.io\/[^\/]* '"${current_k8s_version%.*}"/' { print $1 }')
 
 for package in ${packages}; do
@@ -49,6 +62,10 @@ for package in ${packages}; do
 done
 
 go mod tidy
+
+if [[ -d ${REPO_PATH}/vendor ]]; then
+  go mod vendor
+fi
 
 controller_runtime_versions="$(curl -s https://proxy.golang.org/sigs.k8s.io/controller-runtime/@v/list | { grep -v "+incompatible\|alpha.\|beta.\|rc." || true; } | sort --version-sort -r)"
 for version in ${controller_runtime_versions}; do
@@ -76,3 +93,7 @@ grep -o 'open-cluster-management.io/[^ ]* => github.com/stolostron/[^ ]*' go.mod
 done
 
 go mod tidy
+
+if [[ -d ${REPO_PATH}/vendor ]]; then
+  go mod vendor
+fi
