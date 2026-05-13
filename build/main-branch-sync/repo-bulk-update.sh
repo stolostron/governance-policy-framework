@@ -23,7 +23,6 @@ urls=""
 preserve_forks=false
 upstream=false
 target_branch="main"
-branch=""
 branch_suffix=""
 delete_branch=false
 commit_msg=""
@@ -146,7 +145,7 @@ if [[ -z "${commit_msg}" ]] && ! ${dry_run}; then
   exit 1
 fi
 
-if [[ ${head_branch} == "release-"* ]] || [[ ${head_branch} == "main" ]]; then
+if [[ ${head_branch} == "release-"* ]] || [[ ${head_branch} == "backplane-"* ]] || [[ ${head_branch} == "main" ]]; then
   echo "error: Branch name cannot be main or a release branch. Did you mean to use --target-branch?" >&2
   exit 1
 fi
@@ -156,11 +155,11 @@ if [[ -z "${branch_suffix}" ]] && [[ -z "${head_branch}" ]]; then
 fi
 
 upstream_script="cat ${SCRIPT_PATH}/repo-upstream.txt"
-if [[ ${target_branch} == "release-"* ]] || ! ${upstream}; then
+if [[ ${target_branch} == "release-"* ]] || [[ ${target_branch} == "backplane-"* ]] || ! ${upstream}; then
   upstream_script=":"
 fi
 
-if [[ ${target_branch} == "release-"* ]]; then
+if [[ ${target_branch} == "release-"* ]] || [[ ${target_branch} == "backplane-"* ]]; then
   commit_msg="[${target_branch}] ${commit_msg}"
 fi
 
@@ -173,13 +172,17 @@ fi
 # Collect repositories to handle
 # The default value here collects stolostron and OCM-io repos and
 # deduplicates based on the name of the repo, keeping the OCM-io one
-repos=$(
-  {
-    ${upstream_script} || exit 1
-    cat "${SCRIPT_PATH}/repo.txt"
-    cat "${SCRIPT_PATH}/repo-extra.txt"
-  } | awk "${deduplication[@]}"
-)
+if [[ -n "${REPOS}" ]]; then
+  repos="${REPOS}"
+else
+  repos=$(
+    {
+      ${upstream_script} || exit 1
+      cat "${SCRIPT_PATH}/repo.txt"
+      cat "${SCRIPT_PATH}/repo-extra.txt"
+    } | awk "${deduplication[@]}"
+  )
+fi
 
 # Preflight check for existing git directories
 for repo in ${repos}; do
@@ -304,6 +307,11 @@ for repo in ${repos}; do
       [[ -n "${output}" ]] && echo "${output}"
       urls="${urls}
     https://github.com/${repo}/compare/${target_branch}...${head_branch}"
+      # Open a pull request using the GitHub CLI ('gh') after pushing the branch
+      (
+        cd "${REPO_PATH}" || exit 1
+        gh pr create --head "${head_branch}" --base "${target_branch}" --title "${commit_msg}" --body "${commit_body}" --repo "${repo}" --web=false
+      )
     fi
   fi
 
