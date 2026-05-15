@@ -22,14 +22,9 @@ if [[ -z "${REPO_PATH}" ]]; then
   exit 1
 fi
 
-SED="sed"
-if [ "${OS}" == "darwin" ]; then
-  SED="gsed"
-  if [ ! -x "$(command -v ${SED})" ]; then
-    echo "ERROR: ${SED} required, but not found."
-    echo 'Perform "brew install gnu-sed" and try again.'
-    exit 1
-  fi
+if [[ -z "${SED}" ]]; then
+  echo "error: SED is not set" >&2
+  exit 1
 fi
 
 common_files=(
@@ -48,7 +43,7 @@ done
 cd "${REPO_PATH}" || exit 1
 
 if [[ -f "${REPO_PATH}/go.mod" ]]; then
-  ${SED} -i "s%- prefix(.*)%- prefix($(go list -m))%" "${REPO_PATH}/build/common/config/.golangci.yml"
+  ${SED} -i "s%- prefix(.*)%- prefix($(go list -m))%" "${REPO_PATH}/build/common/config/.golangci.yml" || true
   make generate || true
   make manifests || true
   make generate-operator-yaml || true
