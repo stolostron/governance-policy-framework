@@ -34,7 +34,7 @@ currentReleaseRefs() {
 	# Get the current version from CURRENT_VERSION file
 	CURRENT_VERSION="$(cat CURRENT_VERSION)"
 	EXPECTED_BRANCH="release-${CURRENT_VERSION}"
-	EXPECTED_OUTPUT=$(printf "%s\n%s" "${EXPECTED_BRANCH}" "${EXPECTED_BRANCH}")
+	EXPECTED_OUTPUT=$(printf "%s\n%s\n%s" "${EXPECTED_BRANCH}" "${EXPECTED_BRANCH}" "${EXPECTED_BRANCH}")
 
 	# Fetch the .gitmodules file from acm-cli repository
 	GITMODULES_URL="https://raw.githubusercontent.com/stolostron/acm-cli/main/.gitmodules"
