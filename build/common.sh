@@ -4,7 +4,7 @@ BUILD_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" >/dev/null 2>&1 && pwd)"
 
 export CHECK_RELEASES EXTRA_REPO_PATH UPSTREAM_REPO_PATH
 
-CHECK_RELEASES="$(cat "${BUILD_DIR}/../CURRENT_VERSION"; echo; cat "${BUILD_DIR}/../CURRENT_SUPPORTED_VERSIONS")"
+CHECK_RELEASES="$(head -1 "${BUILD_DIR}/../CURRENT_VERSION"; echo; cat "${BUILD_DIR}/../CURRENT_SUPPORTED_VERSIONS")"
 COMPONENT_ORG=stolostron
 DEFAULT_BRANCH=${DEFAULT_BRANCH:-"main"}
 UTIL_REPOS="pipeline multiclusterhub-operator"

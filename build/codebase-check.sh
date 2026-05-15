@@ -16,12 +16,12 @@ currentReleaseProw() {
 		yq '.tests[] | select(.as == "test-e2e-grc-framework").steps.env.ACM_RELEASE_VERSION')"
 
 	# If the latest branch doesn't exist or no snapshots have been promoted, return success
-	git -C pipeline/ checkout --quiet "$(cat CURRENT_VERSION)-dev" || return 0
-	ls pipeline/snapshots/manifest-* | grep -F -- "-$(cat CURRENT_VERSION)" 1>/dev/null || return 0
+	git -C pipeline/ checkout --quiet "$(head -1 CURRENT_VERSION)-dev" || return 0
+	ls pipeline/snapshots/manifest-* | grep -F -- "-$(head -1 CURRENT_VERSION)" 1>/dev/null || return 0
 
-	if [[ -n "${FRAMEWORK_VERSION}" ]] && [[ "release-$(cat CURRENT_VERSION)" != "${FRAMEWORK_VERSION}" ]]; then
+	if [[ -n "${FRAMEWORK_VERSION}" ]] && [[ "release-$(head -1 CURRENT_VERSION)" != "${FRAMEWORK_VERSION}" ]]; then
 		echo "****"
-		echo "ERROR: Found ${FRAMEWORK_VERSION} in Prow framework config, but release-$(cat CURRENT_VERSION) is current." | tee -a "${OUTPUT_FILES[@]}"
+		echo "ERROR: Found ${FRAMEWORK_VERSION} in Prow framework config, but release-$(head -1 CURRENT_VERSION) is current." | tee -a "${OUTPUT_FILES[@]}"
 		echo "  Link: ${rawURL}${configPath}" | tee -a "${ERROR_FILE}"
 		echo "***"
 		return 1
@@ -32,7 +32,7 @@ currentReleaseRefs() {
 	echo "Checking that acm-cli submodules are set to the correct release branch..."
 
 	# Get the current version from CURRENT_VERSION file
-	CURRENT_VERSION="$(cat CURRENT_VERSION)"
+	CURRENT_VERSION="$(head -1 CURRENT_VERSION)"
 	EXPECTED_BRANCH="release-${CURRENT_VERSION}"
 	EXPECTED_OUTPUT=$(printf "%s\n%s" "${EXPECTED_BRANCH}" "${EXPECTED_BRANCH}")
 

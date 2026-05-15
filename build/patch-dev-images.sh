@@ -6,7 +6,7 @@ set -e
 script_dir="$(cd "$(dirname "${BASH_SOURCE[0]}")" >/dev/null 2>&1 && pwd)"
 
 acm_installed_namespace=$(oc get subscriptions.operators.coreos.com --all-namespaces | grep advanced-cluster-management | awk '{print $1}')
-acm_version=${ACM_VERSION:-$(cat "${script_dir}/../CURRENT_VERSION")}
+acm_version=${ACM_VERSION:-$(head -1 "${script_dir}/../CURRENT_VERSION")}
 image_tag="latest"
 image_repo="quay.io/redhat-user-workloads/crt-redhat-acm-tenant"
 image_suffix="-acm-${acm_version//./}"
