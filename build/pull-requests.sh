@@ -55,7 +55,7 @@ border=$(echo "${title}" | sed 's/./#/g')
 echo -e "${border}\n${title}\n${border}"
 
 # Fetch PRs authored by the squad
-users=$(yq '.reviewers[]' OWNERS)
+users=${USERS:-$(yq '.reviewers[]' OWNERS)}
 orgs='
   open-cluster-management-io
   stolostron
@@ -64,12 +64,12 @@ orgs='
 
 squad_pr_json=$(get_pr_json "${users}" "${orgs}")
 
-repos=$(
+repos=${REPOS:-$(
   cat "${script_dir}/main-branch-sync/repo.txt"
   cat "${script_dir}/main-branch-sync/repo-extra.txt"
   cat "${script_dir}/main-branch-sync/repo-upstream.txt"
   echo "stolostron/magic-mirror"
-)
+)}
 
 # Fetch any PRs in our repos
 repo_pr_json=$(get_pr_json "" "" "${repos}")
@@ -85,7 +85,7 @@ openshift-cherrypick-robot
 bot_users=$(echo "${bot_users}" | jq -Rsc 'split("\n") | map(select(. != ""))')
 
 # Omit the squad PRs and create buckets for PRs from bots and the community
-filtered_pr_json=$(echo "${repo_pr_json}" | jq --argjson user_filter "$(yq -o json -I 0 '.reviewers' OWNERS)" 'select(.user.login | IN($user_filter[]) | not)')
+filtered_pr_json=$(echo "${repo_pr_json}" | jq --argjson user_filter "$(echo "${users}" | jq -R '.' | jq -s '.')" 'select(.user.login | IN($user_filter[]) | not)')
 bot_pr_json=$(echo "${filtered_pr_json}" | jq --argjson user_filter "${bot_users}" 'select(.user.login | IN($user_filter[]))')
 community_pr_json=$(echo "${filtered_pr_json}" | jq --argjson user_filter "${bot_users}" 'select(.user.login | IN($user_filter[]) | not)')
 
