@@ -87,7 +87,6 @@ linters:
       - std-error-handling
     rules:
       - linters:
-          - golint
           - revive
           - staticcheck
         path: _test\.go$|^test/
