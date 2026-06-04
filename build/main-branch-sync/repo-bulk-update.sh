@@ -98,6 +98,15 @@ while [[ $# -gt 0 ]]; do
   esac
 done
 
+# Special argument handling
+case "${sync_util}" in
+  konflux-cleanup)
+    if [[ ${#sync_util_args[@]} -eq 0 ]]; then
+      sync_util_args+=("${target_branch}")
+    fi
+    ;;
+esac
+
 sync_util_list=$(cd "${SCRIPT_PATH}/sync-utils" && for f in *.sh; do basename "$f" .sh; done)
 
 if [[ "$1" == "--help" || "$1" == "-h" || -z "${sync_util}" ]]; then
