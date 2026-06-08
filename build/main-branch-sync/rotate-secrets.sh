@@ -32,7 +32,15 @@ if [[ -z "${AWS_LOGIN_USER}" ]]; then
   exit 1
 fi
 
-echo "Currently logged into AWS as: ${AWS_LOGIN_USER}"
+aws_account=$(aws iam list-account-aliases --query "AccountAliases[0]" --output text)
+echo "Currently logged into AWS as:"
+echo "  AWS account:  ${aws_account}"
+echo "  AWS username: ${AWS_LOGIN_USER}"
+
+if [[ "${aws_account}" != "aws-acm-dev08" ]]; then
+  echo "ERROR: Log in to aws-acm-dev08 before continuing."
+  exit 1
+fi
 
 # Verify GitHub access
 gh auth status
@@ -92,6 +100,10 @@ COLLECTIVE_SECRET=$(oc create token "${SERVICE_ACCT_NAME}" -n "${COLLECTIVE_NS}"
 # Update SonarCloud tokens in GitHub repos
 echo "Setting SonarCloud token on GitHub repos..."
 for REPO in $(cat "${SCRIPT_DIR}/repo.txt" && cat "${SCRIPT_DIR}/repo-extra.txt"); do
+  if [[ "${REPO}" == "stolostron/multicluster-role-assignment" ]]; then
+    echo "INFO: Skipping unmanaged repo ${REPO}"
+    continue
+  fi
   gh secret set SONAR_TOKEN -b "${SONAR_TOKEN}" --repo "${REPO}"
 done
 
