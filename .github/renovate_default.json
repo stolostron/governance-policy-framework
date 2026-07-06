@@ -34,7 +34,8 @@
     },
     {
       "matchManagers": ["github-actions"],
-      "groupName": "GitHub actions"
+      "groupName": "GitHub actions",
+      "pinDigests": true
     }
   ]
 }
