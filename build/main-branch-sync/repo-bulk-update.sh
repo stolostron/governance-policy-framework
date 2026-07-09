@@ -308,7 +308,10 @@ for repo in ${repos}; do
       fi
 
       # shellcheck disable=SC2086 # amend contains multiple arguments
-      ${git} commit -s -S -a -m "${commit_msg}" -m "${commit_body}"
+      ${git} commit -s -S -a -m "${commit_msg}" -m "${commit_body}" || {
+        echo "ERROR: commit failed. Skipping pull request."
+        continue
+      }
       output=$(${git} push origin "${head_branch}" 2>&1) || {
         printf "ERROR $?: %s\n" "${output}"
         exit 1
