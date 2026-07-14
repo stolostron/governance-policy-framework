@@ -4,7 +4,7 @@ set -e
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" >/dev/null 2>&1 && pwd)"
 
-GITHUB_BOT_USER="acm-grc-security"
+GITHUB_BOT_USER="grc-security"
 AWS_BOT_USER="ocm-grc-aws-kind-bot"
 COLLECTIVE_NS="acm-grc-security"
 
@@ -84,7 +84,7 @@ oc delete secret "$(oc get sa "${SERVICE_ACCT_NAME}" -n "${COLLECTIVE_NS}" -o js
 
 # Update credentials on Collective using regenerated tokens
 oc delete secret rhacmstackem-github-secret policy-grc-aws-creds -n "${COLLECTIVE_NS}"
-oc create secret generic rhacmstackem-github-secret -n "${COLLECTIVE_NS}" --from-literal=user=acm-grc-security --from-literal=token="${COLLECTIVE_GH_TOKEN}"
+oc create secret generic rhacmstackem-github-secret -n "${COLLECTIVE_NS}" --from-literal=user=grc-security --from-literal=token="${COLLECTIVE_GH_TOKEN}"
 oc create secret generic policy-grc-aws-creds -n "${COLLECTIVE_NS}" --from-literal=aws_access_key_id="${AWS_ACCESS_KEY_ID}" --from-literal=aws_secret_access_key="${AWS_SECRET_ACCESS_KEY}"
 
 # Update credentials for each existing cluster deployment

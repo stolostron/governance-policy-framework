@@ -82,7 +82,7 @@ build/main-branch-sync/repo-bulk-update.sh --help
 - **Prerequisites**:
   - CLIs installed: `gh`, `aws`, `oc`, `jq`
   - Log in to the Collective cluster
-  - Log in to GitHub with username `acm-grc-security`
+  - Log in to GitHub with username `grc-security`
 
 1. Run the [`rotate-secrets.sh`](./rotate-secrets.sh) script. (It will prompt for the new GitHub and
    SonarCloud tokens, regenerate the AWS token, rotate the Collective tokens, rotate the GitHub

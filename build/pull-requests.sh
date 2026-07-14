@@ -79,7 +79,7 @@ dependabot[bot]
 red-hat-konflux[bot]
 magic-mirror-bot[bot]
 acm-cicd-prow-bot
-acm-grc-security
+grc-security
 openshift-cherrypick-robot
 '
 bot_users=$(echo "${bot_users}" | jq -Rsc 'split("\n") | map(select(. != ""))')
