@@ -16,14 +16,6 @@ for CLI in gh aws jq yq oc; do
   fi
 done
 
-# Verify the oc version
-MAJOR_OC=$(oc version -o json | jq -r '.clientVersion.gitVersion' | grep -o "[0-9]\+\.[0-9]\+" | sed 's/\.[0-9]*$//')
-MINOR_OC=$(oc version -o json | jq -r '.clientVersion.gitVersion' | grep -o "[0-9]\+\.[0-9]\+" | sed 's/^[0-9]*\.//')
-if ((MAJOR_OC < 4)) || ((MAJOR_OC == 4)) && ((MINOR_OC < 11)); then
-  echo "The openshift CLI must be at version 4.11 or later. Current version: $(oc version -o json | jq -r '.clientVersion.gitVersion')"
-  exit 1
-fi
-
 # Verify AWS access
 AWS_LOGIN_USER=$(aws iam list-access-keys | jq -r '.AccessKeyMetadata[0].UserName')
 
