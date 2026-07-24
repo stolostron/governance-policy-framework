@@ -1,7 +1,5 @@
 {
   "$schema": "https://docs.renovatebot.com/renovate-schema.json",
   "timezone": "America/New_York",
-  "gomod": {
-    "enabled": false
-  }
+  "extends": ["github>stolostron/governance-policy-framework//.github/renovate_default"]
 }
