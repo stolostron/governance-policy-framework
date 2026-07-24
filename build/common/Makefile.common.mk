@@ -3,21 +3,28 @@
 
 ## CLI versions (with links to the latest releases)
 # https://github.com/kubernetes-sigs/controller-tools/releases/latest
-CONTROLLER_GEN_VERSION := v0.16.3
+CONTROLLER_GEN_VERSION := v0.19.0
 # https://github.com/kubernetes-sigs/kustomize/releases/latest
-KUSTOMIZE_VERSION := v5.4.3
+KUSTOMIZE_VERSION := v5.7.1
 # https://github.com/golangci/golangci-lint/releases/latest
-GOLANGCI_VERSION := v1.64.8
+GOLANGCI_VERSION := v2.12.2
 # https://github.com/mvdan/gofumpt/releases/latest
-GOFUMPT_VERSION := v0.7.0
+GOFUMPT_VERSION := v0.9.1
 # https://github.com/daixiang0/gci/releases/latest
-GCI_VERSION := v0.13.5
+GCI_VERSION := v0.13.7
 # https://github.com/securego/gosec/releases/latest
-GOSEC_VERSION := v2.21.3
+GOSEC_VERSION := v2.22.10
 # https://github.com/kubernetes-sigs/kubebuilder/releases/latest
-KBVERSION := 3.15.1
-# https://github.com/kubernetes/kubernetes/releases/latest
-ENVTEST_K8S_VERSION := 1.30.x
+KBVERSION := 4.9.0
+# https://github.com/alexfalkowski/gocovmerge/releases/latest
+GOCOVMERGE_VERSION := v2.16.0
+# ref: https://book.kubebuilder.io/reference/envtest.html?highlight=setup-envtest#installation
+# Parse the controller-runtime version from go.mod and parse to its release-X.Y git branch
+ENVTEST_VERSION ?= $(shell go list -mod=readonly -m -f "{{ .Version }}" sigs.k8s.io/controller-runtime 2>/dev/null | awk -F'[v.]' '{printf "release-%d.%d", $$2, $$3}')
+# Parse the Kubernetes API version from go.mod (which is v0.Y.Z) and convert to the corresponding v1.Y.Z format
+ENVTEST_K8S_VERSION := $(shell go list -mod=readonly -m -f "{{ .Version }}" k8s.io/api 2>/dev/null | awk -F'[v.]' '{printf "1.%d", $$3}')
+# https://github.com/gotestyourself/gotestsum/releases/latest
+GOTESTSUM_VERSION := v1.13.0
 
 LOCAL_BIN ?= $(error LOCAL_BIN is not set.)
 ifneq ($(findstring $(LOCAL_BIN), $(PATH)), $(LOCAL_BIN))
@@ -71,7 +78,7 @@ lint: lint-dependencies lint-yaml lint-go
 
 .PHONY: lint-dependencies
 lint-dependencies:
-	$(call go-get-tool,github.com/golangci/golangci-lint/cmd/golangci-lint@$(GOLANGCI_VERSION))
+	$(call go-get-tool,github.com/golangci/golangci-lint/v2/cmd/golangci-lint@$(GOLANGCI_VERSION))
 
 .PHONY: lint-yaml
 lint-yaml:
@@ -101,10 +108,16 @@ fmt: fmt-dependencies
 GOSEC = $(LOCAL_BIN)/gosec
 KUBEBUILDER = $(LOCAL_BIN)/kubebuilder
 ENVTEST = $(LOCAL_BIN)/setup-envtest
+GOTESTSUM = $(LOCAL_BIN)/gotestsum
+
+GOTST_FMT := --format=pkgname-and-test-fails --format-icons=text
+ifeq ($(GITHUB_ACTIONS), true)
+  GOTST_FMT := --format=github-actions
+endif
 
 .PHONY: kubebuilder
 kubebuilder:
-	@if [ "$$($(KUBEBUILDER) version 2>/dev/null | grep -o KubeBuilderVersion:\"[0-9]*\.[0-9]\.[0-9]*\")" != "KubeBuilderVersion:\"$(KBVERSION)\"" ]; then \
+	@if [ "$$($(KUBEBUILDER) version 2>/dev/null | grep -o KubeBuilderVersion:\"[0-9]*\.[0-9]*\.[0-9]*\")" != "KubeBuilderVersion:\"$(KBVERSION)\"" ]; then \
 		echo "Installing Kubebuilder"; \
 		curl -L https://github.com/kubernetes-sigs/kubebuilder/releases/download/v$(KBVERSION)/kubebuilder_$(GOOS)_$(GOARCH) -o $(KUBEBUILDER); \
 		chmod +x $(KUBEBUILDER); \
@@ -112,7 +125,8 @@ kubebuilder:
 
 .PHONY: envtest
 envtest:
-	$(call go-get-tool,sigs.k8s.io/controller-runtime/tools/setup-envtest@latest)
+	# Installing setup-envtest using the release-X.Y branch from the version specified in go.mod
+	$(call go-get-tool,sigs.k8s.io/controller-runtime/tools/setup-envtest@$(ENVTEST_VERSION))
 
 .PHONY: gosec
 gosec:
@@ -121,6 +135,10 @@ gosec:
 .PHONY: gosec-scan
 gosec-scan: gosec
 	$(GOSEC) -fmt sonarqube -out gosec.json -stdout -exclude-dir=.go -exclude-dir=test $(GOSEC_ARGS) ./...
+
+.PHONY: gotestsum
+gotestsum:
+	$(call go-get-tool,gotest.tools/gotestsum@$(GOTESTSUM_VERSION))
 
 ############################################################
 #  E2E Test
@@ -164,6 +182,7 @@ kind-controller-kubeconfig: install-resources
 		--server=$(shell kubectl config view --minify -o jsonpath='{.clusters[].cluster.server}' --kubeconfig=kubeconfig_$(CLUSTER_NAME)_e2e) \
 		--certificate-authority=temp-ca.crt --embed-certs=true
 	@rm -f temp-ca.crt
+	@kubectl wait --for='jsonpath={.data.token}' -n $(CONTROLLER_NAMESPACE) secret $(CONTROLLER_NAME) --timeout=60s --kubeconfig=$(PWD)/kubeconfig_$(CLUSTER_NAME)_e2e
 	@kubectl config set-credentials $(KIND_CLUSTER_NAME) --kubeconfig=$(PWD)/kubeconfig_$(CLUSTER_NAME) \
 		--token=$$(kubectl get secret -n $(CONTROLLER_NAMESPACE) $(CONTROLLER_NAME) -o jsonpath='{.data.token}' --kubeconfig=$(PWD)/kubeconfig_$(CLUSTER_NAME)_e2e | $(BASE64) --decode)
 	@kubectl config set-context $(KIND_CLUSTER_NAME) --kubeconfig=$(PWD)/kubeconfig_$(CLUSTER_NAME) \
@@ -180,4 +199,4 @@ e2e-dependencies:
 GOCOVMERGE = $(LOCAL_BIN)/gocovmerge
 .PHONY: coverage-dependencies
 coverage-dependencies:
-	$(call go-get-tool,github.com/wadey/gocovmerge@v0.0.0-20160331181800-b5bfa59ec0ad)
+	$(call go-get-tool,github.com/alexfalkowski/gocovmerge/v2@$(GOCOVMERGE_VERSION))
