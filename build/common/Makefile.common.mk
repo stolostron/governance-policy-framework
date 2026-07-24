@@ -7,7 +7,7 @@ CONTROLLER_GEN_VERSION := v0.19.0
 # https://github.com/kubernetes-sigs/kustomize/releases/latest
 KUSTOMIZE_VERSION := v5.7.1
 # https://github.com/golangci/golangci-lint/releases/latest
-GOLANGCI_VERSION := v2.4.0
+GOLANGCI_VERSION := v2.12.2
 # https://github.com/mvdan/gofumpt/releases/latest
 GOFUMPT_VERSION := v0.9.1
 # https://github.com/daixiang0/gci/releases/latest
@@ -20,9 +20,11 @@ KBVERSION := 4.9.0
 GOCOVMERGE_VERSION := v2.16.0
 # ref: https://book.kubebuilder.io/reference/envtest.html?highlight=setup-envtest#installation
 # Parse the controller-runtime version from go.mod and parse to its release-X.Y git branch
-ENVTEST_VERSION ?= $(shell go list -m -f "{{ .Version }}" sigs.k8s.io/controller-runtime 2>/dev/null | awk -F'[v.]' '{printf "release-%d.%d", $$2, $$3}')
+ENVTEST_VERSION ?= $(shell go list -mod=readonly -m -f "{{ .Version }}" sigs.k8s.io/controller-runtime 2>/dev/null | awk -F'[v.]' '{printf "release-%d.%d", $$2, $$3}')
 # Parse the Kubernetes API version from go.mod (which is v0.Y.Z) and convert to the corresponding v1.Y.Z format
-ENVTEST_K8S_VERSION := $(shell go list -m -f "{{ .Version }}" k8s.io/api 2>/dev/null | awk -F'[v.]' '{printf "1.%d", $$3}')
+ENVTEST_K8S_VERSION := $(shell go list -mod=readonly -m -f "{{ .Version }}" k8s.io/api 2>/dev/null | awk -F'[v.]' '{printf "1.%d", $$3}')
+# https://github.com/gotestyourself/gotestsum/releases/latest
+GOTESTSUM_VERSION := v1.13.0
 
 LOCAL_BIN ?= $(error LOCAL_BIN is not set.)
 ifneq ($(findstring $(LOCAL_BIN), $(PATH)), $(LOCAL_BIN))
@@ -106,10 +108,16 @@ fmt: fmt-dependencies
 GOSEC = $(LOCAL_BIN)/gosec
 KUBEBUILDER = $(LOCAL_BIN)/kubebuilder
 ENVTEST = $(LOCAL_BIN)/setup-envtest
+GOTESTSUM = $(LOCAL_BIN)/gotestsum
+
+GOTST_FMT := --format=pkgname-and-test-fails --format-icons=text
+ifeq ($(GITHUB_ACTIONS), true)
+  GOTST_FMT := --format=github-actions
+endif
 
 .PHONY: kubebuilder
 kubebuilder:
-	@if [ "$$($(KUBEBUILDER) version 2>/dev/null | grep -o KubeBuilderVersion:\"[0-9]*\.[0-9]\.[0-9]*\")" != "KubeBuilderVersion:\"$(KBVERSION)\"" ]; then \
+	@if [ "$$($(KUBEBUILDER) version 2>/dev/null | grep -o KubeBuilderVersion:\"[0-9]*\.[0-9]*\.[0-9]*\")" != "KubeBuilderVersion:\"$(KBVERSION)\"" ]; then \
 		echo "Installing Kubebuilder"; \
 		curl -L https://github.com/kubernetes-sigs/kubebuilder/releases/download/v$(KBVERSION)/kubebuilder_$(GOOS)_$(GOARCH) -o $(KUBEBUILDER); \
 		chmod +x $(KUBEBUILDER); \
@@ -127,6 +135,10 @@ gosec:
 .PHONY: gosec-scan
 gosec-scan: gosec
 	$(GOSEC) -fmt sonarqube -out gosec.json -stdout -exclude-dir=.go -exclude-dir=test $(GOSEC_ARGS) ./...
+
+.PHONY: gotestsum
+gotestsum:
+	$(call go-get-tool,gotest.tools/gotestsum@$(GOTESTSUM_VERSION))
 
 ############################################################
 #  E2E Test
