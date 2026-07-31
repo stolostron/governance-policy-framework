@@ -91,6 +91,7 @@ var _ = BeforeSuite(func(ctx SpecContext) {
 	common.VerifyMCE(ctx)
 
 	By("Create Namespace if needed")
+
 	namespaces := clientHub.CoreV1().Namespaces()
 	if _, err := namespaces.Get(
 		ctx,
@@ -103,9 +104,11 @@ var _ = BeforeSuite(func(ctx SpecContext) {
 			},
 		}, metav1.CreateOptions{})).NotTo(BeNil())
 	}
+
 	Expect(namespaces.Get(ctx, userNamespace, metav1.GetOptions{})).NotTo(BeNil())
 
 	By("Create ManagedClusterSetBinding")
+
 	err := common.ApplyManagedClusterSetBinding(ctx)
 	Expect(err).ToNot(HaveOccurred())
 
@@ -124,6 +127,7 @@ var _ = AfterSuite(func(ctx SpecContext) {
 
 	if userNamespace != "open-cluster-management-global-set" {
 		By("Delete Namespace if needed")
+
 		_, err := common.OcHub(
 			"delete", "namespace", userNamespace,
 			"--ignore-not-found",

@@ -20,17 +20,23 @@ var _ = Describe("Test cert policy", func() {
 	Describe("Test cert policy inform", Ordered, func() {
 		const certPolicyName string = "cert-policy"
 		const certPolicyYaml string = "../resources/cert_policy/cert-policy.yaml"
+
 		It("should be created on managed cluster", func(ctx SpecContext) {
 			common.DoCreatePolicyTest(ctx, certPolicyYaml, common.GvrCertPolicy)
 		})
+
 		It("the policy should be compliant as there is no certificate", func() {
 			common.DoRootComplianceTest(certPolicyName, policiesv1.Compliant)
 		})
+
 		It("the policy should be noncompliant after creating a certficate that expires", func() {
 			By("Creating ../resources/cert_policy/issuer.yaml in ns default")
+
 			_, err := common.OcManaged("apply", "-f", "../resources/cert_policy/issuer.yaml", "-n", "default")
 			Expect(err).ToNot(HaveOccurred())
+
 			By("Creating ../resources/cert_policy/certificate.yaml in ns default")
+
 			_, err = common.OcManaged("apply", "-f", "../resources/cert_policy/certificate.yaml", "-n", "default")
 			Expect(err).ToNot(HaveOccurred())
 
@@ -38,6 +44,7 @@ var _ = Describe("Test cert policy", func() {
 		})
 		It("the policy should be compliant after creating a certficate that doesn't expire", func() {
 			By("Creating ../resources/cert_policy/certificate_compliant.yaml in ns default")
+
 			_, err := common.OcManaged(
 				"apply", "-f",
 				"../resources/cert_policy/certificate_compliant.yaml",
@@ -49,14 +56,19 @@ var _ = Describe("Test cert policy", func() {
 		It("the policy should be noncompliant after creating a certficate that expires "+
 			"and then is compliant after a fix", func() {
 			By("Creating ../resources/cert_policy/issuer.yaml in ns default")
+
 			_, err := common.OcManaged("apply", "-f", "../resources/cert_policy/issuer.yaml", "-n", "default")
 			Expect(err).ToNot(HaveOccurred())
+
 			By("Creating ../resources/cert_policy/certificate.yaml in ns default")
+
 			_, err = common.OcManaged("apply", "-f", "../resources/cert_policy/certificate.yaml", "-n", "default")
 			Expect(err).ToNot(HaveOccurred())
 
 			common.DoRootComplianceTest(certPolicyName, policiesv1.NonCompliant)
+
 			By("Creating ../resources/cert_policy/certificate_compliant.yaml in ns default")
+
 			_, err = common.OcManaged(
 				"apply", "-f",
 				"../resources/cert_policy/certificate_compliant.yaml",
@@ -67,9 +79,12 @@ var _ = Describe("Test cert policy", func() {
 		})
 		It("the policy should be noncompliant after creating a CA certficate that expires", func() {
 			By("Creating ../resources/cert_policy/issuer.yaml in ns default")
+
 			_, err := common.OcManaged("apply", "-f", "../resources/cert_policy/issuer.yaml", "-n", "default")
 			Expect(err).ToNot(HaveOccurred())
+
 			By("Creating ../resources/cert_policy/certificate_expired-ca.yaml in ns default")
+
 			_, err = common.OcManaged(
 				"apply", "-f",
 				"../resources/cert_policy/certificate_expired-ca.yaml",
@@ -80,6 +95,7 @@ var _ = Describe("Test cert policy", func() {
 		})
 		It("the policy should be compliant after creating a certficate that doesn't expire after CA expired", func() {
 			By("Creating ../resources/cert_policy/certificate_compliant.yaml in ns default")
+
 			_, err := common.OcManaged(
 				"apply", "-f",
 				"../resources/cert_policy/certificate_compliant.yaml",
@@ -90,15 +106,19 @@ var _ = Describe("Test cert policy", func() {
 		})
 		It("the policy should be noncompliant after creating a certficate that has too long duration", func() {
 			By("Creating ../resources/cert_policy/issuer.yaml in ns default")
+
 			_, err := common.OcManaged("apply", "-f", "../resources/cert_policy/issuer.yaml", "-n", "default")
 			Expect(err).ToNot(HaveOccurred())
+
 			By("Creating ../resources/cert_policy/certificate_long.yaml in ns default")
+
 			_, err = common.OcManaged("apply", "-f", "../resources/cert_policy/certificate_long.yaml", "-n", "default")
 			Expect(err).ToNot(HaveOccurred())
 			common.DoRootComplianceTest(certPolicyName, policiesv1.NonCompliant)
 		})
 		It("the policy should be compliant after creating a certficate with an expected duration", func() {
 			By("Creating ../resources/cert_policy/certificate_compliant.yaml in ns default")
+
 			_, err := common.OcManaged(
 				"apply", "-f",
 				"../resources/cert_policy/certificate_compliant.yaml",
@@ -109,9 +129,12 @@ var _ = Describe("Test cert policy", func() {
 		})
 		It("the policy should be noncompliant after creating a CA certficate that has too long duration", func() {
 			By("Creating ../resources/cert_policy/issuer.yaml in ns default")
+
 			_, err := common.OcManaged("apply", "-f", "../resources/cert_policy/issuer.yaml", "-n", "default")
 			Expect(err).ToNot(HaveOccurred())
+
 			By("Creating ../resources/cert_policy/certificate_long-ca.yaml in ns default")
+
 			_, err = common.OcManaged(
 				"apply", "-f",
 				"../resources/cert_policy/certificate_long-ca.yaml",
@@ -122,6 +145,7 @@ var _ = Describe("Test cert policy", func() {
 		})
 		It("the policy should be compliant after creating a certficate with an expected duration after CA", func() {
 			By("Creating ../resources/cert_policy/certificate_compliant.yaml in ns default")
+
 			_, err := common.OcManaged(
 				"apply", "-f",
 				"../resources/cert_policy/certificate_compliant.yaml",
@@ -133,9 +157,12 @@ var _ = Describe("Test cert policy", func() {
 		It("the policy should be noncompliant after creating a certficate "+
 			"that has a DNS entry that is not allowed", func() {
 			By("Creating ../resources/cert_policy/issuer.yaml in ns default")
+
 			_, err := common.OcManaged("apply", "-f", "../resources/cert_policy/issuer.yaml", "-n", "default")
 			Expect(err).ToNot(HaveOccurred())
+
 			By("Creating ../resources/cert_policy/certificate_allow-noncompliant.yaml in ns default")
+
 			_, err = common.OcManaged(
 				"apply", "-f",
 				"../resources/cert_policy/certificate_allow-noncompliant.yaml",
@@ -146,6 +173,7 @@ var _ = Describe("Test cert policy", func() {
 		})
 		It("the policy should be compliant after creating a certficate with allowed dns names", func() {
 			By("Creating ../resources/cert_policy/certificate_compliant.yaml in ns default")
+
 			_, err := common.OcManaged(
 				"apply", "-f",
 				"../resources/cert_policy/certificate_compliant.yaml",
@@ -156,9 +184,12 @@ var _ = Describe("Test cert policy", func() {
 		})
 		It("the policy should be noncompliant after creating a certficate with a disallowed wildcard", func() {
 			By("Creating ../resources/cert_policy/issuer.yaml in ns default")
+
 			_, err := common.OcManaged("apply", "-f", "../resources/cert_policy/issuer.yaml", "-n", "default")
 			Expect(err).ToNot(HaveOccurred())
+
 			By("Creating ../resources/cert_policy/certificate_disallow-noncompliant.yaml in ns default")
+
 			_, err = common.OcManaged(
 				"apply", "-f",
 				"../resources/cert_policy/certificate_disallow-noncompliant.yaml",
@@ -169,6 +200,7 @@ var _ = Describe("Test cert policy", func() {
 		})
 		It("the policy should be compliant after creating a certficate with no dns names that are not allowed", func() {
 			By("Creating ../resources/cert_policy/certificate_compliant.yaml in ns default")
+
 			_, err := common.OcManaged(
 				"apply", "-f",
 				"../resources/cert_policy/certificate_compliant.yaml",
@@ -198,6 +230,7 @@ var _ = Describe("Test cert policy", func() {
 		})
 		It("the messages from history should not repeat", func() {
 			By("Creating ../resources/cert_policy/certificate_disallow-noncompliant.yaml in ns default")
+
 			_, err := common.OcManaged(
 				"apply", "-f",
 				"../resources/cert_policy/certificate_disallow-noncompliant.yaml",
@@ -205,7 +238,7 @@ var _ = Describe("Test cert policy", func() {
 			)
 			Expect(err).ToNot(HaveOccurred())
 			By("the policy should not duplicate messages")
-			Consistently(func() interface{} {
+			Consistently(func() any {
 				msg := common.GetDuplicateHistoryMessage(certPolicyName)
 
 				return msg
@@ -217,6 +250,7 @@ var _ = Describe("Test cert policy", func() {
 			common.DoCleanupPolicy(certPolicyYaml, common.GvrCertPolicy)
 
 			By("Deleting ../resources/cert_policy/issuer.yaml in ns default")
+
 			_, err := common.OcManaged(
 				"delete", "-f", "../resources/cert_policy/issuer.yaml",
 				"-n", "default", "--ignore-not-found",
@@ -224,6 +258,7 @@ var _ = Describe("Test cert policy", func() {
 			Expect(err).ToNot(HaveOccurred())
 
 			By("Deleting ../resources/cert_policy/certificate.yaml in ns default")
+
 			_, err = common.OcManaged(
 				"delete", "-f", "../resources/cert_policy/certificate.yaml",
 				"-n", "default", "--ignore-not-found",
@@ -231,6 +266,7 @@ var _ = Describe("Test cert policy", func() {
 			Expect(err).ToNot(HaveOccurred())
 
 			By("Deleting cert-policy-secret")
+
 			_, err = common.OcManaged(
 				"delete", "secret",
 				"cert-policy-secret", "-n", "default",

@@ -198,7 +198,7 @@ func PolicyOrdering(labels ...string) bool {
 
 				yamlPlc := utils.ParseYaml("../resources/policy_ordering/dep-plcset-statuscheck.yaml")
 
-				Eventually(func() interface{} {
+				Eventually(func() any {
 					rootPlcSet := utils.GetWithTimeout(
 						ClientHubDynamic,
 						GvrPolicySet,

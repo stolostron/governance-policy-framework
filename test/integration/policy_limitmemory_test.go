@@ -31,6 +31,7 @@ var _ = Describe("GRC: [P1][Sev1][policy-grc] Test the policy-limitmemory policy
 
 		It("stable/"+policyLimitMemoryName+" should be created on the Hub", func(ctx SpecContext) {
 			By("Creating the policy on the Hub")
+
 			_, err := utils.KubectlWithOutput(
 				"apply", "-f", policyLimitMemoryURL, "-n", userNamespace, "--kubeconfig="+kubeconfigHub,
 			)
@@ -101,6 +102,7 @@ var _ = Describe("GRC: [P1][Sev1][policy-grc] Test the policy-limitmemory policy
 
 		It("Enforcing stable/"+policyLimitMemoryName, func() {
 			By("Patching remediationAction = enforce on the root policy")
+
 			_, err := clientHubDynamic.Resource(common.GvrPolicy).Namespace(userNamespace).Patch(
 				context.TODO(),
 				policyLimitMemoryName,
@@ -146,8 +148,10 @@ var _ = Describe("GRC: [P1][Sev1][policy-grc] Test the policy-limitmemory policy
 			err = clientManaged.CoreV1().Namespaces().Delete(
 				context.TODO(), policyLimitMemoryNSName, metav1.DeleteOptions{},
 			)
+
 			if !k8serrors.IsNotFound(err) {
 				var exitError *exec.ExitError
+
 				ok := errors.As(err, &exitError)
 				if ok {
 					Expect(exitError.Stderr).To(BeNil())

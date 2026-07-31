@@ -31,6 +31,7 @@ var _ = Describe(
 
 		It("stable/"+policyEtcdEncryptionName+" should be created on the Hub", func(ctx SpecContext) {
 			By("Creating the policy on the Hub")
+
 			_, err := utils.KubectlWithOutput(
 				"apply", "-f", policyEtcdEncryptionURL, "-n", userNamespace, "--kubeconfig="+kubeconfigHub,
 			)
