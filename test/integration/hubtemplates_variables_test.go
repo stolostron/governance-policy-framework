@@ -25,6 +25,7 @@ var _ = Describe("GRC: [P1][Sev1][policy-grc] Test hub template variables", Orde
 
 		BeforeAll(func() {
 			By("Creating a configmap on the hub to use in the test")
+
 			_, err := common.OcHub("apply", "-f="+hubConfigmapYAML, "-n="+userNamespace)
 			Expect(err).ToNot(HaveOccurred())
 		})
@@ -50,6 +51,7 @@ var _ = Describe("GRC: [P1][Sev1][policy-grc] Test hub template variables", Orde
 
 		AfterAll(func() {
 			By("Removing the configmap from the hub")
+
 			_, err := common.OcHub("delete", "-f="+hubConfigmapYAML, "-n="+userNamespace, "--ignore-not-found")
 			Expect(err).ToNot(HaveOccurred())
 
@@ -57,10 +59,12 @@ var _ = Describe("GRC: [P1][Sev1][policy-grc] Test hub template variables", Orde
 			common.DoCleanupPolicy(policyYAML, common.GvrConfigurationPolicy)
 
 			By("Removing the configmap from the managed cluster")
+
 			_, err = common.OcManaged("delete", "configmap", createdConfigmapName, "-n=default", "--ignore-not-found")
 			Expect(err).ToNot(HaveOccurred())
 
 			By("Removing policy events from the managed cluster")
+
 			_, err = common.OcManaged(
 				"delete", "events", "-n", clusterNamespace,
 				"--field-selector=involvedObject.name="+common.UserNamespace+"."+policyName,
@@ -102,10 +106,12 @@ var _ = Describe("GRC: [P1][Sev1][policy-grc] Test hub template variables", Orde
 			common.DoCleanupPolicy(policyYAML, common.GvrConfigurationPolicy)
 
 			By("Removing the configmap from the managed cluster")
+
 			_, err := common.OcManaged("delete", "configmap", createdConfigmapName, "-n=default", "--ignore-not-found")
 			Expect(err).ToNot(HaveOccurred())
 
 			By("Removing policy events from the managed cluster")
+
 			_, err = common.OcManaged(
 				"delete", "events", "-n", clusterNamespace,
 				"--field-selector=involvedObject.name="+common.UserNamespace+"."+policyName,

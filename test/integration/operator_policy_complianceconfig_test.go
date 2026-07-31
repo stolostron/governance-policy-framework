@@ -72,6 +72,7 @@ var _ = Describe("RHACM4K-48381 GRC: [P1][Sev1][policy-grc] Test OperatorPolicy 
 		It(operatorPolicyName+" should be modified to report NonCompliance when upgrades are available", func() {
 			// new policy specifies NonCompliant for upgradesAvailable in complianceConfig
 			By("Patching upgradesAvailable complianceConfig on the operator policy to NonCompliant")
+
 			_, err := common.OcHub("apply", "-f", policyPathModified, "-n", userNamespace)
 			Expect(err).ToNot(HaveOccurred())
 
@@ -183,6 +184,7 @@ var _ = Describe("RHACM4K-48382 GRC: [P1][Sev1][policy-grc] Test OperatorPolicy 
 		It(operatorPolicyName+" should be patched with NonCompliant ComplianceConfig for each option", func() {
 			// new policy specifies NonCompliant for each field of complianceConfig
 			By("Modifying complianceConfig to NonCompliant for each field")
+
 			_, err := common.OcHub("apply", "-f", policyPathModified, "-n", userNamespace)
 			Expect(err).ToNot(HaveOccurred())
 

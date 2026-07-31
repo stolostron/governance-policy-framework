@@ -27,11 +27,12 @@ var _ = Describe("GRC: [P1][Sev1][policy-grc] Test the ACM Hardening "+
 
 	It("Sets up the application subscription", func() {
 		By("Verifying that the default ManagedClusterSet exists")
+
 		mcs := unstructured.Unstructured{
-			Object: map[string]interface{}{
+			Object: map[string]any{
 				"apiVersion": "cluster.open-cluster-management.io/v1beta2",
 				"kind":       "ManagedClusterSet",
-				"metadata": map[string]interface{}{
+				"metadata": map[string]any{
 					"name": "default",
 				},
 			},
@@ -45,6 +46,7 @@ var _ = Describe("GRC: [P1][Sev1][policy-grc] Test the ACM Hardening "+
 		}
 
 		By("Creating the application subscription")
+
 		_, err = common.OcUser(
 			gitopsUser,
 			"apply",
@@ -73,8 +75,10 @@ var _ = Describe("GRC: [P1][Sev1][policy-grc] Test the ACM Hardening "+
 
 	It("Validates the propagated policies", func() {
 		By("Checking that the policy set was created")
+
 		policySetRsrc := clientHubDynamic.Resource(common.GvrPolicySet)
 		var policyset *unstructured.Unstructured
+
 		Eventually(
 			func() error {
 				var err error
@@ -93,12 +97,15 @@ var _ = Describe("GRC: [P1][Sev1][policy-grc] Test the ACM Hardening "+
 		Expect(err).ShouldNot(HaveOccurred())
 		Expect(found).Should(BeTrue())
 		Expect(policies).Should(HaveLen(len(policyNames)))
+
 		for idx, policyName := range policyNames {
 			Expect(policies[idx]).Should(Equal(policyName))
 		}
 
 		By("Checking that the subscriptions root policy was created and becomes compliant")
+
 		policyRsrc := clientHubDynamic.Resource(common.GvrPolicy)
+
 		Eventually(
 			func() error {
 				policy, err := policyRsrc.Namespace(namespace).Get(
@@ -109,6 +116,7 @@ var _ = Describe("GRC: [P1][Sev1][policy-grc] Test the ACM Hardening "+
 					if myerr != nil {
 						return myerr
 					}
+
 					if !found {
 						return errors.New("failed to find the compliant field of the policy status")
 					} else if compliant != "Compliant" {
@@ -139,7 +147,9 @@ var _ = Describe("GRC: [P1][Sev1][policy-grc] Test the ACM Hardening "+
 		).ShouldNot(HaveOccurred())
 
 		By("Checking that the policy reports configuration policy was created in the local-cluster namespace")
+
 		configPolicyRsrc := clientHubDynamic.Resource(common.GvrConfigurationPolicy)
+
 		Eventually(
 			func() error {
 				_, err := configPolicyRsrc.Namespace("local-cluster").Get(

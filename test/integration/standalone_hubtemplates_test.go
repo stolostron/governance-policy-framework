@@ -61,10 +61,10 @@ var _ = Describe("GRC: [P1][Sev1][policy-grc] Test standalone hub templating", O
 			details, _, _ := unstructured.NestedSlice(plc.Object, "status", "compliancyDetails")
 			Expect(details).To(HaveLen(1))
 
-			conds, _, _ := unstructured.NestedSlice(details[0].(map[string]interface{}), "conditions")
+			conds, _, _ := unstructured.NestedSlice(details[0].(map[string]any), "conditions")
 			Expect(conds).To(HaveLen(1))
 
-			msg, _, _ := unstructured.NestedString(conds[0].(map[string]interface{}), "message")
+			msg, _, _ := unstructured.NestedString(conds[0].(map[string]any), "message")
 
 			return msg
 		}, 10, 2).Should(ContainSubstring("governance-standalone-hub-templating addon must be enabled"))
@@ -115,10 +115,10 @@ var _ = Describe("GRC: [P1][Sev1][policy-grc] Test standalone hub templating", O
 			details, _, _ := unstructured.NestedSlice(plc.Object, "status", "compliancyDetails")
 			Expect(details).To(HaveLen(1))
 
-			conds, _, _ := unstructured.NestedSlice(details[0].(map[string]interface{}), "conditions")
+			conds, _, _ := unstructured.NestedSlice(details[0].(map[string]any), "conditions")
 			Expect(conds).To(HaveLen(1))
 
-			msg, _, _ := unstructured.NestedString(conds[0].(map[string]interface{}), "message")
+			msg, _, _ := unstructured.NestedString(conds[0].(map[string]any), "message")
 
 			return msg
 		}, 10, 2).Should(ContainSubstring(`cannot list resource "configmaps"`))

@@ -36,8 +36,10 @@ var _ = Describe("GRC: [P1][Sev1][policy-grc] Test policy set", Ordered, Label("
 			Expect(err).ToNot(HaveOccurred())
 
 			By("Checking that the root policy was created")
+
 			rootPolicyRsrc := clientHubDynamic.Resource(testcommon.GvrPolicy)
 			var rootPolicy *unstructured.Unstructured
+
 			Eventually(
 				func() error {
 					var err error
@@ -60,7 +62,9 @@ var _ = Describe("GRC: [P1][Sev1][policy-grc] Test policy set", Ordered, Label("
 			Expect(err).ToNot(HaveOccurred())
 
 			By("Checking " + testPolicyName + " on managed cluster in ns " + clusterNamespace)
+
 			policyRsrc := clientHubDynamic.Resource(testcommon.GvrPolicy)
+
 			Eventually(
 				func() error {
 					var err error
@@ -75,10 +79,12 @@ var _ = Describe("GRC: [P1][Sev1][policy-grc] Test policy set", Ordered, Label("
 			).ShouldNot(HaveOccurred())
 
 			By("Checking the status of policy set")
+
 			yamlPlc := utils.ParseYaml("../resources/policy_set/statuscheck-1.yaml")
 
 			policySetRsrc := clientHubDynamic.Resource(testcommon.GvrPolicySet)
-			Eventually(func(g Gomega) interface{} {
+
+			Eventually(func(g Gomega) any {
 				rootPlcSet, err := policySetRsrc.Namespace(userNamespace).Get(
 					context.TODO(), testPolicySetName, metav1.GetOptions{},
 				)
@@ -101,10 +107,12 @@ var _ = Describe("GRC: [P1][Sev1][policy-grc] Test policy set", Ordered, Label("
 			Expect(err).ToNot(HaveOccurred())
 
 			By("Checking the status of policy set")
+
 			yamlPlc := utils.ParseYaml("../resources/policy_set/statuscheck-2.yaml")
 
 			policySetRsrc := clientHubDynamic.Resource(testcommon.GvrPolicySet)
-			Eventually(func(g Gomega) interface{} {
+
+			Eventually(func(g Gomega) any {
 				rootPlcSet, err := policySetRsrc.Namespace(userNamespace).Get(
 					context.TODO(), testPolicySetName, metav1.GetOptions{},
 				)
@@ -117,6 +125,7 @@ var _ = Describe("GRC: [P1][Sev1][policy-grc] Test policy set", Ordered, Label("
 			).Should(utils.SemanticEqual(yamlPlc.Object["status"]))
 
 			By("Undoing patch with " + testPolicySetPatchYaml)
+
 			output, err = utils.KubectlWithOutput("apply",
 				"-f", testUndoPolicySetPatchYaml,
 				"-n", userNamespace,
@@ -129,10 +138,12 @@ var _ = Describe("GRC: [P1][Sev1][policy-grc] Test policy set", Ordered, Label("
 			testcommon.EnforcePolicy(testPolicyName)
 
 			By("Checking the status of policy set")
+
 			yamlPlc := utils.ParseYaml("../resources/policy_set/statuscheck-3.yaml")
 
 			policySetRsrc := clientHubDynamic.Resource(testcommon.GvrPolicySet)
-			Eventually(func(g Gomega) interface{} {
+
+			Eventually(func(g Gomega) any {
 				rootPlcSet, err := policySetRsrc.Namespace(userNamespace).Get(
 					context.TODO(), testPolicySetName, metav1.GetOptions{},
 				)
@@ -155,6 +166,7 @@ var _ = Describe("GRC: [P1][Sev1][policy-grc] Test policy set", Ordered, Label("
 			Expect(err).ToNot(HaveOccurred())
 
 			plcRsrc := clientHubDynamic.Resource(testcommon.GvrPolicy)
+
 			Eventually(
 				func() error {
 					var err error
@@ -169,10 +181,12 @@ var _ = Describe("GRC: [P1][Sev1][policy-grc] Test policy set", Ordered, Label("
 			).ShouldNot(HaveOccurred())
 
 			By("Checking the status of policy set")
+
 			yamlPlc := utils.ParseYaml("../resources/policy_set/statuscheck-4.yaml")
 
 			policySetRsrc := clientHubDynamic.Resource(testcommon.GvrPolicySet)
-			Eventually(func(g Gomega) interface{} {
+
+			Eventually(func(g Gomega) any {
 				rootPlcSet, err := policySetRsrc.Namespace(userNamespace).Get(
 					context.TODO(), testPolicySetName, metav1.GetOptions{},
 				)

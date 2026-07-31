@@ -73,7 +73,7 @@ func complianceScanTest(scanPolicyName string, scanPolicyURL string, scanName st
 			)
 			Expect(compliancesuite).NotTo(BeNil())
 			By("Checking if ComplianceSuite " + scanName + " scan status field has been created")
-			Eventually(func() interface{} {
+			Eventually(func() any {
 				compliancesuite := utils.GetWithTimeout(
 					clientManagedDynamic,
 					common.GvrComplianceSuite,
@@ -86,7 +86,7 @@ func complianceScanTest(scanPolicyName string, scanPolicyURL string, scanName st
 				return compliancesuite.Object["status"]
 			}, defaultTimeoutSeconds*4, 1).ShouldNot(BeNil())
 			By("Checking if ComplianceSuite " + scanName + " scan status.phase is RUNNING")
-			Eventually(func() interface{} {
+			Eventually(func() any {
 				compliancesuite := utils.GetWithTimeout(
 					clientManagedDynamic,
 					common.GvrComplianceSuite,
@@ -96,7 +96,7 @@ func complianceScanTest(scanPolicyName string, scanPolicyURL string, scanName st
 					defaultTimeoutSeconds,
 				)
 
-				return compliancesuite.Object["status"].(map[string]interface{})["phase"]
+				return compliancesuite.Object["status"].(map[string]any)["phase"]
 			}, common.MaxTimeoutSeconds, 1).Should(Equal("RUNNING"))
 		})
 		It("Informing stable/"+scanPolicyName+"", func() {
@@ -120,7 +120,7 @@ func complianceScanTest(scanPolicyName string, scanPolicyURL string, scanName st
 		})
 		It("ComplianceSuite "+scanName+" scan results should be AGGREGATING", func() {
 			By("Checking if ComplianceSuite " + scanName + " scan status.phase is AGGREGATING")
-			Eventually(func() interface{} {
+			Eventually(func() any {
 				compliancesuite := utils.GetWithTimeout(
 					clientManagedDynamic,
 					common.GvrComplianceSuite,
@@ -130,7 +130,7 @@ func complianceScanTest(scanPolicyName string, scanPolicyURL string, scanName st
 					defaultTimeoutSeconds,
 				)
 
-				return compliancesuite.Object["status"].(map[string]interface{})["phase"]
+				return compliancesuite.Object["status"].(map[string]any)["phase"]
 			}, common.MaxTimeoutSeconds, 1).Should(Or(Equal("AGGREGATING"), Equal("RUNNING")))
 		})
 	})
@@ -228,12 +228,13 @@ var _ = Describe("RHACM4K-2222 GRC: [P1][Sev1][policy-grc] "+
 		compCISScanPolicyName = "policy-cis-scan"
 	)
 
-	var getComplianceState func(Gomega) interface{}
+	var getComplianceState func(Gomega) any
 
 	BeforeAll(func() {
 		if !common.IsAtLeastVersion("4.6") {
 			Skip("Skipping as compliance operator is only supported on OCP 4.6 and above")
 		}
+
 		if !canCreateOpenshiftNamespaces() {
 			Skip("Skipping as compliance operator requires the ability to create the openshift-compliance namespace")
 		}
@@ -244,6 +245,7 @@ var _ = Describe("RHACM4K-2222 GRC: [P1][Sev1][policy-grc] "+
 	Describe("Test stable/"+compPolicyName, Label("BVT"), func() {
 		It("stable/"+compPolicyName+" should be created on hub", func(ctx SpecContext) {
 			By("Creating policy on hub")
+
 			_, err := utils.KubectlWithOutput(
 				"apply", "-f",
 				compPolicyURL, "-n",
@@ -287,11 +289,14 @@ var _ = Describe("RHACM4K-2222 GRC: [P1][Sev1][policy-grc] "+
 		})
 		It("Compliance operator pod should be running", func() {
 			By("Checking if pod compliance-operator has been created")
+
 			i := 0
+
 			Eventually(func(g Gomega) []corev1.Pod {
 				if i == 60*2 || i == 60*4 {
 					GinkgoWriter.Println("compliance operator pod still not created, "+
 						"deleting subscription and let it recreate", i)
+
 					_, err := utils.KubectlWithOutput(
 						"get", "-n",
 						"openshift-compliance",
@@ -312,6 +317,7 @@ var _ = Describe("RHACM4K-2222 GRC: [P1][Sev1][policy-grc] "+
 					)
 					g.Expect(err).ToNot(HaveOccurred())
 				}
+
 				i++
 				podList, err := clientManaged.CoreV1().Pods("openshift-compliance").List(
 					context.TODO(),
@@ -322,7 +328,7 @@ var _ = Describe("RHACM4K-2222 GRC: [P1][Sev1][policy-grc] "+
 				return podList.Items
 			}, defaultTimeoutSeconds*12, 1).Should(HaveLen(1))
 			By("Checking if pod compliance-operator is running")
-			Eventually(func(g Gomega) interface{} {
+			Eventually(func(g Gomega) any {
 				podList, err := clientManaged.CoreV1().Pods("openshift-compliance").List(
 					context.TODO(),
 					metav1.ListOptions{LabelSelector: "name=compliance-operator"},
@@ -344,7 +350,7 @@ var _ = Describe("RHACM4K-2222 GRC: [P1][Sev1][policy-grc] "+
 				return podList.Items
 			}, defaultTimeoutSeconds*6, 1).Should(HaveLen(1))
 			By("Checking if pod ocp4-pp is running")
-			Eventually(func(g Gomega) interface{} {
+			Eventually(func(g Gomega) any {
 				podList, err := clientManaged.CoreV1().Pods("openshift-compliance").List(
 					context.TODO(),
 					metav1.ListOptions{LabelSelector: "profile-bundle=ocp4"},
@@ -364,7 +370,7 @@ var _ = Describe("RHACM4K-2222 GRC: [P1][Sev1][policy-grc] "+
 				return podList.Items
 			}, defaultTimeoutSeconds*6, 1).Should(HaveLen(1))
 			By("Checking if pod rhcos4-pp is running")
-			Eventually(func(g Gomega) interface{} {
+			Eventually(func(g Gomega) any {
 				podList, err := clientManaged.CoreV1().Pods("openshift-compliance").List(
 					context.TODO(),
 					metav1.ListOptions{
@@ -413,6 +419,7 @@ var _ = Describe("RHACM4K-2222 GRC: [P1][Sev1][policy-grc] "+
 			false,
 			defaultTimeoutSeconds,
 		)
+
 		_, err = utils.KubectlWithOutput(
 			"delete", "-n",
 			"openshift-compliance",
