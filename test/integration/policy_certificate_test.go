@@ -39,6 +39,7 @@ var _ = Describe(
 
 		It("stable/"+policyCertificateName+" should be created on the Hub", func(ctx SpecContext) {
 			By("Creating the policy on the Hub")
+
 			_, err := utils.KubectlWithOutput(
 				"apply",
 				"-f",
@@ -105,6 +106,7 @@ var _ = Describe(
 
 		It("Make the policy NonCompliant", func() {
 			By("Creating a secret with an expired certificate")
+
 			key, err := rsa.GenerateKey(rand.Reader, 2048)
 			Expect(err).ToNot(HaveOccurred())
 

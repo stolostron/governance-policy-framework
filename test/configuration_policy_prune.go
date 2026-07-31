@@ -103,7 +103,7 @@ func ConfigPruneBehavior(labels ...string) bool {
 		)
 
 		By("Checking that the ConfigurationPolicy identified that it created the object")
-		Eventually(func(g Gomega) interface{} {
+		Eventually(func(g Gomega) any {
 			cfgPol := utils.GetWithTimeout(clientHostingDynamic, GvrConfigurationPolicy,
 				policyName, ClusterNamespace, true, DefaultTimeoutSeconds)
 
@@ -112,7 +112,7 @@ func ConfigPruneBehavior(labels ...string) bool {
 			g.Expect(relObj).ToNot(BeEmpty())
 
 			createdByPolicy, _, err := unstructured.NestedBool(
-				relObj[0].(map[string]interface{}), "properties", "createdByPolicy")
+				relObj[0].(map[string]any), "properties", "createdByPolicy")
 			g.Expect(err).ToNot(HaveOccurred())
 
 			return createdByPolicy
@@ -213,7 +213,7 @@ func ConfigPruneBehavior(labels ...string) bool {
 		// but for now we only ensure the ConfigurationPolicy remains while things are deleting.
 
 		By("Checking that the ConfigurationPolicy is still on the cluster")
-		Consistently(func() interface{} {
+		Consistently(func() any {
 			return utils.GetWithTimeout(clientHostingDynamic, GvrConfigurationPolicy, policyName,
 				ClusterNamespace, true, DefaultTimeoutSeconds)
 		}, 30, 5).ShouldNot(BeNil())
@@ -302,7 +302,7 @@ func ConfigPruneBehavior(labels ...string) bool {
 		)
 		Expect(err).ToNot(HaveOccurred())
 		By("Wait for configpolicy to update to inform")
-		Eventually(func() interface{} {
+		Eventually(func() any {
 			configpol := utils.GetWithTimeout(
 				clientHostingDynamic,
 				GvrConfigurationPolicy,

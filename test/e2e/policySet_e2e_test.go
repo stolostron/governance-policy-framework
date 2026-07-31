@@ -61,9 +61,10 @@ var _ = Describe("Test policy set", func() {
 			Expect(plcSet).NotTo(BeNil())
 
 			By("Checking the status of policy set - NonCompliant")
+
 			yamlPlc := utils.ParseYaml("../resources/policy_set/statuscheck-1.yaml")
 
-			Eventually(func() interface{} {
+			Eventually(func() any {
 				rootPlcSet := utils.GetWithTimeout(
 					clientHubDynamic,
 					common.GvrPolicySet,
@@ -88,9 +89,10 @@ var _ = Describe("Test policy set", func() {
 			Expect(plcSet).NotTo(BeNil())
 
 			By("Checking the status of policy set")
+
 			yamlPlc := utils.ParseYaml("../resources/policy_set/statuscheck-2.yaml")
 
-			Eventually(func() interface{} {
+			Eventually(func() any {
 				rootPlcSet := utils.GetWithTimeout(
 					clientHubDynamic,
 					common.GvrPolicySet,
@@ -104,6 +106,7 @@ var _ = Describe("Test policy set", func() {
 			}, defaultTimeoutSeconds, 1).Should(utils.SemanticEqual(yamlPlc.Object["status"]))
 
 			By("Undoing patch with " + testPolicySetPatchYaml)
+
 			_, err = common.OcHub("apply", "-f", testUndoPolicySetPatchYaml, "-n", userNamespace)
 			Expect(err).ToNot(HaveOccurred())
 		})
@@ -112,9 +115,10 @@ var _ = Describe("Test policy set", func() {
 			common.EnforcePolicy(testPolicyName)
 
 			By("Checking the status of policy set")
+
 			yamlPlc := utils.ParseYaml("../resources/policy_set/statuscheck-5.yaml")
 
-			Eventually(func() interface{} {
+			Eventually(func() any {
 				rootPlcSet := utils.GetWithTimeout(
 					clientHubDynamic,
 					common.GvrPolicySet,
@@ -139,9 +143,10 @@ var _ = Describe("Test policy set", func() {
 			Expect(plc).NotTo(BeNil())
 
 			By("Checking the status of policy set")
+
 			yamlPlc := utils.ParseYaml("../resources/policy_set/statuscheck-6.yaml")
 
-			Eventually(func() interface{} {
+			Eventually(func() any {
 				rootPlcSet := utils.GetWithTimeout(
 					clientHubDynamic,
 					common.GvrPolicySet,

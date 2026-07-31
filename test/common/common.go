@@ -96,7 +96,7 @@ func InitFlags(flagset *flag.FlagSet) {
 	)
 }
 
-// Initializes the Hub and Managed Clients. Should be called after InitFlags,
+// InitInterfaces Initializes the Hub and Managed Clients. Should be called after InitFlags,
 // and before any tests using common functions are run.
 func InitInterfaces(hubConfig, managedConfig string, isHosted bool) {
 	if isHosted {
@@ -279,7 +279,7 @@ func oc(args ...string) (string, error) {
 	return string(output), err
 }
 
-// Runs the given oc/kubectl command against the configured hub cluster.
+// OcHub Runs the given oc/kubectl command against the configured hub cluster.
 // Prints and returns the stdout from the command.
 // If the command fails (non-zero exit code) and stderr was populated, that
 // content will be returned in the error.
@@ -289,7 +289,7 @@ func OcHub(args ...string) (string, error) {
 	return oc(args...)
 }
 
-// Runs the given oc/kubectl command against the configured managed cluster.
+// OcManaged Runs the given oc/kubectl command against the configured managed cluster.
 // Prints and returns the stdout from the command.
 // If the command fails (non-zero exit code) and stderr was populated, that
 // content will be returned in the error.
@@ -370,6 +370,7 @@ func CleanupHubNamespace(namespace string) {
 			_, err := ClientHub.CoreV1().Namespaces().Get(
 				context.TODO(), namespace, metav1.GetOptions{},
 			)
+
 			isNotFound := k8serrors.IsNotFound(err)
 			if !isNotFound && err != nil {
 				GinkgoWriter.Printf("'%s' namespace 'get' error: %w", err)
@@ -384,14 +385,14 @@ func CleanupHubNamespace(namespace string) {
 
 func ApplyManagedClusterSetBinding(ctx SpecContext) error {
 	managedClusterSetBinding := unstructured.Unstructured{
-		Object: map[string]interface{}{
+		Object: map[string]any{
 			"apiVersion": GvrManagedClusterSetBinding.Group +
 				"/" + GvrManagedClusterSetBinding.Version,
 			"kind": "ManagedClusterSetBinding",
-			"metadata": map[string]interface{}{
+			"metadata": map[string]any{
 				"name": "global",
 			},
-			"spec": map[string]interface{}{
+			"spec": map[string]any{
 				"clusterSet": "global",
 			},
 		},

@@ -6,6 +6,7 @@ import (
 	"encoding/csv"
 	"flag"
 	"fmt"
+	"maps"
 	"net/http"
 	"os"
 	"os/exec"
@@ -44,9 +45,7 @@ func (h WithHeader) RoundTrip(req *http.Request) (*http.Response, error) {
 	}
 
 	req = req.Clone(req.Context())
-	for k, v := range h.Header {
-		req.Header[k] = v
-	}
+	maps.Copy(req.Header, h.Header)
 
 	return h.rt.RoundTrip(req)
 }
