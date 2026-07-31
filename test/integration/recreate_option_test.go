@@ -23,6 +23,7 @@ var _ = Describe("GRC: [P1][Sev1][policy-grc] Test recreateOption", Ordered, Lab
 
 	AfterAll(func(ctx SpecContext) {
 		By("Deleting the recreate-option-initial policy")
+
 		_, err := common.OcHub(
 			"delete",
 			"-f",
@@ -32,6 +33,7 @@ var _ = Describe("GRC: [P1][Sev1][policy-grc] Test recreateOption", Ordered, Lab
 		Expect(err).ToNot(HaveOccurred())
 
 		By("Deleting the recreate-option-update policy")
+
 		_, err = common.OcHub(
 			"delete",
 			"-f",
@@ -41,6 +43,7 @@ var _ = Describe("GRC: [P1][Sev1][policy-grc] Test recreateOption", Ordered, Lab
 		Expect(err).ToNot(HaveOccurred())
 
 		By("Deleting the recreate-option-all policy")
+
 		_, err = common.OcHub(
 			"delete",
 			"-f",
@@ -52,6 +55,7 @@ var _ = Describe("GRC: [P1][Sev1][policy-grc] Test recreateOption", Ordered, Lab
 
 	It("Updates a Deployment due to immutable fields with recreateOption set to IfRequired", func(ctx context.Context) {
 		By("Creating a policy to create the initial Deployment")
+
 		_, err := common.OcHub(
 			"apply",
 			"-f",
@@ -62,6 +66,7 @@ var _ = Describe("GRC: [P1][Sev1][policy-grc] Test recreateOption", Ordered, Lab
 		verifyPolicyOnAllClusters(ctx, ns, "recreate-option-initial", "Compliant", defaultTimeoutSeconds)
 
 		By("Deleting the recreate-option-initial policy")
+
 		_, err = common.OcHub(
 			"delete",
 			"-f",
@@ -70,6 +75,7 @@ var _ = Describe("GRC: [P1][Sev1][policy-grc] Test recreateOption", Ordered, Lab
 		Expect(err).ToNot(HaveOccurred())
 
 		By("Creating the policy to update immutable fields on the Deployment")
+
 		_, err = common.OcHub(
 			"apply",
 			"-f",
@@ -93,14 +99,14 @@ var _ = Describe("GRC: [P1][Sev1][policy-grc] Test recreateOption", Ordered, Lab
 				g.Expect(err).ToNot(HaveOccurred())
 				g.Expect(details).To(HaveLen(1))
 
-				templateDetails, ok := details[0].(map[string]interface{})
+				templateDetails, ok := details[0].(map[string]any)
 				g.Expect(ok).To(BeTrue())
 
 				history, _, err := unstructured.NestedSlice(templateDetails, "history")
 				g.Expect(err).ToNot(HaveOccurred())
 				g.Expect(history).ToNot(BeEmpty())
 
-				topHistoryItem, ok := history[0].(map[string]interface{})
+				topHistoryItem, ok := history[0].(map[string]any)
 				g.Expect(ok).To(BeTrue())
 
 				message, _, _ := unstructured.NestedString(topHistoryItem, "message")
@@ -109,6 +115,7 @@ var _ = Describe("GRC: [P1][Sev1][policy-grc] Test recreateOption", Ordered, Lab
 		}
 
 		By("Setting recreateOption IfRequired to update immutable fields on the Deployment")
+
 		_, err = common.OcHub(
 			"-n", ns, "patch", "policy", "recreate-option-update", "--type=json", "-p",
 			`[{ "op": "add", `+
@@ -122,6 +129,7 @@ var _ = Describe("GRC: [P1][Sev1][policy-grc] Test recreateOption", Ordered, Lab
 
 	It("Recreates a ConfigMap on update with recreateOption set to All", func(ctx context.Context) {
 		By("Creating the policy to create the ConfigMap")
+
 		_, err := common.OcHub("apply", "-f", policyConfigMapYAML)
 		Expect(err).ToNot(HaveOccurred())
 
@@ -135,6 +143,7 @@ var _ = Describe("GRC: [P1][Sev1][policy-grc] Test recreateOption", Ordered, Lab
 		oldUID := configMap.GetUID()
 
 		By("Updating the policy to update the ConfigMap")
+
 		_, err = common.OcHub(
 			"-n", ns, "patch", "policy", "recreate-option-all", "--type=json", "-p",
 			`[{ "op": "replace", `+

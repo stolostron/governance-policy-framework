@@ -20,6 +20,7 @@ var _ = Describe("GRC: [P1][Sev1][policy-grc] Test the Policy Generator "+
 
 	It("Sets up the application subscription", func() {
 		By("Creating the application subscription")
+
 		_, err := common.OcUser(
 			gitopsUser,
 			"apply",
@@ -49,8 +50,11 @@ var _ = Describe("GRC: [P1][Sev1][policy-grc] Test the Policy Generator "+
 	It("Validates the propagated policies", func() {
 		// Perform some basic validation on the generated policy.
 		By("Checking that the root policy was created")
+
 		policyRsrc := clientHubDynamic.Resource(common.GvrPolicy)
+
 		var policy *unstructured.Unstructured
+
 		Eventually(
 			func() error {
 				var err error
@@ -70,7 +74,7 @@ var _ = Describe("GRC: [P1][Sev1][policy-grc] Test the Policy Generator "+
 		Expect(templates).Should(HaveLen(3))
 
 		for _, template := range templates {
-			objSpec, found, err := unstructured.NestedMap(template.(map[string]interface{}), "objectDefinition", "spec")
+			objSpec, found, err := unstructured.NestedMap(template.(map[string]any), "objectDefinition", "spec")
 			Expect(err).ShouldNot(HaveOccurred())
 			Expect(found).Should(BeTrue())
 			Expect(objSpec["severity"]).Should(Equal("high"))
@@ -78,7 +82,7 @@ var _ = Describe("GRC: [P1][Sev1][policy-grc] Test the Policy Generator "+
 			Expect(err).ShouldNot(HaveOccurred())
 			Expect(found).Should(BeTrue())
 			Expect(objTemplates).Should(HaveLen(1))
-			templateObj := objTemplates[0].(map[string]interface{})
+			templateObj := objTemplates[0].(map[string]any)
 			Expect(templateObj["complianceType"]).Should(Equal("mustnothave"))
 		}
 
@@ -98,7 +102,9 @@ var _ = Describe("GRC: [P1][Sev1][policy-grc] Test the Policy Generator "+
 		).ShouldNot(HaveOccurred())
 
 		By("Checking that the configuration policies were created in the local-cluster namespace")
+
 		configPolicyRsrc := clientHubDynamic.Resource(common.GvrConfigurationPolicy)
+
 		for _, suffix := range []string{"", "2", "3"} {
 			Eventually(
 				func() error {

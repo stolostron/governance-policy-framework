@@ -41,6 +41,7 @@ var _ = Describe("GRC: [P1][Sev1][policy-grc] Test the policy-psp policy",
 
 		It("stable/"+rootPolicyName+" should be created on the hub cluster", func() {
 			By("Creating " + rootPolicyName + " on the hub cluster")
+
 			_, err := utils.KubectlWithOutput(
 				"apply",
 				"-f",
@@ -126,6 +127,7 @@ var _ = Describe("GRC: [P1][Sev1][policy-grc] Test the policy-psp policy",
 
 		AfterAll(func() {
 			By("Deleting the PodSecurityPolicy " + rootPolicyName + " on the hub cluster")
+
 			_, err := utils.KubectlWithOutput(
 				"delete",
 				"-f",
@@ -138,6 +140,7 @@ var _ = Describe("GRC: [P1][Sev1][policy-grc] Test the policy-psp policy",
 			Expect(err).ToNot(HaveOccurred())
 
 			By("Deleting the PodSecurityPolicy " + pspName + " on the managed cluster")
+
 			err = clientManagedDynamic.Resource(gvrPSP).Delete(
 				context.TODO(),
 				pspName,
@@ -145,6 +148,7 @@ var _ = Describe("GRC: [P1][Sev1][policy-grc] Test the policy-psp policy",
 			)
 			if !k8serrors.IsNotFound(err) {
 				var exitError *exec.ExitError
+
 				ok := errors.As(err, &exitError)
 				if ok {
 					Expect(exitError.Stderr).To(BeNil())

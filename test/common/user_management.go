@@ -30,9 +30,9 @@ const ocpConfigNs = "openshift-config"
 
 // k8sJSONPatch represents a Kubernetes patch of type JSON (i.e. types.JSONPatchType).
 type k8sJSONPatch struct {
-	Op    string      `json:"op"`
-	Path  string      `json:"path"`
-	Value interface{} `json:"value,omitempty"`
+	Op    string `json:"op"`
+	Path  string `json:"path"`
+	Value any    `json:"value,omitempty"`
 }
 
 // OCPUser represents an OpenShift user to be created on a cluster.
@@ -105,7 +105,7 @@ func GetKubeConfig(server, username, password string) (string, error) {
 	return kubeconfigPath, nil
 }
 
-// Runs the given oc/kubectl command using the given OCPUser.
+// OcUser runs the given oc/kubectl command using the given OCPUser.
 // Prints and returns the stdout from the command.
 // If the command fails (non-zero exit code) and stderr was populated, that
 // content will be returned in the error.
@@ -129,7 +129,7 @@ func CreateOCPUser(
 	}
 
 	// Create a secret to hold the generated htpasswd file with the user's credentials.
-	htpasswd := []byte(fmt.Sprintf("%s:%s\n", user.Username, string(passwordBytes)))
+	htpasswd := fmt.Appendf(nil, "%s:%s\n", user.Username, string(passwordBytes))
 	secret := corev1.Secret{
 		ObjectMeta: metav1.ObjectMeta{Name: user.Username},
 		Data:       map[string][]byte{"htpasswd": htpasswd},
@@ -173,7 +173,7 @@ func addHtPasswd(dynamicClient dynamic.Interface, secretName string) error {
 
 	oauthRsrc := dynamicClient.Resource(GvrOAuth)
 	// The type was already validated in getClusterOAuthConfig
-	spec, _ := clusterOAuth.Object["spec"].(map[string]interface{})
+	spec, _ := clusterOAuth.Object["spec"].(map[string]any)
 
 	// If spec.identityProviders is not set, it needs to first be set to an empty array for the
 	// patch below to work.
@@ -182,7 +182,7 @@ func addHtPasswd(dynamicClient dynamic.Interface, secretName string) error {
 			{
 				Op:    "add",
 				Path:  "/spec/identityProviders",
-				Value: []interface{}{},
+				Value: []any{},
 			},
 		}
 
@@ -198,7 +198,7 @@ func addHtPasswd(dynamicClient dynamic.Interface, secretName string) error {
 			return fmt.Errorf(`failed to patch the "%s" OAuth object: %w`, oAuthName, err)
 		}
 	} else {
-		idps, ok := spec["identityProviders"].([]interface{})
+		idps, ok := spec["identityProviders"].([]any)
 		if !ok {
 			return fmt.Errorf(
 				`the "%s" OAuth object has an invalid spec.identityProviders field`, oAuthName,
@@ -206,7 +206,7 @@ func addHtPasswd(dynamicClient dynamic.Interface, secretName string) error {
 		}
 
 		for i, idp := range idps {
-			idp, ok := idp.(map[string]interface{})
+			idp, ok := idp.(map[string]any)
 			if !ok {
 				return fmt.Errorf(
 					`the "%s" OAuth object has an invalid spec.identityProviders[%d] field`,
@@ -226,12 +226,12 @@ func addHtPasswd(dynamicClient dynamic.Interface, secretName string) error {
 		{
 			Op:   "add",
 			Path: "/spec/identityProviders/-",
-			Value: map[string]interface{}{
+			Value: map[string]any{
 				"name":          secretName,
 				"mappingMethod": "claim",
 				"type":          "HTPasswd",
-				"htpasswd": map[string]interface{}{
-					"fileData": map[string]interface{}{
+				"htpasswd": map[string]any{
+					"fileData": map[string]any{
 						"name": secretName,
 					},
 				},
@@ -267,7 +267,7 @@ func getClusterOAuthConfig(dynamicClient dynamic.Interface) (*unstructured.Unstr
 		return nil, fmt.Errorf(`failed to get the "%s" OAuth object: %w`, oAuthName, err)
 	}
 
-	_, ok := clusterOAuth.Object["spec"].(map[string]interface{})
+	_, ok := clusterOAuth.Object["spec"].(map[string]any)
 	if !ok {
 		return nil, fmt.Errorf(`the "%s" OAuth object has an invalid spec`, oAuthName)
 	}
@@ -306,13 +306,13 @@ func addClusterRoleBindings(client kubernetes.Interface, user OCPUser) error {
 			continue
 		}
 
-		subject := map[string]interface{}{
+		subject := map[string]any{
 			"apiGroup": "rbac.authorization.k8s.io",
 			"kind":     "User",
 			"name":     user.Username,
 		}
 
-		var patchObj interface{}
+		var patchObj any
 		var patchType types.PatchType
 		// A strategic merge patch is required when there are no subjects since the Kubernetes API
 		// rejects a JSON patch when there are no subjects set. Setting it first to an empty array
@@ -322,8 +322,8 @@ func addClusterRoleBindings(client kubernetes.Interface, user OCPUser) error {
 		// entire subjects array in this case. This is why both patch types must be used.
 		if len(bindingObj.Subjects) == 0 {
 			patchType = types.StrategicMergePatchType
-			patchObj = map[string]interface{}{
-				"subjects": []map[string]interface{}{subject},
+			patchObj = map[string]any{
+				"subjects": []map[string]any{subject},
 			}
 		} else {
 			patchType = types.JSONPatchType
@@ -495,7 +495,7 @@ func deleteHtPasswd(dynamicClient dynamic.Interface, authName string, user OCPUs
 		return err
 	}
 
-	spec, ok := clusterOAuth.Object["spec"].(map[string]interface{})
+	spec, ok := clusterOAuth.Object["spec"].(map[string]any)
 	if !ok {
 		return fmt.Errorf(`the "%s" OAuth object has an invalid spec`, oAuthName)
 	}
@@ -504,7 +504,7 @@ func deleteHtPasswd(dynamicClient dynamic.Interface, authName string, user OCPUs
 		return nil
 	}
 
-	idps, ok := spec["identityProviders"].([]interface{})
+	idps, ok := spec["identityProviders"].([]any)
 	if !ok {
 		return fmt.Errorf(
 			`the "%s" OAuth object has an invalid spec.identityProviders field`, oAuthName,
@@ -514,7 +514,7 @@ func deleteHtPasswd(dynamicClient dynamic.Interface, authName string, user OCPUs
 	idpIndex := -1
 
 	for i, idp := range idps {
-		idp, ok := idp.(map[string]interface{})
+		idp, ok := idp.(map[string]any)
 		if !ok {
 			return fmt.Errorf(
 				`the "%s" OAuth object has an invalid spec.identityProviders[%d] field`,
@@ -599,7 +599,7 @@ func removeClusterRoleBindings(client kubernetes.Interface, user OCPUser) error 
 			{
 				Op:   "remove",
 				Path: fmt.Sprintf("/subjects/%d", subjectIndex),
-				Value: map[string]interface{}{
+				Value: map[string]any{
 					"apiGroup": "rbac.authorization.k8s.io",
 					"kind":     "User",
 					"name":     user.Username,

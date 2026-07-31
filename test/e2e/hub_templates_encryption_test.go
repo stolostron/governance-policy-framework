@@ -49,10 +49,12 @@ var _ = Describe("Test Hub Template Encryption", Ordered, func() {
 
 		It("Should be created on the managed cluster", func() {
 			By("Creating the " + secretName + " Secret")
+
 			_, err := common.OcHub("apply", "-f", secretYAML, "-n", userNamespace)
 			Expect(err).ToNot(HaveOccurred())
 
 			By("Creating the " + configMapName + " ConfigMap")
+
 			_, err = common.OcHub("apply", "-f", configMapYAML, "-n", userNamespace)
 			Expect(err).ToNot(HaveOccurred())
 
@@ -66,6 +68,7 @@ var _ = Describe("Test Hub Template Encryption", Ordered, func() {
 
 		It("Should use encryption in the replicated policy", func() {
 			By("Verifying the replicated policy")
+
 			managedplc := utils.GetWithTimeout(
 				clientHostingDynamic,
 				common.GvrPolicy,
@@ -81,7 +84,7 @@ var _ = Describe("Test Hub Template Encryption", Ordered, func() {
 			Expect(err).ToNot(HaveOccurred())
 			Expect(plcTemplates).To(HaveLen(1))
 
-			plcTemplate, ok := plcTemplates[0].(map[string]interface{})
+			plcTemplate, ok := plcTemplates[0].(map[string]any)
 			Expect(ok).To(BeTrue())
 
 			objectTemplates, ok, err := unstructured.NestedSlice(
@@ -91,7 +94,7 @@ var _ = Describe("Test Hub Template Encryption", Ordered, func() {
 			Expect(err).ToNot(HaveOccurred())
 			Expect(objectTemplates).To(HaveLen(2))
 
-			secretTemplate, ok := objectTemplates[0].(map[string]interface{})
+			secretTemplate, ok := objectTemplates[0].(map[string]any)
 			Expect(ok).To(BeTrue())
 
 			city, ok, err := unstructured.NestedString(secretTemplate, "objectDefinition", "data", "city")
@@ -114,7 +117,7 @@ var _ = Describe("Test Hub Template Encryption", Ordered, func() {
 			Expect(strings.Contains(state, "North Carolina")).ToNot(BeTrue())
 			Expect(strings.Contains(state, "Tm9ydGggQ2Fyb2xpbmE=")).ToNot(BeTrue())
 
-			configMapTemplate, ok := objectTemplates[1].(map[string]interface{})
+			configMapTemplate, ok := objectTemplates[1].(map[string]any)
 			Expect(ok).To(BeTrue())
 
 			cert, ok, err := unstructured.NestedString(configMapTemplate, "objectDefinition", "data", "cert")
@@ -129,6 +132,7 @@ var _ = Describe("Test Hub Template Encryption", Ordered, func() {
 
 		It("Verifies that the objects are created by the policy", func() {
 			By("Verifying the copied Secret")
+
 			secret, err := clientManaged.CoreV1().Secrets("default").Get(
 				ctx, secretCopyName, metav1.GetOptions{},
 			)
@@ -137,6 +141,7 @@ var _ = Describe("Test Hub Template Encryption", Ordered, func() {
 			Expect(string(secret.Data["state"])).To(Equal("North Carolina"))
 
 			By("Verifying the copied ConfigMap")
+
 			configMap, err := clientManaged.CoreV1().ConfigMaps("default").Get(
 				ctx, configMapCopyName, metav1.GetOptions{},
 			)
@@ -152,13 +157,16 @@ var _ = Describe("Test Hub Template Encryption", Ordered, func() {
 
 		It("Verifies that the key can be rotated", func() {
 			By("Fetching current encryption key")
+
 			encryptionSecret, err := clientHub.CoreV1().Secrets(clusterNamespaceOnHub).Get(
 				ctx, "policy-encryption-key", metav1.GetOptions{},
 			)
 			Expect(err).ToNot(HaveOccurred())
+
 			originalKey := encryptionSecret.Data["key"]
 
 			By("Clearing the last-rotated annotation to trigger a key rotation")
+
 			encryptionSecret.Annotations[lastRotatedAnnotation] = ""
 			_, err = clientHub.CoreV1().Secrets(clusterNamespaceOnHub).
 				Update(ctx, encryptionSecret, metav1.UpdateOptions{})
@@ -190,7 +198,7 @@ var _ = Describe("Test Hub Template Encryption", Ordered, func() {
 			)
 
 			Eventually(
-				func() interface{} {
+				func() any {
 					rootPolicy := utils.GetWithTimeout(
 						clientHubDynamic,
 						common.GvrPolicy,
@@ -213,6 +221,7 @@ var _ = Describe("Test Hub Template Encryption", Ordered, func() {
 			)
 			if !k8serrors.IsNotFound(err) {
 				var exitError *exec.ExitError
+
 				ok := errors.As(err, &exitError)
 				if ok {
 					Expect(exitError.Stderr).To(BeNil())
@@ -226,6 +235,7 @@ var _ = Describe("Test Hub Template Encryption", Ordered, func() {
 			)
 			if !k8serrors.IsNotFound(err) {
 				var exitError *exec.ExitError
+
 				ok := errors.As(err, &exitError)
 				if ok {
 					Expect(exitError.Stderr).To(BeNil())
@@ -239,6 +249,7 @@ var _ = Describe("Test Hub Template Encryption", Ordered, func() {
 			)
 			if !k8serrors.IsNotFound(err) {
 				var exitError *exec.ExitError
+
 				ok := errors.As(err, &exitError)
 				if ok {
 					Expect(exitError.Stderr).To(BeNil())
@@ -250,6 +261,7 @@ var _ = Describe("Test Hub Template Encryption", Ordered, func() {
 			err = clientHub.CoreV1().Secrets(userNamespace).Delete(ctx, secretName, metav1.DeleteOptions{})
 			if !k8serrors.IsNotFound(err) {
 				var exitError *exec.ExitError
+
 				ok := errors.As(err, &exitError)
 				if ok {
 					Expect(exitError.Stderr).To(BeNil())
@@ -261,6 +273,7 @@ var _ = Describe("Test Hub Template Encryption", Ordered, func() {
 			err = clientHub.CoreV1().ConfigMaps(userNamespace).Delete(ctx, configMapName, metav1.DeleteOptions{})
 			if !k8serrors.IsNotFound(err) {
 				var exitError *exec.ExitError
+
 				ok := errors.As(err, &exitError)
 				if ok {
 					Expect(exitError.Stderr).To(BeNil())
@@ -272,6 +285,7 @@ var _ = Describe("Test Hub Template Encryption", Ordered, func() {
 			err = clientManaged.CoreV1().Secrets(userNamespace).Delete(ctx, secretCopyName, metav1.DeleteOptions{})
 			if !k8serrors.IsNotFound(err) {
 				var exitError *exec.ExitError
+
 				ok := errors.As(err, &exitError)
 				if ok {
 					Expect(exitError.Stderr).To(BeNil())
@@ -283,6 +297,7 @@ var _ = Describe("Test Hub Template Encryption", Ordered, func() {
 			err = clientHub.CoreV1().ConfigMaps(userNamespace).Delete(ctx, configMapCopyName, metav1.DeleteOptions{})
 			if !k8serrors.IsNotFound(err) {
 				var exitError *exec.ExitError
+
 				ok := errors.As(err, &exitError)
 				if ok {
 					Expect(exitError.Stderr).To(BeNil())

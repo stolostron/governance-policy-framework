@@ -20,6 +20,7 @@ var _ = Describe("GRC: [P1][Sev1][policy-grc] Test the Policy Generator "+
 
 	It("Sets up the application subscription", func() {
 		By("Creating the application subscription")
+
 		_, err := common.OcUser(
 			gitopsUser,
 			"apply",
@@ -48,8 +49,11 @@ var _ = Describe("GRC: [P1][Sev1][policy-grc] Test the Policy Generator "+
 
 	It("Validates the propagated policies", func() {
 		By("Checking that the policy set was created")
+
 		policySetRsrc := clientHubDynamic.Resource(common.GvrPolicySet)
+
 		var policyset *unstructured.Unstructured
+
 		Eventually(
 			func() error {
 				var err error
@@ -73,8 +77,11 @@ var _ = Describe("GRC: [P1][Sev1][policy-grc] Test the Policy Generator "+
 		Expect(policies[0]).Should(Equal(policyName))
 
 		By("Checking that the root policy was created")
+
 		policyRsrc := clientHubDynamic.Resource(common.GvrPolicy)
+
 		var policy *unstructured.Unstructured
+
 		Eventually(
 			func() error {
 				var err error
@@ -97,7 +104,7 @@ var _ = Describe("GRC: [P1][Sev1][policy-grc] Test the Policy Generator "+
 		Expect(templates).Should(HaveLen(1))
 
 		objTemplates, found, err := unstructured.NestedSlice(
-			templates[0].(map[string]interface{}), "objectDefinition", "spec", "object-templates",
+			templates[0].(map[string]any), "objectDefinition", "spec", "object-templates",
 		)
 		Expect(err).ShouldNot(HaveOccurred())
 		Expect(found).Should(BeTrue())
@@ -119,7 +126,9 @@ var _ = Describe("GRC: [P1][Sev1][policy-grc] Test the Policy Generator "+
 		).ShouldNot(HaveOccurred())
 
 		By("Checking that the configuration policy was created in the local-cluster namespace")
+
 		configPolicyRsrc := clientHubDynamic.Resource(common.GvrConfigurationPolicy)
+
 		Eventually(
 			func() error {
 				_, err := configPolicyRsrc.Namespace("local-cluster").Get(

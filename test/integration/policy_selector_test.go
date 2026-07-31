@@ -65,6 +65,7 @@ var _ = Describe(
 				}
 
 				By(fmt.Sprintf("Creating ConfigMap %s/%s on the Managed cluster", configNamespace, unrelatedConfigMap))
+
 				_, err = clientManaged.CoreV1().ConfigMaps(configNamespace).Create(ctx, &corev1.ConfigMap{
 					ObjectMeta: metav1.ObjectMeta{
 						Name: unrelatedConfigMap,
@@ -88,8 +89,10 @@ var _ = Describe(
 
 		selectorTestRun := func(test selectorTest) {
 			By("Patching the objectSelector")
+
 			selector, err := json.Marshal(test.selector)
 			Expect(err).NotTo(HaveOccurred())
+
 			jsonPath := "/spec/policy-templates/0/objectDefinition/" +
 				"spec/object-templates/0/objectSelector/matchExpressions"
 			_, err = common.OcHub(
@@ -135,6 +138,7 @@ var _ = Describe(
 		Describe("Using skipObject with an argument", func() {
 			It("should report the correct status", func() {
 				By("Patching skipObject to use an argument")
+
 				_, err := common.OcHub(
 					"patch", "policies.policy.open-cluster-management.io", policyName,
 					"-n", userNamespace, "--type=json", "-p", `[{
@@ -156,6 +160,7 @@ var _ = Describe(
 				extraConfigMap := fmt.Sprintf("%s%d-extra", configMapName, len(configMapNames))
 
 				By("Creating a matching ConfigMap")
+
 				newConfigMaps := append(configMapNames, extraConfigMap)
 				_, err := common.OcManaged("create", "--namespace", configNamespace, "configmap", extraConfigMap)
 				Expect(err).ToNot(HaveOccurred())
@@ -164,6 +169,7 @@ var _ = Describe(
 					defaultTimeoutSeconds, 1).Should(Equal(generateStatus(newConfigMaps)))
 
 				By("Deleting a matching ConfigMap")
+
 				_, err = common.OcManaged("delete", "--namespace", configNamespace, "configmap", extraConfigMap)
 				Expect(err).ToNot(HaveOccurred())
 
@@ -199,6 +205,7 @@ var _ = Describe(
 
 			It(policyName+" should have a skipObject status message", func() {
 				By("Deleting the test ConfigMaps")
+
 				_, err := common.OcManaged(
 					"delete", "--namespace", configNamespace, "configmap", "--selector", selectorKey)
 				Expect(err).ToNot(HaveOccurred())
@@ -215,6 +222,7 @@ var _ = Describe(
 			By("Deleting policies")
 			common.DoCleanupPolicy(policyYAML, common.GvrConfigurationPolicy)
 			By(fmt.Sprintf("Deleting Namespace %s from the Managed cluster", configNamespace))
+
 			err := clientManaged.CoreV1().Namespaces().Delete(ctx, configNamespace, metav1.DeleteOptions{})
 			if !k8serrors.IsNotFound(err) {
 				Expect(err).ToNot(HaveOccurred())

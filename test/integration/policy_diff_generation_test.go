@@ -32,6 +32,7 @@ var _ = Describe("GRC: [P1][Sev1][policy-grc] Test diff generation",
 
 		It(policyConfigMapName+" should be created on the Hub", func() {
 			By("Creating the policy on the Hub")
+
 			_, err := common.OcHub(
 				"apply", "-f", policyConfigMapPath, "-n", userNamespace,
 			)
@@ -71,6 +72,7 @@ var _ = Describe("GRC: [P1][Sev1][policy-grc] Test diff generation",
 
 		It("should log the diff in the config-policy-controller", func() {
 			By("Parsing the logs of the config-policy-controller on the managed cluster")
+
 			configPolicyPodName, err := common.OcManaged("get", "pod", "-n", common.OCMAddOnNamespace,
 				"-l=app=config-policy-controller", "-o=name")
 			Expect(err).ToNot(HaveOccurred())
