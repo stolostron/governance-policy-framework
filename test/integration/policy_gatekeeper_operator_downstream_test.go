@@ -30,6 +30,7 @@ var _ = Describe("RHACM4K-3055", Ordered, Label("policy-collection", "stable", "
 	Describe("GRC: [P1][Sev1][policy-grc] Test installing gatekeeper operator", func() {
 		It("stable/policy-gatekeeper-operator should be created on hub", func(ctx SpecContext) {
 			By("Creating policy on hub")
+
 			_, err := utils.KubectlWithOutput(
 				"apply", "-f",
 				gatekeeperPolicyURL,
@@ -101,7 +102,7 @@ var _ = Describe("RHACM4K-3055", Ordered, Label("policy-collection", "stable", "
 			}, defaultTimeoutSeconds*12, 1,
 			).Should(HaveLen(1))
 			By("Checking if pod gatekeeper-operator is running")
-			Eventually(func(g Gomega) interface{} {
+			Eventually(func(g Gomega) any {
 				podList, err := clientManaged.CoreV1().Pods("openshift-operators").List(
 					ctx,
 					metav1.ListOptions{
@@ -110,6 +111,7 @@ var _ = Describe("RHACM4K-3055", Ordered, Label("policy-collection", "stable", "
 					},
 				)
 				g.Expect(err).ToNot(HaveOccurred())
+
 				for _, item := range podList.Items {
 					if strings.HasPrefix(item.ObjectMeta.Name, "gatekeeper-operator-controller") {
 						// Log the pod status message if there may be a problem starting the pod
@@ -127,7 +129,7 @@ var _ = Describe("RHACM4K-3055", Ordered, Label("policy-collection", "stable", "
 		It("Checking if validating webhook gatekeeper-validating-webhook-configuration "+
 			"is scoped to grc test namespaces", func() {
 			By("Checking if validating webhook gatekeeper-validating-webhook-configuration exists")
-			Eventually(func() interface{} {
+			Eventually(func() any {
 				out, _ := utils.KubectlWithOutput(
 					"get",
 					"validatingwebhookconfigurations.admissionregistration.k8s.io",
@@ -147,6 +149,7 @@ var _ = Describe("RHACM4K-3055", Ordered, Label("policy-collection", "stable", "
 
 				return webhook.Webhooks
 			}, defaultTimeoutSeconds, 1).Should(HaveLen(2))
+
 			webhook, err := clientManaged.AdmissionregistrationV1().ValidatingWebhookConfigurations().Get(
 				context.TODO(),
 				"gatekeeper-validating-webhook-configuration",
@@ -172,7 +175,7 @@ var _ = Describe("RHACM4K-3055", Ordered, Label("policy-collection", "stable", "
 				return podList.Items
 			}, defaultTimeoutSeconds*2, 1).Should(HaveLen(1))
 			By("Checking if pod gatekeeper-audit is running")
-			Eventually(func(g Gomega) interface{} {
+			Eventually(func(g Gomega) any {
 				podList, err := clientManaged.CoreV1().Pods(gatekeeperNamespace).List(
 					context.TODO(),
 					metav1.ListOptions{
@@ -198,7 +201,7 @@ var _ = Describe("RHACM4K-3055", Ordered, Label("policy-collection", "stable", "
 				return podList.Items
 			}, defaultTimeoutSeconds*2, 1).Should(HaveLen(2))
 			By("Checking if pod gatekeeper-controller-manager is running")
-			Eventually(func(g Gomega) interface{} {
+			Eventually(func(g Gomega) any {
 				podList, err := clientManaged.CoreV1().Pods(gatekeeperNamespace).List(
 					context.TODO(),
 					metav1.ListOptions{
@@ -243,7 +246,7 @@ var _ = Describe("RHACM4K-3055", Ordered, Label("policy-collection", "stable", "
 		)
 		Expect(err).ToNot(HaveOccurred())
 
-		Eventually(func() interface{} {
+		Eventually(func() any {
 			managedPlc := utils.GetWithTimeout(
 				clientManagedDynamic,
 				common.GvrPolicy,
@@ -259,6 +262,7 @@ var _ = Describe("RHACM4K-3055", Ordered, Label("policy-collection", "stable", "
 		const uninstallGKPolicyName = "uninstall-gk"
 
 		By("Creating the " + uninstallGKPolicyName + " policy to uninstall Gatekeeper")
+
 		_, err = common.OcHub(
 			"apply",
 			"-n",
@@ -271,6 +275,7 @@ var _ = Describe("RHACM4K-3055", Ordered, Label("policy-collection", "stable", "
 		_ = verifyPolicyOnAllClusters(ctx, userNamespace, uninstallGKPolicyName, "Compliant", defaultTimeoutSeconds*2)
 
 		By("Delete the " + uninstallGKPolicyName + " policy")
+
 		_, err = common.OcHub(
 			"delete",
 			"-n",

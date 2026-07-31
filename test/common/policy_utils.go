@@ -23,14 +23,14 @@ import (
 
 // GetComplianceState returns a function usable by ginkgo.Eventually that retrieves the
 // compliance state of the input policy in the globally configured managed cluster.
-func GetComplianceState(policyName string) func(Gomega) interface{} {
+func GetComplianceState(policyName string) func(Gomega) any {
 	return GetClusterComplianceState(policyName, ClusterNamespaceOnHub)
 }
 
 // GetClusterComplianceState returns a function usable by ginkgo.Eventually that retrieves the
 // compliance state of the input policy on the specified cluster.
-func GetClusterComplianceState(policyName, clusterName string) func(Gomega) interface{} {
-	return func(g Gomega) interface{} {
+func GetClusterComplianceState(policyName, clusterName string) func(Gomega) any {
+	return func(g Gomega) any {
 		rootPlc := utils.GetWithTimeout(
 			ClientHubDynamic, GvrPolicy, policyName, UserNamespace, true, DefaultTimeoutSeconds,
 		)
@@ -48,7 +48,7 @@ func GetClusterComplianceState(policyName, clusterName string) func(Gomega) inte
 	}
 }
 
-// Patches the requiredClusterSelector of the specified Placement so that it will
+// PatchPlacement Patches the requiredClusterSelector of the specified Placement so that it will
 // always only match the targetCluster.
 func PatchPlacement(namespace, name string) error {
 	By("Patching Placement " + namespace + "/" + name +
@@ -71,17 +71,17 @@ func PatchPlacement(namespace, name string) error {
 	return err
 }
 
-// CreatePlacementDecisionStatus creates a PlacementDecision for the specified
+// CreatePlacementDecision creates a PlacementDecision for the specified
 // Placement and returns the created decision.
 func CreatePlacementDecision(ctx context.Context, namespace, placementName string) (*unstructured.Unstructured, error) {
 	pldName := placementName + "-1"
 
 	By("Creating PlacementDecision for Placement " + namespace + "/" + placementName)
 	placementDecision := unstructured.Unstructured{
-		Object: map[string]interface{}{
+		Object: map[string]any{
 			"apiVersion": GvrPlacementDecision.Group + "/" + GvrPlacementDecision.Version,
 			"kind":       "PlacementDecision",
-			"metadata": map[string]interface{}{
+			"metadata": map[string]any{
 				"name": pldName,
 				"labels": map[string]string{
 					"generated-by-policy-test":                     "",
@@ -118,19 +118,19 @@ func ApplyPlacement(ctx SpecContext, namespace, policyName string) error {
 		" with clusterSelector {name: " + ClusterNamespaceOnHub + "}")
 
 	placement := unstructured.Unstructured{
-		Object: map[string]interface{}{
+		Object: map[string]any{
 			"apiVersion": GvrPlacement.Group + "/" + GvrPlacement.Version,
 			"kind":       "Placement",
-			"metadata": map[string]interface{}{
+			"metadata": map[string]any{
 				"name": "placement-" + policyName,
 			},
-			"spec": map[string]interface{}{
-				"predicates": []interface{}{
-					map[string]interface{}{
-						"requiredClusterSelector": map[string]interface{}{
-							"labelSelector": map[string]interface{}{
-								"matchExpressions": []interface{}{
-									map[string]interface{}{
+			"spec": map[string]any{
+				"predicates": []any{
+					map[string]any{
+						"requiredClusterSelector": map[string]any{
+							"labelSelector": map[string]any{
+								"matchExpressions": []any{
+									map[string]any{
 										"key":      "name",
 										"operator": "In",
 										"values": []string{
@@ -154,19 +154,19 @@ func ApplyPlacement(ctx SpecContext, namespace, policyName string) error {
 	}
 
 	placementBinding := unstructured.Unstructured{
-		Object: map[string]interface{}{
+		Object: map[string]any{
 			"apiVersion": GvrPolicy.Group + "/" + GvrPolicy.Version,
 			"kind":       "PlacementBinding",
-			"metadata": map[string]interface{}{
+			"metadata": map[string]any{
 				"name": "placement-binding-" + policyName,
 			},
-			"placementRef": map[string]interface{}{
+			"placementRef": map[string]any{
 				"name":     "placement-" + policyName,
 				"kind":     "Placement",
 				"apiGroup": GvrPlacement.Group,
 			},
-			"subjects": []interface{}{
-				map[string]interface{}{
+			"subjects": []any{
+				map[string]any{
 					"name":     policyName,
 					"kind":     "Policy",
 					"apiGroup": GvrPolicy.Group,
@@ -307,8 +307,8 @@ func DoRootComplianceTest(policyName string, compliance policiesv1.ComplianceSta
 	).Should(Equal(compliance))
 }
 
-func GetHistoryMessages(policyName string, templateIdx int) ([]interface{}, bool, error) {
-	empty := make([]interface{}, 0)
+func GetHistoryMessages(policyName string, templateIdx int) ([]any, bool, error) {
+	empty := make([]any, 0)
 	replicatedPolicyName := UserNamespace + "." + policyName
 	policyInterface := ClientHostingDynamic.Resource(GvrPolicy).Namespace(ClusterNamespace)
 
@@ -322,7 +322,7 @@ func GetHistoryMessages(policyName string, templateIdx int) ([]interface{}, bool
 		return empty, false, errors.New("error in getting status")
 	}
 
-	templateDetails, ok := details[templateIdx].(map[string]interface{})
+	templateDetails, ok := details[templateIdx].(map[string]any)
 	if !ok {
 		return empty, false, errors.New("error in getting detail")
 	}
@@ -357,7 +357,7 @@ func GetOpPolicyCompMsg(policyName string) func() string {
 		}
 
 		for _, cond := range condList {
-			condMap, ok := cond.(map[string]interface{})
+			condMap, ok := cond.(map[string]any)
 			if !ok {
 				continue
 			}
@@ -381,7 +381,7 @@ func GetLatestStatusMessage(policyName string, templateIdx int) func() string {
 			return ""
 		}
 
-		topHistoryItem, ok := history[0].(map[string]interface{})
+		topHistoryItem, ok := history[0].(map[string]any)
 		if !ok {
 			return ""
 		}
@@ -401,7 +401,7 @@ func GetDuplicateHistoryMessage(policyName string) string {
 	historyMsgs := []string{}
 
 	for _, h := range history {
-		historyItem, _ := h.(map[string]interface{})
+		historyItem, _ := h.(map[string]any)
 		m, _, _ := unstructured.NestedString(historyItem, "message")
 		historyMsgs = append(historyMsgs, m)
 	}
@@ -429,15 +429,19 @@ func DoHistoryUpdatedTest(policyName string, messages ...string) {
 	Eventually(func(g Gomega) {
 		history, _, err := GetHistoryMessages(policyName, 0)
 		g.Expect(err).ShouldNot(HaveOccurred())
+
 		lenMessage := len(messages)
 		historyMsgs := []string{}
+
 		GinkgoWriter.Println("Returned policy history:")
+
 		for i, h := range history {
-			historyItem, _ := h.(map[string]interface{})
+			historyItem, _ := h.(map[string]any)
 			m, _, _ := unstructured.NestedString(historyItem, "message")
 			historyMsgs = append(historyMsgs, m)
 			GinkgoWriter.Println(strconv.Itoa(i) + ": " + m)
 		}
+
 		By("Check history length is same")
 		g.Expect(history).Should(HaveLen(lenMessage))
 

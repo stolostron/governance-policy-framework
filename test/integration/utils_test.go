@@ -47,7 +47,7 @@ func confirmComplianceOnAllClusters(
 		g.Expect(perClusterStatus).ToNot(BeEmpty(), "no cluster status was available on the parent policy")
 
 		for _, clusterStatus := range perClusterStatus {
-			clusterStatus, ok := clusterStatus.(map[string]interface{})
+			clusterStatus, ok := clusterStatus.(map[string]any)
 			g.Expect(ok).To(BeTrue(), "the cluster status was not the right type")
 
 			g.Expect(clusterStatus["compliant"]).To(Equal(compliance))

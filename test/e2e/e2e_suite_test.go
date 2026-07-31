@@ -73,6 +73,7 @@ var _ = BeforeSuite(func(ctx SpecContext) {
 	common.VerifyMCE(ctx)
 
 	By("Create Namespace if needed")
+
 	namespaces := clientHub.CoreV1().Namespaces()
 	if _, err := namespaces.Get(
 		ctx,
@@ -85,10 +86,12 @@ var _ = BeforeSuite(func(ctx SpecContext) {
 			},
 		}, metav1.CreateOptions{})).NotTo(BeNil())
 	}
+
 	Expect(namespaces.Get(ctx, userNamespace, metav1.GetOptions{})).NotTo(BeNil())
 
 	if !common.ManuallyPatchDecisions {
 		By("Create ManagedClusterSetBinding")
+
 		err := common.ApplyManagedClusterSetBinding(ctx)
 		Expect(err).ToNot(HaveOccurred())
 	}
@@ -105,6 +108,7 @@ var _ = AfterSuite(func(ctx SpecContext) {
 
 	if !common.ManuallyPatchDecisions {
 		By("Cleaning up ManagedClusterSetBinding")
+
 		_ = clientHubDynamic.Resource(common.GvrManagedClusterSetBinding).
 			Namespace(userNamespace).Delete(
 			ctx, "global", metav1.DeleteOptions{},
