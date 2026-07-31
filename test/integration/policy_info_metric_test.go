@@ -43,12 +43,14 @@ var _ = Describe("GRC: [P1][Sev1][policy-grc] Test policy_governance_info metric
 
 	It("Sets up the metrics service endpoint for tests", func() {
 		By("Ensuring the metrics service exists")
+
 		_, err := clientHub.CoreV1().Services(ocmNS).Get(
 			context.TODO(), metricsSvcName, metav1.GetOptions{},
 		)
 		Expect(err).ToNot(HaveOccurred())
 
 		By("Checking for an existing metrics route")
+
 		metricsRoute, err := clientHubDynamic.Resource(common.GvrRoute).Namespace(ocmNS).Get(
 			context.TODO(), metricsSvcName, metav1.GetOptions{},
 		)
@@ -56,6 +58,7 @@ var _ = Describe("GRC: [P1][Sev1][policy-grc] Test policy_governance_info metric
 			Expect(err).ToNot(HaveOccurred())
 		} else {
 			By("Exposing the metrics service as a route")
+
 			_, err = common.OcHub(
 				"create",
 				"route",
@@ -71,7 +74,7 @@ var _ = Describe("GRC: [P1][Sev1][policy-grc] Test policy_governance_info metric
 			Expect(err).ToNot(HaveOccurred())
 		}
 
-		routeHost := metricsRoute.Object["spec"].(map[string]interface{})["host"].(string)
+		routeHost := metricsRoute.Object["spec"].(map[string]any)["host"].(string)
 		By("Got the metrics route url: " + routeHost)
 		propagatorMetricsURL = "https://" + routeHost + "/metrics"
 	})
@@ -131,7 +134,7 @@ var _ = Describe("GRC: [P1][Sev1][policy-grc] Test policy_governance_info metric
 		metricsToken = string(decodedToken)
 	})
 	It("Checks that the endpoint does not expose metrics to unauthenticated users", func() {
-		Eventually(func() interface{} {
+		Eventually(func() any {
 			_, status, err := common.GetWithToken(propagatorMetricsURL, "")
 			if err != nil {
 				return err
@@ -141,7 +144,7 @@ var _ = Describe("GRC: [P1][Sev1][policy-grc] Test policy_governance_info metric
 		}, "90s", 1).Should(ContainSubstring("Unauthorized"))
 	})
 	It("Checks that the endpoint does not expose metrics to users without authorization", func() {
-		Eventually(func() interface{} {
+		Eventually(func() any {
 			_, status, err := common.GetWithToken(
 				propagatorMetricsURL,
 				strings.TrimSpace(noMetricsToken),
@@ -153,13 +156,15 @@ var _ = Describe("GRC: [P1][Sev1][policy-grc] Test policy_governance_info metric
 			return status
 		}, defaultTimeoutSeconds, 1).Should(ContainSubstring("403 Forbidden"))
 	})
+
 	It("Checks that endpoint has a HELP comment for the metric", func() {
 		By("Creating a policy")
+
 		_, err := common.OcHub("apply", "-f", compliantPolicyYaml, "-n", userNamespace)
 		Expect(err).ToNot(HaveOccurred())
 		// Don't need to check compliance - just need to guarantee there is a policy in the cluster
 
-		Eventually(func() interface{} {
+		Eventually(func() any {
 			resp, _, err := common.GetWithToken(
 				propagatorMetricsURL,
 				strings.TrimSpace(metricsToken),
@@ -171,10 +176,13 @@ var _ = Describe("GRC: [P1][Sev1][policy-grc] Test policy_governance_info metric
 			return resp
 		}, defaultTimeoutSeconds, 1).Should(ContainSubstring("HELP " + metricName))
 	})
+
 	It("Checks that a compliant policy reports a metric of 0", func() {
 		By("Creating a compliant policy")
+
 		_, err := common.OcHub("apply", "-f", compliantPolicyYaml, "-n", userNamespace)
 		Expect(err).ToNot(HaveOccurred())
+
 		Eventually(
 			common.GetComplianceState(compliantPolicyName),
 			defaultTimeoutSeconds*2,
@@ -182,8 +190,9 @@ var _ = Describe("GRC: [P1][Sev1][policy-grc] Test policy_governance_info metric
 		).Should(Equal(policiesv1.Compliant))
 
 		By("Checking the policy metric")
+
 		policyLabel := `policy="` + compliantPolicyName + `"`
-		Eventually(func() interface{} {
+		Eventually(func() any {
 			resp, _, err := common.GetWithToken(
 				propagatorMetricsURL,
 				strings.TrimSpace(metricsToken),
@@ -195,8 +204,10 @@ var _ = Describe("GRC: [P1][Sev1][policy-grc] Test policy_governance_info metric
 			return resp
 		}, defaultTimeoutSeconds, 1).Should(common.MatchMetricValue(metricName, policyLabel, "0"))
 	})
+
 	It("Checks that a noncompliant policy reports a metric of 1", func() {
 		By("Creating a noncompliant policy")
+
 		_, err := common.OcHub("apply", "-f", noncompliantPolicyYaml, "-n", userNamespace)
 		Expect(err).ToNot(HaveOccurred())
 		Eventually(
@@ -206,8 +217,9 @@ var _ = Describe("GRC: [P1][Sev1][policy-grc] Test policy_governance_info metric
 		).Should(Equal(policiesv1.NonCompliant))
 
 		By("Checking the policy metric")
+
 		policyLabel := `policy="` + noncompliantPolicyName + `"`
-		Eventually(func() interface{} {
+		Eventually(func() any {
 			resp, _, err := common.GetWithToken(
 				propagatorMetricsURL,
 				strings.TrimSpace(metricsToken),

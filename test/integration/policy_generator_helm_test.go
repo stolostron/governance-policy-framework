@@ -18,6 +18,7 @@ var _ = Describe("GRC: [P1][Sev1][policy-grc] Test the Policy Generator "+
 
 	It("Sets up the application subscription", func(ctx SpecContext) {
 		By("Creating the application subscription")
+
 		_, err := common.OcUser(
 			gitopsUser,
 			"apply",
@@ -47,8 +48,10 @@ var _ = Describe("GRC: [P1][Sev1][policy-grc] Test the Policy Generator "+
 	It("Validates the propagated policies", func(ctx SpecContext) {
 		// Perform some basic validation on the generated policy.
 		By("Checking that the root policy was created")
+
 		policyRsrc := clientHubDynamic.Resource(common.GvrPolicy)
 		var policy *unstructured.Unstructured
+
 		Eventually(
 			func() error {
 				var err error
@@ -68,7 +71,7 @@ var _ = Describe("GRC: [P1][Sev1][policy-grc] Test the Policy Generator "+
 		Expect(templates).Should(HaveLen(3))
 
 		for _, template := range templates {
-			objSpec, found, err := unstructured.NestedMap(template.(map[string]interface{}), "objectDefinition", "spec")
+			objSpec, found, err := unstructured.NestedMap(template.(map[string]any), "objectDefinition", "spec")
 			Expect(err).ShouldNot(HaveOccurred())
 			Expect(found).Should(BeTrue())
 			Expect(objSpec["severity"]).Should(Equal("critical"))
@@ -76,7 +79,7 @@ var _ = Describe("GRC: [P1][Sev1][policy-grc] Test the Policy Generator "+
 			Expect(err).ShouldNot(HaveOccurred())
 			Expect(found).Should(BeTrue())
 			Expect(objTemplates).Should(HaveLen(1))
-			templateObj := objTemplates[0].(map[string]interface{})
+			templateObj := objTemplates[0].(map[string]any)
 			Expect(templateObj["complianceType"]).Should(Equal("musthave"))
 		}
 
@@ -96,7 +99,9 @@ var _ = Describe("GRC: [P1][Sev1][policy-grc] Test the Policy Generator "+
 		).ShouldNot(HaveOccurred())
 
 		By("Checking that the configuration policies were created in the local-cluster namespace")
+
 		configPolicyRsrc := clientHubDynamic.Resource(common.GvrConfigurationPolicy)
+
 		for _, suffix := range []string{"", "2", "3"} {
 			Eventually(
 				func() error {
@@ -112,6 +117,7 @@ var _ = Describe("GRC: [P1][Sev1][policy-grc] Test the Policy Generator "+
 		}
 
 		By("Confirming that the Helm lookup returned nothing")
+
 		helmDeploymentPolicy, err := configPolicyRsrc.Namespace("local-cluster").Get(
 			ctx, policyName+"3", metav1.GetOptions{},
 		)
@@ -121,7 +127,7 @@ var _ = Describe("GRC: [P1][Sev1][policy-grc] Test the Policy Generator "+
 		Expect(found).Should(BeTrue(), "object-templates should be present in the ConfigurationPolicy")
 		Expect(objTemplates).Should(HaveLen(1), "There should only be one object-template in the ConfigurationPolicy")
 		labelSpyValue, found, err := unstructured.NestedString(
-			objTemplates[0].(map[string]interface{}),
+			objTemplates[0].(map[string]any),
 			"objectDefinition", "spec", "template", "metadata", "labels", "label-spy",
 		)
 		Expect(err).ShouldNot(HaveOccurred())
