@@ -49,6 +49,7 @@ var _ = Describe(
 						if nsName == userNamespace && cluster == "managed" {
 							createdUserNamespace = true
 						}
+
 						Expect(err).ToNot(HaveOccurred())
 					}
 				}
@@ -153,8 +154,10 @@ var _ = Describe(
 					if nsName == userNamespace && (cluster == "managed" && !createdUserNamespace || cluster == "hub") {
 						cleanupNeeded = false
 					}
+
 					if cleanupNeeded {
 						By(fmt.Sprintf("Deleting Namespace %s from the %s cluster", nsName, cluster))
+
 						err := client.CoreV1().Namespaces().Delete(ctx, nsName, metav1.DeleteOptions{})
 						if !k8serrors.IsNotFound(err) {
 							Expect(err).ToNot(HaveOccurred())
@@ -164,12 +167,14 @@ var _ = Describe(
 
 				for _, cmName := range []string{configMapName1, configMapName2} {
 					By(fmt.Sprintf("Deleting ConfigMap %s from the %s cluster", cmName, cluster))
+
 					err := client.CoreV1().ConfigMaps(userNamespace).Delete(ctx, cmName, metav1.DeleteOptions{})
 					if !k8serrors.IsNotFound(err) {
 						Expect(err).ToNot(HaveOccurred())
 					}
 
 					By(fmt.Sprintf("Deleting ConfigMap %s from the %s cluster", cmName, cluster))
+
 					err = client.CoreV1().ConfigMaps(configNamespace).Delete(
 						ctx, cmName+"-copy", metav1.DeleteOptions{})
 					if !k8serrors.IsNotFound(err) {

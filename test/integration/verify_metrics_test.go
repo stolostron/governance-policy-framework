@@ -63,6 +63,7 @@ var _ = Describe("GRC: [P1][Sev1][policy-grc] Test required metrics are availabl
 
 	It("Verifies all required metrics are available", func(ctx SpecContext) {
 		By("Creating a noncompliant policy")
+
 		_, err := common.OcHub("apply", "-f", noncompliantPolicyYAML, "-n", userNamespace)
 		Expect(err).ToNot(HaveOccurred())
 		Eventually(
@@ -72,6 +73,7 @@ var _ = Describe("GRC: [P1][Sev1][policy-grc] Test required metrics are availabl
 		).Should(Equal(policiesv1.NonCompliant))
 
 		By("Finding the Prometheus route")
+
 		route, err := clientHubDynamic.Resource(common.GvrRoute).Namespace(monitoringNS).Get(
 			ctx, prometheusRouteName, metav1.GetOptions{},
 		)
@@ -83,6 +85,7 @@ var _ = Describe("GRC: [P1][Sev1][policy-grc] Test required metrics are availabl
 		prometheusURL := "https://" + prometheusHost + "/api/v1/query"
 
 		By("Getting a token for a new service account")
+
 		_, err = common.OcHub("create", "serviceaccount", metricsAccName, "-n", userNamespace)
 		Expect(err).ToNot(HaveOccurred())
 
@@ -139,15 +142,15 @@ var _ = Describe("GRC: [P1][Sev1][policy-grc] Test required metrics are availabl
 				resBody, err := io.ReadAll(res.Body)
 				g.Expect(err).ToNot(HaveOccurred())
 
-				resJSON := map[string]interface{}{}
+				resJSON := map[string]any{}
 				err = json.Unmarshal(resBody, &resJSON)
 				g.Expect(err).ToNot(HaveOccurred())
 				g.Expect(resJSON["status"]).To(Equal("success"))
 
-				data, ok := resJSON["data"].(map[string]interface{})
+				data, ok := resJSON["data"].(map[string]any)
 				g.Expect(ok).To(BeTrue())
 
-				result, ok := data["result"].([]interface{})
+				result, ok := data["result"].([]any)
 				g.Expect(ok).To(BeTrue())
 				g.Expect(result).ToNot(BeEmpty(), "Expected metrics for "+metric)
 			}, "60s", 1).Should(Succeed())

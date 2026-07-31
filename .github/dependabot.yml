@@ -3,7 +3,13 @@ updates:
   - package-ecosystem: github-actions
     directory: /
     schedule:
-      interval: weekly
+      interval: cron
+      cronjob: "0 7 * * MON#1"
+      timezone: America/New_York
+    cooldown:
+      default-days: 7
+      semver-major-days: 14
+      semver-minor-days: 14
     groups:
       github-actions:
         patterns:
@@ -11,7 +17,13 @@ updates:
   - package-ecosystem: gomod
     directory: /
     schedule:
-      interval: weekly
+      interval: cron
+      cronjob: "0 7 * * MON#1"
+      timezone: America/New_York
+    cooldown:
+      default-days: 7
+      semver-major-days: 14
+      semver-minor-days: 14
     groups:
       gomod:
         patterns:

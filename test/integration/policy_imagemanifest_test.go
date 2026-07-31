@@ -26,12 +26,14 @@ var _ = Describe("GRC: [P1][Sev1][policy-grc] Test "+
 
 	It("stable/"+policyIMVName+" should be created on the Hub", func(ctx SpecContext) {
 		By("Creating deployment that has an image with vulnerabilities")
+
 		_, err := utils.KubectlWithOutput(
 			"apply", "-f", "../resources/image-vulnerabilities/vulnerable-pod.yaml", "--kubeconfig="+kubeconfigHub,
 		)
 		Expect(err).ToNot(HaveOccurred())
 
 		By("Creating the policy on the Hub")
+
 		_, err = utils.KubectlWithOutput(
 			"apply", "-f", policyIMVURL, "-n", userNamespace, "--kubeconfig="+kubeconfigHub,
 		)
@@ -71,6 +73,7 @@ var _ = Describe("GRC: [P1][Sev1][policy-grc] Test "+
 
 	It("Enforcing stable/"+policyIMVName, func() {
 		By("Patching remediationAction = enforce on the root policy")
+
 		_, err := clientHubDynamic.Resource(common.GvrPolicy).Namespace(userNamespace).Patch(
 			context.TODO(),
 			policyIMVName,
@@ -121,7 +124,7 @@ var _ = Describe("GRC: [P1][Sev1][policy-grc] Test "+
 					defaultTimeoutSeconds,
 				).Object
 				if status, ok := opPol["status"]; ok {
-					if compliance, ok := status.(map[string]interface{})["compliant"]; ok {
+					if compliance, ok := status.(map[string]any)["compliant"]; ok {
 						return compliance.(string)
 					}
 				}
@@ -144,7 +147,7 @@ var _ = Describe("GRC: [P1][Sev1][policy-grc] Test "+
 					defaultTimeoutSeconds,
 				).Object
 				if status, ok := cfgPol["status"]; ok {
-					if compliance, ok := status.(map[string]interface{})["compliant"]; ok {
+					if compliance, ok := status.(map[string]any)["compliant"]; ok {
 						return compliance.(string)
 					}
 				}

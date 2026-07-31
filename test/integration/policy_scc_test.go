@@ -28,6 +28,7 @@ var _ = Describe("GRC: [P1][Sev1][policy-grc] Test the policy-scc policy",
 
 		It("stable/"+rootPolicyName+" should be created on the Hub", func(ctx SpecContext) {
 			By("Creating the policy on the Hub")
+
 			_, err := utils.KubectlWithOutput(
 				"apply", "-f", rootPolicyURL, "-n", userNamespace, "--kubeconfig="+kubeconfigHub,
 			)
@@ -68,6 +69,7 @@ var _ = Describe("GRC: [P1][Sev1][policy-grc] Test the policy-scc policy",
 
 		It("Enforcing stable/"+rootPolicyName, func() {
 			By("Patching remediationAction = enforce on the root policy")
+
 			_, err := clientHubDynamic.Resource(common.GvrPolicy).Namespace(userNamespace).Patch(
 				context.TODO(),
 				rootPolicyName,
