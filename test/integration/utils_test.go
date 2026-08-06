@@ -27,7 +27,7 @@ func verifyPolicyOnAllClusters(
 		clusters = confirmComplianceOnAllClusters(ctx, namespace, policy, compliance)(g)
 	}, timeout, 1).Should(Succeed())
 
-	return
+	return clusters
 }
 
 func confirmComplianceOnAllClusters(
