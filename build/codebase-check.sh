@@ -122,7 +122,7 @@ dockerfileDiff() {
 packageVersioning() {
 	repo="${1}"
 
-	PACKAGES="^go"
+	PACKAGES="go"
 
 	GOMOD_NAME="go.mod"
 	REPO_GOMOD_PATH="${COMPONENT_ORG}/${repo}/${GOMOD_NAME}"
@@ -133,12 +133,25 @@ packageVersioning() {
 
 	rcode=0
 	for pkg in ${PACKAGES}; do
-		FRAMEWORK_VERSION="$(awk "/${pkg//\//\\/}/ {print \$2}" "${DIR}/../${GOMOD_NAME}")"
-		REPO_VERSION="$(awk "/${pkg//\//\\/}/ {print \$2}" "${REPO_GOMOD_PATH}")"
+		FRAMEWORK_VERSION="$(cd "${DIR}/../" && go list -m -f '{{ .Version }}' "${pkg}")"
+		REPO_VERSION="$(cd "${COMPONENT_ORG}/${repo}" && go list -m -f '{{ .Version }}' "${pkg}")"
 
-		# If the package wasn't found, assume it's not needed
+		# If the package wasn't found and isn't Go, assume it's not needed
 		if [[ -z "${REPO_VERSION}" ]]; then
-			return 0
+			if [[ ${pkg} == "go" ]]; then
+				echo "****"
+				echo "ERROR: failed to find Golang version in ${repo}" | tee -a "${OUTPUT_FILES[@]}"
+				echo "***"
+				rcode=1
+			fi
+
+			continue
+		fi
+
+		# For Go, tolerate z-stream differences
+		if [[ ${pkg} == "go" ]]; then
+			FRAMEWORK_VERSION="$(echo "${FRAMEWORK_VERSION}" | grep -o '^[0-9]\+\.[0-9]\+')"
+			REPO_VERSION="$(echo "${REPO_VERSION}" | grep -o '^[0-9]\+\.[0-9]\+')"
 		fi
 
 		if [[ "${FRAMEWORK_VERSION}" != "${REPO_VERSION}" ]]; then
