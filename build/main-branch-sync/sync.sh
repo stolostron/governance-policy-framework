@@ -12,7 +12,7 @@ while IFS="" read -r repo || [ -n "${repo}" ]; do
   echo "::group::${repo}"
   echo "* Updating ${repo} ..."
   p="${path}/${repo}"
-  git clone https://${GITHUB_USER}:${GITHUB_TOKEN}@github.com/${repo}.git ${p}
+  git clone "https://${GITHUB_USER}:${GITHUB_TOKEN}@github.com/${repo}.git" "${p}"
   GIT="git -C ${p}"
   TARGET_COMMIT="$(${GIT} rev-list -1 --before="${COMMIT_TIME}" main)"
   if [[ -z "${TARGET_COMMIT}" ]]; then
