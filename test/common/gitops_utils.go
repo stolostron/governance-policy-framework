@@ -176,6 +176,7 @@ func GitOpsUserSetup(ctx SpecContext, ocpUser *OCPUser) {
 	Eventually(
 		func() error {
 			var err error
+
 			ocpUser.Kubeconfig, err = GetKubeConfig(
 				hubServerURL, ocpUser.Username, ocpUser.Password,
 			)

@@ -22,7 +22,9 @@ var _ = Describe("GRC: [P1][Sev1][policy-grc] Test add-on configuration", Serial
 		})
 
 		By("Deploying AddonDeploymentConfig grc-addon-config")
+
 		_, _ = common.OcHub("create", "namespace", "grc-addon-config-test")
+
 		_, err := common.OcHub(
 			"apply",
 			"-n=grc-addon-config-test",
@@ -67,6 +69,7 @@ var addonTest = func(ctx SpecContext, addOn string) {
 	fetchDeployment := func(g Gomega) (*appsv1.Deployment, corev1.Container) {
 		deployment, err := clientManaged.AppsV1().Deployments(ocmAddonNS).Get(ctx, addOn, metav1.GetOptions{})
 		Expect(err).ToNot(HaveOccurred())
+
 		container := deployment.Spec.Template.Spec.Containers
 		g.Expect(container).To(HaveLen(1))
 
@@ -74,6 +77,7 @@ var addonTest = func(ctx SpecContext, addOn string) {
 	}
 
 	By("Fetching Deployment to determine default configuration")
+
 	baseDeployment, baseContainer := fetchDeployment(Default)
 
 	By("Attaching the AddOnDeploymentConfig to the ManagedClusterAddOn for " + addOn)

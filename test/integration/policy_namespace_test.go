@@ -26,6 +26,7 @@ var _ = Describe("GRC: [P1][Sev1][policy-grc] Test the policy-namespace policy",
 
 		It("stable/"+policyNamespaceName+" should be created on the Hub", func(ctx SpecContext) {
 			By("Creating policy on hub")
+
 			_, err := utils.KubectlWithOutput(
 				"apply", "-f", policyNamespaceURL, "-n", userNamespace, "--kubeconfig="+kubeconfigHub,
 			)
@@ -70,6 +71,7 @@ var _ = Describe("GRC: [P1][Sev1][policy-grc] Test the policy-namespace policy",
 
 		It("Enforcing stable/"+policyNamespaceName, func() {
 			By("Patching remediationAction = enforce on the root policy")
+
 			_, err := clientHubDynamic.Resource(common.GvrPolicy).Namespace(userNamespace).Patch(
 				context.TODO(),
 				policyNamespaceName,
@@ -118,8 +120,10 @@ var _ = Describe("GRC: [P1][Sev1][policy-grc] Test the policy-namespace policy",
 			Expect(err).ToNot(HaveOccurred())
 
 			err = clientManaged.CoreV1().Namespaces().Delete(context.TODO(), "prod", metav1.DeleteOptions{})
+
 			if !k8serrors.IsNotFound(err) {
 				var exitError *exec.ExitError
+
 				ok := errors.As(err, &exitError)
 				if ok {
 					Expect(exitError.Stderr).To(BeNil())

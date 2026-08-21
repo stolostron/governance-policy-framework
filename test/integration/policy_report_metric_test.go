@@ -46,35 +46,44 @@ var _ = Describe("GRC: [P1][Sev1][policy-grc] Test policyreport_info metric", Or
 			By("*** Debugging policyreport_info metric failure ***")
 
 			By("Getting current policies")
+
 			_, err := common.OcHub("get", "policies.policy.open-cluster-management.io", "-A", "-o", "yaml")
 			Expect(err).ToNot(HaveOccurred())
 
 			By("Getting current configurationpolicies")
+
 			_, err = common.OcHub("get", "configurationpolicies.policy.open-cluster-management.io", "-A", "-o", "yaml")
 			Expect(err).ToNot(HaveOccurred())
 
 			By("Getting current policyreports")
+
 			_, err = common.OcHub("get", "policyreports.wgpolicyk8s.io", "-A", "-o", "yaml")
+
 			Expect(err).ToNot(HaveOccurred())
 
 			By("Getting yaml and logs for insights client pod(s)")
+
 			_, err = common.OcHub("get", "pods", "-n", ocmNS, "-l", insightsClientPodSelector, "-o", "yaml")
 			Expect(err).ToNot(HaveOccurred())
 
 			clientPodList, err := clientHub.CoreV1().Pods(ocmNS).List(
 				context.TODO(),
+
 				metav1.ListOptions{
 					LabelSelector: insightsClientPodSelector,
 				},
 			)
 			Expect(err).ToNot(HaveOccurred())
+
 			for _, pod := range clientPodList.Items {
 				By("Logs for " + pod.GetName())
+
 				_, err := common.OcHub("logs", "-n", ocmNS, pod.GetName())
 				Expect(err).ToNot(HaveOccurred())
 			}
 
 			By("Getting yaml and logs for insights metric pod(s)")
+
 			_, err = common.OcHub(
 				"get",
 				"pods",
@@ -88,12 +97,15 @@ var _ = Describe("GRC: [P1][Sev1][policy-grc] Test policyreport_info metric", Or
 			Expect(err).ToNot(HaveOccurred())
 
 			metricsPodList, err := clientHub.CoreV1().Pods(ocmNS).List(
+
 				context.TODO(),
 				metav1.ListOptions{
 					LabelSelector: insightsMetricsSelector,
 				},
 			)
+
 			Expect(err).ToNot(HaveOccurred())
+
 			for _, pod := range metricsPodList.Items {
 				By("Logs for " + pod.GetName())
 				_, err := common.OcHub("logs", "-n", ocmNS, pod.GetName(), "-c", "metrics")
@@ -105,11 +117,13 @@ var _ = Describe("GRC: [P1][Sev1][policy-grc] Test policyreport_info metric", Or
 	It("Sets up the metrics service endpoint for tests", func() {
 		By("Setting the insights client to poll every minute")
 		var insightsClientPod string
-		Eventually(func() interface{} {
+
+		Eventually(func() any {
 			var err error
 
 			insightsClientPod, err = common.OcHub(
 				"get",
+
 				"pods",
 				"-n",
 				ocmNS,
@@ -118,6 +132,7 @@ var _ = Describe("GRC: [P1][Sev1][policy-grc] Test policyreport_info metric", Or
 				"-o",
 				"name",
 			)
+
 			insightsClientPods := strings.Split(insightsClientPod, "pod/")
 			if err != nil || len(insightsClientPods) < 2 {
 				return errors.New("could not find insights client pod")
@@ -131,6 +146,7 @@ var _ = Describe("GRC: [P1][Sev1][policy-grc] Test policyreport_info metric", Or
 		_, err := common.OcHub(
 			"set",
 			"env",
+
 			"-n",
 			ocmNS,
 			insightsClientDeployment,
@@ -138,10 +154,12 @@ var _ = Describe("GRC: [P1][Sev1][policy-grc] Test policyreport_info metric", Or
 		)
 		Expect(err).ToNot(HaveOccurred())
 		// checking if new pod has spun up
-		Eventually(func() interface{} {
+		Eventually(func() any {
 			var err error
+
 			pod, err := common.OcHub(
 				"get",
+
 				"pods",
 				"-n",
 				ocmNS,
@@ -156,14 +174,16 @@ var _ = Describe("GRC: [P1][Sev1][policy-grc] Test policyreport_info metric", Or
 			return pod
 		}, defaultTimeoutSeconds*10, 1).ShouldNot(Equal(""))
 		// checking if old pod with slow refresh has been taken down
-		Eventually(func() interface{} {
+		Eventually(func() any {
 			var err error
+
 			pod, err := common.OcHub(
 				"get",
 				"pods",
 				"-n",
 				ocmNS,
 				"-l",
+
 				insightsClientPodSelector,
 				"--field-selector=status.phase=Running,metadata.name="+insightsClientPod,
 			)
@@ -175,6 +195,7 @@ var _ = Describe("GRC: [P1][Sev1][policy-grc] Test policyreport_info metric", Or
 		}, defaultTimeoutSeconds*10, 1).Should(Equal(""))
 
 		By("Ensuring the metrics service exists")
+
 		svcList, err := clientHub.CoreV1().Services(ocmNS).List(
 			context.TODO(),
 			metav1.ListOptions{
@@ -183,12 +204,15 @@ var _ = Describe("GRC: [P1][Sev1][policy-grc] Test policyreport_info metric", Or
 		)
 		Expect(err).ToNot(HaveOccurred())
 		Expect(svcList.Items).To(HaveLen(1))
+
 		metricsSvc := svcList.Items[0]
 
 		By("Checking for an existing metrics route")
 		var routeList *unstructured.UnstructuredList
+
 		Eventually(func(g Gomega) []unstructured.Unstructured {
 			var err error
+
 			routeList, err = clientHubDynamic.Resource(common.GvrRoute).Namespace(ocmNS).List(
 				context.TODO(),
 				metav1.ListOptions{
@@ -202,6 +226,7 @@ var _ = Describe("GRC: [P1][Sev1][policy-grc] Test policyreport_info metric", Or
 
 		if len(routeList.Items) == 0 {
 			By("Exposing the insights metrics service as a route")
+
 			_, err = common.OcHub(
 				"create",
 				"route",
@@ -225,7 +250,7 @@ var _ = Describe("GRC: [P1][Sev1][policy-grc] Test policyreport_info metric", Or
 			}, defaultTimeoutSeconds, 1).Should(HaveLen(1))
 		}
 
-		routeHost := routeList.Items[0].Object["spec"].(map[string]interface{})["host"].(string)
+		routeHost := routeList.Items[0].Object["spec"].(map[string]any)["host"].(string)
 		By("Got the metrics route url: " + routeHost)
 		insightsMetricsURL = "https://" + routeHost + "/metrics"
 	})
@@ -258,7 +283,7 @@ var _ = Describe("GRC: [P1][Sev1][policy-grc] Test policyreport_info metric", Or
 		insightsToken = string(decodedToken)
 	})
 	It("Checks that the endpoint does not expose metrics without auth", func() {
-		Eventually(func() interface{} {
+		Eventually(func() any {
 			_, status, err := common.GetWithToken(insightsMetricsURL, "")
 			if err != nil {
 				return err
@@ -269,8 +294,10 @@ var _ = Describe("GRC: [P1][Sev1][policy-grc] Test policyreport_info metric", Or
 	})
 	It("Checks that a noncompliant policy reports a metric", func() {
 		By("Creating a noncompliant policy")
+
 		_, err := common.OcHub("apply", "-f", noncompliantPolicyYamlReport, "-n", userNamespace)
 		Expect(err).ToNot(HaveOccurred())
+
 		Eventually(
 			common.GetComplianceState(noncompliantPolicyNameReport),
 			defaultTimeoutSeconds*8,
@@ -278,14 +305,16 @@ var _ = Describe("GRC: [P1][Sev1][policy-grc] Test policyreport_info metric", Or
 		).Should(Equal(policiesv1.NonCompliant))
 
 		By("Checking the policy metric")
+
 		output, err := common.OcHub("set", "env", "-n", ocmNS, insightsClientDeployment, "--list")
 		Expect(err).ToNot(HaveOccurred())
 		klog.V(5).Infof("INSIGHTS CLIENT ENV VARIABLES:%s\n", output)
 
 		policyLabel := `policy="` + userNamespace + "." + noncompliantPolicyNameReport + `"`
-		Eventually(func() interface{} {
+		Eventually(func() any {
 			resp, _, err := common.GetWithToken(
 				insightsMetricsURL,
+
 				strings.TrimSpace(insightsToken),
 			)
 			if err != nil {
@@ -294,6 +323,7 @@ var _ = Describe("GRC: [P1][Sev1][policy-grc] Test policyreport_info metric", Or
 
 				return err
 			}
+
 			GinkgoWriter.Println("metric response received:")
 			GinkgoWriter.Println(resp)
 
@@ -302,6 +332,7 @@ var _ = Describe("GRC: [P1][Sev1][policy-grc] Test policyreport_info metric", Or
 	})
 	It("Checks that changing the policy to compliant removes the metric", func() {
 		By("Creating a compliant policy")
+
 		_, err := common.OcHub("apply", "-f", compliantPolicyYamlReport, "-n", userNamespace)
 		Expect(err).ToNot(HaveOccurred())
 		Eventually(
@@ -311,12 +342,13 @@ var _ = Describe("GRC: [P1][Sev1][policy-grc] Test policyreport_info metric", Or
 		).Should(Equal(policiesv1.Compliant))
 
 		By("Checking the policy metric displays nothing")
+
 		output, err := common.OcHub("set", "env", "-n", ocmNS, insightsClientDeployment, "--list")
 		Expect(err).ToNot(HaveOccurred())
 		klog.V(5).Infof("INSIGHTS CLIENT ENV VARIABLES:%s\n", output)
 
 		policyLabel := `policy="` + userNamespace + "." + noncompliantPolicyNameReport + `"`
-		Eventually(func() interface{} {
+		Eventually(func() any {
 			resp, _, err := common.GetWithToken(
 				insightsMetricsURL,
 				strings.TrimSpace(insightsToken),

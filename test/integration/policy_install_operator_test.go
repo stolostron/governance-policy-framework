@@ -104,6 +104,7 @@ var _ = Describe("GRC: [P1][Sev1][policy-grc] Test install Operator",
 				Expect(err).ToNot(HaveOccurred())
 
 				By("Checking that it exists on the hub cluster")
+
 				rootPlc := utils.GetWithTimeout(
 					clientHubDynamic, common.GvrPolicy, policyNamePrefix+noGroupSuffix,
 					userNamespace, true, defaultTimeoutSeconds,
@@ -154,7 +155,7 @@ var _ = Describe("GRC: [P1][Sev1][policy-grc] Test install Operator",
 				msg := common.RegisterDebugMessage()
 
 				By("Checking if the status of the root policy is compliant")
-				Eventually(func(g Gomega) interface{} {
+				Eventually(func(g Gomega) any {
 					*msg = "Current compliance condition of OperatorPolicy: " +
 						common.GetOpPolicyCompMsg("operator-policy"+noGroupSuffix)()
 
@@ -164,6 +165,7 @@ var _ = Describe("GRC: [P1][Sev1][policy-grc] Test install Operator",
 
 			It("Should verify OperatorGroup details", func() {
 				By("Getting the OperatorGroup name from relatedObj field")
+
 				opPolicy := utils.GetWithTimeout(
 					clientManagedDynamic,
 					common.GvrOperatorPolicy,
@@ -179,8 +181,9 @@ var _ = Describe("GRC: [P1][Sev1][policy-grc] Test install Operator",
 				Expect(found).Should(BeTrue())
 
 				foundOpGroupName := ""
+
 				for _, relObj := range relObjList {
-					relObjMap, ok := relObj.(map[string]interface{})
+					relObjMap, ok := relObj.(map[string]any)
 					if !ok {
 						continue
 					}
@@ -191,6 +194,7 @@ var _ = Describe("GRC: [P1][Sev1][policy-grc] Test install Operator",
 						foundOpGroupName, _, _ = unstructured.NestedString(relObjMap, "object", "metadata", "name")
 					}
 				}
+
 				Expect(foundOpGroupName).ToNot(BeEmpty())
 
 				dynamicOpGroupName = foundOpGroupName
@@ -251,6 +255,7 @@ var _ = Describe("GRC: [P1][Sev1][policy-grc] Test install Operator",
 
 			It("RHACM4K-53812: Should be compliant with a templated versions array", func() {
 				By("Updating the OperatorPolicy to be inform and include the templated versions array")
+
 				_, err := common.OcHub("apply", "-f", policyNoGroupTmplYAML, "-n", userNamespace)
 				Expect(err).ToNot(HaveOccurred())
 
@@ -275,11 +280,12 @@ var _ = Describe("GRC: [P1][Sev1][policy-grc] Test install Operator",
 				}, defaultTimeoutSeconds, 1).Should(Succeed())
 
 				By("Verifying the ClusterServiceVersionCompliant condition is true")
+
 				found := false
 				conditions, _, _ := unstructured.NestedSlice(opPolicy.Object, "status", "conditions")
 
 				for _, condition := range conditions {
-					conditionTyped, ok := condition.(map[string]interface{})
+					conditionTyped, ok := condition.(map[string]any)
 					if !ok {
 						continue
 					}
@@ -359,9 +365,11 @@ var _ = Describe("GRC: [P1][Sev1][policy-grc] Test install Operator",
 				_, err := common.OcHub("apply", "-f", policyWithGroupYAML, "-n", userNamespace)
 				Expect(err).ToNot(HaveOccurred())
 				err = common.PatchPlacement(userNamespace, policyNamePrefix+withGroupSuffix+"-plr")
+
 				Expect(err).ToNot(HaveOccurred())
 
 				By("Checking that it exists on the hub cluster")
+
 				rootPlc := utils.GetWithTimeout(
 					clientHubDynamic, common.GvrPolicy, policyNamePrefix+withGroupSuffix,
 					userNamespace, true, defaultTimeoutSeconds,
@@ -394,7 +402,7 @@ var _ = Describe("GRC: [P1][Sev1][policy-grc] Test install Operator",
 				debugMsg := common.RegisterDebugMessage()
 
 				By("Checking if the status of the root policy is NonCompliant")
-				Eventually(func(g Gomega) interface{} {
+				Eventually(func(g Gomega) any {
 					*debugMsg = "Current compliance condition of OperatorPolicy: " +
 						common.GetOpPolicyCompMsg("operator-policy"+withGroupSuffix)()
 
@@ -415,7 +423,7 @@ var _ = Describe("GRC: [P1][Sev1][policy-grc] Test install Operator",
 				debugMsg := common.RegisterDebugMessage()
 
 				By("Checking if the status of the root policy is compliant")
-				Eventually(func(g Gomega) interface{} {
+				Eventually(func(g Gomega) any {
 					*debugMsg = "Current compliance condition of OperatorPolicy: " +
 						common.GetOpPolicyCompMsg("operator-policy"+withGroupSuffix)()
 
@@ -484,6 +492,7 @@ var _ = Describe("GRC: [P1][Sev1][policy-grc] Test install Operator",
 
 			AfterAll(func(ctx SpecContext) {
 				By("Cleaning up the operator installation")
+
 				_, err := common.OcHub(
 					"delete",
 					"-f",

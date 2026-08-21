@@ -31,6 +31,7 @@ var _ = Describe("GRC: [P1][Sev1][policy-grc] Test the policy-role policy",
 
 		It("stable/"+policyRoleName+" should be created on the Hub", func(ctx SpecContext) {
 			By("Creating policy on hub")
+
 			_, err := utils.KubectlWithOutput(
 				"apply", "-f", policyRoleURL, "-n", userNamespace, "--kubeconfig="+kubeconfigHub,
 			)
@@ -99,6 +100,7 @@ var _ = Describe("GRC: [P1][Sev1][policy-grc] Test the policy-role policy",
 
 		It("Enforcing stable/"+policyRoleName, func() {
 			By("Patching remediationAction = enforce on the root policy")
+
 			_, err := clientHubDynamic.Resource(common.GvrPolicy).Namespace(userNamespace).Patch(
 				context.TODO(),
 				policyRoleName,
@@ -147,6 +149,7 @@ var _ = Describe("GRC: [P1][Sev1][policy-grc] Test the policy-role policy",
 			)
 			if !k8serrors.IsNotFound(err) {
 				var exitError *exec.ExitError
+
 				ok := errors.As(err, &exitError)
 				if ok {
 					Expect(exitError.Stderr).To(BeNil())

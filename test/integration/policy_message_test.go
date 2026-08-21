@@ -22,16 +22,21 @@ var _ = Describe("GRC: [P1][Sev1][policy-grc] Test Consolidate compliance messag
 				policyYaml = resourcesPath + policyName + ".yaml"
 				targetNs   = "policy-message-ns-1"
 			)
+
 			BeforeAll(func() {
 				By("Create namespace for the test")
+
 				_, err := common.OcManaged("create", "ns", targetNs)
 				Expect(err).ToNot(HaveOccurred())
 
 				By("Applying prerequisites")
+
 				_, err = common.OcManaged("apply", "-n", targetNs, "-f", prereqYaml)
+
 				Expect(err).ToNot(HaveOccurred())
 
 				By("Create policy " + policyName)
+
 				_, err = common.OcHub("apply", "-f", policyYaml, "-n", userNamespace)
 				Expect(err).ToNot(HaveOccurred())
 			})
@@ -67,20 +72,26 @@ var _ = Describe("GRC: [P1][Sev1][policy-grc] Test Consolidate compliance messag
 		Describe("Consolidate compliance messages with ObjectSelector", func() {
 			const (
 				prereqYaml = resourcesPath + "obj-selector-prereq" + ".yaml"
+
 				policyName = "policy-message-obj-selector"
 				policyYaml = resourcesPath + policyName + ".yaml"
-				targetNs   = "policy-message-ns"
+
+				targetNs = "policy-message-ns"
 			)
+
 			BeforeAll(func() {
 				By("Create namespace for the test")
+
 				_, err := common.OcManaged("create", "ns", targetNs)
 				Expect(err).ToNot(HaveOccurred())
 
 				By("Applying prerequisites")
+
 				_, err = common.OcManaged("apply", "-n", targetNs, "-f", prereqYaml)
 				Expect(err).ToNot(HaveOccurred())
 
 				By("Create policy " + policyName)
+
 				_, err = common.OcHub("apply", "-f", policyYaml, "-n", userNamespace)
 				Expect(err).ToNot(HaveOccurred())
 			})
