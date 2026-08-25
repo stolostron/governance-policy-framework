@@ -25,7 +25,13 @@ fi
 
 if [[ -f ${REPO_PATH}/go.mod ]]; then
   GO="go -C ${REPO_PATH}"
-  ${GO} get "go@${go_version}.0"
+
+  current_go_version=$(${GO} list -m -f '{{.Version}}' go)
+  if [[ "${current_go_version%.*}" != "${go_version}" ]]; then
+    ${GO} get "go@${go_version}.0"
+  else
+    echo "INFO: Go version ${current_go_version} is already at ${go_version}"
+  fi
 
   ${GO} mod tidy || {
     echo "error: Failed to tidy go.mod in ${REPO_PATH}" >&2
