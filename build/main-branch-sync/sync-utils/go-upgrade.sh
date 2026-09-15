@@ -64,5 +64,5 @@ for file in ${konflux_build_files} ${konflux_build_files_base} "${REPO_PATH}"/bu
     continue
   fi
   echo "INFO: Checking version in ${file}"
-  ${SED} -i -E "s/(golang:|go|rhel_[0-9]+_)[0-9]+\.[0-9]+/\1${go_version}/g" "${file}"
+  ${SED} -i -E "s/(golang:|go|rhel_[0-9]+_|golang-builder-v)[0-9]+\.[0-9]+/\1${go_version}/g" "${file}"
 done
