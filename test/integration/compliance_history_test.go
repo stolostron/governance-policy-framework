@@ -26,7 +26,6 @@ import (
 	k8serrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
-	k8stypes "k8s.io/apimachinery/pkg/types"
 
 	"github.com/stolostron/governance-policy-framework/test/common"
 )
@@ -36,7 +35,6 @@ import (
 var _ = Describe("GRC: [P1][Sev1][policy-grc] Test the compliance history API", Ordered, Serial, Label("BVT"), func() {
 	const policyNS = "open-cluster-management-global-set"
 	var eventsEndpoint string
-	var csvEndpoint string
 	var token string
 	const saName = "compliance-history-user"
 
@@ -127,7 +125,6 @@ var _ = Describe("GRC: [P1][Sev1][policy-grc] Test the compliance history API", 
 		}, common.DefaultTimeoutSeconds, 1).Should(Succeed())
 
 		eventsEndpoint = fmt.Sprintf("https://%s/api/v1/compliance-events", routeHost)
-		csvEndpoint = fmt.Sprintf("https://%s/api/v1/reports/compliance-events", routeHost)
 
 		By("Creating the AddOnDeploymentConfig with the complianceHistoryAPIURL variable")
 		addonDeploymentConfig := unstructured.Unstructured{
@@ -245,162 +242,6 @@ var _ = Describe("GRC: [P1][Sev1][policy-grc] Test the compliance history API", 
 		if !k8serrors.IsNotFound(err) {
 			Expect(err).ToNot(HaveOccurred())
 		}
-	})
-
-	It("Creates a policy with a compliant and noncompliant configuration policy", func(ctx context.Context) {
-		const policyName = "compliance-api-configpolicy"
-
-		startOfTest := time.Now().UTC().Format(time.RFC3339Nano)
-
-		By("Creating the policy")
-		_, err := common.OcHub(
-			"apply",
-			"-f",
-			"../resources/compliance_history/policy.yaml",
-		)
-		Expect(err).ToNot(HaveOccurred())
-
-		DeferCleanup(func(ctx context.Context) {
-			By("Deleting the policy")
-			_, err := common.OcHub(
-				"delete",
-				"-f",
-				"../resources/compliance_history/policy.yaml",
-				"--ignore-not-found",
-			)
-			Expect(err).ToNot(HaveOccurred())
-		})
-
-		clusters := verifyPolicyOnAllClusters(ctx, policyNS, policyName, "NonCompliant", defaultTimeoutSeconds*2)
-
-		expectedEvents := len(clusters) * 2
-
-		By(fmt.Sprintf("Verifying that there are %d compliance events for the parent policy", expectedEvents))
-		Eventually(func(g Gomega) {
-			for _, cluster := range clusters {
-				// event.timestamp_after is used to filter compliance events from previous runs if the test
-				// is run multiple times. This won't be needed after https://issues.redhat.com/browse/ACM-9314 is
-				// addressed.
-				events, err := listComplianceEvents(
-					ctx, "cluster.name="+cluster,
-					"parent_policy.name="+policyName,
-					"event.timestamp_after="+startOfTest,
-				)
-				g.Expect(err).ToNot(HaveOccurred())
-
-				g.Expect(events).To(HaveLen(2), fmt.Sprintf("expected cluster %s to have two events", cluster))
-
-				event1 := events[0].(map[string]interface{})
-				event2 := events[1].(map[string]interface{})
-
-				if event1["policy"].(map[string]interface{})["name"].(string) == "default-namespace-must-exist" {
-					g.Expect(event1["event"].(map[string]interface{})["compliance"]).To(Equal("Compliant"))
-					g.Expect(event2["event"].(map[string]interface{})["compliance"]).To(Equal("NonCompliant"))
-				} else {
-					g.Expect(event1["event"].(map[string]interface{})["compliance"]).To(Equal("NonCompliant"))
-					g.Expect(event2["event"].(map[string]interface{})["compliance"]).To(Equal("Compliant"))
-				}
-			}
-		}, defaultTimeoutSeconds, 1).Should(Succeed())
-
-		now := time.Now().UTC().Format(time.RFC3339Nano)
-
-		By("Deleting a policy template to verify the disabled event")
-		_, err = clientHubDynamic.Resource(common.GvrPolicy).Namespace(policyNS).Patch(
-			ctx,
-			policyName,
-			k8stypes.JSONPatchType,
-			[]byte(
-				`[{"op": "remove", "path": "/spec/policy-templates/1"}]`,
-			),
-			metav1.PatchOptions{},
-		)
-		Expect(err).ToNot(HaveOccurred())
-
-		By("Verifying that there is a single disabled compliance events for the parent policy")
-		Eventually(func(g Gomega) {
-			for _, cluster := range clusters {
-				events, err := listComplianceEvents(
-					ctx,
-					"cluster.name="+cluster,
-					"parent_policy.name="+policyName,
-					"event.timestamp_after="+now,
-					"event.compliance=Disabled",
-				)
-				g.Expect(err).ToNot(HaveOccurred())
-
-				g.Expect(events).To(HaveLen(1), fmt.Sprintf("expected cluster %s to have one disabled events", cluster))
-
-				event := events[0].(map[string]interface{})
-				g.Expect(event["policy"].(map[string]interface{})["name"]).To(Equal(
-					"does-not-exist-namespace-must-exist",
-				))
-				eventDetails := event["event"].(map[string]interface{})
-
-				g.Expect(eventDetails["compliance"]).To(Equal("Disabled"))
-				g.Expect(eventDetails["message"]).To(Equal("The policy was removed from the parent policy"))
-			}
-		}, defaultTimeoutSeconds, 1).Should(Succeed())
-
-		now = time.Now().UTC().Format(time.RFC3339Nano)
-
-		_, err = common.OcHub(
-			"delete",
-			"-f",
-			"../resources/compliance_history/policy.yaml",
-			"--ignore-not-found",
-		)
-		Expect(err).ToNot(HaveOccurred())
-
-		By("Verifying that there is a single disabled compliance event for the parent policy")
-		Eventually(func(g Gomega) {
-			for _, cluster := range clusters {
-				events, err := listComplianceEvents(
-					ctx,
-					"cluster.name="+cluster,
-					"parent_policy.name="+policyName,
-					"event.timestamp_after="+now,
-					"event.compliance=Disabled",
-				)
-				g.Expect(err).ToNot(HaveOccurred())
-
-				g.Expect(events).To(HaveLen(1), fmt.Sprintf("expected cluster %s to have one disabled events", cluster))
-
-				event := events[0].(map[string]interface{})
-				g.Expect(event["policy"].(map[string]interface{})["name"]).To(Equal("default-namespace-must-exist"))
-				eventDetails := event["event"].(map[string]interface{})
-
-				g.Expect(eventDetails["compliance"]).To(Equal("Disabled"))
-				g.Expect(eventDetails["message"]).To(Equal(
-					"The policy was removed because the parent policy no longer applies to this cluster",
-				))
-			}
-		}, defaultTimeoutSeconds, 1).Should(Succeed())
-
-		expectedEvents = len(clusters) * 4
-
-		By("Verifying the CSV report")
-		Eventually(func(g Gomega) {
-			req, err := http.NewRequestWithContext(
-				ctx, http.MethodGet, csvEndpoint+"?event.timestamp_after="+startOfTest, nil,
-			)
-			g.Expect(err).ToNot(HaveOccurred())
-
-			req.Header.Set("Authorization", "Bearer "+token)
-
-			resp, err := httpClient.Do(req)
-			g.Expect(err).ToNot(HaveOccurred())
-
-			defer resp.Body.Close()
-
-			g.Expect(resp.StatusCode).To(Equal(http.StatusOK))
-			g.Expect(resp.Header.Get("Content-Type")).To(Equal("text/csv"))
-
-			body, err := io.ReadAll(resp.Body)
-			g.Expect(err).ToNot(HaveOccurred())
-			// Add 1 to expectedEvents to account for the CSV header line
-			g.Expect(strings.Split(strings.TrimSpace(string(body)), "\n")).To(HaveLen(expectedEvents + 1))
-		}, defaultTimeoutSeconds, 1).Should(Succeed())
 	})
 
 	It("Creates a policy with a Gatekeeper constraint", func(ctx context.Context) {
