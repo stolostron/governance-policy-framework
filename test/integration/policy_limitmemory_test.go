@@ -33,7 +33,7 @@ var _ = Describe("GRC: [P1][Sev1][policy-grc] Test the policy-limitmemory policy
 			By("Creating the policy on the Hub")
 
 			_, err := utils.KubectlWithOutput(
-				"apply", "-f", policyLimitMemoryURL, "-n", userNamespace, "--kubeconfig="+kubeconfigHub,
+				ctx, "apply", "-f", policyLimitMemoryURL, "-n", userNamespace, "--kubeconfig="+kubeconfigHub,
 			)
 			Expect(err).ToNot(HaveOccurred())
 
@@ -137,9 +137,9 @@ var _ = Describe("GRC: [P1][Sev1][policy-grc] Test the policy-limitmemory policy
 			).ShouldNot(HaveOccurred())
 		})
 
-		AfterAll(func() {
+		AfterAll(func(ctx SpecContext) {
 			_, err := utils.KubectlWithOutput(
-				"delete", "-f", policyLimitMemoryURL, "-n",
+				ctx, "delete", "-f", policyLimitMemoryURL, "-n",
 				userNamespace, "--kubeconfig="+kubeconfigHub,
 				"--ignore-not-found",
 			)

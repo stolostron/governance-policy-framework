@@ -39,10 +39,11 @@ var _ = Describe("GRC: [P1][Sev1][policy-grc] Test the policy-psp policy",
 			}
 		})
 
-		It("stable/"+rootPolicyName+" should be created on the hub cluster", func() {
+		It("stable/"+rootPolicyName+" should be created on the hub cluster", func(ctx SpecContext) {
 			By("Creating " + rootPolicyName + " on the hub cluster")
 
 			_, err := utils.KubectlWithOutput(
+				ctx,
 				"apply",
 				"-f",
 				rootPolicyURL,
@@ -125,11 +126,11 @@ var _ = Describe("GRC: [P1][Sev1][policy-grc] Test the policy-psp policy",
 			).ShouldNot(HaveOccurred())
 		})
 
-		AfterAll(func() {
+		AfterAll(func(ctx SpecContext) {
 			By("Deleting the PodSecurityPolicy " + rootPolicyName + " on the hub cluster")
 
 			_, err := utils.KubectlWithOutput(
-				"delete",
+				ctx, "delete",
 				"-f",
 				rootPolicyURL,
 				"-n",

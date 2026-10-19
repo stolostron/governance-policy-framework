@@ -23,6 +23,7 @@ func complianceScanTest(scanPolicyName string, scanPolicyURL string, scanName st
 			By("Creating policy on hub")
 
 			_, err := utils.KubectlWithOutput(
+				ctx,
 				"apply",
 				"-f",
 				scanPolicyURL,
@@ -134,10 +135,11 @@ func complianceScanTest(scanPolicyName string, scanPolicyURL string, scanName st
 			}, common.MaxTimeoutSeconds, 1).Should(Or(Equal("AGGREGATING"), Equal("RUNNING")))
 		})
 	})
-	AfterAll(func() {
+	AfterAll(func(ctx SpecContext) {
 		By("Removing policy")
 
 		_, err := utils.KubectlWithOutput(
+			ctx,
 			"delete",
 			"-f",
 			scanPolicyURL,
@@ -159,6 +161,7 @@ func complianceScanTest(scanPolicyName string, scanPolicyURL string, scanName st
 
 		By("Removing ScanSettingBinding")
 		utils.Kubectl(
+			ctx,
 			"delete",
 			"-n",
 			"openshift-compliance",
@@ -170,6 +173,7 @@ func complianceScanTest(scanPolicyName string, scanPolicyURL string, scanName st
 
 		By("Wait for ComplianceSuite to be deleted")
 		utils.Kubectl(
+			ctx,
 			"delete",
 			"-n",
 			"openshift-compliance",
@@ -230,12 +234,12 @@ var _ = Describe("RHACM4K-2222 GRC: [P1][Sev1][policy-grc] "+
 
 	var getComplianceState func(Gomega) any
 
-	BeforeAll(func() {
+	BeforeAll(func(ctx SpecContext) {
 		if !common.IsAtLeastVersion("4.6") {
 			Skip("Skipping as compliance operator is only supported on OCP 4.6 and above")
 		}
 
-		if !canCreateOpenshiftNamespaces() {
+		if !canCreateOpenshiftNamespaces(ctx) {
 			Skip("Skipping as compliance operator requires the ability to create the openshift-compliance namespace")
 		}
 
@@ -247,7 +251,7 @@ var _ = Describe("RHACM4K-2222 GRC: [P1][Sev1][policy-grc] "+
 			By("Creating policy on hub")
 
 			_, err := utils.KubectlWithOutput(
-				"apply", "-f",
+				ctx, "apply", "-f",
 				compPolicyURL, "-n",
 				userNamespace,
 				"--kubeconfig="+kubeconfigHub,
@@ -287,7 +291,7 @@ var _ = Describe("RHACM4K-2222 GRC: [P1][Sev1][policy-grc] "+
 		It("Enforcing stable/"+compPolicyName, func() {
 			common.EnforcePolicy(compPolicyName)
 		})
-		It("Compliance operator pod should be running", func() {
+		It("Compliance operator pod should be running", func(ctx SpecContext) {
 			By("Checking if pod compliance-operator has been created")
 
 			i := 0
@@ -298,7 +302,7 @@ var _ = Describe("RHACM4K-2222 GRC: [P1][Sev1][policy-grc] "+
 						"deleting subscription and let it recreate", i)
 
 					_, err := utils.KubectlWithOutput(
-						"get", "-n",
+						ctx, "get", "-n",
 						"openshift-compliance",
 						"subscriptions.operators.coreos.com",
 						"compliance-operator",
@@ -308,7 +312,7 @@ var _ = Describe("RHACM4K-2222 GRC: [P1][Sev1][policy-grc] "+
 					g.Expect(err).ToNot(HaveOccurred())
 
 					_, err = utils.KubectlWithOutput(
-						"delete", "-n",
+						ctx, "delete", "-n",
 						"openshift-compliance",
 						"subscriptions.operators.coreos.com",
 						"compliance-operator",
@@ -396,9 +400,10 @@ var _ = Describe("RHACM4K-2222 GRC: [P1][Sev1][policy-grc] "+
 	Describe("Test stable/"+compCISScanPolicyName, Ordered, func() {
 		complianceScanTest(compCISScanPolicyName, compCISscanPolicyURL, "cis")
 	})
-	AfterAll(func() {
+	AfterAll(func(ctx SpecContext) {
 		// clean up compliance operator
 		_, err := utils.KubectlWithOutput(
+			ctx,
 			"delete", "-f",
 			compPolicyURL,
 			"-n",
@@ -421,7 +426,7 @@ var _ = Describe("RHACM4K-2222 GRC: [P1][Sev1][policy-grc] "+
 		)
 
 		_, err = utils.KubectlWithOutput(
-			"delete", "-n",
+			ctx, "delete", "-n",
 			"openshift-compliance",
 			"ProfileBundle", "--all",
 			"--kubeconfig="+kubeconfigManaged,
@@ -434,7 +439,7 @@ var _ = Describe("RHACM4K-2222 GRC: [P1][Sev1][policy-grc] "+
 		}
 
 		_, err = utils.KubectlWithOutput(
-			"delete", "-n",
+			ctx, "delete", "-n",
 			"openshift-compliance",
 			"subscriptions.operators.coreos.com",
 			"compliance-operator",
@@ -444,7 +449,7 @@ var _ = Describe("RHACM4K-2222 GRC: [P1][Sev1][policy-grc] "+
 		Expect(err).ToNot(HaveOccurred())
 
 		_, err = utils.KubectlWithOutput(
-			"delete", "-n",
+			ctx, "delete", "-n",
 			"openshift-compliance",
 			"OperatorGroup",
 			"compliance-operator",
@@ -454,7 +459,7 @@ var _ = Describe("RHACM4K-2222 GRC: [P1][Sev1][policy-grc] "+
 		Expect(err).ToNot(HaveOccurred())
 
 		out, _ := utils.KubectlWithOutput(
-			"delete", "ns",
+			ctx, "delete", "ns",
 			"openshift-compliance",
 			"--kubeconfig="+kubeconfigManaged,
 		)
@@ -464,7 +469,7 @@ var _ = Describe("RHACM4K-2222 GRC: [P1][Sev1][policy-grc] "+
 		))
 
 		_, err = utils.KubectlWithOutput(
-			"delete", "events", "-n",
+			ctx, "delete", "events", "-n",
 			clusterNamespace,
 			"--field-selector=involvedObject.name="+userNamespace+"."+compPolicyName,
 			"--kubeconfig="+kubeconfigManaged,
@@ -473,7 +478,7 @@ var _ = Describe("RHACM4K-2222 GRC: [P1][Sev1][policy-grc] "+
 		Expect(err).ToNot(HaveOccurred())
 
 		_, err = utils.KubectlWithOutput(
-			"delete", "events", "-n",
+			ctx, "delete", "events", "-n",
 			clusterNamespace,
 			"--field-selector=involvedObject.name="+userNamespace+"."+compCISScanPolicyName,
 			"--kubeconfig="+kubeconfigManaged,
@@ -482,7 +487,7 @@ var _ = Describe("RHACM4K-2222 GRC: [P1][Sev1][policy-grc] "+
 		Expect(err).ToNot(HaveOccurred())
 
 		_, err = utils.KubectlWithOutput(
-			"delete", "events", "-n",
+			ctx, "delete", "events", "-n",
 			clusterNamespace,
 			"--field-selector=involvedObject.name="+userNamespace+"."+compE8ScanPolicyName,
 			"--kubeconfig="+kubeconfigManaged,

@@ -33,7 +33,7 @@ var _ = Describe(
 			By("Creating the policy on the Hub")
 
 			_, err := utils.KubectlWithOutput(
-				"apply", "-f", policyEtcdEncryptionURL, "-n", userNamespace, "--kubeconfig="+kubeconfigHub,
+				ctx, "apply", "-f", policyEtcdEncryptionURL, "-n", userNamespace, "--kubeconfig="+kubeconfigHub,
 			)
 			Expect(err).ToNot(HaveOccurred())
 
@@ -138,9 +138,9 @@ var _ = Describe(
 			).Should(Equal("aescbc"))
 		})
 
-		AfterAll(func() {
+		AfterAll(func(ctx SpecContext) {
 			_, err := utils.KubectlWithOutput(
-				"delete", "-f",
+				ctx, "delete", "-f",
 				policyEtcdEncryptionURL, "-n",
 				userNamespace, "--kubeconfig="+kubeconfigHub,
 				"--ignore-not-found",

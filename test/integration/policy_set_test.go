@@ -26,9 +26,9 @@ var _ = Describe("GRC: [P1][Sev1][policy-grc] Test policy set", Ordered, Label("
 	)
 
 	Describe("Create policy, policyset, and placement in ns:"+userNamespace, func() {
-		It("Should create and process policy and policyset", func() {
+		It("Should create and process policy and policyset", func(ctx SpecContext) {
 			By("Creating " + testPolicySetYaml)
-			output, err := utils.KubectlWithOutput("apply",
+			output, err := utils.KubectlWithOutput(ctx, "apply",
 				"-f", testPolicySetYaml,
 				"-n", userNamespace,
 				"--kubeconfig="+kubeconfigHub)
@@ -97,9 +97,9 @@ var _ = Describe("GRC: [P1][Sev1][policy-grc] Test policy set", Ordered, Label("
 			).Should(utils.SemanticEqual(yamlPlc.Object["status"]))
 		})
 
-		It("Should add a status entry in policyset for a policy that does not exist", func() {
+		It("Should add a status entry in policyset for a policy that does not exist", func(ctx SpecContext) {
 			By("Creating " + testPolicySetPatchYaml)
-			output, err := utils.KubectlWithOutput("apply",
+			output, err := utils.KubectlWithOutput(ctx, "apply",
 				"-f", testPolicySetPatchYaml,
 				"-n", userNamespace,
 				"--kubeconfig="+kubeconfigHub)
@@ -126,7 +126,7 @@ var _ = Describe("GRC: [P1][Sev1][policy-grc] Test policy set", Ordered, Label("
 
 			By("Undoing patch with " + testPolicySetPatchYaml)
 
-			output, err = utils.KubectlWithOutput("apply",
+			output, err = utils.KubectlWithOutput(ctx, "apply",
 				"-f", testUndoPolicySetPatchYaml,
 				"-n", userNamespace,
 				"--kubeconfig="+kubeconfigHub)
@@ -156,9 +156,9 @@ var _ = Describe("GRC: [P1][Sev1][policy-grc] Test policy set", Ordered, Label("
 			).Should(utils.SemanticEqual(yamlPlc.Object["status"]))
 		})
 
-		It("Should update status properly if a policy is disabled", func() {
+		It("Should update status properly if a policy is disabled", func(ctx SpecContext) {
 			By("Creating " + testedDisablePolicyYaml)
-			output, err := utils.KubectlWithOutput("apply",
+			output, err := utils.KubectlWithOutput(ctx, "apply",
 				"-f", testedDisablePolicyYaml,
 				"-n", userNamespace,
 				"--kubeconfig="+kubeconfigHub)
@@ -199,8 +199,8 @@ var _ = Describe("GRC: [P1][Sev1][policy-grc] Test policy set", Ordered, Label("
 			).Should(utils.SemanticEqual(yamlPlc.Object["status"]))
 		})
 
-		AfterAll(func() {
-			output, err := utils.KubectlWithOutput("delete",
+		AfterAll(func(ctx SpecContext) {
+			output, err := utils.KubectlWithOutput(ctx, "delete",
 				"-f", testPolicySetYaml,
 				"-n", userNamespace,
 				"--kubeconfig="+kubeconfigHub,
