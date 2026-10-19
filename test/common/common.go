@@ -309,7 +309,7 @@ func OcHosting(args ...string) (string, error) {
 	return oc(args...)
 }
 
-func OutputDebugInfo(testName string, kubeconfig string, additionalResources ...string) {
+func OutputDebugInfo(ctx SpecContext, testName string, kubeconfig string, additionalResources ...string) {
 	GinkgoWriter.Printf("%s test Kubernetes info:\n", testName)
 
 	resources := []string{
@@ -320,7 +320,8 @@ func OutputDebugInfo(testName string, kubeconfig string, additionalResources ...
 	resources = append(resources, additionalResources...)
 
 	for _, resource := range resources {
-		_, _ = utils.KubectlWithOutput("get", resource, "--all-namespaces", "-o", "yaml", "--kubeconfig="+kubeconfig)
+		_, _ = utils.KubectlWithOutput(
+			ctx, "get", resource, "--all-namespaces", "-o", "yaml", "--kubeconfig="+kubeconfig)
 	}
 }
 

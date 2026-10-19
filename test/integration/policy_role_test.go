@@ -33,7 +33,7 @@ var _ = Describe("GRC: [P1][Sev1][policy-grc] Test the policy-role policy",
 			By("Creating policy on hub")
 
 			_, err := utils.KubectlWithOutput(
-				"apply", "-f", policyRoleURL, "-n", userNamespace, "--kubeconfig="+kubeconfigHub,
+				ctx, "apply", "-f", policyRoleURL, "-n", userNamespace, "--kubeconfig="+kubeconfigHub,
 			)
 			Expect(err).ToNot(HaveOccurred())
 
@@ -135,9 +135,9 @@ var _ = Describe("GRC: [P1][Sev1][policy-grc] Test the policy-role policy",
 			).ShouldNot(HaveOccurred())
 		})
 
-		AfterAll(func() {
+		AfterAll(func(ctx SpecContext) {
 			_, err := utils.KubectlWithOutput(
-				"delete", "-f", policyRoleURL, "-n", userNamespace,
+				ctx, "delete", "-f", policyRoleURL, "-n", userNamespace,
 				"--kubeconfig="+kubeconfigHub, "--ignore-not-found",
 			)
 			Expect(err).ToNot(HaveOccurred())

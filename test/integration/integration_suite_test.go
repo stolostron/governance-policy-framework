@@ -150,7 +150,7 @@ var _ = AfterSuite(func(ctx SpecContext) {
 	common.GitOpsCleanup(ctx, gitopsUser)
 })
 
-func canCreateOpenshiftNamespaces() bool {
+func canCreateOpenshiftNamespaces(ctx SpecContext) bool {
 	// Only check once - this makes it faster and prevents the answer changing mid-suite.
 	if canCreateOpenshiftNamespacesInitialized {
 		return canCreateOpenshiftNamespacesResult
@@ -162,6 +162,7 @@ func canCreateOpenshiftNamespaces() bool {
 	// A server-side dry run will check the admission webhooks, but it needs to use the right
 	// serviceaccount because the kubeconfig might have superuser privileges to get around them.
 	out, _ := utils.KubectlWithOutput(
+		ctx,
 		"create", "ns", "openshift-grc-test",
 		"--kubeconfig="+kubeconfigManaged,
 		"--dry-run=server",
