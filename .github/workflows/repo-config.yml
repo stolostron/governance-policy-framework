@@ -8,6 +8,9 @@ defaults:
   run:
     shell: bash
 
+permissions:
+  contents: read
+
 jobs:
   checks:
     name: Code Health Checks
@@ -100,6 +103,7 @@ jobs:
   clusteradm:
     name: Deploy framework with clusteradm
     runs-on: ubuntu-latest
+    permissions: {}
     steps:
       - name: Install clusteradm
         run: |
@@ -163,6 +167,7 @@ jobs:
     name: Post result to Slack
     needs: [checks, clusteradm]
     runs-on: ubuntu-latest
+    permissions: {}
     if: ${{ always() }}
     steps:
       - name: Send result to Slack
