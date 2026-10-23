@@ -111,6 +111,10 @@ jobs:
       - name: Bootstrap clusters with OCM
         # Source: https://github.com/open-cluster-management-io/ocm/blob/main/solutions/setup-dev-environment/local-up.sh
         run: |
+          # Source: https://kind.sigs.k8s.io/docs/user/known-issues/#pod-errors-due-to-too-many-open-files
+          sudo sysctl fs.inotify.max_user_watches=524288
+          sudo sysctl fs.inotify.max_user_instances=512
+
           export PATH=${PATH}:$(go env GOPATH)/bin
           hub="hub" c1="cluster1" c2="cluster2"
 
