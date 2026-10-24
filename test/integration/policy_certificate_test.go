@@ -41,6 +41,7 @@ var _ = Describe(
 			By("Creating the policy on the Hub")
 
 			_, err := utils.KubectlWithOutput(
+				ctx,
 				"apply",
 				"-f",
 				policyCertificateURL,
@@ -148,9 +149,9 @@ var _ = Describe(
 			).Should(Equal(policiesv1.NonCompliant))
 		})
 
-		AfterAll(func() {
+		AfterAll(func(ctx SpecContext) {
 			_, err := utils.KubectlWithOutput(
-				"delete", "-f", policyCertificateURL, "-n",
+				ctx, "delete", "-f", policyCertificateURL, "-n",
 				userNamespace, "--kubeconfig="+kubeconfigHub,
 				"--ignore-not-found",
 			)

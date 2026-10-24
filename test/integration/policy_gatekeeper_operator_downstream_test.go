@@ -32,7 +32,7 @@ var _ = Describe("RHACM4K-3055", Ordered, Label("policy-collection", "stable", "
 			By("Creating policy on hub")
 
 			_, err := utils.KubectlWithOutput(
-				"apply", "-f",
+				ctx, "apply", "-f",
 				gatekeeperPolicyURL,
 				"-n", userNamespace,
 				"--kubeconfig="+kubeconfigHub,
@@ -41,7 +41,7 @@ var _ = Describe("RHACM4K-3055", Ordered, Label("policy-collection", "stable", "
 			By("Patching Policy Gatekeeper CR template with namespaceSelector " +
 				"to kubernetes.io/metadata.name=" + userNamespace)
 			_, err = utils.KubectlWithOutput(
-				"patch", "-n", userNamespace,
+				ctx, "patch", "-n", userNamespace,
 				"policies.policy.open-cluster-management.io",
 				gatekeeperPolicyName,
 				"--type=json", "-p=[{\"op\": \"add\", \"path\": \"/spec/policy-templates/1/objectDefinition/"+
@@ -127,10 +127,11 @@ var _ = Describe("RHACM4K-3055", Ordered, Label("policy-collection", "stable", "
 			}, defaultTimeoutSeconds*4, 1).Should(Equal("Running"))
 		})
 		It("Checking if validating webhook gatekeeper-validating-webhook-configuration "+
-			"is scoped to grc test namespaces", func() {
+			"is scoped to grc test namespaces", func(ctx SpecContext) {
 			By("Checking if validating webhook gatekeeper-validating-webhook-configuration exists")
 			Eventually(func() any {
 				out, _ := utils.KubectlWithOutput(
+					ctx,
 					"get",
 					"validatingwebhookconfigurations.admissionregistration.k8s.io",
 					"gatekeeper-validating-webhook-configuration",
@@ -161,11 +162,11 @@ var _ = Describe("RHACM4K-3055", Ordered, Label("policy-collection", "stable", "
 			Expect(webhook.Webhooks[0].NamespaceSelector.MatchExpressions[0]).NotTo(BeNil())
 			Expect(webhook.Webhooks[1].NamespaceSelector.MatchExpressions[0]).NotTo(BeNil())
 		})
-		It("Gatekeeper audit pod should be running", func() {
+		It("Gatekeeper audit pod should be running", func(ctx SpecContext) {
 			By("Checking if pod gatekeeper-audit has been created")
 			Eventually(func(g Gomega) []corev1.Pod {
 				podList, err := clientManaged.CoreV1().Pods(gatekeeperNamespace).List(
-					context.TODO(),
+					ctx,
 					metav1.ListOptions{
 						LabelSelector: "control-plane=audit-controller",
 					},
@@ -177,7 +178,7 @@ var _ = Describe("RHACM4K-3055", Ordered, Label("policy-collection", "stable", "
 			By("Checking if pod gatekeeper-audit is running")
 			Eventually(func(g Gomega) any {
 				podList, err := clientManaged.CoreV1().Pods(gatekeeperNamespace).List(
-					context.TODO(),
+					ctx,
 					metav1.ListOptions{
 						LabelSelector: "control-plane=audit-controller",
 					},
@@ -187,7 +188,7 @@ var _ = Describe("RHACM4K-3055", Ordered, Label("policy-collection", "stable", "
 				return string(podList.Items[0].Status.Phase)
 			}, defaultTimeoutSeconds*4, 1).Should(Equal("Running"))
 		})
-		It("Gatekeeper controller manager pods should be running", func() {
+		It("Gatekeeper controller manager pods should be running", func(ctx SpecContext) {
 			By("Checking if pod gatekeeper-controller-manager has been created")
 			Eventually(func(g Gomega) []corev1.Pod {
 				podList, err := clientManaged.CoreV1().Pods(gatekeeperNamespace).List(
@@ -229,6 +230,7 @@ var _ = Describe("RHACM4K-3055", Ordered, Label("policy-collection", "stable", "
 	AfterAll(func(ctx SpecContext) {
 		if CurrentSpecReport().Failed() {
 			common.OutputDebugInfo(
+				ctx,
 				"Gatekeeper policies",
 				kubeconfigHub,
 			)
@@ -236,6 +238,7 @@ var _ = Describe("RHACM4K-3055", Ordered, Label("policy-collection", "stable", "
 
 		// Clean up stable/policy-gatekeeper-operator
 		_, err := utils.KubectlWithOutput(
+			ctx,
 			"delete",
 			"-f",
 			gatekeeperPolicyURL,
@@ -287,6 +290,7 @@ var _ = Describe("RHACM4K-3055", Ordered, Label("policy-collection", "stable", "
 		Expect(err).ToNot(HaveOccurred())
 
 		utils.Kubectl(
+			ctx,
 			"delete",
 			"namespace",
 			gatekeeperNamespace,
@@ -295,6 +299,7 @@ var _ = Describe("RHACM4K-3055", Ordered, Label("policy-collection", "stable", "
 		)
 
 		utils.Kubectl(
+			ctx,
 			"delete",
 			"events",
 			"-n", clusterNamespace,
