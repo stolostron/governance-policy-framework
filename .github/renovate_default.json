@@ -2,10 +2,30 @@
   "$schema": "https://docs.renovatebot.com/renovate-schema.json",
   "timezone": "America/New_York",
   "schedule": [
-    "* 0-9 1-7 * 1"
+    "* * 1-7 * 0"
   ],
+  "commitMessageSuffix": "({{{baseBranch}}})",
+  "updateNotScheduled": true,
+  "osvVulnerabilityAlerts": true,
+  "vulnerabilityAlerts": {
+    "enabled": true,
+    "schedule": ["* * * * 0"],
+    "minimumReleaseAge": "3 days",
+    "groupName": "{{manager}} security updates",
+    "groupSlug": "{{manager}}-security",
+    "labels": ["acknowledge-security-fixes-only"],
+    "commitMessageSuffix": "[SECURITY] ({{{baseBranch}}})"
+  },
   "dockerfile": {
     "enabled": false
+  },
+  "lockFileMaintenance": {
+    "schedule": ["* * 1-7 * 0"]
+  },
+  "rpm-lockfile": {
+    "lockFileMaintenance": {
+      "schedule": ["* * 1-7 * 0"]
+    }
   },
   "gomod": {
     "packageRules": [
@@ -15,10 +35,6 @@
       }
     ]
   },
-  "vulnerabilityAlerts": {
-    "enabled": true
-  },
-  "osvVulnerabilityAlerts": true,
   "packageRules": [
     {
       "matchManagers": ["gomod"],
@@ -35,7 +51,8 @@
     {
       "matchManagers": ["github-actions"],
       "groupName": "GitHub actions",
-      "pinDigests": true
+      "pinDigests": true,
+      "separateMajorMinor": false
     }
   ]
 }
