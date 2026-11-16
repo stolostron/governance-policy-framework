@@ -17,7 +17,7 @@ for CLI in gh aws jq yq oc; do
 done
 
 # Verify AWS access
-AWS_LOGIN_USER=$(aws iam list-access-keys | jq -r '.AccessKeyMetadata[0].UserName')
+AWS_LOGIN_USER=$(aws sts get-caller-identity | jq -r '.Arn')
 
 if [[ -z "${AWS_LOGIN_USER}" ]]; then
   echo "Log in to the AWS CLI with an Access Key (creatable from the AWS console) to continue"
